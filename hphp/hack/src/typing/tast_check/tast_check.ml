@@ -38,6 +38,9 @@ let warning_checks =
     (module Sketchy_null_check);
     (module Disjoint_types);
     (module Cast_non_primitive);
+    (module Truthiness_test);
+    (module Equality_check);
+    (module Duplicate_properties);
   ]
 
 let visitor ctx =
@@ -102,6 +105,7 @@ let visitor ctx =
           Some Readonly_check.handler;
           Some Meth_caller_check.handler;
           Some Expression_tree_check.handler;
+          Some Xhp_attr_value.handler;
           hierarchy_check Class_const_origin_check.handler;
           (if TypecheckerOptions.global_access_check_enabled tcopt then
             Some Global_access_check.handler

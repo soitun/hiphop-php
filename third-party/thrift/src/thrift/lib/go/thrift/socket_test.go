@@ -17,6 +17,7 @@
 package thrift
 
 import (
+	"net"
 	"runtime"
 	"testing"
 )
@@ -29,14 +30,32 @@ func TestNewSocket(t *testing.T) {
 	if runtime.GOOS == "darwin" {
 		address = "localhost:1234"
 	}
-	sock, err := NewSocket(SocketTimeout(10), SocketAddr(address))
+	addr, err := resolveAddr(address)
 	if err != nil {
 		t.Error(err)
 	}
-	if sock.(*socket).timeout != 10 {
-		t.Error("wrong timeout")
+	if addr.String() != "[::1]:1234" {
+		t.Errorf("wrong address: %s", addr)
 	}
-	if sock.(*socket).addr.String() != "[::1]:1234" {
-		t.Errorf("wrong address: %s", sock.(*socket).addr)
+}
+
+func TestNewSocketUnix(t *testing.T) {
+	path := t.TempDir() + "/test.sock"
+
+	l, err := net.Listen("unix", path)
+	if err != nil {
+		t.Fatalf("Cannot listen on unix socket %q: %v", path, err)
 	}
+	defer l.Close()
+
+	conn, err := net.Dial("unix", path)
+	if err != nil {
+		t.Fatalf("Cannot dial unix socket %q: %v", path, err)
+	}
+
+	s, err := NewSocket(SocketConn(conn))
+	if err != nil {
+		t.Fatalf("Cannot create new socket: %v", err)
+	}
+	defer s.Close()
 }

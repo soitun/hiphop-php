@@ -653,8 +653,7 @@ void ExecutionContext::executeFunctions(ShutdownType type) {
       Cfg::Server::PspCpuTimeoutSeconds
   );
 
-  // Since inaccessible is now used as the default context
-  assertx((*ImplicitContext::activeCtx) == (*ImplicitContext::inaccessibleCtx));
+  assertx((*ImplicitContext::activeCtx) == (*ImplicitContext::emptyCtx));
 
   // We mustn't destroy any callbacks until we're done with all
   // of them. So hold them in tmp.
@@ -669,7 +668,7 @@ void ExecutionContext::executeFunctions(ShutdownType type) {
       [](TypedValue v) {
         vm_call_user_func(VarNR{v}, init_null_variant,
                           RuntimeCoeffects::defaults());
-        assertx((*ImplicitContext::activeCtx) == (*ImplicitContext::inaccessibleCtx));
+        assertx((*ImplicitContext::activeCtx) == (*ImplicitContext::emptyCtx));
       }
     );
     tmp.append(funcs);
@@ -1429,11 +1428,12 @@ void ExecutionContext::requestInit() {
     SystemLib::mergePersistentUnits();
   }
 
-  assertx(!ImplicitContext::inaccessibleCtx.isInit());
-  ImplicitContext::inaccessibleCtx.initWith(initInaccessibleConext().detach());
+  assertx(!ImplicitContext::emptyCtx.isInit());
+  ImplicitContext::emptyCtx.initWith(initEmptyContext().detach());
 
   assertx(!ImplicitContext::activeCtx.isInit());
-  ImplicitContext::activeCtx.initWith(*ImplicitContext::inaccessibleCtx);
+  ImplicitContext::activeCtx.initWith(*ImplicitContext::emptyCtx);
+  (*ImplicitContext::activeCtx)->incRefCount();
 
   profileRequestStart();
 
@@ -1623,7 +1623,7 @@ TypedValue ExecutionContext::invokeFuncImpl(const Func* f,
     // This is an explicit try-catch-rethrow rather than a SCOPE_EXIT
     // because std::uncaught_exceptions() is relatively expensive, and this
     // is very hot code.
-    *ImplicitContext::activeCtx = prev_ic;
+    ImplicitContext::setActive(Object{prev_ic});
     throw;
   }
 }
@@ -1749,12 +1749,11 @@ void ExecutionContext::resumeAsyncFunc(Resumable* resumable,
   SCOPE_EXIT { assertx(regState() == VMRegState::CLEAN); };
 
   auto fp = resumable->actRec();
-
-  *ImplicitContext::activeCtx = [&] {
+  ImplicitContext::setActive(Object{[&] {
     if (!fp->func()->isGenerator()) return frame_afwh(fp)->m_implicitContext;
     auto gen = frame_async_generator(fp);
     return gen->getWaitHandle()->m_implicitContext;
-  }();
+  }()});
 
   // We don't need to check for space for the ActRec (unlike generally
   // in normal re-entry), because the ActRec isn't on the stack.
@@ -1794,12 +1793,11 @@ void ExecutionContext::resumeAsyncFuncThrow(Resumable* resumable,
   SCOPE_EXIT { assertx(regState() == VMRegState::CLEAN); };
 
   auto fp = resumable->actRec();
-
-  *ImplicitContext::activeCtx = [&] {
+  ImplicitContext::setActive(Object{[&] {
     if (!fp->func()->isGenerator()) return frame_afwh(fp)->m_implicitContext;
     auto gen = frame_async_generator(fp);
     return gen->getWaitHandle()->m_implicitContext;
-  }();
+  }()});
 
   checkStack(vmStack(), fp->func(), 0);
 

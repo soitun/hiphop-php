@@ -206,11 +206,6 @@ val shape_field_name_with_ty_err :
   ('a, 'b) Aast.expr ->
   (Ast_defs.shape_field_name, Typing_error.t) Result.t
 
-val simplify_constraint_type :
-  Typing_env_types.env ->
-  Typing_defs.constraint_type ->
-  Typing_env_types.env * Typing_defs.internal_type
-
 type add_constraint =
   Typing_env_types.env ->
   Ast_defs.constraint_kind ->
@@ -531,6 +526,7 @@ val make_simplify_typed_expr :
   Typing_env_types.env * Tast.expr
 
 val partition_union :
-  f:('a Typing_defs.ty -> bool) ->
-  'a Typing_defs.ty list ->
-  'a Typing_defs.ty list * 'a Typing_defs.ty list
+  f:(Typing_defs.locl_ty -> bool) ->
+  Typing_env_types.env ->
+  Typing_defs.locl_ty list ->
+  Typing_defs.locl_ty list * Typing_defs.locl_ty list

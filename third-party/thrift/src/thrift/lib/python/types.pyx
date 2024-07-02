@@ -107,6 +107,7 @@ cdef class TypeInfoBase:
         """
         raise NotImplementedError("Not implemented on base TypeInfoBase class")
 
+@cython.final
 cdef class TypeInfo(TypeInfoBase):
     @staticmethod
     cdef create(const cTypeInfo& cpp_obj, pytypes, str singleton_name):
@@ -147,6 +148,7 @@ cdef class TypeInfo(TypeInfoBase):
         # instead of repeatedly constructing TypeInfo instances
         return self.singleton_name
 
+@cython.final
 cdef class IntegerTypeInfo(TypeInfoBase):
     @staticmethod
     cdef create(const cTypeInfo& cpp_obj, min_value, max_value, str singleton_name):
@@ -190,6 +192,7 @@ cdef class IntegerTypeInfo(TypeInfoBase):
     def __reduce__(self):
         return self.singleton_name
 
+@cython.final
 cdef class StringTypeInfo(TypeInfoBase):
     @staticmethod
     cdef create(const cTypeInfo& cpp_obj, str singleton_name):
@@ -244,6 +247,7 @@ cdef class StringTypeInfo(TypeInfoBase):
     def __reduce__(self):
         return self.singleton_name
 
+@cython.final
 cdef class IOBufTypeInfo(TypeInfoBase):
     @staticmethod
     cdef create(const cTypeInfo& cpp_obj, str singleton_name):
@@ -454,7 +458,10 @@ cdef class StructInfo:
             field_info.type_info = field_type_info
             self.name_to_index[field_info.py_name] = idx
             dynamic_struct_info.addFieldInfo(
-                field_info.id, field_info.qualifier, PyUnicode_AsUTF8(field_info.name), getCTypeInfo(field_type_info)
+                field_info.id,
+                field_info.qualifier,
+                PyUnicode_AsUTF8(field_info.name),
+                getCTypeInfo(field_type_info)
             )
 
     cdef void _initialize_default_values(self) except *:
@@ -540,6 +547,7 @@ cdef to_container_elements_no_convert(type_info):
     return isinstance(type_info, (TypeInfo, IntegerTypeInfo)) or type_info is typeinfo_iobuf
 
 
+@cython.final
 cdef class ListTypeInfo(TypeInfoBase):
     def __cinit__(self, val_info):
         self.val_info = val_info
@@ -596,6 +604,7 @@ cdef class ListTypeInfo(TypeInfoBase):
     def __reduce__(self):
         return (ListTypeInfo, (self.val_info,))
 
+@cython.final
 cdef class SetTypeInfo(TypeInfoBase):
     def __cinit__(self, val_info):
         self.val_info = val_info
@@ -646,6 +655,7 @@ cdef class SetTypeInfo(TypeInfoBase):
     def __reduce__(self):
         return (SetTypeInfo, (self.val_info,))
 
+@cython.final
 cdef class MapTypeInfo(TypeInfoBase):
     def __cinit__(self, key_info, val_info):
         self.key_info = key_info
@@ -712,6 +722,7 @@ cdef class MapTypeInfo(TypeInfoBase):
     def __reduce__(self):
         return (MapTypeInfo, (self.key_info, self.val_info))
 
+@cython.final
 cdef class StructTypeInfo(TypeInfoBase):
     def __cinit__(self, klass):
         self._class = klass
@@ -781,6 +792,7 @@ cdef class StructTypeInfo(TypeInfoBase):
     def __reduce__(self):
         return (StructTypeInfo, (self._class,))
 
+@cython.final
 cdef class EnumTypeInfo(TypeInfoBase):
     def __cinit__(self, klass):
         self._class = klass
@@ -843,6 +855,7 @@ cdef class EnumTypeInfo(TypeInfoBase):
     def __reduce__(self):
         return (EnumTypeInfo, (self._class,))
 
+@cython.final
 cdef class AdaptedTypeInfo(TypeInfoBase):
     def __cinit__(self, orig_type_info, adapter_info, transitive_annotation):
         self._orig_type_info = orig_type_info
@@ -932,6 +945,20 @@ cdef api object _get_fbthrift_data(object struct_or_union):
 cdef api object _get_exception_fbthrift_data(object generated_error):
     return (<GeneratedError> generated_error)._fbthrift_data
 
+cdef _fbthrift_compare_struct_less(lhs, rhs, return_if_same_type):
+    if type(lhs) != type(rhs):
+        return NotImplemented
+    for name, lhs_value in lhs:
+        rhs_value = getattr(rhs, name)
+        if lhs_value == rhs_value:
+            continue
+        if lhs_value is None:
+            return True
+        if rhs_value is None:
+            return False
+        return lhs_value < rhs_value
+    return return_if_same_type
+
 cdef class Struct(StructOrUnion):
     """
     Base class for all generated classes corresponding to a Thrift struct in
@@ -1017,25 +1044,11 @@ cdef class Struct(StructOrUnion):
                 return False
         return True
 
-    def __fbthrift_compare_less(self, other, return_if_same_type):
-        if type(self) != type(other):
-            return NotImplemented
-        for name, value in self:
-            other_value = getattr(other, name)
-            if value == other_value:
-                continue
-            if value is None:
-                return True
-            if other_value is None:
-                return False
-            return value < other_value
-        return return_if_same_type
-
     def __lt__(self, other):
-        return self.__fbthrift_compare_less(other, False)
+        return _fbthrift_compare_struct_less(self, other, False)
 
     def __le__(self, other):
-        return self.__fbthrift_compare_less(other, True)
+        return _fbthrift_compare_struct_less(self, other, True)
 
     def __hash__(Struct self):
         value_tuple = tuple(v for _, v in self)
@@ -1220,7 +1233,7 @@ cdef class Union(StructOrUnion):
 
     def __init__(self, **kwargs):
         if not kwargs:
-            self._fbthrift_load_cache()
+            self._fbthrift_update_current_field_attributes()
             return
         # recommend calling with 1 kwarg.
         # ok to call with one not None kwarg and extra None kwargs.
@@ -1247,7 +1260,7 @@ cdef class Union(StructOrUnion):
     def _fbthrift_create(cls, data):
         cdef Union inst = cls.__new__(cls)
         inst._fbthrift_data = data
-        inst._fbthrift_load_cache()
+        inst._fbthrift_update_current_field_attributes()
         return inst
 
     @staticmethod
@@ -1290,16 +1303,23 @@ cdef class Union(StructOrUnion):
         Py_INCREF(value)
         PyTuple_SET_ITEM(self._fbthrift_data, 1, value)
         Py_DECREF(old_value)
-        self._fbthrift_load_cache()
 
-    cdef void _fbthrift_load_cache(self) except *:
+        self._fbthrift_update_current_field_attributes()
+
+    cdef void _fbthrift_update_current_field_attributes(self) except *:
+        """
+        Updates the `type` and `value` attributes from the internal data tuple
+        of this union (`self._fbthrift_data`).
+        """
         self.type = type(self).Type(self._fbthrift_data[0])
         val = self._fbthrift_data[1]
         if val is None:
             self.value = None
             return
         cdef UnionInfo info = self._fbthrift_struct_info
-        self.value = info.type_infos[self._fbthrift_data[0]].to_python_value(val)
+        self.value = (
+            info.type_infos[self._fbthrift_data[0]].to_python_value(val)
+        )
 
     cdef folly.iobuf.IOBuf _serialize(self, Protocol proto):
         cdef UnionInfo info = self._fbthrift_struct_info
@@ -1310,19 +1330,19 @@ cdef class Union(StructOrUnion):
     cdef uint32_t _deserialize(self, folly.iobuf.IOBuf buf, Protocol proto) except? 0:
         cdef UnionInfo info = self._fbthrift_struct_info
         cdef uint32_t size = cdeserialize(deref(info.cpp_obj), buf._this, self._fbthrift_data, proto)
-        self._fbthrift_load_cache()
+        self._fbthrift_update_current_field_attributes()
         return size
 
-    cdef _fbthrift_get_field_value(self, int16_t index):
+    cdef _fbthrift_get_field_value(self, int16_t field_id):
         """
-        Returns the value of the field with the given `index` if it is indeed the field
-        that is (currently) set for this union. Otherwise, raises AttributeError.
+        Returns the value of the field with the given `field_id` if it is indeed the
+        field that is (currently) set for this union. Otherwise, raises AttributeError.
         """
-        if self.type.value != index:
+        if self.type.value != field_id:
             # TODO in python 3.10 update this to use name and obj fields
             raise AttributeError(
                 f'Union contains a value of type {self.type.name}, not '
-                f'{type(self).Type(index).name}')
+                f'{type(self).Type(field_id).name}')
         return self.value
 
     def get_type(self):
@@ -1906,7 +1926,7 @@ cdef class MapTypeFactory:
 
 cdef class Map(Container):
     """
-    A immutable container used to prepresent a Thrift map. It has compatible
+    A immutable container used to represent a Thrift map. It has compatible
     API with a Python map but has additional API to interact with other Python
     iterators
     """

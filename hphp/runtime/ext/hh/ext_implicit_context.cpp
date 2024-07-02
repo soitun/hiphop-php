@@ -85,62 +85,44 @@ Object create_new_IC() {
 }
 } // namespace
 
-bool HHVM_FUNCTION(is_inaccessible) {
+bool HHVM_FUNCTION(has_key, StringArg keyArg) {
   assertx(*ImplicitContext::activeCtx);
+  auto key = keyArg.get();
+  if (key->size() == 0) { return false; }
   auto const obj = *ImplicitContext::activeCtx;
   auto const context = Native::data<ImplicitContext>(obj);
-  // In future, if we add a nullstate, that will be implemented
-  // using an object to represent the null state
-  return context->m_state == ImplicitContext::State::Inaccessible;
+  return context->m_map.find(key) != context->m_map.end();
 }
 
-Object initInaccessibleConext() {
+bool HHVM_FUNCTION(is_inaccessible) {
+  assertx(*ImplicitContext::activeCtx);
+  return (*ImplicitContext::activeCtx) == (*ImplicitContext::emptyCtx);
+}
+
+Object initEmptyContext() {
   auto const obj = Object{ ImplicitContextLoader::classof() };
-  auto context = Native::data<ImplicitContext>(obj.get());
-  context->m_state = ImplicitContext::State::Inaccessible;
   return obj;
 };
 
 String HHVM_FUNCTION(get_state_unsafe) {
   assertx(*ImplicitContext::activeCtx);
-  auto const obj = *ImplicitContext::activeCtx;
-  auto const context = Native::data<ImplicitContext>(obj);
-
-  switch (context->m_state) {
-    case ImplicitContext::State::Value:
-      return String{s_ICStateValue.get()};
-    case ImplicitContext::State::Inaccessible:
-      return String{s_ICStateInaccessible.get()};
-    case ImplicitContext::State::SoftInaccessible:
-      return String{s_ICStateSoftInaccessible.get()};
-    case ImplicitContext::State::SoftSet:
-      return String{s_ICStateSoftSet.get()};
+  if ((*ImplicitContext::activeCtx) == (*ImplicitContext::emptyCtx)) {
+    return String{s_ICStateInaccessible.get()};
   }
-  not_reached();
+  return String{s_ICStateValue.get()};
 }
 
 TypedValue HHVM_FUNCTION(get_implicit_context, StringArg key) {
   assertx(*ImplicitContext::activeCtx);
   auto const obj = *ImplicitContext::activeCtx;
   auto const context = Native::data<ImplicitContext>(obj);
-
-  switch (context->m_state) {
-    case ImplicitContext::State::Value: {
-      auto const it = context->m_map.find(key.get());
-      if (it == context->m_map.end()) return make_tv<KindOfNull>();
-      auto const result = it->second.first;
-      if (isRefcountedType(result.m_type)) tvIncRefCountable(result);
-      return result;
-    }
-    case ImplicitContext::State::Inaccessible:
-      throw_implicit_context_exception("Implicit context is set to inaccessible");
-    case ImplicitContext::State::SoftInaccessible:
-      raise_implicit_context_warning("Implicit context is set to soft inaccessible");
-      [[fallthrough]];
-    case ImplicitContext::State::SoftSet:
-      return make_tv<KindOfNull>();
+  auto const it = context->m_map.find(key.get());
+  if (it == context->m_map.end()) {
+    throw_implicit_context_exception("Implicit context is set to inaccessible");
   }
-  not_reached();
+  auto const result = it->second.first;
+  if (isRefcountedType(result.m_type)) tvIncRefCountable(result);
+  return result;
 }
 
 ObjectRet HHVM_FUNCTION(get_whole_implicit_context) {
@@ -169,12 +151,11 @@ Array HHVM_FUNCTION(get_implicit_context_debug_info) {
   auto const obj = *ImplicitContext::activeCtx;
   auto const context = Native::data<ImplicitContext>(obj);
 
-  if (context->m_state != ImplicitContext::State::Value) {
+  if (obj == (*ImplicitContext::emptyCtx)) {
     VecInit ret{1};
     ret.append(s_ICInaccessibleMemoKey.data());
     return ret.toArray();
   }
-  assertx(context->m_state == ImplicitContext::State::Value);
   VecInit ret{context->m_map.size() * 2}; // key and value
   for (auto const& p : context->m_map) {
     auto const key = String(p.first->data());
@@ -232,7 +213,6 @@ Object HHVM_FUNCTION(create_implicit_context, StringArg keyarg,
   auto obj = create_new_IC();
   auto const context = Native::data<ImplicitContext>(obj.get());
 
-  context->m_state = ImplicitContext::State::Value;
   // IncRef data and key as we are storing in the map
   if (isRefcountedType(data.m_type)) tvIncRefCountable(data);
   key->incRefCount();
@@ -297,18 +277,13 @@ static struct HHImplicitContext final : Extension {
                   HHVM_FN(get_implicit_context_memo_key));
     HHVM_NAMED_FE(HH\\ImplicitContext\\is_inaccessible,
                   HHVM_FN(is_inaccessible));
+    HHVM_NAMED_FE(HH\\ImplicitContext\\_Private\\has_key,
+                  HHVM_FN(has_key));
     HHVM_NAMED_FE(HH\\ImplicitContext\\_Private\\get_implicit_context_debug_info,
                   HHVM_FN(get_implicit_context_debug_info));
     HHVM_NAMED_FE(HH\\Coeffects\\_Private\\enter_zoned_with,
                   HHVM_FN(enter_zoned_with));
 
-#define X(hacknm, cppnm) HHVM_RC_INT(HH\\MEMOIZE_IC_TYPE_##hacknm, \
-  static_cast<int64_t>(ImplicitContext::State::cppnm))
-    X(VALUE, Value)
-    X(INACCESSIBLE, Inaccessible)
-    X(SOFT_INACCESSIBLE, SoftInaccessible)
-    X(SOFT_SET, SoftSet)
-#undef X
   }
 } s_hh_implicit_context;
 

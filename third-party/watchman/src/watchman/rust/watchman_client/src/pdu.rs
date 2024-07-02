@@ -8,10 +8,12 @@
 //! This module defines the request and response PDU types used by the
 //! watchman protocol.
 
+use std::fmt;
 use std::path::PathBuf;
 
 use serde::Deserialize;
 use serde::Serialize;
+use serde::Serializer;
 use serde_bser::value::Value;
 
 use crate::expr::Expr;
@@ -144,9 +146,9 @@ impl From<std::time::Duration> for SettleDurationMs {
     }
 }
 
-impl Into<i64> for SettleDurationMs {
-    fn into(self) -> i64 {
-        self.0.as_millis() as i64
+impl From<SettleDurationMs> for i64 {
+    fn from(val: SettleDurationMs) -> Self {
+        val.0.as_millis() as i64
     }
 }
 
@@ -203,9 +205,9 @@ impl From<std::time::Duration> for SyncTimeout {
     }
 }
 
-impl Into<i64> for SyncTimeout {
-    fn into(self) -> i64 {
-        match self {
+impl From<SyncTimeout> for i64 {
+    fn from(val: SyncTimeout) -> Self {
+        match val {
             // This is only really here because the `ClockRequestParams` PDU
             // treats a missing sync_timeout as `DisableCookie`, whereas
             // the `QueryRequestCommon` PDU treats it as `Default`.
@@ -215,9 +217,9 @@ impl Into<i64> for SyncTimeout {
             // default behavior, we use the current default sync timeout here.
             // We're honestly not likely to change this, so this should be fine.
             // The server uses 1 minute; the value here is expressed in milliseconds.
-            Self::Default => 60_000,
-            Self::DisableCookie => 0,
-            Self::Duration(d) => d.as_millis() as i64,
+            SyncTimeout::Default => 60_000,
+            SyncTimeout::DisableCookie => 0,
+            SyncTimeout::Duration(d) => d.as_millis() as i64,
         }
     }
 }
@@ -559,6 +561,121 @@ pub struct SubscribeResponse {
     pub saved_state_info: Option<Value>,
 }
 
+/// The `trigger` command request.
+///
+/// The fields are explained in detail here:
+/// <https://facebook.github.io/watchman/docs/cmd/trigger#extended-syntax>
+#[derive(Deserialize, Serialize, Default, Clone, Debug)]
+pub struct TriggerRequest {
+    /// Defines the name of the trigger.
+    pub name: String,
+
+    /// Specifies the command to invoke.
+    pub command: Vec<String>,
+
+    /// It true, matching files (up to system limits) will be added to the
+    /// command's execution args.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub append_files: bool,
+
+    /// Specifies the expression used to filter candidate matches.
+    #[serde(skip_serializing_if = "Option::is_none", skip_deserializing)]
+    pub expression: Option<Expr>,
+
+    /// Configure the way `stdin` is configured for the executed trigger.
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        serialize_with = "TriggerStdinConfig::serialize",
+        skip_deserializing
+    )]
+    pub stdin: Option<TriggerStdinConfig>,
+
+    /// Specifies a file to write the output stream to.  Prefix with `>` to
+    /// overwrite and `>>` to append.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stdout: Option<String>,
+
+    /// Specifies a file to write the error stream to.  Prefix with `>` to
+    /// overwrite and `>>` to append.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stderr: Option<String>,
+
+    /// Specifies a limit on the number of files reported on stdin when stdin is
+    /// set to hold the set of matched files.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_files_stdin: Option<u64>,
+
+    /// Specifies the working directory that will be set prior to spawning the
+    /// process. The default is to set the working directory to the watched
+    /// root. The value of this property is a string that will be interpreted
+    /// relative to the watched root.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub chdir: Option<String>,
+
+    /// Since 3.4. Evaluates triggers with respect to a path within a watched root.
+    ///
+    /// See <https://facebook.github.io/watchman/docs/cmd/trigger#relative-roots>
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub relative_root: Option<PathBuf>,
+}
+
+#[derive(Clone, Debug)]
+pub enum TriggerStdinConfig {
+    DevNull,
+    FieldNames(Vec<String>),
+    NamePerLine,
+}
+
+impl Default for TriggerStdinConfig {
+    fn default() -> Self {
+        Self::DevNull
+    }
+}
+
+impl TriggerStdinConfig {
+    fn serialize<S>(this: &Option<Self>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match this {
+            Some(Self::DevNull) => serializer.serialize_str("/dev/null"),
+            Some(Self::FieldNames(names)) => serializer.collect_seq(names.iter()),
+            Some(Self::NamePerLine) => serializer.serialize_str("NAME_PER_LINE"),
+            None => serializer.serialize_none(),
+        }
+    }
+}
+
+#[derive(Serialize, Clone, Debug)]
+pub struct TriggerCommand(pub &'static str, pub PathBuf, pub TriggerRequest);
+
+#[derive(Deserialize, Debug)]
+pub struct TriggerResponse {
+    pub version: String,
+    pub disposition: String,
+    pub triggerid: String,
+}
+
+#[derive(Serialize, Clone, Debug)]
+pub struct TriggerDelCommand(pub &'static str, pub PathBuf, pub String);
+
+#[derive(Deserialize, Debug)]
+pub struct TriggerDelResponse {
+    pub version: String,
+    pub deleted: bool,
+    pub trigger: String,
+}
+
+#[derive(Serialize, Clone, Debug)]
+pub struct TriggerListCommand(pub &'static str, pub PathBuf);
+
+#[derive(Deserialize, Debug)]
+pub struct TriggerListResponse {
+    pub version: String,
+    pub triggers: Vec<TriggerRequest>,
+}
+
 #[derive(Serialize, Debug)]
 pub struct Unsubscribe(pub &'static str, pub PathBuf, pub String);
 
@@ -657,11 +774,11 @@ impl ClockSpec {
     }
 }
 
-impl Into<Value> for ClockSpec {
-    fn into(self) -> Value {
-        match self {
-            Self::StringClock(st) => Value::Utf8String(st),
-            Self::UnixTimestamp(ts) => Value::Integer(ts),
+impl From<ClockSpec> for Value {
+    fn from(val: ClockSpec) -> Self {
+        match val {
+            ClockSpec::StringClock(st) => Value::Utf8String(st),
+            ClockSpec::UnixTimestamp(ts) => Value::Integer(ts),
         }
     }
 }
@@ -755,9 +872,9 @@ pub enum FileType {
     Unknown,
 }
 
-impl std::string::ToString for FileType {
-    fn to_string(&self) -> String {
-        (*self).into()
+impl fmt::Display for FileType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        f.write_str(&String::from(*self))
     }
 }
 
@@ -778,18 +895,18 @@ impl From<String> for FileType {
     }
 }
 
-impl Into<String> for FileType {
-    fn into(self) -> String {
-        match self {
-            Self::BlockSpecial => "b",
-            Self::CharSpecial => "c",
-            Self::Directory => "d",
-            Self::Regular => "f",
-            Self::Fifo => "p",
-            Self::Symlink => "l",
-            Self::Socket => "s",
-            Self::SolarisDoor => "D",
-            Self::Unknown => "?",
+impl From<FileType> for String {
+    fn from(val: FileType) -> Self {
+        match val {
+            FileType::BlockSpecial => "b",
+            FileType::CharSpecial => "c",
+            FileType::Directory => "d",
+            FileType::Regular => "f",
+            FileType::Fifo => "p",
+            FileType::Symlink => "l",
+            FileType::Socket => "s",
+            FileType::SolarisDoor => "D",
+            FileType::Unknown => "?",
         }
         .to_string()
     }

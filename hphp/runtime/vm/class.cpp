@@ -84,6 +84,14 @@ const StaticString s___Reified("__Reified");
 const StaticString s___ModuleLevelTrait("__ModuleLevelTrait");
 
 Mutex g_classesMutex;
+static std::atomic<ClassId::Id> s_nextClassId{1};
+
+///////////////////////////////////////////////////////////////////////////////
+
+void Class::setNewClassId() {
+  assertx(m_classId.isInvalid());
+  m_classId = ClassId(s_nextClassId.fetch_add(1, std::memory_order_acq_rel));
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Class::PropInitVec.
@@ -257,8 +265,8 @@ unsigned loadUsedTraits(PreClass* preClass,
  */
 constexpr size_t sizeof_Class = Class::classVecOff();
 
-static constexpr size_t kClassSize = debug ? (use_lowptr ? 276 : 320)
-                                           : (use_lowptr ? 272 : 312);
+static constexpr size_t kClassSize = debug ? (use_lowptr ? 280 : 320)
+                                           : (use_lowptr ? 276 : 320);
 static_assert(CheckSize<sizeof_Class, kClassSize>(), "");
 
 /*
@@ -783,15 +791,6 @@ const Class* Class::commonAncestor(const Class* cls) const {
   } while (vecIdx--);
 
   return nullptr;
-}
-
-const Class* Class::getClassDependency(const StringData* name) const {
-  for (auto idx = m_classVecLen; idx--; ) {
-    auto cls = m_classVec[idx];
-    if (cls->name()->tsame(name)) return cls;
-  }
-
-  return m_interfaces.lookupDefault(name, nullptr);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1819,6 +1818,9 @@ void Class::setInstanceBitsImpl() {
   // Bit 0 is reserved to indicate whether or not the rest of the bits
   // are initialized yet.
   if (m_instanceBits.test(0)) return;
+
+  // Make sure profiling translations stop changing the profiling counter.
+  m_instanceCheckCount.store(1, std::memory_order_release);
 
   InstanceBits::BitSet bits;
   bits.set(0);
@@ -4837,6 +4839,7 @@ void setupClass(Class* newClass, NamedType* nameList) {
 
   newClass->setClassHandle(nameList->m_cachedClass);
   newClass->incAtomicCount();
+  newClass->setNewClassId();
 
   InstanceBits::ifInitElse(
     [&] { newClass->setInstanceBits();

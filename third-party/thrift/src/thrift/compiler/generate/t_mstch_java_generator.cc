@@ -1101,9 +1101,7 @@ class mstch_java_enum : public mstch_enum {
   mstch::node java_skip_enum_name_map() {
     return enum_->has_annotation("java.swift.skip_enum_name_map");
   }
-  mstch::node num_values() {
-    return static_cast<int>(enum_->get_enum_values().size());
-  }
+  mstch::node num_values() { return enum_->get_enum_values().size(); }
 };
 
 class mstch_java_enum_value : public mstch_enum_value {
@@ -1173,6 +1171,10 @@ class mstch_java_const : public mstch_const {
         return set->get_elem_type()->has_annotation(
             "java.swift.skip_enum_name_map");
       }
+    }
+    if (const_->generated()) {
+      // T194272441 generated schema const is rendered incorrectly.
+      return true;
     }
     return mstch::node();
   }

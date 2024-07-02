@@ -477,9 +477,7 @@ class mstch_program : public mstch_base {
   mstch::node constants();
 
   mstch::node has_interned_values() { return !program_->intern_list().empty(); }
-  mstch::node num_interned_values() {
-    return static_cast<int>(program_->intern_list().size());
-  }
+  mstch::node num_interned_values() { return program_->intern_list().size(); }
   mstch::node interned_values();
 
  protected:
@@ -1055,7 +1053,7 @@ class mstch_field : public mstch_base {
         });
   }
   mstch::node name() { return field_->get_name(); }
-  mstch::node key() { return std::to_string(field_->get_key()); }
+  mstch::node key() { return field_->get_key(); }
   mstch::node value();
   mstch::node type();
   /**
@@ -1067,7 +1065,7 @@ class mstch_field : public mstch_base {
    * element types, etc.).
    */
   mstch::node idl_type();
-  mstch::node index() { return std::to_string(pos_.index); }
+  mstch::node index() { return pos_.index; }
   mstch::node is_terse() {
     return field_->qualifier() == t_field_qualifier::terse;
   }
@@ -1276,7 +1274,7 @@ class mstch_enum_value : public mstch_base {
         });
   }
   mstch::node name() { return enum_value_->get_name(); }
-  mstch::node value() { return std::to_string(enum_value_->get_value()); }
+  mstch::node value() { return enum_value_->get_value(); }
 
  protected:
   const t_enum_value* enum_value_;
@@ -1353,7 +1351,6 @@ class mstch_const_value : public mstch_base {
             {"value:list?", &mstch_const_value::is_list},
             {"value:container?", &mstch_const_value::is_container},
             {"value:empty_container?", &mstch_const_value::is_empty_container},
-            {"value:value", &mstch_const_value::value},
             {"value:integer_value", &mstch_const_value::integer_value},
             {"value:double_value", &mstch_const_value::double_value},
             {"value:bool_value", &mstch_const_value::bool_value},
@@ -1361,6 +1358,7 @@ class mstch_const_value : public mstch_base {
             {"value:nonzero?", &mstch_const_value::is_non_zero},
             {"value:enum_name", &mstch_const_value::enum_name},
             {"value:string_value", &mstch_const_value::string_value},
+            {"value:string_length", &mstch_const_value::string_length},
             {"value:list_elements", &mstch_const_value::list_elems},
             {"value:map_elements", &mstch_const_value::map_elems},
             {"value:const_struct", &mstch_const_value::const_struct},
@@ -1398,7 +1396,6 @@ class mstch_const_value : public mstch_base {
     return (type_ == cv::CV_MAP && const_value_->get_map().empty()) ||
         (type_ == cv::CV_LIST && const_value_->get_list().empty());
   }
-  mstch::node value();
   mstch::node integer_value();
   mstch::node double_value();
   mstch::node bool_value();
@@ -1406,6 +1403,7 @@ class mstch_const_value : public mstch_base {
   mstch::node is_non_zero();
   mstch::node enum_name();
   mstch::node string_value();
+  mstch::node string_length();
   mstch::node list_elems();
   mstch::node map_elems();
   mstch::node const_struct();

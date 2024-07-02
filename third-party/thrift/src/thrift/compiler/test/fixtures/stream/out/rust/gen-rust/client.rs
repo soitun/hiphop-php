@@ -15,12 +15,6 @@ pub mod errors;
 pub(crate) use crate as client;
 pub(crate) use ::::services;
 
-// Used by Thrift-generated code to implement service inheritance.
-#[doc(hidden)]
-#[deprecated]
-pub mod dependencies {
-}
-
 
 /// Client definitions for `PubSubStreamingService`.
 pub struct PubSubStreamingServiceImpl<P, T, S = ::fbthrift::NoopSpawner> {
@@ -106,7 +100,7 @@ where
                                         ::std::result::Result::Ok(::std::result::Result::Err(crate::errors::pub_sub_streaming_service::ReturnstreamStreamError::ApplicationException(aexn)))
                                     }
                                 }
-                            }).await?
+                            }).await.map_err(::anyhow::Error::from)??
                         }
                     }
                 }
@@ -176,7 +170,7 @@ where
                                         ::std::result::Result::Ok(::std::result::Result::Err(crate::errors::pub_sub_streaming_service::StreamthrowsStreamError::ApplicationException(aexn)))
                                     }
                                 }
-                            }).await?
+                            }).await.map_err(::anyhow::Error::from)??
                         }
                     }
                 }
@@ -246,7 +240,7 @@ where
                                         ::std::result::Result::Ok(::std::result::Result::Err(crate::errors::pub_sub_streaming_service::ServicethrowsStreamError::ApplicationException(aexn)))
                                     }
                                 }
-                            }).await?
+                            }).await.map_err(::anyhow::Error::from)??
                         }
                     }
                 }
@@ -316,7 +310,7 @@ where
                                         ::std::result::Result::Ok(::std::result::Result::Err(crate::errors::pub_sub_streaming_service::Servicethrows2StreamError::ApplicationException(aexn)))
                                     }
                                 }
-                            }).await?
+                            }).await.map_err(::anyhow::Error::from)??
                         }
                     }
                 }
@@ -386,7 +380,7 @@ where
                                         ::std::result::Result::Ok(::std::result::Result::Err(crate::errors::pub_sub_streaming_service::BoththrowsStreamError::ApplicationException(aexn)))
                                     }
                                 }
-                            }).await?
+                            }).await.map_err(::anyhow::Error::from)??
                         }
                     }
                 }
@@ -456,7 +450,7 @@ where
                                         ::std::result::Result::Ok(::std::result::Result::Err(crate::errors::pub_sub_streaming_service::ResponseandstreamstreamthrowsStreamError::ApplicationException(aexn)))
                                     }
                                 }
-                            }).await?
+                            }).await.map_err(::anyhow::Error::from)??
                         }
                     }
                 }
@@ -526,7 +520,7 @@ where
                                         ::std::result::Result::Ok(::std::result::Result::Err(crate::errors::pub_sub_streaming_service::ResponseandstreamservicethrowsStreamError::ApplicationException(aexn)))
                                     }
                                 }
-                            }).await?
+                            }).await.map_err(::anyhow::Error::from)??
                         }
                     }
                 }
@@ -596,7 +590,7 @@ where
                                         ::std::result::Result::Ok(::std::result::Result::Err(crate::errors::pub_sub_streaming_service::ResponseandstreamboththrowsStreamError::ApplicationException(aexn)))
                                     }
                                 }
-                            }).await?
+                            }).await.map_err(::anyhow::Error::from)??
                         }
                     }
                 }
@@ -668,7 +662,7 @@ where
                                         ::std::result::Result::Ok(::std::result::Result::Err(crate::errors::pub_sub_streaming_service::ReturnstreamFastStreamError::ApplicationException(aexn)))
                                     }
                                 }
-                            }).await?
+                            }).await.map_err(::anyhow::Error::from)??
                         }
                     }
                 }

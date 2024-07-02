@@ -21,6 +21,8 @@
 #include <filesystem>
 #endif
 #include <fstream>
+#include <string_view>
+#include <unordered_set>
 #include <vector>
 
 namespace apache {
@@ -33,17 +35,43 @@ struct CrateInfo {
   std::vector<std::string> thrift_names;
   std::string label;
 };
+
+void split(
+    std::vector<std::string>& out,
+    std::string_view input,
+    std::string_view delimiter) {
+  while (true) {
+    auto i = input.find(delimiter);
+    if (i == std::string_view::npos) {
+      out.emplace_back(input);
+      return;
+    }
+    out.emplace_back(input.substr(0, i));
+    input = input.substr(i + delimiter.length());
+  }
+}
 } // namespace
 
 rust_crate_map load_crate_map(const std::string& path) {
   // Each line of the file is:
-  // thrift_name crate_name
+  // path/to/thrift_name.thrift crate_name //path/to:target-rust
   //
-  // As an example of each value, we might have:
-  //   - thrift_name: demo
-  //     (this is the name by which the dependency is referred to in thrift)
-  //   - crate_name: demo_api
-  //     (the Rust code will refer to demo_api::types::WhateverType)
+  // The first column is the string by which this Thrift file would be
+  // identified in `include` statements within other Thrift sources. The
+  // substring between the last '/' and the last '.' is Thrift package name.
+  // For example a struct `Struct` within a Thrift file `thrift_name.thrift`
+  // would be named as `thrift_name.Struct` in downstream Thrift files.
+  //
+  // The second column is the Rust crate name. Rust code in downstream targets
+  // will refer to `crate_name::Struct`. By default, the Rust crate name is
+  // derived from the Thrift package name (sanitized to avoid Rust keywords) but
+  // may also be set to something different by a `namespace rust` statement.
+  //
+  // The third column is a build-system-specific label that identifies how one
+  // might build the Rust generated code for this Thrift file. In Buck, this
+  // would be the target label of a `thrift_library` target. This column is
+  // optional. If present, it is included in various deprecation messages or
+  // comments.
 
   rust_crate_map ret;
 #ifdef _WIN32
@@ -61,68 +89,146 @@ rust_crate_map load_crate_map(const std::string& path) {
     throw std::runtime_error(error_message.str());
   }
 
-  // Map from crate_name to list of thrift_names. Most Thrift crates consist of
-  // a single *.thrift file but some may have multiple.
+  // Map from Rust crate name to list of Thrift sources. Most Thrift libraries
+  // consist of a single *.thrift file but some may have multiple.
   std::map<std::string, CrateInfo> sources;
 
   std::string line;
   while (std::getline(in, line)) {
     std::istringstream iss(line);
-    std::string thrift_name, crate_name, label;
-    iss >> thrift_name >> crate_name >> label;
-    sources[crate_name].label = label;
-    sources[crate_name].thrift_names.push_back(thrift_name);
+    std::string thrift_name, dependency_path, label;
+    iss >> thrift_name >> dependency_path >> label;
+    sources[dependency_path].label = label;
+    sources[dependency_path].thrift_names.push_back(thrift_name);
   }
 
   for (const auto& source : sources) {
-    auto crate_name = source.first;
+    auto dependency_path = source.first;
     auto label = source.second.label;
     auto thrift_names = source.second.thrift_names;
     auto multifile = thrift_names.size() > 1;
 
     // Look out for our own crate in the cratemap. It will require paths that
     // begin with `crate::module` rather than `::depenency::module`.
-    if (crate_name == "crate") {
+    if (dependency_path == "crate") {
       ret.multifile_mode = multifile;
       ret.label = label;
     }
 
-    if (multifile) {
+    if (multifile || dependency_path != "crate") {
       for (const auto& thrift_name : thrift_names) {
-        ret.cratemap[thrift_name].name = crate_name;
-        ret.cratemap[thrift_name].multifile_module = thrift_name;
-        ret.cratemap[thrift_name].label = label;
+        auto& cratemap_entry = ret.cratemap[thrift_name];
+        if (dependency_path != "crate") {
+          split(cratemap_entry.dependency_path, dependency_path, "->");
+        }
+        cratemap_entry.multifile = multifile;
+        cratemap_entry.label = label;
       }
-    } else if (crate_name != "crate") {
-      ret.cratemap[thrift_names[0]].name = crate_name;
-      ret.cratemap[thrift_names[0]].multifile_module = std::nullopt;
-      ret.cratemap[thrift_names[0]].label = label;
     }
   }
 
   return ret;
 }
 
+rust_crate_index::rust_crate_index(
+    const t_program* current_program,
+    std::map<std::string, rust_crate> cratemap)
+    : cratemap(std::move(cratemap)) {
+  // Traverse the entire include tree in depth-first order to resolve relative
+  // import paths into absolute paths. Depth-first traversal mimicks the
+  // semantics of C++ '#include' with include guards.
+  compute_absolute_paths_of_includes(current_program, current_program->path());
+}
+
+void rust_crate_index::compute_absolute_paths_of_includes(
+    const t_program* program, const std::string& absolute_path) {
+  thrift_file_absolute_paths[program] = absolute_path;
+
+  for (auto include : program->includes()) {
+    auto dependency = include->get_program();
+
+    if (thrift_file_absolute_paths.find(dependency) !=
+        thrift_file_absolute_paths.end()) {
+      // Already visited.
+      continue;
+    }
+
+    auto raw_path = fmt::to_string(include->raw_path());
+    if (cratemap.find(raw_path) != cratemap.end()) {
+      // Include's path is already an absolute path.
+      compute_absolute_paths_of_includes(dependency, raw_path);
+      continue;
+    }
+
+    std::string::size_type slash = absolute_path.find_last_of("/\\");
+    if (slash != std::string::npos) {
+      std::string concatenated_path =
+          fmt::format("{}/{}", absolute_path.substr(0, slash), raw_path);
+      if (cratemap.find(concatenated_path) != cratemap.end()) {
+        // Include's path is relative to the Thrift file containing the include.
+        compute_absolute_paths_of_includes(dependency, concatenated_path);
+        continue;
+      }
+    }
+
+    // Otherwise not found, but this isn't an error unless something must refer
+    // to this program later.
+  }
+}
+
+const rust_crate* rust_crate_index::find(const t_program* program) const {
+  auto absolute_paths_entry = thrift_file_absolute_paths.find(program);
+  const std::string& absolute_path =
+      absolute_paths_entry == thrift_file_absolute_paths.end()
+      ? program->path()
+      : absolute_paths_entry->second;
+
+  auto crate = cratemap.find(absolute_path);
+  if (crate == cratemap.end()) {
+    return nullptr;
+  } else {
+    return &crate->second;
+  }
+}
+
+std::vector<const rust_crate*> rust_crate_index::direct_dependencies() const {
+  std::vector<const rust_crate*> direct_dependencies;
+  std::unordered_set<std::string_view> distinct_names;
+  for (const auto& entry : cratemap) {
+    const rust_crate& crate = entry.second;
+    if (crate.dependency_path.size() != 1) {
+      // Not a direct dependency.
+      continue;
+    }
+    std::string_view crate_name = crate.dependency_path[0];
+    if (distinct_names.insert(crate_name).second) {
+      direct_dependencies.push_back(&crate);
+    }
+  }
+  return direct_dependencies;
+}
+
 static bool is_legal_crate_name(const std::string& name) {
   return name == mangle(name) && name != "core" && name != "std";
 }
 
-std::string rust_crate::import_name() const {
-  std::string absolute_crate_name;
+std::string rust_crate::import_name(const t_program* program) const {
+  std::string path;
 
-  if (name == "crate") {
-    absolute_crate_name = "crate";
-  } else if (is_legal_crate_name(name)) {
-    absolute_crate_name = "::" + name;
+  if (dependency_path.empty()) {
+    path = "crate";
   } else {
-    absolute_crate_name = "::" + name + "_";
+    for (const auto& dep : dependency_path) {
+      path += path.empty() ? "::" : "::__dependencies::";
+      path += mangle_crate_name(dep);
+    }
   }
 
-  if (multifile_module) {
-    return absolute_crate_name + "::" + mangle(*multifile_module);
-  } else {
-    return absolute_crate_name;
+  if (multifile) {
+    path += "::" + multifile_module_name(program);
   }
+
+  return path;
 }
 
 std::string mangle(const std::string& name) {
@@ -164,6 +270,14 @@ std::string mangle(const std::string& name) {
   }
 
   return name;
+}
+
+std::string mangle_crate_name(const std::string& name) {
+  if (is_legal_crate_name(name)) {
+    return name;
+  } else {
+    return name + "_";
+  }
 }
 
 std::string mangle_type(const std::string& name) {
@@ -318,6 +432,19 @@ std::string named_rust_name(const t_named* node) {
     return mangle(node->name());
   }
   return unmangled_rust_name(node);
+}
+
+std::string multifile_module_name(const t_program* program) {
+  const std::string& namespace_rust = program->get_namespace("rust");
+
+  // If source file has `namespace rust cratename.modulename` then modulename.
+  auto separator = namespace_rust.find('.');
+  if (separator != std::string::npos) {
+    return namespace_rust.substr(separator + 1);
+  }
+
+  // Otherwise, the module is named after the source file, modulename.thrift.
+  return mangle(program->name());
 }
 
 } // namespace rust

@@ -6,8 +6,8 @@ use std::path::Path;
 use thrift_compiler::Config;
 use thrift_compiler::GenContext;
 const CRATEMAP: &str = "\
-rust crate //thrift/annotation:rust-rust
-scope scope //thrift/annotation:scope-rust
+thrift/annotation/rust.thrift crate //thrift/annotation:rust-rust
+thrift/annotation/scope.thrift scope //thrift/annotation:scope-rust
 ";
 #[rustfmt::skip]
 fn main() {
@@ -15,20 +15,11 @@ fn main() {
     let out_dir = env::var_os("OUT_DIR").expect("OUT_DIR env not provided");
     let cratemap_path = Path::new(&out_dir).join("cratemap");
     fs::write(cratemap_path, CRATEMAP).expect("Failed to write cratemap");
-    let mut conf = Config::from_env(GenContext::Types)
-        .expect("Failed to instantiate thrift_compiler::Config");
-    let cargo_manifest_dir = env::var_os("CARGO_MANIFEST_DIR")
-        .expect("CARGO_MANIFEST_DIR not provided");
-    let mut base_path = Path::new(&cargo_manifest_dir)
-        .join("../../../../..")
-        .canonicalize()
-        .expect("Failed to canonicalize base_path");
-    if cfg!(windows) {
-        base_path = base_path.to_string_lossy().trim_start_matches(r"\\?\").into();
-    }
-    conf.base_path(base_path);
-    conf.types_crate("rust__types");
-    conf.clients_crate("rust__clients");
-    let srcs: &[&str] = &["../../../../annotation/rust.thrift"];
-    conf.run(srcs).expect("Failed while running thrift compilation");
+    Config::from_env(GenContext::Types)
+        .expect("Failed to instantiate thrift_compiler::Config")
+        .base_path("../../../../..")
+        .types_crate("rust__types")
+        .clients_crate("rust__clients")
+        .run(["../../../../annotation/rust.thrift"])
+        .expect("Failed while running thrift compilation");
 }

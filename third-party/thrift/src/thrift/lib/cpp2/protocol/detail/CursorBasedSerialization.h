@@ -27,11 +27,11 @@
 
 namespace apache::thrift {
 
-template <typename T, bool Contiguous>
+template <typename ProtocolReader, typename T, bool Contiguous>
 class StructuredCursorReader;
-template <typename Tag, bool Contiguous>
+template <typename ProtocolReader, typename Tag, bool Contiguous>
 class ContainerCursorReader;
-template <typename Tag, bool Contiguous>
+template <typename ProtocolReader, typename Tag, bool Contiguous>
 class ContainerCursorIterator;
 
 template <typename T>
@@ -93,9 +93,10 @@ struct ContainerTraits<type::map<KTag, VTag>> {
 template <typename Tag, typename Type>
 struct ContainerTraits<type::cpp_type<Type, Tag>> : ContainerTraits<Tag> {};
 
+template <typename ProtocolReader>
 class BaseCursorReader {
  protected:
-  BinaryProtocolReader protocol_;
+  ProtocolReader* protocol_;
   enum class State {
     Active,
     Child, // Reading a nested struct or container
@@ -118,8 +119,7 @@ class BaseCursorReader {
     }
   }
 
-  explicit BaseCursorReader(BinaryProtocolReader&& p)
-      : protocol_(std::move(p)) {}
+  explicit BaseCursorReader(ProtocolReader* p) : protocol_(p) {}
   BaseCursorReader() = default;
 
   ~BaseCursorReader() {
@@ -148,7 +148,7 @@ class BaseCursorReader {
 
 class BaseCursorWriter {
  protected:
-  BinaryProtocolWriter protocol_;
+  BinaryProtocolWriter* protocol_;
   enum class State {
     Active,
     Child,
@@ -156,8 +156,7 @@ class BaseCursorWriter {
   };
   State state_ = State::Active;
 
-  explicit BaseCursorWriter(BinaryProtocolWriter&& p)
-      : protocol_(std::move(p)) {}
+  explicit BaseCursorWriter(BinaryProtocolWriter* p) : protocol_(p) {}
 
   void checkState(State expected) const {
     if (state_ != expected) {
@@ -271,7 +270,7 @@ struct DefaultValueWriter {
             }
             const auto& val = *op::get<Id>(op::getDefault<T>());
             writer.template writeField<Id>(
-                [&] { op::encode<FTag>(writer.protocol_, val); }, val);
+                [&] { op::encode<FTag>(*writer.protocol_, val); }, val);
           }};
     });
     constexprQuickSort(fields, 0, fields.size() - 1);
@@ -293,15 +292,15 @@ class DelayedSizeCursorWriter : public BaseCursorWriter {
 
   constexpr static size_t kSizeLen = 4;
 
-  explicit DelayedSizeCursorWriter(BinaryProtocolWriter&& p)
-      : BaseCursorWriter(std::move(p)) {}
+  explicit DelayedSizeCursorWriter(BinaryProtocolWriter* p)
+      : BaseCursorWriter(p) {}
 
   void writeSize() {
     static_assert(
-        std::is_same_v<decltype(protocol_), BinaryProtocolWriter>,
+        std::is_same_v<decltype(protocol_), BinaryProtocolWriter*>,
         "Using internals of binary protocol.");
-    size_ = protocol_.ensure(kSizeLen);
-    protocol_.advance(kSizeLen);
+    size_ = protocol_->ensure(kSizeLen);
+    protocol_->advance(kSizeLen);
   }
 
   void finalize(int32_t actualSize) {
@@ -320,7 +319,8 @@ using lift_view_t = std::conditional_t<
     std::string_view,
     T>;
 
-inline std::string_view readStringView(BinaryProtocolReader& protocol) {
+template <typename ProtocolReader>
+std::string_view readStringView(ProtocolReader& protocol) {
   int32_t size;
   protocol.readI32(size);
   if (size < 0) {
@@ -334,8 +334,8 @@ inline std::string_view readStringView(BinaryProtocolReader& protocol) {
   return std::string_view(reinterpret_cast<const char*>(c.data()), size);
 }
 
-template <typename Tag, typename T>
-void decodeTo(BinaryProtocolReader& protocol, T& t) {
+template <typename ProtocolReader, typename Tag, typename T>
+void decodeTo(ProtocolReader& protocol, T& t) {
   if constexpr (
       std::is_same_v<T, std::string_view> &&
       type::is_a_v<Tag, type::string_c>) {
@@ -343,6 +343,46 @@ void decodeTo(BinaryProtocolReader& protocol, T& t) {
   } else {
     op::decode<Tag>(protocol, t);
   }
+}
+
+template <typename T, typename = void>
+struct HasValueType {
+  constexpr static bool value = false;
+};
+template <typename T>
+struct HasValueType<T, std::void_t<typename T::value_type>> {
+  constexpr static bool value = true;
+};
+
+template <typename Tag>
+struct IsSupportedCppType {
+  constexpr static bool value = true;
+};
+template <typename T, typename Tag>
+struct IsSupportedCppType<type::cpp_type<T, Tag>> {
+  constexpr static bool value = [] {
+    if constexpr (type::is_a_v<Tag, type::integral_c>) {
+      return std::is_integral_v<T>;
+    } else if constexpr (type::is_a_v<Tag, type::string_c>) {
+      return std::is_same_v<T, folly::IOBuf> ||
+          std::is_same_v<T, std::unique_ptr<folly::IOBuf>> ||
+          std::is_same_v<T, folly::fbstring> || std::is_same_v<T, std::string>;
+    } else if constexpr (type::is_a_v<Tag, type::container_c>) {
+      return HasValueType<T>::value;
+    }
+    return false;
+  }();
+};
+
+template <typename T>
+constexpr bool validateCppTypes() {
+  op::for_each_ordinal<T>([](auto ord) {
+    using Ord = decltype(ord);
+    static_assert(
+        IsSupportedCppType<op::get_type_tag<T, Ord>>::value,
+        "Unsupported cpp.Type. Consider using cpp.Adapter instead.");
+  });
+  return true;
 }
 
 } // namespace detail

@@ -11,7 +11,6 @@
 #include <boost/thread.hpp>
 #include <folly/FileUtil.h>
 #include <folly/executors/IOThreadPoolExecutor.h>
-#include <folly/experimental/TestUtil.h>
 #include <folly/io/async/AsyncSSLSocket.h>
 #include <folly/io/async/AsyncServerSocket.h>
 #include <folly/io/async/EventBaseManager.h>
@@ -20,6 +19,7 @@
 #include <folly/portability/GTest.h>
 #include <folly/ssl/OpenSSLCertUtils.h>
 #include <folly/ssl/OpenSSLPtrTypes.h>
+#include <folly/testing/TestUtil.h>
 #include <proxygen/httpclient/samples/curl/CurlClient.h>
 #include <proxygen/httpserver/HTTPServer.h>
 #include <proxygen/httpserver/ResponseBuilder.h>
@@ -228,8 +228,8 @@ class AcceptorFactoryForTest : public wangle::AcceptorFactory {
  public:
   std::shared_ptr<wangle::Acceptor> newAcceptor(
       folly::EventBase* /*eventBase*/) override {
-    wangle::ServerSocketConfig config;
-    auto acc = std::make_shared<wangle::Acceptor>(config);
+    auto config = std::make_shared<wangle::ServerSocketConfig>();
+    auto acc = std::make_shared<wangle::Acceptor>(std::move(config));
     return acc;
   }
 };

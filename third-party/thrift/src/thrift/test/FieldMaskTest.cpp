@@ -1507,6 +1507,41 @@ TEST(FieldMaskTest, IsCompatibleWithOtherTypes) {
   EXPECT_FALSE(protocol::is_compatible_with<type::list<type::string_t>>(mask));
 }
 
+TEST(FieldMaskTest, IsCompatibleWithUnion) {
+  using UnionTag = type::union_t<RecursiveUnion>;
+  EXPECT_TRUE(protocol::is_compatible_with<RecursiveUnion>(allMask()));
+  EXPECT_TRUE(protocol::is_compatible_with<RecursiveUnion>(noneMask()));
+
+  Mask m;
+  auto& includes = m.includes_ref().emplace();
+  includes[1] = allMask();
+  EXPECT_TRUE(protocol::is_compatible_with<UnionTag>(m));
+  includes[2] = noneMask();
+  EXPECT_TRUE(protocol::is_compatible_with<UnionTag>(m));
+
+  Mask invalid(m);
+  (*invalid.includes_ref())[100] = allMask(); // doesn't exist
+  EXPECT_FALSE(protocol::is_compatible_with<UnionTag>(invalid));
+
+  Mask nested(m);
+  (*nested.includes_ref())[4] = m;
+  EXPECT_TRUE(protocol::is_compatible_with<UnionTag>(m));
+
+  {
+    Mask invalidNested(nested);
+    (*(*invalidNested.includes_ref())[4].includes_ref())[4] = invalid;
+    EXPECT_FALSE(protocol::is_compatible_with<UnionTag>(invalidNested));
+  }
+
+  Mask mapMask;
+  auto& mapIncludes = mapMask.includes_string_map_ref().emplace();
+  mapIncludes["1"] = Mask(m);
+  mapIncludes["2"] = Mask(m);
+
+  (*nested.includes_ref())[5] = mapMask;
+  EXPECT_TRUE(protocol::is_compatible_with<UnionTag>(m));
+}
+
 TEST(FieldMaskTest, Ensure) {
   Mask mask;
   // mask = includes{1: includes{2: excludes{}},
@@ -3149,6 +3184,84 @@ TEST(FieldMaskTest, Compare) {
     includes[2] = allMask();
     EXPECT_EQ(mask, expected);
     EXPECT_EQ(protocol::compare(dst, src), mask); // commutative
+  }
+}
+
+TEST(FieldMaskTest, UnionCompare) {
+  {
+    // compare with self
+    RecursiveUnion src;
+    EXPECT_EQ(noneMask(), protocol::compare(src, src));
+
+    src.foo_ref().emplace();
+    src.foo_ref()->field1() = 1;
+    EXPECT_EQ(noneMask(), protocol::compare(src, src));
+  }
+  {
+    // single field mismatch
+    RecursiveUnion src;
+    src.foo_ref().emplace();
+    src.foo_ref()->field1() = 1;
+
+    RecursiveUnion dst(src);
+    dst.foo_ref()->field1() = 2;
+
+    EXPECT_EQ(
+        [] {
+          Mask m;
+          // m = {includes: {1: includes{1: allMask()}}}
+          m.includes_ref().emplace()[1].includes_ref().emplace()[1] = allMask();
+          return m;
+        }(),
+        protocol::compare(src, dst));
+  }
+  {
+    // different fields set
+    RecursiveUnion src;
+    src.foo_ref().emplace();
+
+    RecursiveUnion dst;
+    dst.bar_ref().emplace();
+    EXPECT_EQ(
+        [] {
+          Mask m;
+          // m = {includes: {1: allMask(), 2: allMask()}}
+          auto& includes = m.includes_ref().emplace();
+          includes[1] = allMask();
+          includes[2] = allMask();
+          return m;
+        }(),
+        protocol::compare(src, dst));
+  }
+  {
+    // nested field mismatch
+    RecursiveUnion src;
+    auto& nestedSrc = src.recurse_ref().emplace();
+    RecursiveUnion dst;
+    auto& nestedDst = dst.recurse_ref().emplace();
+
+    nestedSrc.foo_ref().emplace();
+    nestedSrc.foo_ref()->field1() = 1;
+    EXPECT_EQ(noneMask(), protocol::compare(src, src));
+
+    nestedDst.foo_ref().emplace();
+    nestedDst.foo_ref()->field2() = 2;
+
+    EXPECT_EQ(
+        []() {
+          Mask m;
+          // m = {includes: {4: includes{1: {includes: 1: allMask(), 3:
+          // allMask()}}}}
+          m.includes_ref()
+              .emplace()[4]
+              .includes_ref()
+              .emplace()[1]
+              .includes_ref()
+              .emplace() =
+              (protocol::FieldIdToMask{{1, allMask()}, {3, allMask()}});
+          return m;
+        }(),
+        protocol::compare(src, dst));
   }
 }
 

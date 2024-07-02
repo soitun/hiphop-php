@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<ad855218ea884fd59b76bb589b61b4ff>>
+// @generated SignedSource<<782d3dc8821b811507054cbd42faf7b0>>
 //
 // To regenerate this file, run:
 //   hphp/hack/src/oxidized_regen.sh
@@ -339,9 +339,11 @@ pub enum T_<'a> {
     #[rust_to_ocaml(inline_tuple)]
     Rpredicated(&'a (&'a pos::Pos<'a>, &'a str)),
     #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
-    Ris(&'a pos::Pos<'a>),
+    #[rust_to_ocaml(name = "Ris_refinement")]
+    RisRefinement(&'a pos::Pos<'a>),
     #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
-    Ras(&'a pos::Pos<'a>),
+    #[rust_to_ocaml(name = "Ras_refinement")]
+    RasRefinement(&'a pos::Pos<'a>),
     #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
     Requal(&'a pos::Pos<'a>),
     #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
@@ -365,8 +367,8 @@ pub enum T_<'a> {
     #[rust_to_ocaml(name = "Ridx_dict")]
     RidxDict(&'a pos::Pos<'a>),
     #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
-    #[rust_to_ocaml(name = "Rset_element")]
-    RsetElement(&'a pos::Pos<'a>),
+    #[rust_to_ocaml(name = "Ridx_set_element")]
+    RidxSetElement(&'a pos::Pos<'a>),
     #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
     #[rust_to_ocaml(name = "Rmissing_optional_field")]
     #[rust_to_ocaml(inline_tuple)]
@@ -604,6 +606,7 @@ pub enum Ureason<'a> {
     URstrInterp,
     #[rust_to_ocaml(name = "URdynamic_prop")]
     URdynamicProp,
+    URlabel,
 }
 impl<'a> TrivialDrop for Ureason<'a> {}
 arena_deserializer::impl_deserialize_in_arena!(Ureason<'arena>);

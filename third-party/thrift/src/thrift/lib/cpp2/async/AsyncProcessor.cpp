@@ -16,6 +16,9 @@
 
 #include <thrift/lib/cpp2/async/AsyncProcessor.h>
 
+#include <fmt/core.h>
+#include <fmt/format.h>
+
 #include <folly/io/async/EventBaseAtomicNotificationQueue.h>
 
 #include <thrift/lib/cpp2/async/ReplyInfo.h>
@@ -238,7 +241,7 @@ bool GeneratedAsyncProcessorBase::createInteraction(ServerRequest& req) {
             });
             return;
           } catch (...) {
-            ex = std::current_exception();
+            ex = folly::current_exception();
           }
           DCHECK(ex);
           eb.add([promisePtr, ex = std::move(ex)]() {
@@ -318,7 +321,7 @@ bool GeneratedAsyncProcessorBase::createInteraction(
         });
         return;
       } catch (...) {
-        ex = std::current_exception();
+        ex = folly::current_exception();
       }
       DCHECK(ex);
       eb.add([promisePtr, ex = std::move(ex)]() {
@@ -343,6 +346,7 @@ std::unique_ptr<Tile> GeneratedAsyncProcessorBase::createInteractionImpl(
 }
 
 namespace {
+constexpr std::string_view kNONE = "NONE";
 /**
  * Call this version to only invoke handlers that explicitly okays
  * callbacks from non-per-request contexts.
@@ -372,19 +376,129 @@ ContextStack::UniquePtr getContextStackForNonPerRequestCallbacks(
       method,
       connectionContext);
 }
+
+std::string priorityToString(concurrency::PRIORITY priority) {
+  switch (priority) {
+    case concurrency::PRIORITY::HIGH_IMPORTANT:
+      return "HIGH_IMPORTANT";
+    case concurrency::PRIORITY::HIGH:
+      return "HIGH";
+    case concurrency::PRIORITY::IMPORTANT:
+      return "IMPORTANT";
+    case concurrency::PRIORITY::NORMAL:
+      return "NORMAL";
+    case concurrency::PRIORITY::BEST_EFFORT:
+      return "BEST_EFFORT";
+    case concurrency::PRIORITY::N_PRIORITIES:
+      return "N_PRIORITIES";
+    default:
+      folly::assume_unreachable();
+  }
+}
+
+std::string executorTypeToString(
+    AsyncProcessorFactory::MethodMetadata::ExecutorType executorType) {
+  switch (executorType) {
+    case AsyncProcessorFactory::MethodMetadata::ExecutorType::UNKNOWN:
+      return "UNKNOWN";
+    case AsyncProcessorFactory::MethodMetadata::ExecutorType::EVB:
+      return "EVB";
+    case AsyncProcessorFactory::MethodMetadata::ExecutorType::ANY:
+      return "ANY";
+    default:
+      folly::assume_unreachable();
+  }
+}
+
+std::string interactionTypeToString(
+    AsyncProcessorFactory::MethodMetadata::InteractionType interactionType) {
+  switch (interactionType) {
+    case AsyncProcessorFactory::MethodMetadata::InteractionType::UNKNOWN:
+      return "UNKNOWN";
+    case AsyncProcessorFactory::MethodMetadata::InteractionType::NONE:
+      return "NONE";
+    case AsyncProcessorFactory::MethodMetadata::InteractionType::INTERACTION_V1:
+      return "INTERACTION_V1";
+    default:
+      folly::assume_unreachable();
+  }
+}
 } // namespace
+
+std::string AsyncProcessorFactory::MethodMetadata::describeFields() const {
+  return fmt::format(
+      "executorType={} interactionType={} rpcKind={} priority={} "
+      "interactionName={} createsInteraction={} isWildcard={}",
+      executorTypeToString(executorType),
+      interactionTypeToString(interactionType),
+      rpcKind ? util::enumNameSafe(*rpcKind) : kNONE,
+      priority ? priorityToString(*priority) : kNONE,
+      interactionName.value_or(kNONE),
+      createsInteraction,
+      isWildcard());
+}
+
+std::string AsyncProcessorFactory::WildcardMethodMetadata::describe() const {
+  return fmt::format("WildcardMethodMetadata({})", describeFields());
+}
+
+std::string AsyncProcessorFactory::MethodMetadata::describe() const {
+  return fmt::format("MethodMetadata({})", describeFields());
+}
+
+std::string AsyncProcessorFactory::describe(
+    const MethodMetadataMap& metadataMap) {
+  auto buf = fmt::memory_buffer();
+  auto inserter = std::back_inserter(buf);
+  fmt::format_to(inserter, "MethodMetadataMap(");
+
+  for (auto entry = cbegin(metadataMap); entry != cend(metadataMap); ++entry) {
+    if (entry != cbegin(metadataMap)) {
+      fmt::format_to(inserter, " ");
+    }
+    fmt::format_to(inserter, "{}={}", entry->first, entry->second->describe());
+  }
+
+  fmt::format_to(inserter, ")");
+  return fmt::to_string(buf);
+}
+
+std::string AsyncProcessorFactory::describe(
+    const WildcardMethodMetadataMap& metadataMap) {
+  return fmt::format(
+      "WildcardMethodMetadataMap(wildcardMetadata={} knownMethods={})",
+      metadataMap.wildcardMetadata ? metadataMap.wildcardMetadata->describe()
+                                   : kNONE,
+      describe(metadataMap.knownMethods));
+}
+
+std::string AsyncProcessorFactory::describe(
+    const CreateMethodMetadataResult& createMethodMetadataResult) {
+  auto buf = fmt::memory_buffer();
+  auto inserter = std::back_inserter(buf);
+  fmt::format_to(inserter, "CreateMethodMetadataResult(");
+  std::visit(
+      [&inserter](auto&& arg) {
+        fmt::format_to(inserter, "{}", describe(arg));
+      },
+      createMethodMetadataResult);
+  fmt::format_to(inserter, ")");
+  return fmt::to_string(buf);
+}
 
 void GeneratedAsyncProcessorBase::terminateInteraction(
     int64_t id, Cpp2ConnContext& conn, folly::EventBase& eb) noexcept {
   eb.dcheckIsInEventBaseThread();
 
   if (auto tile = conn.removeTile(id)) {
-    Tile::onTermination(std::move(tile), eb);
     auto ctxStack = getContextStackForNonPerRequestCallbacks(
         handlers_, getServiceName(), "#terminateInteraction", &conn);
     if (ctxStack) {
-      ctxStack->onInteractionTerminate(id);
+      tile->onDestroy([id, ctxStack = std::move(ctxStack)] {
+        ctxStack->onInteractionTerminate(id);
+      });
     }
+    Tile::onTermination(std::move(tile), eb);
   }
 }
 
@@ -613,7 +727,7 @@ void ServerInterface::BlockingThreadManager::add(folly::Func f) {
     return;
   } catch (...) {
     LOG(FATAL) << "Failed to schedule a task within timeout: "
-               << folly::exceptionStr(std::current_exception());
+               << folly::exceptionStr(folly::current_exception());
   }
 }
 
@@ -982,34 +1096,42 @@ bool HandlerCallbackBase::shouldProcessServiceInterceptorsOnResponse() const {
 
 #if FOLLY_HAS_COROUTINES
 folly::coro::Task<void>
-HandlerCallbackBase::processServiceInterceptorsOnRequest() {
+HandlerCallbackBase::processServiceInterceptorsOnRequest(
+    detail::ServiceInterceptorOnRequestArguments arguments) {
   DCHECK(shouldProcessServiceInterceptorsOnRequest());
   const apache::thrift::server::ServerConfigs* server =
       reqCtx_->getConnectionContext()->getWorkerContext()->getServerContext();
   DCHECK(server);
-  const std::vector<std::shared_ptr<ServiceInterceptorBase>>&
-      serviceInterceptors = server->getServiceInterceptors();
+  const std::vector<server::ServerConfigs::ServiceInterceptorInfo>&
+      serviceInterceptorsInfo = server->getServiceInterceptors();
   std::vector<std::exception_ptr> exceptions;
 
-  for (std::size_t i = 0; i < serviceInterceptors.size(); ++i) {
-    auto connectionInfo =
-        ServiceInterceptorBase::ConnectionInfo{reqCtx_->getConnectionContext()};
+  for (std::size_t i = 0; i < serviceInterceptorsInfo.size(); ++i) {
+    auto* connectionCtx = reqCtx_->getConnectionContext();
+    auto connectionInfo = ServiceInterceptorBase::ConnectionInfo{
+        connectionCtx,
+        connectionCtx->getStorageForServiceInterceptorOnConnectionByIndex(i)};
     auto requestInfo = ServiceInterceptorBase::RequestInfo{
-        reqCtx_, reqCtx_->getStorageForServiceInterceptorOnRequestByIndex(i)};
+        reqCtx_,
+        reqCtx_->getStorageForServiceInterceptorOnRequestByIndex(i),
+        arguments};
     try {
-      co_await serviceInterceptors[i]->internal_onRequest(
+      co_await serviceInterceptorsInfo[i].interceptor->internal_onRequest(
           std::move(connectionInfo), std::move(requestInfo));
     } catch (...) {
-      exceptions.emplace_back(std::current_exception());
+      exceptions.emplace_back(folly::current_exception());
     }
   }
   if (!exceptions.empty()) {
     std::string message = fmt::format(
-        "ServiceInterceptor::onRequest threw exceptions:\n[0] {}\n",
+        "ServiceInterceptor::onRequest threw exceptions:\n[{}] {}\n",
+        serviceInterceptorsInfo[0].qualifiedName,
         folly::exceptionStr(exceptions[0]));
     for (std::size_t i = 1; i < exceptions.size(); ++i) {
-      message +=
-          fmt::format("[{}] {}\n", i, folly::exceptionStr(exceptions[i]));
+      message += fmt::format(
+          "[{}] {}\n",
+          serviceInterceptorsInfo[i].qualifiedName,
+          folly::exceptionStr(exceptions[i]));
     }
     co_yield folly::coro::co_error(TApplicationException(message));
   }
@@ -1021,30 +1143,36 @@ HandlerCallbackBase::processServiceInterceptorsOnResponse() {
   const apache::thrift::server::ServerConfigs* server =
       reqCtx_->getConnectionContext()->getWorkerContext()->getServerContext();
   DCHECK(server);
-  const std::vector<std::shared_ptr<ServiceInterceptorBase>>&
-      serviceInterceptors = server->getServiceInterceptors();
+  const std::vector<server::ServerConfigs::ServiceInterceptorInfo>&
+      serviceInterceptorsInfo = server->getServiceInterceptors();
   std::vector<std::exception_ptr> exceptions;
 
-  for (auto i = std::ptrdiff_t(serviceInterceptors.size()) - 1; i >= 0; --i) {
-    auto connectionInfo =
-        ServiceInterceptorBase::ConnectionInfo{reqCtx_->getConnectionContext()};
+  for (auto i = std::ptrdiff_t(serviceInterceptorsInfo.size()) - 1; i >= 0;
+       --i) {
+    auto* connectionCtx = reqCtx_->getConnectionContext();
+    auto connectionInfo = ServiceInterceptorBase::ConnectionInfo{
+        connectionCtx,
+        connectionCtx->getStorageForServiceInterceptorOnConnectionByIndex(i)};
     auto responseInfo = ServiceInterceptorBase::ResponseInfo{
         reqCtx_, reqCtx_->getStorageForServiceInterceptorOnRequestByIndex(i)};
     try {
-      co_await serviceInterceptors[i]->internal_onResponse(
+      co_await serviceInterceptorsInfo[i].interceptor->internal_onResponse(
           std::move(connectionInfo), std::move(responseInfo));
     } catch (...) {
-      exceptions.emplace_back(std::current_exception());
+      exceptions.emplace_back(folly::current_exception());
     }
   }
 
   if (!exceptions.empty()) {
     std::string message = fmt::format(
-        "ServiceInterceptor::onResponse threw exceptions:\n[0] {}\n",
+        "ServiceInterceptor::onResponse threw exceptions:\n[{}] {}\n",
+        serviceInterceptorsInfo[0].qualifiedName,
         folly::exceptionStr(exceptions[0]));
     for (std::size_t i = 1; i < exceptions.size(); ++i) {
-      message +=
-          fmt::format("[{}] {}\n", i, folly::exceptionStr(exceptions[i]));
+      message += fmt::format(
+          "[{}] {}\n",
+          serviceInterceptorsInfo[i].qualifiedName,
+          folly::exceptionStr(exceptions[i]));
     }
     co_yield folly::coro::co_error(TApplicationException(message));
   }
@@ -1059,11 +1187,12 @@ bool shouldProcessServiceInterceptorsOnRequest(HandlerCallbackBase& callback) {
 
 #if FOLLY_HAS_COROUTINES
 folly::coro::Task<void> processServiceInterceptorsOnRequest(
-    HandlerCallbackBase& callback) {
+    HandlerCallbackBase& callback,
+    detail::ServiceInterceptorOnRequestArguments arguments) {
   try {
-    co_await callback.processServiceInterceptorsOnRequest();
+    co_await callback.processServiceInterceptorsOnRequest(std::move(arguments));
   } catch (...) {
-    callback.exception(std::current_exception());
+    callback.exception(folly::current_exception());
     throw;
   }
 }

@@ -85,7 +85,7 @@ class HTTPServer final {
   };
 
   struct AcceptorFactoryConfig {
-    AcceptorConfiguration accConfig;
+    std::shared_ptr<const AcceptorConfiguration> accConfig;
     std::shared_ptr<HTTPCodecFactory> codecFactory;
   };
 
@@ -186,6 +186,13 @@ class HTTPServer final {
    * Updates ticket seeds for the HTTPServer for all the VIPs.
    */
   void updateTicketSeeds(wangle::TLSTicketKeySeeds seeds);
+
+  /**
+   * Allows the caller to apply a function to each acceptor the server is
+   * responsible for
+   */
+  void forEachAcceptor(
+      const std::function<void(wangle::Acceptor* acceptor)>& fn);
 
  protected:
   /**

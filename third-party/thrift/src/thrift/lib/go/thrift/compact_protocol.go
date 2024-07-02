@@ -74,8 +74,7 @@ func init() {
 }
 
 type CompactProtocol struct {
-	trans         RichTransport
-	origTransport Transport
+	trans RichTransport
 
 	// Used to keep track of the last field for the current and previous structs,
 	// so we can do the delta stuff.
@@ -104,12 +103,12 @@ type CompactProtocol struct {
 }
 
 // Create a CompactProtocol given a Transport
-func NewCompactProtocol(trans Transport) *CompactProtocol {
-	p := &CompactProtocol{origTransport: trans, version: COMPACT_VERSION_BE}
+func NewCompactProtocol(trans io.ReadWriteCloser) *CompactProtocol {
+	p := &CompactProtocol{version: COMPACT_VERSION_BE}
 	if et, ok := trans.(RichTransport); ok {
 		p.trans = et
 	} else {
-		p.trans = NewRichTransport(trans)
+		p.trans = newRichTransport(trans)
 	}
 
 	return p
@@ -637,7 +636,7 @@ func (p *CompactProtocol) Skip(fieldType Type) (err error) {
 }
 
 func (p *CompactProtocol) Close() error {
-	return p.origTransport.Close()
+	return p.trans.Close()
 }
 
 //

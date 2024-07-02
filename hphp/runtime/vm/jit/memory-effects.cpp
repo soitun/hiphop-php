@@ -1501,12 +1501,12 @@ MemEffects memory_effects_impl(const IRInstruction& inst) {
     };
 
   case LdImplicitContext:
-    // Not a PureLoad due to the leaking refcounting semantics.
-    return may_load_store(ARds { ImplicitContext::activeCtx.handle() }, AEmpty);
+    return PureLoad { ARds { ImplicitContext::activeCtx.handle() } };
 
   case StImplicitContext:
-    // Not a PureStore due to the leaking refcounting semantics.
-    return may_load_store(AEmpty, ARds { ImplicitContext::activeCtx.handle() });
+    return PureStore {
+      ARds { ImplicitContext::activeCtx.handle() }, inst.src(0), nullptr
+    };
 
   //////////////////////////////////////////////////////////////////////
   // Instructions that never read or write memory locations tracked by this
@@ -1632,6 +1632,7 @@ MemEffects memory_effects_impl(const IRInstruction& inst) {
   case LdClsCtxCns:
   case CheckSubClsCns:
   case LdClsCnsVecLen:
+  case EqClassId:
   case FuncHasAttr:
   case ClassHasAttr:
   case LdFuncRequiredCoeffects:
@@ -1804,7 +1805,7 @@ MemEffects memory_effects_impl(const IRInstruction& inst) {
   case ContArIncIdx:
   case ContArIncKey:
   case ContArUpdateIdx:
-  case LdClsCachedSafe:
+  case LookupClsCached:
   case LdClsInitData:
   case UnwindCheckSideExit:
   case CallViolatesModuleBoundary:
@@ -1834,7 +1835,7 @@ MemEffects memory_effects_impl(const IRInstruction& inst) {
   case LdWHState:
   case LdWHNotDone:
   case LookupClsMethod:
-  case LookupClsRDS:
+  case LookupCls:
   case StrictlyIntegerConv:
   case DbgAssertFunc:
   case ProfileCall:

@@ -872,6 +872,30 @@ struct DebugGetBlobMetadataResponse {
   1: list<BlobMetadataWithOrigin> metadatas;
 }
 
+struct DebugGetScmTreeRequest {
+  1: MountId mountId;
+  # id of the blob we would like to fetch SCM tree for
+  2: ThriftObjectId id;
+  # where we should fetch the blob SCM tree from
+  3: DataFetchOriginSet origins; # DataFetchOrigin
+}
+
+union ScmTreeOrError {
+  1: list<ScmTreeEntry> treeEntries;
+  2: EdenError error;
+}
+
+struct ScmTreeWithOrigin {
+  # the SCM tree data
+  1: ScmTreeOrError scmTreeData;
+  # where the SCM tree was fetched from
+  2: DataFetchOrigin origin;
+}
+
+struct DebugGetScmTreeResponse {
+  1: list<ScmTreeWithOrigin> trees;
+}
+
 struct ActivityRecorderResult {
   // 0 if the operation has failed. For example,
   // fail to start recording due to file permission issue
@@ -1637,6 +1661,14 @@ struct ChangeOwnershipRequest {
 
 struct ChangeOwnershipResponse {}
 
+struct GetBlockedFaultsRequest {
+  1: string keyclass;
+}
+
+struct GetBlockedFaultsResponse {
+  1: list<string> keyValues;
+}
+
 service EdenService extends fb303_core.BaseService {
   list<MountInfo> listMounts() throws (1: EdenError ex);
   void mount(1: MountArgument info) throws (1: EdenError ex);
@@ -2082,6 +2114,9 @@ service EdenService extends fb303_core.BaseService {
   //////// Debugging APIs ////////
 
   /**
+   * DEPRECATED: Use debugGetTree().
+   * TODO: remove this API after 07/01/2024
+   *
    * Get the contents of a source control Tree.
    *
    * This can be used to confirm if eden's LocalStore contains information
@@ -2096,6 +2131,10 @@ service EdenService extends fb303_core.BaseService {
     1: PathString mountPoint,
     2: ThriftObjectId id,
     3: bool localStoreOnly,
+  ) throws (1: EdenError ex);
+
+  DebugGetScmTreeResponse debugGetTree(
+    1: DebugGetScmTreeRequest request,
   ) throws (1: EdenError ex);
 
   /**
@@ -2184,6 +2223,11 @@ service EdenService extends fb303_core.BaseService {
    * Get the list of outstanding Thrift requests
    */
   list<ThriftRequestMetadata> debugOutstandingThriftRequests();
+
+  /**
+   * Get the list of outstanding file download events from source control servers
+   */
+  list<HgEvent> debugOutstandingHgEvents(1: PathString mountPoint);
 
   /**
    * Start recording performance metrics such as files read
@@ -2357,8 +2401,8 @@ service EdenService extends fb303_core.BaseService {
   );
 
   /**
-   * Gets a list of hg events stored in Eden's Hg ActivityBuffer. Used for
-   * retroactive debugging by the `eden trace hg --retroactive` command.
+   * Gets a list of Sapling events stored in Eden's Sapling ActivityBuffer. Used for
+   * retroactive debugging by the `eden trace sl --retroactive` command.
    */
   GetRetroactiveHgEventsResult getRetroactiveHgEvents(
     1: GetRetroactiveHgEventsParams params,
@@ -2395,6 +2439,10 @@ service EdenService extends fb303_core.BaseService {
    * Returns the number of pending calls that were unblocked
    */
   i64 unblockFault(1: UnblockFaultArg info) throws (1: EdenError ex);
+
+  GetBlockedFaultsResponse getBlockedFaults(
+    1: GetBlockedFaultsRequest request,
+  ) throws (1: EdenError ex);
 
   /**
    * Directly load a BackingStore object identified by id at the given path.

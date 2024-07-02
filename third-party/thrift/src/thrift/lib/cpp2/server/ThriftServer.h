@@ -37,10 +37,10 @@
 #include <folly/SocketAddress.h>
 #include <folly/Synchronized.h>
 #include <folly/TokenBucket.h>
+#include <folly/concurrency/memory/PrimaryPtr.h>
 #include <folly/dynamic.h>
 #include <folly/executors/IOThreadPoolExecutor.h>
 #include <folly/executors/VirtualExecutor.h>
-#include <folly/experimental/PrimaryPtr.h>
 #include <folly/experimental/coro/AsyncScope.h>
 #include <folly/io/ShutdownSocketSet.h>
 #include <folly/io/SocketOptionMap.h>
@@ -53,6 +53,8 @@
 #include <folly/logging/xlog.h>
 #include <folly/observer/Observer.h>
 #include <folly/synchronization/CallOnce.h>
+
+#include <fmt/core.h>
 
 #include <thrift/lib/cpp/concurrency/PosixThreadFactory.h>
 #include <thrift/lib/cpp/concurrency/Thread.h>
@@ -234,6 +236,14 @@ namespace detail {
  * dynamic Server Attributes
  */
 ThriftServerConfig& getThriftServerConfig(ThriftServer&);
+/**
+ * The set of service interceptors are not fully known until
+ * ThriftServer::setup(). However, unit tests can mock objects such that the
+ * setup is bypassed. This is a safe alternative to
+ * ThriftServer::getServiceInterceptors() which returns 0 for such unit tests.
+ */
+const std::vector<server::ServerConfigs::ServiceInterceptorInfo>&
+getServiceInterceptorsIfServerIsSetUp(ThriftServer&);
 } // namespace detail
 
 /**
@@ -864,6 +874,8 @@ class ThriftServer : public apache::thrift::concurrency::Runnable,
 
  private:
   friend ThriftServerConfig& detail::getThriftServerConfig(ThriftServer&);
+  friend const std::vector<ServiceInterceptorInfo>&
+  detail::getServiceInterceptorsIfServerIsSetUp(ThriftServer&);
 
   ThriftServerConfig thriftConfig_;
 
@@ -2026,8 +2038,7 @@ class ThriftServer : public apache::thrift::concurrency::Runnable,
         coalescedLegacyEventHandlers;
     std::vector<std::shared_ptr<server::TServerEventHandler>>
         coalescedLegacyServerEventHandlers;
-    std::vector<std::shared_ptr<ServiceInterceptorBase>>
-        coalescedServiceInterceptors;
+    std::vector<ServiceInterceptorInfo> coalescedServiceInterceptors;
   };
   static ProcessedModuleSet processModulesSpecification(ModulesSpecification&&);
 
@@ -2093,7 +2104,8 @@ class ThriftServer : public apache::thrift::concurrency::Runnable,
     CHECK(configMutable());
     auto name = module->getName();
     if (unprocessedModulesSpecification_.names.count(name)) {
-      throw std::invalid_argument("Duplicate module name");
+      throw std::invalid_argument(
+          fmt::format("Duplicate module name: {}", name));
     }
     unprocessedModulesSpecification_.infos.emplace_back(
         ModulesSpecification::Info{std::move(module), std::move(name)});
@@ -2396,40 +2408,40 @@ class ThriftServer : public apache::thrift::concurrency::Runnable,
     return sslCacheOptions_;
   }
 
-  wangle::ServerSocketConfig getServerSocketConfig() {
-    wangle::ServerSocketConfig config;
+  std::shared_ptr<wangle::ServerSocketConfig> getServerSocketConfig() {
+    auto config = std::make_shared<wangle::ServerSocketConfig>();
     if (sslContextObserver_.has_value()) {
-      config.sslContextConfigs.push_back(*sslContextObserver_->getSnapshot());
+      config->sslContextConfigs.push_back(*sslContextObserver_->getSnapshot());
     }
     if (sslCacheOptions_) {
-      config.sslCacheOptions = *sslCacheOptions_;
+      config->sslCacheOptions = *sslCacheOptions_;
     }
-    config.connectionIdleTimeout = getIdleTimeout();
-    config.connectionAgeTimeout = getConnectionAgeTimeout();
-    config.acceptBacklog = getListenBacklog();
+    config->connectionIdleTimeout = getIdleTimeout();
+    config->connectionAgeTimeout = getConnectionAgeTimeout();
+    config->acceptBacklog = getListenBacklog();
     if (ticketSeeds_) {
-      config.initialTicketSeeds = *ticketSeeds_;
+      config->initialTicketSeeds = *ticketSeeds_;
     }
     if (enableTFO_) {
-      config.enableTCPFastOpen = *enableTFO_;
-      config.fastOpenQueueSize = fastOpenQueueSize_;
+      config->enableTCPFastOpen = *enableTFO_;
+      config->fastOpenQueueSize = fastOpenQueueSize_;
     }
     if (sslHandshakeTimeout_) {
-      config.sslHandshakeTimeout = *sslHandshakeTimeout_;
+      config->sslHandshakeTimeout = *sslHandshakeTimeout_;
     } else if (getIdleTimeout() == std::chrono::milliseconds::zero()) {
       // make sure a handshake that takes too long doesn't kill the connection
-      config.sslHandshakeTimeout = std::chrono::milliseconds::zero();
+      config->sslHandshakeTimeout = std::chrono::milliseconds::zero();
     }
     // By default, we set strictSSL to false. This means the server will start
     // even if cert/key is missing as it may become available later
-    config.strictSSL = getStrictSSL() || getSSLPolicy() == SSLPolicy::REQUIRED;
-    config.fizzConfig = fizzConfig_;
-    config.customConfigMap["thrift_tls_config"] =
+    config->strictSSL = getStrictSSL() || getSSLPolicy() == SSLPolicy::REQUIRED;
+    config->fizzConfig = fizzConfig_;
+    config->customConfigMap["thrift_tls_config"] =
         std::make_shared<ThriftTlsConfig>(thriftTlsConfig_);
-    config.socketMaxReadsPerEvent = socketMaxReadsPerEvent_;
+    config->socketMaxReadsPerEvent = socketMaxReadsPerEvent_;
 
-    config.useZeroCopy = !!zeroCopyEnableFunc_;
-    config.preferIoUring = preferIoUring_;
+    config->useZeroCopy = !!zeroCopyEnableFunc_;
+    config->preferIoUring = preferIoUring_;
     return config;
   }
 
@@ -2825,8 +2837,8 @@ class ThriftServer : public apache::thrift::concurrency::Runnable,
    * Gets all ServiceInterceptors installed on this ThriftServer instance via
    * addModule().
    */
-  const std::vector<std::shared_ptr<ServiceInterceptorBase>>&
-  getServiceInterceptors() const override {
+  const std::vector<ServiceInterceptorInfo>& getServiceInterceptors()
+      const override {
     CHECK(processedServiceDescription_)
         << "Server must be set up before calling this method";
     return processedServiceDescription_->modules.coalescedServiceInterceptors;
@@ -3160,6 +3172,18 @@ THRIFT_PLUGGABLE_FUNC_DECLARE(
 inline ThriftServerConfig& getThriftServerConfig(ThriftServer& server) {
   return server.thriftConfig_;
 }
+
+inline const std::vector<server::ServerConfigs::ServiceInterceptorInfo>&
+getServiceInterceptorsIfServerIsSetUp(ThriftServer& server) {
+  if (auto* description = server.processedServiceDescription_.get()) {
+    return description->modules.coalescedServiceInterceptors;
+  }
+  static const folly::Indestructible<
+      std::vector<server::ServerConfigs::ServiceInterceptorInfo>>
+      kEmpty;
+  return *kEmpty;
+}
+
 } // namespace detail
 
 } // namespace thrift

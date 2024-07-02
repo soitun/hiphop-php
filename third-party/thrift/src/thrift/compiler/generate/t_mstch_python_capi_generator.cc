@@ -43,6 +43,38 @@ namespace compiler {
 
 namespace {
 
+std::string_view remove_global_scope(std::string_view symbol) {
+  if (symbol.size() >= 2 && symbol.find("::", 0, 2) == 0) {
+    symbol.remove_prefix(2);
+  }
+  return symbol;
+}
+
+bool is_supported_template(std::string_view symbol) {
+  symbol = remove_global_scope(symbol);
+  static const std::unordered_set<std::string_view> kSupportedTemplates = {
+      "folly::F14FastMap",
+      "folly::F14FastSet",
+      "folly::F14NodeMap",
+      "folly::F14NodeSet",
+      "folly::F14ValueMap",
+      "folly::F14ValueSet",
+      "folly::F14VectorMap",
+      "folly::F14VectorSet",
+      "folly::fbvector",
+      "folly::small_vector",
+      "folly::sorted_vector_map",
+      "folly::sorted_vector_set",
+      "std::deque",
+      "std::map",
+      "std::set",
+      "std::unordered_map",
+      "std::unordered_set",
+      "std::vector",
+  };
+  return kSupportedTemplates.count(symbol);
+}
+
 // t_node must be t_type or t_field
 const t_const* find_structured_annotation(const t_node& node, const char* uri) {
   if (auto field = dynamic_cast<const t_field*>(&node)) {
@@ -467,48 +499,75 @@ class python_capi_mstch_struct : public mstch_struct {
     return a;
   }
 
-  bool eligible_type_override(const t_const* annotation) {
+  bool capi_eligible_type_annotation(const t_const* annotation) {
     if (const auto* type_name =
             annotation->get_value_from_structured_annotation_or_null("name")) {
       return is_type_iobuf(type_name->get_string());
     }
-    return annotation->get_value_from_structured_annotation_or_null(
-               "template") == nullptr;
+    if (const auto* template_name =
+            annotation->get_value_from_structured_annotation_or_null(
+                "template")) {
+      return is_supported_template(template_name->get_string());
+    }
+    return false;
   }
 
-  bool eligible_type_or_adapter_override(const t_type* type) {
-    if (t_typedef::get_first_structured_annotation_or_null(
-            type, kCppAdapterUri)) {
+  bool capi_eligible_type(const t_type* type) {
+    if (type->find_structured_annotation_or_null(kCppAdapterUri)) {
       return false;
     }
 
-    if (const auto* type_anno =
-            t_typedef::get_first_structured_annotation_or_null(
-                type, kCppTypeUri)) {
-      return eligible_type_override(type_anno);
+    if (const auto* cpp_type_anno =
+            type->find_structured_annotation_or_null(kCppTypeUri)) {
+      if (!capi_eligible_type_annotation(cpp_type_anno)) {
+        return false;
+      }
     }
     // thrift currently lowers structured annotations to unstructured
     // annotations so this will always be non-null if @cpp.Type annotation
     // used on type or field
     // TODO: delete these if structured annotation migration completed
-    if (t_typedef::get_first_annotation_or_null(
-            type, {"cpp.template", "cpp2.template"})) {
+    if (const std::string* template_anno =
+            type->find_annotation_or_null({"cpp.template", "cpp2.template"})) {
+      if (!is_supported_template(*template_anno)) {
+        return false;
+      }
+    }
+    if (const std::string* type_anno =
+            type->find_annotation_or_null({"cpp.type", "cpp2.type"})) {
+      return is_type_iobuf(*type_anno);
+    }
+    if (type->is_list() &&
+        !capi_eligible_type(
+            dynamic_cast<const t_list*>(type)->get_elem_type())) {
+      return false;
+    } else if (
+        type->is_set() &&
+        !capi_eligible_type(
+            dynamic_cast<const t_set*>(type)->get_elem_type())) {
+      return false;
+    } else if (
+        type->is_map() &&
+        (!capi_eligible_type(
+             dynamic_cast<const t_map*>(type)->get_key_type()) ||
+         !capi_eligible_type(
+             dynamic_cast<const t_map*>(type)->get_val_type()))) {
       return false;
     }
-    if (const std::string* type_anno = t_typedef::get_first_annotation_or_null(
-            type, {"cpp.type", "cpp2.type"})) {
-      return is_type_iobuf(*type_anno);
+    if (type->is_typedef()) {
+      const t_typedef* tdef = dynamic_cast<const t_typedef*>(type);
+      return capi_eligible_type(tdef->get_type());
     }
     return true;
   }
 
-  bool eligible_type_or_adapter_override(const t_field& field) {
+  bool capi_eligible_field(const t_field& field) {
     if (field.find_structured_annotation_or_null(kCppAdapterUri)) {
       return false;
     }
-    if (const auto* type_anno =
+    if (const auto* cpp_type_anno =
             field.find_structured_annotation_or_null(kCppTypeUri)) {
-      return eligible_type_override(type_anno);
+      return capi_eligible_type_annotation(cpp_type_anno);
     }
     return true;
   }
@@ -532,28 +591,7 @@ class python_capi_mstch_struct : public mstch_struct {
       return true;
     }
     for (const auto& f : struct_->fields()) {
-      if (!eligible_type_or_adapter_override(f)) {
-        return false;
-      }
-      const auto* type_ = f.get_type();
-      if (!eligible_type_or_adapter_override(type_)) {
-        return false;
-      }
-      if (type_->is_list() &&
-          !eligible_type_or_adapter_override(
-              dynamic_cast<const t_list*>(type_)->get_elem_type())) {
-        return false;
-      } else if (
-          type_->is_set() &&
-          !eligible_type_or_adapter_override(
-              dynamic_cast<const t_set*>(type_)->get_elem_type())) {
-        return false;
-      } else if (
-          type_->is_map() &&
-          (!eligible_type_or_adapter_override(
-               dynamic_cast<const t_map*>(type_)->get_key_type()) ||
-           !eligible_type_or_adapter_override(
-               dynamic_cast<const t_map*>(type_)->get_val_type()))) {
+      if (!capi_eligible_field(f) || !capi_eligible_type(f.get_type())) {
         return false;
       }
     }
@@ -575,7 +613,7 @@ class python_capi_mstch_struct : public mstch_struct {
     return cpp_resolver_.get_underlying_namespaced_name(*struct_);
   }
 
-  mstch::node fields_size() { return std::to_string(struct_->fields().size()); }
+  mstch::node fields_size() { return struct_->fields().size(); }
 
  private:
   gen::cpp::type_resolver cpp_resolver_;
@@ -653,7 +691,6 @@ class t_mstch_python_capi_generator : public t_mstch_generator {
   }
 
  protected:
-  bool should_resolve_typedefs() const override { return true; }
   void set_mstch_factories();
   void generate_file(
       const std::string& file, const std::filesystem::path& base);

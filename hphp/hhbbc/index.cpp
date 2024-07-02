@@ -11158,7 +11158,7 @@ private:
         orig.originalModuleName != dstCls.moduleName;
       bool copyFromInternal =
         (orig.cls->attrs & AttrInternal)
-        && dstCls.userAttributes.count(s___ModuleLevelTrait.get());;
+        && dstCls.userAttributes.count(s___ModuleLevelTrait.get());
 
       if (Cfg::Eval::ModuleLevelTraits &&
           (copyFromModuleLevelTrait || copyFromInternal)) {
@@ -11933,7 +11933,7 @@ void flatten_type_mappings(IndexData& index,
 
         for (size_t rounds = 0;; ++rounds) {
           if (queue.empty()) break;
-          name = normalizeNS(queue.back());
+          name = normalizeNS(queue.front());
           queue.pop();
 
           if (auto const next = folly::get_ptr(meta.typeMappings, name)) {
@@ -11991,7 +11991,7 @@ void flatten_type_mappings(IndexData& index,
               name
             );
             if (curEnum) anyUnresolved = true;
-            break;
+            continue;
           } else {
             FTRACE(
               2, "Type-mapping '{}' is invalid because it involves "
@@ -12003,7 +12003,7 @@ void flatten_type_mappings(IndexData& index,
             );
             tvu.emplace_back(AnnotType::Unresolved, tc.flags() | flags, name);
             anyUnresolved = true;
-            break;
+            continue;
           }
 
           // Deal with cycles. Since we don't expect to encounter them, just

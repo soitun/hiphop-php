@@ -1452,11 +1452,14 @@ void AsyncSocket::drainZeroCopyQueue() {
   if (idZeroCopyBufPtrMap_.empty()) {
     return;
   }
-  // Enable SO_LINGER, with the linger timeout set to 0.
-  struct linger optLinger = {1, 0};
-  if (setSockOpt(SOL_SOCKET, SO_LINGER, &optLinger) != 0) {
-    VLOG(2) << "AsyncSocket::drainZeroCopyQueue(): error setting SO_LINGER "
-            << "on " << fd_ << ": errno=" << errno;
+
+  // Enable SO_LINGER if requested.
+  if (zeroCopyDrainConfig_.linger.has_value()) {
+    struct linger optLinger = {1, zeroCopyDrainConfig_.linger.value()};
+    if (setSockOpt(SOL_SOCKET, SO_LINGER, &optLinger) != 0) {
+      VLOG(2) << "AsyncSocket::drainZeroCopyQueue(): error setting SO_LINGER "
+              << "on " << fd_ << ": errno=" << errno;
+    }
   }
 
   if (eventBase_) {
@@ -1464,10 +1467,12 @@ void AsyncSocket::drainZeroCopyQueue() {
     // copy the buffers and adjust the allocatedBytesBuffered_
     std::vector<std::unique_ptr<folly::IOBuf>> bufs;
     for (auto& info : std::exchange(idZeroCopyBufInfoMap_, {})) {
-      const size_t allocated = info.second.buf_->computeChainCapacity();
-      DCHECK_GE(allocatedBytesBuffered_, allocated);
-      allocatedBytesBuffered_ -= allocated;
-      bufs.emplace_back(std::move(info.second.buf_));
+      if (info.second.buf_) {
+        const size_t allocated = info.second.buf_->computeChainCapacity();
+        DCHECK_GE(allocatedBytesBuffered_, allocated);
+        allocatedBytesBuffered_ -= allocated;
+        bufs.emplace_back(std::move(info.second.buf_));
+      }
     }
     // enqueue for later destruction
     eventBase_->scheduleAt(

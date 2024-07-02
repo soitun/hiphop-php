@@ -28,25 +28,26 @@ const BinaryVersionMask uint32 = 0xffff0000
 const BinaryVersion1 uint32 = 0x80010000
 
 type BinaryProtocol struct {
-	trans         RichTransport
-	origTransport Transport
-	reader        io.Reader
-	writer        io.Writer
-	strictRead    bool
-	strictWrite   bool
-	buffer        [64]byte
+	trans       RichTransport
+	reader      io.Reader
+	writer      io.Writer
+	strictRead  bool
+	strictWrite bool
+	buffer      [64]byte
 }
 
-func NewBinaryProtocolTransport(t Transport) *BinaryProtocol {
+// NewBinaryProtocolTransport creates a new protocol handler using a buffer
+func NewBinaryProtocolTransport(t io.ReadWriteCloser) *BinaryProtocol {
 	return NewBinaryProtocol(t, false, true)
 }
 
-func NewBinaryProtocol(t Transport, strictRead, strictWrite bool) *BinaryProtocol {
-	p := &BinaryProtocol{origTransport: t, strictRead: strictRead, strictWrite: strictWrite}
+// NewBinaryProtocol creates a new protocol handler using a buffer
+func NewBinaryProtocol(t io.ReadWriteCloser, strictRead, strictWrite bool) *BinaryProtocol {
+	p := &BinaryProtocol{strictRead: strictRead, strictWrite: strictWrite}
 	if et, ok := t.(RichTransport); ok {
 		p.trans = et
 	} else {
-		p.trans = NewRichTransport(t)
+		p.trans = newRichTransport(t)
 	}
 	p.reader = p.trans
 	p.writer = p.trans
@@ -472,7 +473,7 @@ func (p *BinaryProtocol) Skip(fieldType Type) (err error) {
 }
 
 func (p *BinaryProtocol) Close() error {
-	return p.origTransport.Close()
+	return p.trans.Close()
 }
 
 func (p *BinaryProtocol) readAll(buf []byte) error {

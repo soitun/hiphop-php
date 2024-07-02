@@ -15,12 +15,6 @@ pub mod errors;
 pub(crate) use crate as client;
 pub(crate) use ::::services;
 
-// Used by Thrift-generated code to implement service inheritance.
-#[doc(hidden)]
-#[deprecated]
-pub mod dependencies {
-}
-
 
 /// Client definitions for `C`.
 pub struct CImpl<P, T, S = ::fbthrift::NoopSpawner> {
@@ -148,7 +142,7 @@ where
                                         ::std::result::Result::Ok(::std::result::Result::Err(crate::errors::c::NumbersStreamError::ApplicationException(aexn)))
                                     }
                                 }
-                            }).await?
+                            }).await.map_err(::anyhow::Error::from)??
                         }
                     }
                 }

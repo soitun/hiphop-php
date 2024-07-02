@@ -1047,9 +1047,7 @@ class cpp_mstch_type : public mstch_type {
     }
     return {};
   }
-  mstch::node resolved_cpp_type() {
-    return fmt::to_string(cpp2::get_type(resolved_type_));
-  }
+  mstch::node resolved_cpp_type() { return cpp2::get_type(resolved_type_); }
   mstch::node is_string_or_binary() {
     return resolved_type_->is_string_or_binary();
   }
@@ -1197,11 +1195,12 @@ class cpp_mstch_struct : public mstch_struct {
             {"struct:extra_namespace", &cpp_mstch_struct::extra_namespace},
             {"struct:type_tag", &cpp_mstch_struct::type_tag},
             {"struct:patch?", &cpp_mstch_struct::patch},
+            {"struct:use_op_encode?", &cpp_mstch_struct::use_op_encode},
             {"struct:is_trivially_destructible?",
              &cpp_mstch_struct::is_trivially_destructible},
         });
   }
-  mstch::node fields_size() { return std::to_string(struct_->fields().size()); }
+  mstch::node fields_size() { return struct_->fields().size(); }
   mstch::node explicitly_constructed_fields() {
     // Filter fields according to the following criteria:
     // Get all enums
@@ -1423,7 +1422,7 @@ class cpp_mstch_struct : public mstch_struct {
         size++;
       }
     }
-    return std::to_string(size);
+    return size;
   }
   mstch::node isset_bitset_option() {
     static const std::string kPrefix =
@@ -1479,7 +1478,7 @@ class cpp_mstch_struct : public mstch_struct {
     if (!struct_->is_union()) {
       throw std::runtime_error("not a union struct");
     }
-    return std::to_string(struct_->fields().size());
+    return struct_->fields().size();
   }
   mstch::node has_non_optional_and_non_terse_field() {
     const auto& fields = struct_->fields();
@@ -1670,6 +1669,15 @@ class cpp_mstch_struct : public mstch_struct {
     return true;
   }
 
+  mstch::node use_op_encode() {
+    for (const auto& field : struct_->fields()) {
+      if (needs_op_encode(field, *struct_)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   std::shared_ptr<cpp2_generator_context> cpp_context_;
 
   std::vector<const t_field*> fields_in_layout_order_;
@@ -1760,7 +1768,7 @@ class cpp_mstch_field : public mstch_field {
   mstch::node name_hash() {
     return "__fbthrift_hash_" + cpp2::sha256_hex(field_->get_name());
   }
-  mstch::node index_plus_one() { return std::to_string(pos_.index + 1); }
+  mstch::node index_plus_one() { return pos_.index + 1; }
   mstch::node ordinal() { return index_plus_one(); }
   mstch::node isset_index() {
     assert(field_context_);
@@ -2058,7 +2066,7 @@ class cpp_mstch_enum : public mstch_enum {
         });
   }
   mstch::node is_empty() { return enum_->get_enum_values().empty(); }
-  mstch::node size() { return std::to_string(enum_->get_enum_values().size()); }
+  mstch::node size() { return enum_->get_enum_values().size(); }
   mstch::node min() {
     if (!enum_->get_enum_values().empty()) {
       auto e_min = std::min_element(
@@ -2085,7 +2093,7 @@ class cpp_mstch_enum : public mstch_enum {
   }
   mstch::node cpp_is_unscoped() { return cpp_is_unscoped_(); }
   mstch::node cpp_name() { return cpp2::get_name(enum_); }
-  mstch::node cpp_enum_type() { return fmt::to_string(cpp_enum_type(*enum_)); }
+  mstch::node cpp_enum_type() { return cpp_enum_type(*enum_); }
   mstch::node cpp_declare_bitwise_ops() {
     return enum_->find_annotation_or_null(
                {"cpp.declare_bitwise_ops", "cpp2.declare_bitwise_ops"}) ||

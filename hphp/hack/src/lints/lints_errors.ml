@@ -66,28 +66,6 @@ let bad_virtualized_method p =
     p
     "`__bool` methods should return `bool`. They show that an expression tree type can be used in a boolean expression."
 
-let non_equatable_comparison p ret ty1 ty2 =
-  Lints.add Codes.non_equatable_comparison Lint_warning p
-  @@ Printf.sprintf
-       "Invalid comparison: This expression will always return %s.\nA value of type %s can never be equal to a value of type %s"
-       (string_of_bool ret |> Markdown_lite.md_codify)
-       (Markdown_lite.md_codify ty1)
-       (Markdown_lite.md_codify ty2)
-
-let invalid_contains_check p trv_val_ty val_ty =
-  Lints.add Codes.invalid_contains_check Lint_warning p
-  @@ Printf.sprintf
-       "Invalid `C\\contains` check: This call will always return `false`.\nA `Traversable<%s>` cannot contain a value of type %s"
-       trv_val_ty
-       (Markdown_lite.md_codify val_ty)
-
-let invalid_contains_key_check p trv_key_ty key_ty =
-  Lints.add Codes.invalid_contains_check Lint_warning p
-  @@ Printf.sprintf
-       "Invalid `C\\contains_key` check: This call will always return `false`.\nA `KeyedTraversable<%s, ...>` cannot contain a key of type %s"
-       trv_key_ty
-       (Markdown_lite.md_codify key_ty)
-
 let class_overrides_all_trait_methods pos class_name trait_name =
   Lints.add
     Codes.class_overrides_all_trait_methods
@@ -142,47 +120,6 @@ let missing_override_attribute
 
   Lints.add ~autofix Codes.missing_override_attribute Lint_error name_pos @@ msg
 
-let invalid_truthiness_test pos ty =
-  Lints.add Codes.invalid_truthiness_test Lint_warning pos
-  @@ Printf.sprintf
-       "Invalid condition: a value of type %s will always be truthy"
-       (Markdown_lite.md_codify ty)
-
-let invalid_truthiness_test_falsy pos ty =
-  Lints.add Codes.invalid_truthiness_test Lint_warning pos
-  @@ Printf.sprintf
-       "Invalid condition: a value of type %s will always be falsy"
-       (Markdown_lite.md_codify ty)
-
-let sketchy_truthiness_test pos ty truthiness =
-  Lints.add Codes.sketchy_truthiness_test Lint_warning pos
-  @@
-  match truthiness with
-  | `String ->
-    Printf.sprintf
-      "Sketchy condition: testing the truthiness of %s may not behave as expected.\nThe values `\"\"` and `\"0\"` are both considered falsy. To check for emptiness, use `Str\\is_empty`."
-      ty
-  | `Arraykey ->
-    Printf.sprintf
-      "Sketchy condition: testing the truthiness of %s may not behave as expected.\nThe values `0`, `\"\"`, and `\"0\"` are all considered falsy. Test for them explicitly."
-      ty
-  | `Stringish ->
-    Printf.sprintf
-      "Sketchy condition: testing the truthiness of a %s may not behave as expected.\nThe values `\"\"` and `\"0\"` are both considered falsy, but objects will be truthy even if their `__toString` returns `\"\"` or `\"0\"`.\nTo check for emptiness, convert to a string and use `Str\\is_empty`."
-      ty
-  | `XHPChild ->
-    Printf.sprintf
-      "Sketchy condition: testing the truthiness of an %s may not behave as expected.\nThe values `\"\"` and `\"0\"` are both considered falsy, but objects (including XHP elements) will be truthy even if their `__toString` returns `\"\"` or `\"0\"`."
-      ty
-  | `Traversable ->
-    (* We have a truthiness test on a value with an interface type which is a
-         subtype of Traversable, but not a subtype of Container.
-         Since the runtime value may be a falsy-when-empty Container or an
-         always-truthy Iterable/Generator, we forbid the test. *)
-    Printf.sprintf
-      "Sketchy condition: a value of type %s may be truthy even when empty.\nHack collections and arrays are falsy when empty, but user-defined Traversables will always be truthy, even when empty.\nIf you would like to only allow containers which are falsy when empty, use the `Container` or `KeyedContainer` interfaces."
-      ty
-
 let redundant_covariant pos name msg suggest =
   Lints.add Codes.redundant_generic Lint_warning pos
   @@ "The generic parameter "
@@ -226,18 +163,6 @@ let nullsafe_not_needed pos =
   ^ " You can use the "
   ^ Markdown_lite.md_codify "->"
   ^ " operator instead."
-
-let invalid_attribute_value
-    pos (attr_name : string) (valid_values : string list) =
-  let valid_values = List.map valid_values ~f:Markdown_lite.md_codify in
-  Lints.add
-    Codes.bad_xhp_enum_attribute_value
-    Lint_error
-    pos
-    (Printf.sprintf
-       "Invalid value for %s, expected one of %s."
-       (Markdown_lite.md_codify attr_name)
-       (String.concat ~sep:", " valid_values))
 
 let parse_error code pos msg = Lints.add code Lint_error pos msg
 
@@ -437,12 +362,3 @@ let awaitable_awaitable pos =
     ^ " You probably want to use await inside this async lambda,"
     ^ " so stack traces include the lambda position."
     ^ " If this is intentional, please annotate the return type.")
-
-let cast_non_primitive pos =
-  Lints.add
-    Codes.cast_non_primitive
-    Lint_error
-    pos
-    ("Casting a non-primitive to a primitive rarely yields a "
-    ^ "useful value. Did you mean to extract a value from this object "
-    ^ "before casting it, or to do a null-check?")

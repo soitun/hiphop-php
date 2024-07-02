@@ -26,32 +26,21 @@ namespace HPHP {
 
 rds::Link<ObjectData*, rds::Mode::Normal> ImplicitContext::activeCtx;
 
-rds::Link<ObjectData*, rds::Mode::Normal> ImplicitContext::inaccessibleCtx;
+rds::Link<ObjectData*, rds::Mode::Normal> ImplicitContext::emptyCtx;
 
-std::string ImplicitContext::stateToString(ImplicitContext::State state) {
-  switch (state) {
-    case ImplicitContext::State::Value:
-      return "a value";
-    case ImplicitContext::State::Inaccessible:
-      return "an inaccessible";
-    case ImplicitContext::State::SoftInaccessible:
-      return "a soft inaccessible";
-    case ImplicitContext::State::SoftSet:
-      return "a soft set";
-  }
-  not_reached();
+void ImplicitContext::setActive(Object&& ctx) {
+  assertx(*ImplicitContext::activeCtx);
+  (*ImplicitContext::activeCtx)->decRefCount();
+  *ImplicitContext::activeCtx = ctx.detach();
 }
 
-bool ImplicitContext::isStateSoft(ImplicitContext::State state) {
-  switch (state) {
-    case ImplicitContext::State::Value:
-    case ImplicitContext::State::Inaccessible:
-      return false;
-    case ImplicitContext::State::SoftInaccessible:
-    case ImplicitContext::State::SoftSet:
-      return true;
-  }
-  not_reached();
+ImplicitContext::Saver::Saver() {
+  m_context = *ImplicitContext::activeCtx;
+  setActive(Object{*ImplicitContext::emptyCtx});
+}
+
+ImplicitContext::Saver::~Saver() {
+  setActive(Object{m_context});
 }
 
 Variant ImplicitContext::getBlameVectors() {

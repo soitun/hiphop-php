@@ -17,28 +17,25 @@
 package thrift
 
 import (
+	"io"
 	"net"
 	"time"
 )
 
 type mockSocket struct {
-	Transport
+	io.ReadWriteCloser
 }
 
-var _ Socket = (*mockSocket)(nil)
+var _ net.Conn = (*mockSocket)(nil)
 
 func newMockSocket() *mockSocket {
 	return &mockSocket{
-		Transport: NewMemoryBuffer(),
+		ReadWriteCloser: NewMemoryBuffer(),
 	}
 }
 
-func (s *mockSocket) Open() error {
-	return nil
-}
-
 func (s *mockSocket) Bytes() []byte {
-	return s.Transport.(*MemoryBuffer).Bytes()
+	return s.ReadWriteCloser.(*MemoryBuffer).Bytes()
 }
 
 type mockAddr struct {

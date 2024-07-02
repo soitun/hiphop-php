@@ -219,7 +219,7 @@ cdef class Struct(StructOrUnion):
 cdef class Union(StructOrUnion):
     cdef readonly object type
     cdef readonly object value
-    cdef void _fbthrift_load_cache(self) except *
+    cdef void _fbthrift_update_current_field_attributes(self) except *
     cdef object _fbthrift_to_internal_data(self, type_value, value)
     cdef void _fbthrift_set_union_value(self, field_id, value) except *
     cdef folly.iobuf.IOBuf _serialize(Union self, Protocol proto)
@@ -250,3 +250,4 @@ cdef class ServiceInterface:
 
 cdef const cTypeInfo* getCTypeInfo(type_info)
 cdef list_compare(object first, object second, int op)
+cdef _fbthrift_compare_struct_less(object lhs, object rhs, object return_if_same_type)

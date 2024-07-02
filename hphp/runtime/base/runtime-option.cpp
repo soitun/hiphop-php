@@ -713,13 +713,6 @@ bool RuntimeOption::DisableSmallAllocator = false;
 std::map<std::string, std::string> RuntimeOption::ServerVariables;
 std::map<std::string, std::string> RuntimeOption::EnvVariables;
 
-int64_t RuntimeOption::HeapSizeMB = 4096; // 4gb
-int64_t RuntimeOption::HeapResetCountBase = 1;
-int64_t RuntimeOption::HeapResetCountMultiple = 2;
-int64_t RuntimeOption::HeapLowWaterMark = 16;
-int64_t RuntimeOption::HeapHighWaterMark = 1024;
-
-
 std::string RuntimeOption::WatchmanRootSocket;
 std::string RuntimeOption::WatchmanDefaultSocket;
 
@@ -911,14 +904,16 @@ double RuntimeOption::ProfilerTraceExpansion = 1.2;
 int RuntimeOption::ProfilerMaxTraceBuffer = 0;
 
 #ifdef HHVM_FACEBOOK
+
+int RuntimeOption::ThriftFBServerWorkerThreads = 1;
+int RuntimeOption::ThriftFBServerPoolThreads = 1;
+
 bool RuntimeOption::EnableFb303Server = false;
 int RuntimeOption::Fb303ServerPort = 0;
 std::string RuntimeOption::Fb303ServerIP;
 int RuntimeOption::Fb303ServerWorkerThreads = 1;
 int RuntimeOption::Fb303ServerPoolThreads = 1;
-bool RuntimeOption::Fb303ServerEnableAclChecks = false;
-bool RuntimeOption::Fb303ServerEnforceAclChecks = false;
-std::string RuntimeOption::Fb303ServerIdentity;
+bool RuntimeOption::Fb303ServerExposeSensitiveMethods = false;
 
 bool RuntimeOption::ThreadTuneDebug = false;
 bool RuntimeOption::ThreadTuneSkipWarmup = false;
@@ -932,6 +927,7 @@ double RuntimeOption::ThreadTuneThreadUtilizationThreshold = 90.0;
 double RuntimeOption::XenonPeriodSeconds = 0.0;
 uint32_t RuntimeOption::XenonRequestFreq = 1;
 bool RuntimeOption::XenonForceAlwaysOn = false;
+bool RuntimeOption::XenonTrackActiveWorkers = false;
 
 bool RuntimeOption::StrobelightEnabled = false;
 
@@ -1510,17 +1506,6 @@ void RuntimeOption::Load(
                  0);
     Config::Bind(SerializationSizeLimit, ini, config,
                  "ResourceLimit.SerializationSizeLimit", StringData::MaxSize);
-    Config::Bind(HeapSizeMB, ini, config, "ResourceLimit.HeapSizeMB",
-                 HeapSizeMB);
-    Config::Bind(HeapResetCountBase, ini, config,
-                 "ResourceLimit.HeapResetCountBase", HeapResetCountBase);
-    Config::Bind(HeapResetCountMultiple, ini, config,
-                 "ResourceLimit.HeapResetCountMultiple",
-                 HeapResetCountMultiple);
-    Config::Bind(HeapLowWaterMark , ini, config,
-                 "ResourceLimit.HeapLowWaterMark", HeapLowWaterMark);
-    Config::Bind(HeapHighWaterMark , ini, config,
-                 "ResourceLimit.HeapHighWaterMark",HeapHighWaterMark);
   }
   {
     // watchman
@@ -1984,6 +1969,12 @@ void RuntimeOption::Load(
   }
 #ifdef HHVM_FACEBOOK
   {
+    // ThriftFBServer
+    Config::Bind(ThriftFBServerWorkerThreads, ini, config,
+                 "ThriftFBServer.WorkerThreads", 1);
+    Config::Bind(ThriftFBServerPoolThreads, ini, config, "ThriftFBServer.PoolThreads",
+                 1);
+                 
     // Fb303Server
     Config::Bind(EnableFb303Server, ini, config, "Fb303Server.Enable",
                  EnableFb303Server);
@@ -1993,11 +1984,8 @@ void RuntimeOption::Load(
                  "Fb303Server.WorkerThreads", 1);
     Config::Bind(Fb303ServerPoolThreads, ini, config, "Fb303Server.PoolThreads",
                  1);
-    Config::Bind(Fb303ServerEnableAclChecks, ini, config,
-                 "Fb303Server.EnableAclChecks", Fb303ServerEnableAclChecks);
-    Config::Bind(Fb303ServerEnforceAclChecks, ini, config,
-                 "Fb303Server.EnforceAclChecks", Fb303ServerEnforceAclChecks);
-    Config::Bind(Fb303ServerIdentity, ini, config, "Fb303Server.Identity");
+    Config::Bind(Fb303ServerExposeSensitiveMethods, ini, config,
+                 "Fb303Server.ExposeSensitiveMethods", Fb303ServerExposeSensitiveMethods);
 
     Config::Bind(ThreadTuneDebug, ini, config,
                  "ThreadTuneDebug", ThreadTuneDebug);
@@ -2021,6 +2009,7 @@ void RuntimeOption::Load(
     Config::Bind(XenonPeriodSeconds, ini, config, "Xenon.Period", 0.0);
     Config::Bind(XenonRequestFreq, ini, config, "Xenon.RequestFreq", 1);
     Config::Bind(XenonForceAlwaysOn, ini, config, "Xenon.ForceAlwaysOn", false);
+    Config::Bind(XenonTrackActiveWorkers, ini, config, "Xenon.TrackActiveWorkers", false);
   }
   {
     // Strobelight

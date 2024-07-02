@@ -87,6 +87,7 @@ add_library(
   STATIC
 
   detail/system.cc
+  detail/pluggable_functions.cc
   diagnostic.cc
   source_location.cc
 
@@ -130,6 +131,7 @@ add_library(
   lib/go/util.cc
   lib/java/util.cc
   lib/rust/util.cc
+  lib/py3/util.cpp
   lib/python/util.cc
 )
 target_link_libraries(

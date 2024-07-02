@@ -418,12 +418,6 @@ struct RuntimeOption {
   static std::string ProfDataTag;
   static bool DumpPreciseProfData;
 
-  static int64_t HeapSizeMB;
-  static int64_t HeapResetCountBase;
-  static int64_t HeapResetCountMultiple;
-  static int64_t HeapLowWaterMark;
-  static int64_t HeapHighWaterMark;
-
   static std::string WatchmanRootSocket;
   static std::string WatchmanDefaultSocket;
 
@@ -999,15 +993,17 @@ public:
   static bool SimpleXMLEmptyNamespaceMatchesAll;
 
 #ifdef HHVM_FACEBOOK
+  // ThriftFBServer
+  static int ThriftFBServerWorkerThreads;
+  static int ThriftFBServerPoolThreads;
+
   // fb303 server
   static bool EnableFb303Server;
   static int Fb303ServerPort;
   static std::string Fb303ServerIP;
   static int Fb303ServerWorkerThreads;
   static int Fb303ServerPoolThreads;
-  static bool Fb303ServerEnableAclChecks;
-  static bool Fb303ServerEnforceAclChecks;
-  static std::string Fb303ServerIdentity;
+  static bool Fb303ServerExposeSensitiveMethods;
 
   // Experimental thread tuning options, allows threads to be adjusted by
   // thread controller (host stats monitor). `ThreadTuneDebug` is meant to allow
@@ -1034,6 +1030,7 @@ public:
   static double XenonPeriodSeconds;
   static uint32_t XenonRequestFreq;
   static bool XenonForceAlwaysOn;
+  static bool XenonTrackActiveWorkers;
 
   // Strobelight options
   static bool StrobelightEnabled;

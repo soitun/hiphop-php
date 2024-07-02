@@ -713,58 +713,6 @@ end = struct
         [],
         User_error_flags.empty )
 
-    let enum_class_label_unknown
-        pos label_name enum_name decl_pos most_similar ty_pos =
-      let enum_name = Markdown_lite.md_codify (Render.strip_ns enum_name) in
-
-      let claim =
-        lazy
-          ( pos,
-            Printf.sprintf
-              "Enum class %s does not contain a label named %s."
-              enum_name
-              (Markdown_lite.md_codify label_name) )
-      in
-
-      let decl_reason =
-        [(decl_pos, Printf.sprintf "%s is defined here" enum_name)]
-      in
-      let (similar_reason, quickfixes) =
-        match most_similar with
-        | Some (similar_name, similar_pos) ->
-          ( [
-              ( similar_pos,
-                Printf.sprintf
-                  "Did you mean %s?"
-                  (Markdown_lite.md_codify similar_name) );
-            ],
-            [
-              Quickfix.make_eager_default_hint_style
-                ~title:("Change to " ^ Markdown_lite.md_codify similar_name)
-                ~new_text:similar_name
-                pos;
-            ] )
-        | None -> ([], [])
-      in
-      let ty_reason =
-        match ty_pos with
-        | Some ty_pos ->
-          [
-            ( ty_pos,
-              Printf.sprintf
-                "This is why I expected an enum class label from %s."
-                enum_name );
-          ]
-        | None -> []
-      in
-
-      let reason = lazy (decl_reason @ similar_reason @ ty_reason) in
-      ( Error_code.EnumClassLabelUnknown,
-        claim,
-        reason,
-        quickfixes,
-        User_error_flags.empty )
-
     let enum_class_label_as_expr pos =
       let claim =
         lazy
@@ -853,15 +801,6 @@ end = struct
           expected_pos
           actual
           pos
-      | Enum_class_label_unknown
-          { pos; label_name; enum_name; decl_pos; most_similar; ty_pos } ->
-        enum_class_label_unknown
-          pos
-          label_name
-          enum_name
-          decl_pos
-          most_similar
-          ty_pos
       | Enum_class_label_as_expr pos -> enum_class_label_as_expr pos
       | Enum_class_label_member_mismatch { pos; label; expected_ty_msg_opt } ->
         enum_class_label_member_mismatch pos label expected_ty_msg_opt
@@ -1699,6 +1638,21 @@ end = struct
         [],
         User_error_flags.empty )
 
+    let attribute_value pos attr_name valid_values =
+      ( Error_code.InvalidXhpAttributeValue,
+        lazy
+          ( pos,
+            let valid_values =
+              List.map valid_values ~f:Markdown_lite.md_codify
+            in
+            Printf.sprintf
+              "Invalid value for %s, expected one of %s."
+              (Markdown_lite.md_codify attr_name)
+              (String.concat ~sep:", " valid_values) ),
+        lazy [],
+        [],
+        User_error_flags.empty )
+
     let to_error t ~env:_ =
       let open Typing_error.Primary.Xhp in
       match t with
@@ -1708,6 +1662,8 @@ end = struct
         illegal_xhp_child pos ty_reason_msg
       | Missing_xhp_required_attr { pos; attr; ty_reason_msg } ->
         missing_xhp_required_attr pos attr ty_reason_msg
+      | Attribute_value { pos; attr_name; valid_values } ->
+        attribute_value pos attr_name valid_values
   end
 
   module Eval_casetype = struct
@@ -3182,11 +3138,18 @@ end = struct
       [],
       User_error_flags.empty )
 
-  let redundant_covariant pos msg suggest =
+  let redundant_generic pos variance msg suggest =
+    let variance_msg =
+      match variance with
+      | `Co -> "covariant (output)"
+      | `Contra -> "contravariant (input)"
+    in
     ( Error_code.RedundantGeneric,
       lazy
         ( pos,
-          "This generic parameter is redundant because it only appears in a covariant (output) position"
+          Printf.sprintf
+            "This generic parameter is redundant because it only appears in a %s position"
+            variance_msg
           ^ msg
           ^ ". Consider replacing uses of generic parameter with "
           ^ Markdown_lite.md_codify suggest
@@ -5195,8 +5158,8 @@ end = struct
     | Unserializable_type { pos; message } -> unserializable_type pos message
     | Invalid_arraykey_constraint { pos; ty_name } ->
       invalid_arraykey_constraint pos @@ Lazy.force ty_name
-    | Redundant_covariant { pos; msg; suggest } ->
-      redundant_covariant pos msg suggest
+    | Redundant_generic { pos; variance; msg; suggest } ->
+      redundant_generic pos variance msg suggest
     | Meth_caller_trait { pos; trait_name } -> meth_caller_trait pos trait_name
     | Duplicate_interface { pos; name; others } ->
       duplicate_interface pos name others
@@ -5684,26 +5647,6 @@ end = struct
     in
     (Error_code.TypeArityMismatch, reasons, User_error_flags.empty)
 
-  (* In typing_coercion.ml we sometimes check t1 <: t2 by adding dynamic
-     to check t1 < t|dynamic. In that case, we use the Rdynamic_coercion
-     reason so that we can detect it here and not print the dynamic if there
-     is a type error. *)
-  let detect_attempting_dynamic_coercion_reason r ty =
-    let open Typing_defs_core in
-    match r with
-    | Typing_reason.Rdynamic_coercion r ->
-      (match ty with
-      | LoclType lty ->
-        (match get_node lty with
-        | Tunion [t1; t2] ->
-          (match (get_node t1, get_node t2) with
-          | (Tdynamic, _) -> (r, LoclType t2)
-          | (_, Tdynamic) -> (r, LoclType t1)
-          | _ -> (r, ty))
-        | _ -> (r, ty))
-      | _ -> (r, ty))
-    | _ -> (r, ty)
-
   let describe_coeffect env ty =
     lazy
       (let (env, ty) = Typing_utils.simplify_intersections env ty in
@@ -5816,7 +5759,9 @@ end = struct
       | (_, Ttype_switch _) ->
         Markdown_lite.md_codify
           (Typing_print.with_blank_tyvars (fun () ->
-               Typing_print.full_strip_ns_i env (ConstraintType ty))))
+               Typing_print.full_strip_ns_i env (ConstraintType ty)))
+      | (_, Thas_const { name; ty = _ }) ->
+        Printf.sprintf "a class with a constant `%s`" name)
 
   let describe_ty_sub ~is_coeffect env ety =
     let ty_descr = describe_ty ~is_coeffect env ety in
@@ -5842,9 +5787,6 @@ end = struct
     lazy
       (let r_super = Typing_defs.reason ty_sup in
        let r_sub = Typing_defs.reason ty_sub in
-       let (r_super, ty_sup) =
-         detect_attempting_dynamic_coercion_reason r_super ty_sup
-       in
        let ty_super_descr = describe_ty_super ~is_coeffect env ty_sup in
        let ty_sub_descr = describe_ty_sub ~is_coeffect env ty_sub in
        let (ty_super_descr, ty_sub_descr) =
@@ -5857,7 +5799,7 @@ end = struct
        let left =
          Typing_reason.to_string
            ("Expected " ^ ty_super_descr)
-           (Typing_reason.Rrev r_super)
+           (Typing_reason.rev r_super)
        in
        let right = Typing_reason.to_string ("But got " ^ ty_sub_descr) r_sub in
        let reasons = left @ right in
@@ -5866,10 +5808,10 @@ end = struct
            ~default:[]
            ~f:(function
              | GlobalOptions.Extended complexity ->
-               Typing_reason.(explain (Rflow (r_sub, r_super)) ~complexity)
+               Typing_reason.(explain (flow (r_sub, r_super)) ~complexity)
              | GlobalOptions.Debug
              | GlobalOptions.Yolo ->
-               Typing_reason.(debug (Rflow (r_sub, r_super))))
+               Typing_reason.(debug (flow (r_sub, r_super))))
            (TypecheckerOptions.tco_extended_reasons
               Typing_env_types.(env.genv.tcopt))
        in
@@ -5985,10 +5927,10 @@ end = struct
              ~f:(function
                | GlobalOptions.Extended complexity ->
                  Typing_reason.(
-                   explain (Rflow (reason_sub, reason_super)) ~complexity)
+                   explain (flow (reason_sub, reason_super)) ~complexity)
                | GlobalOptions.Debug
                | GlobalOptions.Yolo ->
-                 Typing_reason.(debug (Rflow (reason_sub, reason_super))))
+                 Typing_reason.(debug (flow (reason_sub, reason_super))))
              (TypecheckerOptions.tco_extended_reasons
                 Typing_env_types.(env.genv.tcopt)))
     in
@@ -6131,10 +6073,10 @@ end = struct
              ~f:(function
                | GlobalOptions.Extended complexity ->
                  Typing_reason.(
-                   explain (Rflow (reason_sub, reason_super)) ~complexity)
+                   explain (flow (reason_sub, reason_super)) ~complexity)
                | GlobalOptions.Debug
                | GlobalOptions.Yolo ->
-                 Typing_reason.(debug (Rflow (reason_sub, reason_super))))
+                 Typing_reason.(debug (flow (reason_sub, reason_super))))
              (TypecheckerOptions.tco_extended_reasons
                 Typing_env_types.(env.genv.tcopt)))
     in
@@ -6595,6 +6537,26 @@ end = struct
       lazy [(pos, "This " ^ kind ^ " refinement constraint is violated")],
       User_error_flags.empty )
 
+  let label_unknown enum_name decl_pos most_similar =
+    let reasons =
+      lazy
+        begin
+          let enum_name = Markdown_lite.md_codify (Render.strip_ns enum_name) in
+          (decl_pos, Printf.sprintf "%s is defined here" enum_name)
+          ::
+          (match most_similar with
+          | Some (similar_name, similar_pos) ->
+            [
+              ( similar_pos,
+                Printf.sprintf
+                  "Did you mean %s?"
+                  (Markdown_lite.md_codify similar_name) );
+            ]
+          | None -> [])
+        end
+    in
+    (Error_code.EnumClassLabelUnknown, reasons, User_error_flags.empty)
+
   let eval t ~env ~current_span =
     let open Typing_error.Secondary in
     match t with
@@ -6811,6 +6773,8 @@ end = struct
       Eval_result.single (inexact_tconst_access pos id)
     | Violated_refinement_constraint { cstr } ->
       Eval_result.single (violated_refinement_constraint cstr)
+    | Unknown_label { enum_name; decl_pos; most_similar } ->
+      Eval_result.single (label_unknown enum_name decl_pos most_similar)
 end
 
 and Eval_callback : sig

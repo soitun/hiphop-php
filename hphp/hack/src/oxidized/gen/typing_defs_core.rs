@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<1a46ecd3a387e94c5e5a3c0b56c9ded9>>
+// @generated SignedSource<<2a3963204ad120390349ed94d4c97ac0>>
 //
 // To regenerate this file, run:
 //   hphp/hack/src/oxidized_regen.sh
@@ -472,7 +472,7 @@ pub struct FunImplicitParams {
 #[repr(C)]
 pub struct FunParam {
     #[rust_to_ocaml(attr = "hash.ignore")]
-    #[rust_to_ocaml(attr = "equal fun _ -> fun _ -> true")]
+    #[rust_to_ocaml(attr = "equal fun _ _ -> true")]
     pub pos: pos_or_decl::PosOrDecl,
     pub name: Option<String>,
     pub type_: Ty,
@@ -515,13 +515,11 @@ pub struct FunType {
 
 #[derive(
     Clone,
-    Copy,
     Debug,
     Deserialize,
     Eq,
     EqModuloPos,
     FromOcamlRep,
-    FromOcamlRepIn,
     Hash,
     NoPosHash,
     Ord,
@@ -531,7 +529,7 @@ pub struct FunType {
     ToOcamlRep
 )]
 #[rust_to_ocaml(attr = "deriving (eq, ord, hash, (show { with_path = false }))")]
-#[repr(u8)]
+#[repr(C, u8)]
 pub enum TypePredicate {
     IsBool,
     IsInt,
@@ -541,9 +539,8 @@ pub enum TypePredicate {
     IsNum,
     IsResource,
     IsNull,
+    IsTupleOf(Vec<TypePredicate>),
 }
-impl TrivialDrop for TypePredicate {}
-arena_deserializer::impl_deserialize_in_arena!(TypePredicate);
 
 #[derive(
     Clone,
@@ -758,6 +755,8 @@ pub enum Ty_ {
     Tclass(PosId, Exact, Vec<Ty>),
     /// The negation of the type in neg_type
     Tneg(NegType),
+    /// The type of the label expression #ID
+    Tlabel(String),
 }
 
 #[derive(
@@ -1105,6 +1104,9 @@ pub enum ConstraintType_ {
     ThasMember(HasMember),
     #[rust_to_ocaml(name = "Thas_type_member")]
     ThasTypeMember(HasTypeMember),
+    /// Check if the given type has a class constant that is compatible with [ty]
+    #[rust_to_ocaml(name = "Thas_const")]
+    ThasConst { name: String, ty: Ty },
     #[rust_to_ocaml(name = "Tcan_index")]
     TcanIndex(CanIndex),
     #[rust_to_ocaml(name = "Tcan_traverse")]

@@ -77,12 +77,8 @@ cdef class MapSpec:
 
 cdef class InterfaceSpec:
     cdef readonly str name
-    cdef cvector[PyObject*] _methods
+    cdef list _methods
     cdef readonly object annotations
-
-    @staticmethod
-    cdef _fbthrift_create(str name, dict annotations)
-    cdef void add_method(self, MethodSpec method)
 
 
 cdef class MethodSpec:
@@ -93,22 +89,9 @@ cdef class MethodSpec:
     cdef readonly tuple exceptions
     cdef readonly object annotations
 
-    @staticmethod
-    cdef _fbthrift_create(
-        str name,
-        tuple arguments,
-        NumberType result_kind,
-        object result,
-        tuple exceptions,
-        dict annotations,
-    )
-
 
 cdef class ArgumentSpec:
     cdef readonly str name
     cdef readonly object kind
     cdef readonly object type
     cdef readonly object annotations
-
-    @staticmethod
-    cdef _fbthrift_create(str name, NumberType kind, object type, dict annotations)

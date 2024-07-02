@@ -63,9 +63,9 @@ namespace coro {
 //    }
 //
 //    folly::coro::AsyncScope scope;
-//    scope.add(processEvent(ev1));
-//    scope.add(processEvent(ev2));
-//    scope.add(processEvent(ev3));
+//    scope.add(processEvent(ev1).scheduleOn(folly::getGlobalCPUExecutor()));
+//    scope.add(processEvent(ev2).scheduleOn(folly::getGlobalCPUExecutor()));
+//    scope.add(processEvent(ev3).scheduleOn(folly::getGlobalCPUExecutor()));
 //    co_await scope.joinAsync();
 //
 class AsyncScope {
@@ -170,16 +170,16 @@ class AsyncScope {
             << (source.has_value() ? sourceLocationToString(source.value())
                                    : "")
             << "Unhandled exception thrown from task added to AsyncScope: "
-            << folly::exceptionStr(std::current_exception());
+            << folly::exceptionStr(current_exception());
         if (!exceptionRaised.exchange(true)) {
-          maybeException = folly::exception_wrapper(std::current_exception());
+          maybeException = folly::exception_wrapper(current_exception());
         }
       } else {
         LOG(DFATAL)
             << (source.has_value() ? sourceLocationToString(source.value())
                                    : "")
             << "Unhandled exception thrown from task added to AsyncScope: "
-            << folly::exceptionStr(std::current_exception());
+            << folly::exceptionStr(current_exception());
       }
     }
   }
@@ -314,7 +314,7 @@ class CancellableAsyncScope {
    * See the documentation on AsyncScope::add.
    */
   template <typename Awaitable>
-  void add(
+  FOLLY_NOINLINE void add(
       Awaitable&& awaitable,
       std::optional<CancellationToken> token = std::nullopt,
       void* returnAddress = nullptr) {
@@ -327,7 +327,7 @@ class CancellableAsyncScope {
   }
 
   template <typename Awaitable>
-  void addWithSourceLoc(
+  FOLLY_NOINLINE void addWithSourceLoc(
       Awaitable&& awaitable,
       std::optional<CancellationToken> token,
       void* returnAddress = nullptr,

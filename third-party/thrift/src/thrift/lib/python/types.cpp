@@ -163,8 +163,8 @@ std::tuple<UniquePyObjectPtr, bool> getStandardImmutableDefaultValueForType(
  *   * `""` (i.e., the empty string) for strings and `binary` fields (or an
  *      empty `IOBuf` if applicable).
  *   * An empty `list` for lists.
- *   * An empty `tuple` for maps.
- *   * An empty `frozenset` for sets.
+ *   * An empty `dict` for maps.
+ *   * An empty `set` for sets.
  *   * A recursively default-initialized instance for structs and unions.
  *
  * @throws if there is no standard default value
@@ -214,8 +214,8 @@ std::tuple<UniquePyObjectPtr, bool> getStandardMutableDefaultValueForType(
       value = UniquePyObjectPtr(PyList_New(0));
       break;
     case protocol::TType::T_MAP:
-      // For maps, the default value is an empty tuple.
-      value = UniquePyObjectPtr(PyTuple_New(0));
+      // For maps, the default value is an empty `dict`.
+      value = UniquePyObjectPtr(PyDict_New());
       break;
     case protocol::TType::T_SET:
       // For sets, the default value is an empty `set`.
@@ -593,18 +593,53 @@ void setIOBuf(void* objectPtr, const folly::IOBuf& value) {
   setPyObject(objectPtr, std::move(iobufObj));
 }
 
+// This helper method for `MutableMapTypeInfo::write()` sorts the map keys and
+// writes them to the wire. It is called when the `protocolSortKeys` parameter
+// of `write()` is set to `true`.
+size_t writeMapSorted(
+    const void* context,
+    const void* object,
+    size_t (*writer)(
+        const void* context, const void* keyElem, const void* valueElem)) {
+  PyObject* dict = const_cast<PyObject*>(toPyObject(object));
+  DCHECK(PyDict_Check(dict));
+  UniquePyObjectPtr listPtr =
+      UniquePyObjectPtr{PySequence_List(PyDict_Items(dict))};
+  if (!listPtr) {
+    THRIFT_PY3_CHECK_ERROR();
+  }
+  if (PyList_Sort(listPtr.get()) == -1) {
+    THRIFT_PY3_CHECK_ERROR();
+  }
+
+  size_t written = 0;
+  auto size = PyList_Size(listPtr.get());
+  for (std::uint32_t i = 0; i < size; ++i) {
+    PyObject* pair = PyList_GET_ITEM(listPtr.get(), i);
+    PyObject* key = PyTuple_GET_ITEM(pair, 0);
+    PyObject* value = PyTuple_GET_ITEM(pair, 1);
+    written += writer(context, &key, &value);
+  }
+
+  return written;
+}
+
 } // namespace
 
 PyObject* createUnionTuple() {
-  UniquePyObjectPtr tuple{
-      PyTuple_New(2)}; // one for the type and the other for the value
-  if (!tuple) {
+  // Tuple items: (current field enum value, field value)
+  UniquePyObjectPtr tuple{PyTuple_New(2)};
+  if (tuple == nullptr) {
     THRIFT_PY3_CHECK_ERROR();
   }
-  PyTuple_SET_ITEM(
-      tuple.get(), 0, PyLong_FromLong(0)); // init type to __EMPTY__ (0)
-  PyTuple_SET_ITEM(tuple.get(), 1, Py_None); // init value to None
+
+  // Initialize union tuple to "empty" union, i.e. `(0, Py_None)`. Indeed, 0 is
+  // the special enum value corresponding to an empty union, for all thrift
+  // unions.
+  PyTuple_SET_ITEM(tuple.get(), 0, PyLong_FromLong(0));
+  PyTuple_SET_ITEM(tuple.get(), 1, Py_None);
   Py_INCREF(Py_None);
+
   return tuple.release();
 }
 
@@ -873,10 +908,10 @@ size_t MapTypeInfo::write(
     if (!seq) {
       THRIFT_PY3_CHECK_ERROR();
     }
-    map = seq.get();
-    if (PyList_Sort(map) == -1) {
+    if (PyList_Sort(seq.get()) == -1) {
       THRIFT_PY3_CHECK_ERROR();
     }
+    map = PySequence_Tuple(seq.get());
   }
   for (std::uint32_t i = 0; i < size; ++i) {
     PyObject* pair = PyTuple_GET_ITEM(map, i);
@@ -909,6 +944,66 @@ void MapTypeInfo::consumeElem(
     THRIFT_PY3_CHECK_ERROR();
   }
   PyTuple_SET_ITEM(*pyObjPtr, currentSize, elem.release());
+}
+
+void MutableMapTypeInfo::read(
+    const void* context,
+    void* objectPtr,
+    std::uint32_t mapSize,
+    void (*keyReader)(const void* context, void* key),
+    void (*valueReader)(const void* context, void* val)) {
+  UniquePyObjectPtr dict{PyDict_New()};
+  if (dict == nullptr) {
+    THRIFT_PY3_CHECK_ERROR();
+  }
+  auto read = [context](auto readerFn) {
+    PyObject* obj = nullptr;
+    readerFn(context, &obj);
+    return UniquePyObjectPtr(obj);
+  };
+  for (std::uint32_t i = 0; i < mapSize; ++i) {
+    UniquePyObjectPtr mkey = read(keyReader);
+    UniquePyObjectPtr mvalue = read(valueReader);
+    PyDict_SetItem(dict.get(), mkey.release(), mvalue.release());
+  }
+  setPyObject(objectPtr, std::move(dict));
+}
+
+size_t MutableMapTypeInfo::write(
+    const void* context,
+    const void* object,
+    bool protocolSortKeys,
+    size_t (*writer)(
+        const void* context, const void* keyElem, const void* valueElem)) {
+  if (protocolSortKeys) {
+    return writeMapSorted(context, object, writer);
+  }
+
+  PyObject* dict = const_cast<PyObject*>(toPyObject(object));
+  size_t written = 0;
+  PyObject* key = nullptr;
+  PyObject* value = nullptr;
+  Py_ssize_t pos = 0;
+  while (PyDict_Next(dict, &pos, &key, &value)) {
+    written += writer(context, &key, &value);
+  }
+  return written;
+}
+
+void MutableMapTypeInfo::consumeElem(
+    const void* context,
+    void* objectPtr,
+    void (*keyReader)(const void* context, void* key),
+    void (*valueReader)(const void* context, void* val)) {
+  PyObject** pyObjPtr = toPyObjectPtr(objectPtr);
+  DCHECK(*pyObjPtr != nullptr);
+  PyObject* mkey = nullptr;
+  keyReader(context, &mkey);
+  DCHECK(mkey != nullptr);
+  PyObject* mval = nullptr;
+  valueReader(context, &mval);
+  DCHECK(mval != nullptr);
+  PyDict_SetItem(*pyObjPtr, mkey, mval);
 }
 
 DynamicStructInfo::DynamicStructInfo(

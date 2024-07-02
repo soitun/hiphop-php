@@ -210,6 +210,28 @@ class ProjectCmdBase(SubCmd):
     def setup_project_cmd_parser(self, parser):
         pass
 
+    def create_builder(self, loader, manifest):
+        fetcher = loader.create_fetcher(manifest)
+        src_dir = fetcher.get_src_dir()
+        ctx = loader.ctx_gen.get_context(manifest.name)
+        build_dir = loader.get_project_build_dir(manifest)
+        inst_dir = loader.get_project_install_dir(manifest)
+        return manifest.create_builder(
+            loader.build_opts,
+            src_dir,
+            build_dir,
+            inst_dir,
+            ctx,
+            loader,
+            loader.dependencies_of(manifest),
+        )
+
+    def check_built(self, loader, manifest):
+        built_marker = os.path.join(
+            loader.get_project_install_dir(manifest), ".built-by-getdeps"
+        )
+        return os.path.exists(built_marker)
+
 
 class CachedProject(object):
     """A helper that allows calling the cache logic for a project
@@ -554,11 +576,11 @@ class BuildCmd(ProjectCmdBase):
 
         cache = cache_module.create_cache() if args.use_build_cache else None
 
-        # Accumulate the install directories so that the build steps
-        # can find their dep installation
-        install_dirs = []
+        dep_manifests = []
 
         for m in projects:
+            dep_manifests.append(m)
+
             fetcher = loader.create_fetcher(m)
 
             if args.build_skip_lfs_download and hasattr(fetcher, "skip_lfs_download"):
@@ -625,9 +647,10 @@ class BuildCmd(ProjectCmdBase):
                         build_dir,
                         inst_dir,
                         loader,
+                        dep_manifests,
                     )
                     for preparer in prepare_builders:
-                        preparer.prepare(install_dirs, reconfigure=reconfigure)
+                        preparer.prepare(reconfigure=reconfigure)
 
                     builder = m.create_builder(
                         loader.build_opts,
@@ -636,12 +659,13 @@ class BuildCmd(ProjectCmdBase):
                         inst_dir,
                         ctx,
                         loader,
+                        dep_manifests,
                         final_install_prefix=loader.get_project_install_prefix(m),
                         extra_cmake_defines=extra_cmake_defines,
                         cmake_target=args.cmake_target if m == manifest else "install",
                         extra_b2_args=extra_b2_args,
                     )
-                    builder.build(install_dirs, reconfigure=reconfigure)
+                    builder.build(reconfigure=reconfigure)
 
                     # If we are building the project (not dependency) and a specific
                     # cmake_target (not 'install') has been requested, then we don't
@@ -664,11 +688,6 @@ class BuildCmd(ProjectCmdBase):
                         cached_project.upload()
                 elif args.verbose:
                     print("found good %s" % built_marker)
-
-            # Paths are resolved from front. We prepend rather than append as
-            # the last project in topo order is the project itself, which
-            # should be first in the path, then its deps and so on.
-            install_dirs.insert(0, inst_dir)
 
     def compute_dep_change_status(self, m, built_marker, loader):
         reconfigure = False
@@ -789,14 +808,6 @@ class BuildCmd(ProjectCmdBase):
             "--schedule-type", help="Indicates how the build was activated"
         )
         parser.add_argument(
-            "--extra-cmake-defines",
-            help=(
-                "Input json map that contains extra cmake defines to be used "
-                "when compiling the current project and all its deps. "
-                'e.g: \'{"CMAKE_CXX_FLAGS": "--bla"}\''
-            ),
-        )
-        parser.add_argument(
             "--cmake-target",
             help=("Target for cmake build."),
             default="install",
@@ -863,41 +874,16 @@ class FixupDeps(ProjectCmdBase):
 @cmd("test", "test a given project")
 class TestCmd(ProjectCmdBase):
     def run_project_cmd(self, args, loader, manifest):
-        projects = loader.manifests_in_dependency_order()
-
-        # Accumulate the install directories so that the test steps
-        # can find their dep installation
-        install_dirs = []
-
-        for m in projects:
-            inst_dir = loader.get_project_install_dir(m)
-
-            if m == manifest or args.test_dependencies:
-                built_marker = os.path.join(inst_dir, ".built-by-getdeps")
-                if not os.path.exists(built_marker):
-                    print("project %s has not been built" % m.name)
-                    # TODO: we could just go ahead and build it here, but I
-                    # want to tackle that as part of adding build-for-test
-                    # support.
-                    return 1
-                fetcher = loader.create_fetcher(m)
-                src_dir = fetcher.get_src_dir()
-                ctx = loader.ctx_gen.get_context(m.name)
-                build_dir = loader.get_project_build_dir(m)
-                builder = m.create_builder(
-                    loader.build_opts, src_dir, build_dir, inst_dir, ctx, loader
-                )
-
-                builder.run_tests(
-                    install_dirs,
-                    schedule_type=args.schedule_type,
-                    owner=args.test_owner,
-                    test_filter=args.filter,
-                    retry=args.retry,
-                    no_testpilot=args.no_testpilot,
-                )
-
-            install_dirs.append(inst_dir)
+        if not self.check_built(loader, manifest):
+            print("project %s has not been built" % manifest.name)
+            return 1
+        self.create_builder(loader, manifest).run_tests(
+            schedule_type=args.schedule_type,
+            owner=args.test_owner,
+            test_filter=args.filter,
+            retry=args.retry,
+            no_testpilot=args.no_testpilot,
+        )
 
     def setup_project_cmd_parser(self, parser):
         parser.add_argument(
@@ -917,6 +903,15 @@ class TestCmd(ProjectCmdBase):
             help="Do not use Test Pilot even when available",
             action="store_true",
         )
+
+
+@cmd(
+    "debug",
+    "start a shell in the given project's build dir with the correct environment for running the build",
+)
+class DebugCmd(ProjectCmdBase):
+    def run_project_cmd(self, args, loader, manifest):
+        self.create_builder(loader, manifest).debug(reconfigure=False)
 
 
 @cmd("generate-github-actions", "generate a GitHub actions configuration")
@@ -1325,6 +1320,14 @@ def parse_args():
         help="Build shared libraries if possible",
         action="store_true",
         default=False,
+    )
+    add_common_arg(
+        "--extra-cmake-defines",
+        help=(
+            "Input json map that contains extra cmake defines to be used "
+            "when compiling the current project and all its deps. "
+            'e.g: \'{"CMAKE_CXX_FLAGS": "--bla"}\''
+        ),
     )
     add_common_arg(
         "--allow-system-packages",

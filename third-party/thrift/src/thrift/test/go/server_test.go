@@ -31,23 +31,19 @@ const localConnTimeout = time.Second * 1
 const testCallString = "this is a fairly lengthy test string \\ that ' has \x20 some 东西奇怪的"
 
 // createTestHeaderServer Create and bind a test server to localhost
-func createTestHeaderServer(handler thrifttest.ThriftTest) (*thrift.SimpleServer, net.Addr, error) {
+func createTestHeaderServer(handler thrifttest.ThriftTest) (context.CancelFunc, net.Addr, error) {
+	ctx, cancel := context.WithCancel(context.Background())
 	processor := thrifttest.NewThriftTestProcessor(handler)
 
 	transport, err := thrift.NewServerSocket("[::]:0")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to open test socket: %s", err)
 	}
-
-	err = transport.Listen()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to listen on socket: %s", err)
-	}
 	taddr := transport.Addr()
 
 	server := thrift.NewSimpleServer(processor, transport, thrift.TransportIDHeader)
 	go func(server *thrift.SimpleServer) {
-		err = server.Serve()
+		err = server.ServeContext(ctx)
 		if err != nil && err != thrift.ErrServerClosed {
 			panic(fmt.Errorf("failed to begin serving test socket: %s", err))
 		}
@@ -55,40 +51,42 @@ func createTestHeaderServer(handler thrifttest.ThriftTest) (*thrift.SimpleServer
 
 	conn, err := net.DialTimeout(taddr.Network(), taddr.String(), localConnTimeout)
 	if err != nil {
-		return nil, nil, fmt.Errorf(
+		return cancel, nil, fmt.Errorf(
 			"failed to connect to test socket: %s:%s", taddr.Network(), taddr.String(),
 		)
 	}
 	conn.Close()
 
-	return server, taddr, nil
+	return cancel, taddr, nil
 }
 
 // connectTestHeaderServer Create a client and connect to a test server
 func connectTestHeaderServer(
 	addr net.Addr,
 ) (*thrifttest.ThriftTestClient, error) {
-	socket, err := thrift.NewSocket(thrift.SocketAddr(addr.String()), thrift.SocketTimeout(localConnTimeout))
+	conn, err := thrift.DialHostPort(addr.String())
 	if err != nil {
 		return nil, err
 	}
-
-	err = socket.Open()
+	socket, err := thrift.NewSocket(thrift.SocketConn(conn))
 	if err != nil {
 		return nil, err
 	}
-
-	prot := thrift.NewHeaderProtocol(socket)
+	prot, err := thrift.NewHeaderProtocol(socket)
+	if err != nil {
+		return nil, err
+	}
+	prot.SetTimeout(localConnTimeout)
 	return thrifttest.NewThriftTestClient(prot), nil
 }
 
 func doClientTest(ctx context.Context, t *testing.T) {
 	handler := &testHandler{}
-	serv, addr, err := createTestHeaderServer(handler)
+	cancel, addr, err := createTestHeaderServer(handler)
 	if err != nil {
 		t.Fatalf("failed to create test server: %s", err.Error())
 	}
-	defer serv.Stop()
+	defer cancel()
 
 	client, err := connectTestHeaderServer(addr)
 	if err != nil {

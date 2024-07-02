@@ -180,11 +180,11 @@ struct BitmaskEnum {}
  * This annotation can be specified on at most one field of an
  * [exception definition](https://github.com/facebook/fbthrift/blob/main/thrift/doc/idl/index.md#exceptions),
  * whose type must be `string`. The thrift compiler will generate an error
- * if this annotion is specied on a field in any other structured definition,
+ * if this annotation is specified on a field in any other structured definition,
  * like a [struct definition](https://github.com/facebook/fbthrift/blob/main/thrift/doc/idl/index.md#structs)
  * or an [union definition](https://github.com/facebook/fbthrift/blob/main/thrift/doc/idl/index.md#unions)
  *
- * If an exception definition does not specify this anotation for any field, the
+ * If an exception definition does not specify this annotation for any field, the
  * exception message returned by the aforementioned APIs is unspecified.
  */
 @scope.Field
@@ -249,3 +249,24 @@ enum RpcPriority {
 struct DeprecatedUnvalidatedAnnotations {
   1: map<string, string> items;
 }
+
+/**
+* In addition to reserved words, Thrift reserves all identifiers
+* that contain the case-insensitive substring fbthrift.
+* The use of such identifiers requires users to explicitly annotate
+* the usage with `@thrift.AllowReservedIdentifierName`,
+* and may result in undefined behavior.
+*/
+@scope.Const
+@scope.Enum
+@scope.EnumValue
+@scope.Exception
+@scope.Field
+@scope.Function
+@scope.Interaction
+@scope.Program
+@scope.Service
+@scope.Struct
+@scope.Typedef
+@scope.Union
+struct AllowReservedIdentifierName {}

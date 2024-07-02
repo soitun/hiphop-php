@@ -1,0 +1,244 @@
+bool(true)
+string(5) "class"
+string(4) "enum"
+string(9) "interface"
+string(5) "trait"
+BaseClass is class
+DerivedClass is class
+C1 is class
+E1 is enum
+I1 is interface
+T1 is trait
+Nonexistent has no kind
+Subtypes of BaseClass: ["AbstractDerived","DerivedClass","IRequireExtendsBaseClass","NoFlagsDerived","TRequireExtendsBaseClass","TRequireExtendsBaseClassAndRequireImplementsIBase"]
+Supertypes of BaseClass: []
+Subtypes of IBase with filters {"kind":["class"]}: ["DerivedClass","UsesTRequireImplementsIBase"]
+Subtypes of IBase with filters {"kind":["trait"]}: ["TImplementsIBase","TRequireExtendsBaseClassAndRequireImplementsIBase","TRequireImplementsAndImplementsIBase","TRequireImplementsAndImplementsIBase","TRequireImplementsIBase"]
+Subtypes of IBase with filters {"kind":["class","trait"]}: ["DerivedClass","TImplementsIBase","TRequireExtendsBaseClassAndRequireImplementsIBase","TRequireImplementsAndImplementsIBase","TRequireImplementsAndImplementsIBase","TRequireImplementsIBase","UsesTRequireImplementsIBase"]
+Supertypes of DerivedClass: ["BaseClass","IBase","TImplementsIBase"]
+Supertypes of DerivedClass with filters {"kind":["class"]}: ["BaseClass"]
+Supertypes of DerivedClass with filters {"kind":["trait"]}: ["TImplementsIBase"]
+Supertypes of DerivedClass with filters {"kind":["interface"]}: ["IBase"]
+Supertypes of DerivedClass with filters {"kind":["class","trait"]}: ["BaseClass","TImplementsIBase"]
+Supertypes of DerivedClass with filters {"kind":["interface","trait"]}: ["IBase","TImplementsIBase"]
+
+Excluding `require extends` relations
+Subtypes of IBase with filters {"derive_kind":["extends"]}: ["DerivedClass","TImplementsIBase","TRequireImplementsAndImplementsIBase","UsesTRequireImplementsIBase"]
+Subtypes of BaseClass with filters {"derive_kind":["extends"]}: ["AbstractDerived","DerivedClass","NoFlagsDerived"]
+Subtypes of BaseClass with filters {"derive_kind":["extends"],"flags":["final"]}: ["DerivedClass"]
+Subtypes of BaseClass with filters {"derive_kind":["extends"],"flags":["abstract","final"]}: ["AbstractDerived","DerivedClass"]
+Subtypes of BaseClass with filters {"derive_kind":["extends"],"flags":["empty"]}: ["NoFlagsDerived"]
+Subtypes of BaseClass with filters {"derive_kind":["extends"],"flags":["abstract","empty","final"]}: ["AbstractDerived","DerivedClass","NoFlagsDerived"]
+Subtypes of BaseClass with filters {"derive_kind":["extends"],"flags":[]}: []
+Supertypes of TRequireExtendsBaseClassAndRequireImplementsIBase with filters {"derive_kind":["extends"]}: []
+Supertypes of TRequireImplementsAndImplementsIBase with filters {"derive_kind":["extends"]}: ["IBase"]
+Subtypes of IBase with filters {"kind":["interface"],"derive_kind":["extends"]}: []
+Supertypes of TRequireClassFinalClass with filters {"derive_kind":["extends"]}: []
+Subtypes of TRequireClassFinalClass with filters {"derive_kind":["extends"]}: ["FinalClassUsesTRequireClass","FinalClassUsesTRequireClassB"]
+Supertypes of FinalClassUsesTRequireClass with filters {"derive_kind":["extends"]}: ["TRequireClassFinalCLass"]
+Subtypes of FinalClassUsesTRequireClass with filters {"derive_kind":["extends"]}: []
+Supertypes of TRequireClassFinalClassB with filters {"derive_kind":["extends"]}: []
+Subtypes of FinalClassUsesTRequireClassB with filters {"derive_kind":["extends"]}: []
+
+Excluding `extends` relations
+Subtypes of IBase with filters {"derive_kind":["require extends"]}: ["TRequireExtendsBaseClassAndRequireImplementsIBase","TRequireImplementsAndImplementsIBase","TRequireImplementsIBase"]
+Subtypes of BaseClass with filters {"derive_kind":["require extends"]}: ["IRequireExtendsBaseClass","TRequireExtendsBaseClass","TRequireExtendsBaseClassAndRequireImplementsIBase"]
+Supertypes of TRequireExtendsBaseClassAndRequireImplementsIBase with filters {"derive_kind":["require extends"]}: ["BaseClass","IBase"]
+Supertypes of TRequireImplementsAndImplementsIBase with filters {"derive_kind":["require extends"]}: ["IBase"]
+Supertypes of SomeEnum with filters {"kind":["class"]}: ["HH\\BuiltinEnum"]
+Subtypes of IBase with filters {"kind":["interface"],"derive_kind":["require extends"]}: []
+Subtypes of IBase with filters {"kind":["trait"],"derive_kind":["require extends"]}: ["TRequireExtendsBaseClassAndRequireImplementsIBase","TRequireImplementsAndImplementsIBase","TRequireImplementsIBase"]
+Supertypes of TRequireClassFinalClass with filters {"derive_kind":["require extends"]}: ["FinalClassUsesTRequireClass"]
+Subtypes of TRequireClassFinalClass with filters {"derive_kind":["require extends"]}: []
+Supertypes of FinalClassUsesTRequireClass with filters {"derive_kind":["require extends"]}: []
+Subtypes of FinalClassUsesTRequireClass with filters {"derive_kind":["require extends"]}: ["TRequireClassFinalClass"]
+Supertypes of TRequireClassFinalClassB with filters {"derive_kind":["require extends"]}: ["FinalClassUsesTRequireClassB","SuperClassOfFinalClassB"]
+Subtypes of FinalClassUsesTRequireClassB with filters {"derive_kind":["require extends"]}: ["TRequireClassFinalClassB"]
+
+Getting paths
+AppleThenBanana has relative path: attribute-classes.inc
+outOfClassFunction has relative path: attribute-classes.inc
+alias AnAlias from type_or_type_alias_to_path_relative has relative path: attribute-classes.inc
+alias AnAlias from type_alias_to_path_relative has relative path: attribute-classes.inc
+SOME_CONSTANT has relative path: constants.inc
+someModule has relative path: attribute-classes.inc
+
+Getting attributes
+Attributes of AppleThenBanana: {"TwoArgAttr":["apple","banana"]}
+Attributes of BananaThenApple: {"TwoArgAttr":["banana","apple"]}
+Attributes of AppleThenCarrot: {"TwoArgAttr":["apple","carrot"]}
+Attributes of ClassWithTwoAttrs: {"NoArgAttr":[],"TwoArgAttr":["abc","def"]}
+Attributes of TypeAliasWithAttr: {"TypeAliasAttr":["42","a"]}
+Attributes of ClassWithMethodAttrs::methodWithNoArgAttr: {"NoArgMethodAttr":[]}
+Attributes of ClassWithMethodAttrs::methodWithTwoArgAttr: {"TwoArgMethodAttr":["42","banana"]}
+
+These should be empty, otherwise we're mixing types and type aliases up again
+Attributes of ClassWithTwoAttrs: {}
+Attributes of TypeAliasWithAttr: {}
+
+Getting types with attribute
+Types decorated with NoArgAttr: ["AnnoyingNS\\TerribleClass","ClassWithTwoAttrs"]
+Types decorated with TwoArgAttr: ["AppleThenBanana","AppleThenCarrot","BananaThenApple","ClassWithTwoAttrs"]
+Methods decorated with NoArgMethodAttr: ["ClassWithMethodAttrs::methodWithNoArgAttr"]
+Methods decorated with TwoArgMethodAttr: ["AnnoyingNS\\TerribleClass::terribleMethod","ClassWithMethodAttrs::methodWithTwoArgAttr"]
+Threw RuntimeException:"Queried attribute DontIndexThisMethodAttr not found in IndexedMethodAttributes=[NoArgMethodAttr,TwoArgMethodAttr]" trying to get methods with DontIndexThisMethodAttr
+
+Getting type aliases with attribute
+Type aliases decorated with TypeAliasAttr: ["TypeAliasWithAttr"]
+
+Getting file attributes
+Files decorated with TwoArgFileAttr and value Hello: ["attribute-classes.inc"]
+Files and attr args with OneArgFileAttr: [["attribute-classes.inc","7"]]
+Files decorated with NoArgFileAttr: ["attribute-classes.inc"]
+Files decorated with OneArgFileAttr: ["attribute-classes.inc"]
+Files decorated with TwoArgFileAttr: ["attribute-classes.inc"]
+Files and attr args with NoArgFileAttr: [["attribute-classes.inc",null]]
+Files and attr args with TwoArgFileAttr: [["attribute-classes.inc","Hello"],["attribute-classes.inc","There"]]
+Attributes of attribute-classes.inc: {"NoArgFileAttr":[],"OneArgFileAttr":["7"],"TwoArgFileAttr":["Hello","There"]}
+
+Checking nonexistent paths
+this/path/does/not/exist.php has 0 modules
+this/path/does/not/exist.php has 0 types
+this/path/does/not/exist.php has 0 functions
+this/path/does/not/exist.php has 0 constants
+this/path/does/not/exist.php has 0 type aliases
+/this/path/does/not/exist.php has 0 modules
+/this/path/does/not/exist.php has 0 types
+/this/path/does/not/exist.php has 0 functions
+/this/path/does/not/exist.php has 0 constants
+/this/path/does/not/exist.php has 0 type aliases
+
+exception 'UnexpectedValueException' %s
+%s
+Offending Types:  classWithDuplicateName
+%s
+Stack trace:
+%s: HH\Facts\validate()
+%s
+%s
+%s
+UnexpectedValueException thrown as expected
+UnexpectedValueException thrown as expected
+Finished.
+bool(true)
+string(5) "class"
+string(4) "enum"
+string(9) "interface"
+string(5) "trait"
+BaseClass is class
+DerivedClass is class
+C1 is class
+E1 is enum
+I1 is interface
+T1 is trait
+Nonexistent has no kind
+Subtypes of BaseClass: ["AbstractDerived","DerivedClass","IRequireExtendsBaseClass","NoFlagsDerived","TRequireExtendsBaseClass","TRequireExtendsBaseClassAndRequireImplementsIBase"]
+Supertypes of BaseClass: []
+Subtypes of IBase with filters {"kind":["class"]}: ["DerivedClass","UsesTRequireImplementsIBase"]
+Subtypes of IBase with filters {"kind":["trait"]}: ["TImplementsIBase","TRequireExtendsBaseClassAndRequireImplementsIBase","TRequireImplementsAndImplementsIBase","TRequireImplementsAndImplementsIBase","TRequireImplementsIBase"]
+Subtypes of IBase with filters {"kind":["class","trait"]}: ["DerivedClass","TImplementsIBase","TRequireExtendsBaseClassAndRequireImplementsIBase","TRequireImplementsAndImplementsIBase","TRequireImplementsAndImplementsIBase","TRequireImplementsIBase","UsesTRequireImplementsIBase"]
+Supertypes of DerivedClass: ["BaseClass","IBase","TImplementsIBase"]
+Supertypes of DerivedClass with filters {"kind":["class"]}: ["BaseClass"]
+Supertypes of DerivedClass with filters {"kind":["trait"]}: ["TImplementsIBase"]
+Supertypes of DerivedClass with filters {"kind":["interface"]}: ["IBase"]
+Supertypes of DerivedClass with filters {"kind":["class","trait"]}: ["BaseClass","TImplementsIBase"]
+Supertypes of DerivedClass with filters {"kind":["interface","trait"]}: ["IBase","TImplementsIBase"]
+
+Excluding `require extends` relations
+Subtypes of IBase with filters {"derive_kind":["extends"]}: ["DerivedClass","TImplementsIBase","TRequireImplementsAndImplementsIBase","UsesTRequireImplementsIBase"]
+Subtypes of BaseClass with filters {"derive_kind":["extends"]}: ["AbstractDerived","DerivedClass","NoFlagsDerived"]
+Subtypes of BaseClass with filters {"derive_kind":["extends"],"flags":["final"]}: ["DerivedClass"]
+Subtypes of BaseClass with filters {"derive_kind":["extends"],"flags":["abstract","final"]}: ["AbstractDerived","DerivedClass"]
+Subtypes of BaseClass with filters {"derive_kind":["extends"],"flags":["empty"]}: ["NoFlagsDerived"]
+Subtypes of BaseClass with filters {"derive_kind":["extends"],"flags":["abstract","empty","final"]}: ["AbstractDerived","DerivedClass","NoFlagsDerived"]
+Subtypes of BaseClass with filters {"derive_kind":["extends"],"flags":[]}: []
+Supertypes of TRequireExtendsBaseClassAndRequireImplementsIBase with filters {"derive_kind":["extends"]}: []
+Supertypes of TRequireImplementsAndImplementsIBase with filters {"derive_kind":["extends"]}: ["IBase"]
+Subtypes of IBase with filters {"kind":["interface"],"derive_kind":["extends"]}: []
+Supertypes of TRequireClassFinalClass with filters {"derive_kind":["extends"]}: []
+Subtypes of TRequireClassFinalClass with filters {"derive_kind":["extends"]}: ["FinalClassUsesTRequireClass","FinalClassUsesTRequireClassB"]
+Supertypes of FinalClassUsesTRequireClass with filters {"derive_kind":["extends"]}: ["TRequireClassFinalCLass"]
+Subtypes of FinalClassUsesTRequireClass with filters {"derive_kind":["extends"]}: []
+Supertypes of TRequireClassFinalClassB with filters {"derive_kind":["extends"]}: []
+Subtypes of FinalClassUsesTRequireClassB with filters {"derive_kind":["extends"]}: []
+
+Excluding `extends` relations
+Subtypes of IBase with filters {"derive_kind":["require extends"]}: ["TRequireExtendsBaseClassAndRequireImplementsIBase","TRequireImplementsAndImplementsIBase","TRequireImplementsIBase"]
+Subtypes of BaseClass with filters {"derive_kind":["require extends"]}: ["IRequireExtendsBaseClass","TRequireExtendsBaseClass","TRequireExtendsBaseClassAndRequireImplementsIBase"]
+Supertypes of TRequireExtendsBaseClassAndRequireImplementsIBase with filters {"derive_kind":["require extends"]}: ["BaseClass","IBase"]
+Supertypes of TRequireImplementsAndImplementsIBase with filters {"derive_kind":["require extends"]}: ["IBase"]
+Supertypes of SomeEnum with filters {"kind":["class"]}: ["HH\\BuiltinEnum"]
+Subtypes of IBase with filters {"kind":["interface"],"derive_kind":["require extends"]}: []
+Subtypes of IBase with filters {"kind":["trait"],"derive_kind":["require extends"]}: ["TRequireExtendsBaseClassAndRequireImplementsIBase","TRequireImplementsAndImplementsIBase","TRequireImplementsIBase"]
+Supertypes of TRequireClassFinalClass with filters {"derive_kind":["require extends"]}: ["FinalClassUsesTRequireClass"]
+Subtypes of TRequireClassFinalClass with filters {"derive_kind":["require extends"]}: []
+Supertypes of FinalClassUsesTRequireClass with filters {"derive_kind":["require extends"]}: []
+Subtypes of FinalClassUsesTRequireClass with filters {"derive_kind":["require extends"]}: ["TRequireClassFinalClass"]
+Supertypes of TRequireClassFinalClassB with filters {"derive_kind":["require extends"]}: ["FinalClassUsesTRequireClassB","SuperClassOfFinalClassB"]
+Subtypes of FinalClassUsesTRequireClassB with filters {"derive_kind":["require extends"]}: ["TRequireClassFinalClassB"]
+
+Getting paths
+AppleThenBanana has relative path: attribute-classes.inc
+outOfClassFunction has relative path: attribute-classes.inc
+alias AnAlias from type_or_type_alias_to_path_relative has relative path: attribute-classes.inc
+alias AnAlias from type_alias_to_path_relative has relative path: attribute-classes.inc
+SOME_CONSTANT has relative path: constants.inc
+someModule has relative path: attribute-classes.inc
+
+Getting attributes
+Attributes of AppleThenBanana: {"TwoArgAttr":["apple","banana"]}
+Attributes of BananaThenApple: {"TwoArgAttr":["banana","apple"]}
+Attributes of AppleThenCarrot: {"TwoArgAttr":["apple","carrot"]}
+Attributes of ClassWithTwoAttrs: {"NoArgAttr":[],"TwoArgAttr":["abc","def"]}
+Attributes of TypeAliasWithAttr: {"TypeAliasAttr":["42","a"]}
+Attributes of ClassWithMethodAttrs::methodWithNoArgAttr: {"NoArgMethodAttr":[]}
+Attributes of ClassWithMethodAttrs::methodWithTwoArgAttr: {"TwoArgMethodAttr":["42","banana"]}
+
+These should be empty, otherwise we're mixing types and type aliases up again
+Attributes of ClassWithTwoAttrs: {}
+Attributes of TypeAliasWithAttr: {}
+
+Getting types with attribute
+Types decorated with NoArgAttr: ["AnnoyingNS\\TerribleClass","ClassWithTwoAttrs"]
+Types decorated with TwoArgAttr: ["AppleThenBanana","AppleThenCarrot","BananaThenApple","ClassWithTwoAttrs"]
+Methods decorated with NoArgMethodAttr: ["ClassWithMethodAttrs::methodWithNoArgAttr"]
+Methods decorated with TwoArgMethodAttr: ["AnnoyingNS\\TerribleClass::terribleMethod","ClassWithMethodAttrs::methodWithTwoArgAttr"]
+Threw RuntimeException:"Queried attribute DontIndexThisMethodAttr not found in IndexedMethodAttributes=[NoArgMethodAttr,TwoArgMethodAttr]" trying to get methods with DontIndexThisMethodAttr
+
+Getting type aliases with attribute
+Type aliases decorated with TypeAliasAttr: ["TypeAliasWithAttr"]
+
+Getting file attributes
+Files decorated with TwoArgFileAttr and value Hello: ["attribute-classes.inc"]
+Files and attr args with OneArgFileAttr: [["attribute-classes.inc","7"]]
+Files decorated with NoArgFileAttr: ["attribute-classes.inc"]
+Files decorated with OneArgFileAttr: ["attribute-classes.inc"]
+Files decorated with TwoArgFileAttr: ["attribute-classes.inc"]
+Files and attr args with NoArgFileAttr: [["attribute-classes.inc",null]]
+Files and attr args with TwoArgFileAttr: [["attribute-classes.inc","Hello"],["attribute-classes.inc","There"]]
+Attributes of attribute-classes.inc: {"NoArgFileAttr":[],"OneArgFileAttr":["7"],"TwoArgFileAttr":["Hello","There"]}
+
+Checking nonexistent paths
+this/path/does/not/exist.php has 0 modules
+this/path/does/not/exist.php has 0 types
+this/path/does/not/exist.php has 0 functions
+this/path/does/not/exist.php has 0 constants
+this/path/does/not/exist.php has 0 type aliases
+/this/path/does/not/exist.php has 0 modules
+/this/path/does/not/exist.php has 0 types
+/this/path/does/not/exist.php has 0 functions
+/this/path/does/not/exist.php has 0 constants
+/this/path/does/not/exist.php has 0 type aliases
+
+exception 'UnexpectedValueException' %s
+%s
+Offending Types:  classWithDuplicateName
+%s
+Stack trace:
+%s: HH\Facts\validate()
+%s
+%s
+%s
+UnexpectedValueException thrown as expected
+UnexpectedValueException thrown as expected
+Finished.

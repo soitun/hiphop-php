@@ -68,10 +68,18 @@ folly::Optional<quic::QuicCachedPsk> PersistentQuicPskCache::getPsk(
     uint8_t knobFrameSupport;
     fizz::detail::read(knobFrameSupport, cursor);
     quicCachedPsk.transportParams.knobFrameSupport = knobFrameSupport > 0;
+    uint8_t ackReceiveTimestampsEnabled;
+    fizz::detail::read(ackReceiveTimestampsEnabled, cursor);
+    quicCachedPsk.transportParams.ackReceiveTimestampsEnabled =
+        ackReceiveTimestampsEnabled > 0;
+    fizz::detail::read(quicCachedPsk.transportParams.maxReceiveTimestampsPerAck,
+                       cursor);
+    fizz::detail::read(quicCachedPsk.transportParams.receiveTimestampsExponent,
+                       cursor);
 
     std::unique_ptr<folly::IOBuf> appParams;
     fizz::detail::readBuf<uint16_t>(appParams, cursor);
-    quicCachedPsk.appParams = appParams->moveToFbString().toStdString();
+    quicCachedPsk.appParams = appParams->to<std::string>();
 
     cachedPsk->uses++;
     if (maxPskUses_ != 0 && cachedPsk->uses >= maxPskUses_) {
@@ -110,11 +118,18 @@ void PersistentQuicPskCache::putPsk(const std::string& identity,
                       appender);
   uint8_t knobSupport = quicCachedPsk.transportParams.knobFrameSupport ? 1 : 0;
   fizz::detail::write(knobSupport, appender);
+  uint8_t ackReceiveTimestampsEnabled =
+      quicCachedPsk.transportParams.ackReceiveTimestampsEnabled ? 1 : 0;
+  fizz::detail::write(ackReceiveTimestampsEnabled, appender);
+  fizz::detail::write(quicCachedPsk.transportParams.maxReceiveTimestampsPerAck,
+                      appender);
+  fizz::detail::write(quicCachedPsk.transportParams.receiveTimestampsExponent,
+                      appender);
 
   fizz::detail::writeBuf<uint16_t>(
       folly::IOBuf::wrapBuffer(folly::StringPiece(quicCachedPsk.appParams)),
       appender);
-  cachedPsk.quicParams = quicParams->moveToFbString().toStdString();
+  cachedPsk.quicParams = quicParams->to<std::string>();
   cachedPsk.uses = 0;
   cache_.put(identity, cachedPsk);
 }

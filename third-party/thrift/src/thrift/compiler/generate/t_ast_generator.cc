@@ -24,15 +24,17 @@
 #include <thrift/compiler/ast/ast_visitor.h>
 #include <thrift/compiler/ast/t_include.h>
 #include <thrift/compiler/ast/t_type.h>
+#include <thrift/compiler/detail/pluggable_functions.h>
 #include <thrift/compiler/generate/t_generator.h>
 #include <thrift/compiler/lib/const_util.h>
 #include <thrift/compiler/lib/schematizer.h>
 
+#include <thrift/lib/cpp2/op/Sha256Hasher.h>
 #include <thrift/lib/cpp2/protocol/CompactProtocol.h>
 #include <thrift/lib/cpp2/protocol/DebugProtocol.h>
 #include <thrift/lib/cpp2/protocol/Serializer.h>
 #include <thrift/lib/cpp2/protocol/SimpleJSONProtocol.h>
-#include <thrift/lib/thrift/gen-cpp2/ast_types_custom_protocol.h>
+#include <thrift/lib/thrift/gen-cpp2/schema_types_custom_protocol.h>
 
 namespace apache {
 namespace thrift {
@@ -64,6 +66,11 @@ class t_ast_generator : public t_generator {
  public:
   using t_generator::t_generator;
 
+  static type::Schema gen_schema(
+      schematizer::options& schema_opts,
+      const source_manager& source_mgr,
+      const t_program& root_program);
+
   void process_options(
       const std::map<std::string, std::string>& options) override {
     out_dir_base_ = "gen-ast";
@@ -82,13 +89,15 @@ class t_ast_generator : public t_generator {
               fmt::format("Unknown protocol `{}`", pair.second));
         }
       } else if (pair.first == "include_generated") {
-        include_generated_ = true;
+        schema_opts_.include_generated_ = true;
       } else if (pair.first == "source_ranges") {
-        source_ranges_ = true;
+        schema_opts_.source_ranges_ = true;
       } else if (pair.first == "no_backcompat") {
         schema_opts_.include.reset(schematizer::included_data::DoubleWrites);
       } else if (pair.first == "use_hash") {
         schema_opts_.use_hash = true;
+      } else if (pair.first == "root_program_only") {
+        schema_opts_.only_root_program_ = true;
       } else if (pair.first == "ast") {
       } else {
         throw std::runtime_error(
@@ -99,36 +108,34 @@ class t_ast_generator : public t_generator {
       throw std::runtime_error(
           "Missing required argument protocol=json|debug|compact");
     }
+
+    if (schema_opts_.only_root_program_ && !schema_opts_.use_hash) {
+      throw std::runtime_error(
+          "root_program_only requires use_hash to be enabled");
+    }
   }
 
   void generate_program() override;
 
  private:
   template <typename Id>
-  Id positionToId(size_t pos) {
+  static Id positionToId(size_t pos) {
     return Id{int64_t(pos + 1)};
-  }
-  template <typename Id>
-  size_t idToPosition(Id id) {
-    return size_t(id) - 1;
   }
 
   std::ofstream f_out_;
   ast_protocol protocol_;
   schematizer::options schema_opts_;
-  bool include_generated_{false};
-  bool source_ranges_{false};
-  bool is_root_program_{true};
 };
 
-void t_ast_generator::generate_program() {
-  std::filesystem::create_directory(get_out_dir());
-  std::string fname = fmt::format("{}/{}.ast", get_out_dir(), program_->name());
-  f_out_.open(fname.c_str(), std::ios::out | std::ios::binary);
-
-  cpp2::Ast ast;
+type::Schema t_ast_generator::gen_schema(
+    schematizer::options& schema_opts,
+    const source_manager& source_mgr,
+    const t_program& root_program) {
+  type::Schema ast;
   std::unordered_map<const t_program*, apache::thrift::type::ProgramId>
       program_index;
+  std::unordered_map<apache::thrift::type::ProgramId, size_t> program_pos_index;
   std::unordered_map<const t_named*, apache::thrift::type::DefinitionId>
       definition_index;
   std::unordered_map<const t_named*, apache::thrift::type::DefinitionKey>
@@ -137,9 +144,12 @@ void t_ast_generator::generate_program() {
   auto intern_value = [&](std::unique_ptr<t_const_value> val,
                           t_program* = nullptr) {
     auto value = const_to_value(*val);
-    if (schema_opts_.use_hash) {
-      auto hash = op::hash<type::struct_t<protocol::Value>>(value);
-      auto key = static_cast<type::ValueKey>(hash);
+    if (schema_opts.use_hash) {
+      auto hash = op::hash<
+          type::struct_t<protocol::Value>,
+          apache::thrift::op::Sha256Hasher>(value);
+      type::ValueKey key;
+      memcpy(&key, hash.data(), sizeof(key));
       if (ast.valuesMap()->count(key)) {
         if (ast.valuesMap()->at(key) != value) {
           throw std::runtime_error(fmt::format(
@@ -148,7 +158,7 @@ void t_ast_generator::generate_program() {
       } else {
         ast.valuesMap()->insert({key, std::move(value)});
       }
-      return static_cast<t_program::value_id>(hash);
+      return static_cast<t_program::value_id>(key);
     }
 
     auto& values = ast.values().value();
@@ -157,31 +167,27 @@ void t_ast_generator::generate_program() {
     return ret;
   };
 
-  auto populate_defs = [&](t_program* program) {
-    auto& defs = ast.programs()
-                     ->at(idToPosition(program_index.at(program)))
-                     .definitions()
-                     .value();
-    auto& defKeys = ast.programs()
-                        ->at(idToPosition(program_index.at(program)))
-                        .definitionKeys()
-                        .value();
-    for (auto& def : program->definitions()) {
-      if (def.generated() && !include_generated_) {
+  auto populate_defs = [&](const t_program& program) {
+    auto& prog =
+        ast.programs()->at(program_pos_index.at(program_index.at(&program)));
+    auto& defs = prog.definitions().value();
+    auto& defKeys = prog.definitionKeys().value();
+    for (auto& def : program.definitions()) {
+      if (def.generated() && !schema_opts.include_generated_) {
         continue;
       }
-      if (!schema_opts_.use_hash) {
+      if (!schema_opts.use_hash) {
         defs.push_back(definition_index.at(&def));
       }
       defKeys.push_back(definition_key_index.at(&def));
     }
   };
 
-  auto src_range = [&](source_range in, const t_program* program) {
-    resolved_location begin(in.begin, source_mgr_);
-    resolved_location end(in.end, source_mgr_);
+  auto src_range = [&](source_range in, const t_program& program) {
+    resolved_location begin(in.begin, source_mgr);
+    resolved_location end(in.end, source_mgr);
     type::SourceRange range;
-    range.programId() = program_index.at(program);
+    range.programId() = program_index.at(&program);
     range.beginLine() = begin.line();
     range.beginColumn() = begin.column();
     range.endLine() = end.line();
@@ -193,9 +199,9 @@ void t_ast_generator::generate_program() {
                               type::DefinitionAttrs& attrs,
                               const t_program* program = nullptr) {
     program = program ? program : def.program();
-    attrs.sourceRange() = src_range(def.src_range(), program);
+    attrs.sourceRange() = src_range(def.src_range(), *program);
     if (def.has_doc()) {
-      attrs.docs()->sourceRange() = src_range(def.doc_range(), program);
+      attrs.docs()->sourceRange() = src_range(def.doc_range(), *program);
     }
   };
 
@@ -225,44 +231,49 @@ void t_ast_generator::generate_program() {
     }
   };
 
-  if (!program_bundle_.root_program()->scope()->find_by_uri(
-          "facebook.com/thrift/type/TypeUri")) {
+  if (!root_program.scope()->find_by_uri("facebook.com/thrift/type/TypeUri")) {
     throw std::runtime_error(
         "thrift/lib/thrift/schema.thrift must be present in one of the include paths.");
   }
 
-  schema_opts_.intern_value = intern_value;
-  schematizer schema_source(&program_bundle_, schema_opts_);
+  schema_opts.intern_value = intern_value;
+  schematizer schema_source(*root_program.scope(), schema_opts);
   const_ast_visitor visitor;
+  bool is_root_program = true;
   visitor.add_program_visitor([&](const t_program& program) {
     assert(!program_index.count(&program));
 
     auto& programs = *ast.programs();
     auto pos = programs.size();
-    auto program_id = positionToId<apache::thrift::type::ProgramId>(pos);
+    auto program_id = schema_opts.use_hash
+        ? apache::thrift::type::ProgramId{schematizer::identify_program(
+              program)}
+        : positionToId<apache::thrift::type::ProgramId>(pos);
     program_index[&program] = program_id;
+    program_pos_index[program_id] = pos;
     hydrate_const(programs.emplace_back(), *schema_source.gen_schema(program));
+    programs.back().id() = program_id;
     if (program.has_doc()) {
       programs.back().attrs()->docs()->sourceRange() =
-          src_range(program.doc_range(), &program);
+          src_range(program.doc_range(), program);
     }
 
-    auto is_root_program = std::exchange(is_root_program_, false);
+    auto was_root_program = std::exchange(is_root_program, false);
     for (auto* include : program.get_included_programs()) {
       // This could invalidate references into `programs`.
       if (!program_index.count(include)) {
         visitor(*include);
-        populate_defs(include);
+        populate_defs(*include);
       }
       programs.at(pos).includes().value().push_back(program_index.at(include));
     }
-    is_root_program_ = is_root_program;
+    is_root_program = was_root_program;
 
     // Double write to deprecated externed path. (T161963504)
     // The new path is populated in the Program struct by the schematizer.
-    if (schema_opts_.include.test(schematizer::included_data::DoubleWrites)) {
-      cpp2::SourceInfo info;
-      info.fileName() = source_mgr_.found_include_file(program.path())
+    if (schema_opts.include.test(schematizer::included_data::DoubleWrites)) {
+      type::SourceInfo info;
+      info.fileName() = source_mgr.found_include_file(program.path())
                             .value_or(program.path());
 
       for (const auto& [lang, incs] : program.language_includes()) {
@@ -286,7 +297,12 @@ void t_ast_generator::generate_program() {
 
 #define THRIFT_ADD_VISITOR(kind)                                     \
   visitor.add_##kind##_visitor([&](const t_##kind& node) {           \
-    if (node.generated() && !include_generated_) {                   \
+    if (node.generated() && !schema_opts.include_generated_) {       \
+      return;                                                        \
+    }                                                                \
+    auto key = schematizer::identify_definition(node);               \
+    definition_key_index[&node] = key;                               \
+    if (!is_root_program && schema_opts.only_root_program_) {        \
       return;                                                        \
     }                                                                \
     auto& definitions = *ast.definitions();                          \
@@ -297,14 +313,12 @@ void t_ast_generator::generate_program() {
     hydrate_const(def, *schema_source.gen_schema(node));             \
     set_source_range(node, *def.attrs());                            \
     set_child_source_ranges(node, def);                              \
-    auto key = schematizer::identify_definition(node);               \
     if (ast.definitionsMap()->count(key)) {                          \
       throw std::runtime_error(fmt::format(                          \
           "Duplicate definition key: {}",                            \
           node.uri().empty() ? node.name() : node.uri()));           \
     }                                                                \
-    ast.definitionsMap()[key] = definitions.back();                  \
-    definition_key_index[&node] = std::move(key);                    \
+    ast.definitionsMap()[std::move(key)] = definitions.back();       \
   })
   THRIFT_ADD_VISITOR(service);
   THRIFT_ADD_VISITOR(interaction);
@@ -319,7 +333,7 @@ void t_ast_generator::generate_program() {
   // Populate identifier source range map if enabled.
   auto span = [&](t_type_ref ref) {
     auto combinator = [&](t_type_ref ref, auto& recurse) -> void {
-      if (!ref || !source_ranges_ || !is_root_program_) {
+      if (!ref || !schema_opts.source_ranges_ || !is_root_program) {
         return;
       }
       while (ref->is_typedef() &&
@@ -338,8 +352,8 @@ void t_ast_generator::generate_program() {
       } else if (ref->is_primitive_type()) {
       } else {
         try {
-          cpp2::IdentifierRef ident;
-          ident.range() = src_range(ref.src_range(), program_);
+          type::IdentifierRef ident;
+          ident.range() = src_range(ref.src_range(), root_program);
           if (const auto& uri = ref->uri(); !uri.empty()) {
             ident.uri()->uri_ref() = uri;
           } else {
@@ -357,13 +371,13 @@ void t_ast_generator::generate_program() {
 
   auto const_spans = [&](const t_const_value* val) {
     auto combinator = [&](const t_const_value* val, auto recurse) -> void {
-      if (!val || !source_ranges_ || !is_root_program_) {
+      if (!val || !schema_opts.source_ranges_ || !is_root_program) {
         return;
       }
       if (auto rng = val->ref_range(); rng.begin != source_location{}) {
         try {
-          cpp2::IdentifierRef ident;
-          ident.range() = src_range(rng, program_);
+          type::IdentifierRef ident;
+          ident.range() = src_range(rng, root_program);
           if (auto enum_owner = val->get_enum()) {
             if (const auto& uri = enum_owner->uri(); !uri.empty()) {
               ident.uri()->uri_ref() = uri;
@@ -454,19 +468,29 @@ void t_ast_generator::generate_program() {
     const_spans(node.value());
   });
 
-  visitor(*program_);
-  populate_defs(program_);
-  if (schema_opts_.use_hash) {
+  visitor(root_program);
+  populate_defs(root_program);
+  if (schema_opts.use_hash) {
     ast.definitions()->clear();
   }
-  if (source_ranges_) {
-    for (auto inc : program_->includes()) {
-      cpp2::IncludeRef ident;
-      ident.range() = src_range(inc->str_range(), program_);
+  if (schema_opts.source_ranges_) {
+    for (auto inc : root_program.includes()) {
+      type::IncludeRef ident;
+      ident.range() = src_range(inc->str_range(), root_program);
       ident.target() = program_index.at(inc->get_program());
       ast.includeSourceRanges()->push_back(std::move(ident));
     }
   }
+
+  return ast;
+}
+
+void t_ast_generator::generate_program() {
+  std::filesystem::create_directory(get_out_dir());
+  std::string fname = fmt::format("{}/{}.ast", get_out_dir(), program_->name());
+  f_out_.open(fname.c_str(), std::ios::out | std::ios::binary);
+
+  auto ast = gen_schema(schema_opts_, source_mgr_, *program_);
 
   switch (protocol_) {
     case ast_protocol::json:
@@ -490,7 +514,24 @@ THRIFT_REGISTER_GENERATOR(
     "    source_ranges:     Enables population of the identifier source range map.\n"
     "    no_backcompat:     Disables double writes (breaking changes possible!).\n"
     "    use_hash:          Uses typeHashPrefixSha2_256 in typeUri and instead of extern ids.\n"
+    "    root_program_only: Only schematize the root program.\n"
     "");
+
+namespace {
+std::string gen_schema(
+    schematizer::options& schema_opts,
+    const source_manager& source_mgr,
+    const t_program& root_program) {
+  auto schema =
+      t_ast_generator::gen_schema(schema_opts, source_mgr, root_program);
+  return serialize<CompactProtocolWriter>(schema);
+}
+
+static bool register_schema_generation = []() {
+  detail::pluggable_functions().set<GetSchemaTag>(gen_schema);
+  return true;
+}();
+} // namespace
 
 } // namespace compiler
 } // namespace thrift

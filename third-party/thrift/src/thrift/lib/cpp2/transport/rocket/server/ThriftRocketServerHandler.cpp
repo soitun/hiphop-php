@@ -100,7 +100,10 @@ ThriftRocketServerHandler::ThriftRocketServerHandler(
           nullptr, /* eventBaseManager */
           nullptr, /* x509PeerCert */
           worker_->getServer()->getClientIdentityHook(),
-          worker_.get()),
+          worker_.get(),
+          apache::thrift::detail::getServiceInterceptorsIfServerIsSetUp(
+              *worker_->getServer())
+              .size()),
       setupFrameHandlers_(handlers),
       version_(static_cast<int32_t>(std::min(
           kRocketServerMaxVersion, THRIFT_FLAG(rocket_server_max_version)))),
@@ -113,15 +116,42 @@ ThriftRocketServerHandler::ThriftRocketServerHandler(
   for (const auto& handler : worker_->getServer()->getEventHandlersUnsafe()) {
     handler->newConnection(&connContext_);
   }
+#if FOLLY_HAS_COROUTINES
+  const auto& serviceInterceptorsInfo =
+      apache::thrift::detail::getServiceInterceptorsIfServerIsSetUp(
+          *worker_->getServer());
+  for (std::size_t i = 0; i < serviceInterceptorsInfo.size(); ++i) {
+    ServiceInterceptorBase::ConnectionInfo connectionInfo{
+        &connContext_,
+        connContext_.getStorageForServiceInterceptorOnConnectionByIndex(i)};
+    serviceInterceptorsInfo[i].interceptor->internal_onConnection(
+        connectionInfo);
+  }
+#endif // FOLLY_HAS_COROUTINES
 }
 
 ThriftRocketServerHandler::~ThriftRocketServerHandler() {
+#if FOLLY_HAS_COROUTINES
+  const auto& serviceInterceptorsInfo =
+      apache::thrift::detail::getServiceInterceptorsIfServerIsSetUp(
+          *worker_->getServer());
+  for (std::size_t i = 0; i < serviceInterceptorsInfo.size(); ++i) {
+    ServiceInterceptorBase::ConnectionInfo connectionInfo{
+        &connContext_,
+        connContext_.getStorageForServiceInterceptorOnConnectionByIndex(i)};
+    serviceInterceptorsInfo[i].interceptor->internal_onConnectionClosed(
+        connectionInfo);
+  }
+#endif // FOLLY_HAS_COROUTINES
+
   for (const auto& handler : worker_->getServer()->getEventHandlersUnsafe()) {
     handler->connectionDestroyed(&connContext_);
   }
   // Ensure each connAccepted() call has a matching connClosed()
   if (auto* observer = worker_->getServer()->getObserver()) {
-    observer->connClosed();
+    observer->connClosed(server::TServerObserver::ConnectionInfo(
+        reinterpret_cast<uint64_t>(transport_),
+        transport_->getSecurityProtocol()));
   }
 }
 
@@ -508,7 +538,7 @@ void ThriftRocketServerHandler::handleRequestCommon(
               std::move(metadata),
               rocket::Payload{},
               createDefaultRequestContext()),
-          folly::exceptionStr(std::current_exception()).toStdString());
+          folly::exceptionStr(folly::current_exception()).toStdString());
       return;
     }
   }

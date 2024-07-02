@@ -2538,28 +2538,27 @@ TEST(ThriftServer, IdleServerTimeout) {
 TEST(ThriftServer, ServerConfigTest) {
   ThriftServer server;
 
-  wangle::ServerSocketConfig defaultConfig;
   // If nothing is set, expect defaults
   auto serverConfig = server.getServerSocketConfig();
   EXPECT_EQ(
-      serverConfig.sslHandshakeTimeout, std::chrono::milliseconds::zero());
+      serverConfig->sslHandshakeTimeout, std::chrono::milliseconds::zero());
 
   // Idle timeout of 0 with no SSL handshake set, expect it to be 0.
   server.setIdleTimeout(std::chrono::milliseconds::zero());
   serverConfig = server.getServerSocketConfig();
   EXPECT_EQ(
-      serverConfig.sslHandshakeTimeout, std::chrono::milliseconds::zero());
+      serverConfig->sslHandshakeTimeout, std::chrono::milliseconds::zero());
 
   // Expect the explicit to always win
   server.setSSLHandshakeTimeout(std::chrono::milliseconds(100));
   serverConfig = server.getServerSocketConfig();
-  EXPECT_EQ(serverConfig.sslHandshakeTimeout, std::chrono::milliseconds(100));
+  EXPECT_EQ(serverConfig->sslHandshakeTimeout, std::chrono::milliseconds(100));
 
   // Clear it and expect it to be zero again (due to idle timeout = 0)
   server.setSSLHandshakeTimeout(std::nullopt);
   serverConfig = server.getServerSocketConfig();
   EXPECT_EQ(
-      serverConfig.sslHandshakeTimeout, std::chrono::milliseconds::zero());
+      serverConfig->sslHandshakeTimeout, std::chrono::milliseconds::zero());
 }
 
 TEST(ThriftServer, MultiPort) {
@@ -3864,6 +3863,16 @@ TEST(ThriftServer, AddRemoveWorker) {
   ThriftServer server;
   server.setInterface(std::make_shared<TestInterface>());
   server.setupThreadManager();
+
+  // Under normal operation, ThriftServer will lock the ResourcePoolSet on
+  // startup. The server instance never starts here, so that doesn't happen. The
+  // TM adapter for ResourcePools requires the ResourcePoolSet to be locked for
+  // ::workerCount() to report the correct number, so we need to manually lock
+  // it here.
+  if (server.useResourcePools()) {
+    server.resourcePoolSet().lock();
+  }
+
   auto tm = server.getThreadManager_deprecated();
   auto tc = tm->workerCount();
   tm->addWorker(10);

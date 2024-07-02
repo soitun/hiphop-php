@@ -16,8 +16,12 @@
 
 package thrift
 
+import (
+	"io"
+)
+
 type Deserializer struct {
-	Transport Transport
+	Transport io.ReadWriteCloser
 	Protocol  Format
 }
 
@@ -32,6 +36,12 @@ func NewCompactDeserializer() *Deserializer {
 	transport := NewMemoryBufferLen(1024)
 	protocol := NewCompactProtocol(transport)
 	return &Deserializer{transport, protocol}
+}
+
+func deserializeCompact(data []byte, msg Struct) error {
+	buffer := NewMemoryBufferWithData(data)
+	format := NewCompactProtocol(buffer)
+	return msg.Read(format)
 }
 
 // NewJSONDeserializer creates a new deserializer using the JSON protocol

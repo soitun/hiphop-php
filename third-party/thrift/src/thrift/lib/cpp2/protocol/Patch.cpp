@@ -760,13 +760,18 @@ ExtractedMasksFromPatch extractMaskFromPatch(
   }
   // We can only distinguish struct. For struct, add removed fields to write
   // mask. Both set and map use a set for Remove, so they are indistinguishable.
-  // Therefore, we always add removed keys to write map mask.
+  // For set and map, we cannot distinguish them. For view, we always add
+  // removed keys to write map mask. For non-view, it is a read-write operation
+  // if not intristic default.
   if (auto* value = findOp(patch, PatchOp::Remove)) {
     if (value->is_list()) {
       // struct patch
       insertRemoveWriteFieldsToMask(masks.write, value->as_list());
     } else if (!isIntrinsicDefault(*value)) {
       // set/map patch
+      if (!view) {
+        return {allMask(), allMask()};
+      }
       insertWriteKeysToMapMask(masks.write, value->as_set(), view);
     }
   }
@@ -795,6 +800,13 @@ ExtractedMasksFromPatch extractMaskFromPatch(
   if (auto* ensureUnion = findOp(patch, PatchOp::EnsureUnion)) {
     insertEnsureReadFieldsToMask(masks.read, *ensureUnion);
     masks.write = allMask();
+  }
+
+  // Read mask should be always subset of write mask. If not, make read mask
+  // equal to write mask. This can happen for struct or map fields with patch
+  // operations that returns noneMask for read mask (i.e. assign).
+  if ((masks.read | masks.write) != masks.write) {
+    masks.read = masks.write;
   }
 
   return masks;

@@ -38,7 +38,7 @@ let lambda_flags (f : Nast.fun_) =
     ~readonly_this:ft_readonly_this
     ~support_dynamic_type:fe_support_dynamic_type
     ~is_memoized:ft_is_memoized
-    ~variadic:(List.exists f.f_params ~f:(fun p -> p.param_is_variadic))
+    ~variadic:(List.exists f.f_params ~f:Aast_utils.is_param_variadic)
 
 let lambda_decl_in_env (env : Decl_env.env) (f : Nast.fun_) :
     Typing_defs.fun_elt =
@@ -66,7 +66,7 @@ let lambda_decl_in_env (env : Decl_env.env) (f : Nast.fun_) :
   let ft_flags = lambda_flags f in
   let fe_type =
     mk
-      ( Reason.Rwitness_from_decl fe_pos,
+      ( Reason.witness_from_decl fe_pos,
         Tfun
           {
             ft_tparams = [];

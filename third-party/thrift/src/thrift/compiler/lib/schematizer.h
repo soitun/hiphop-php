@@ -22,7 +22,7 @@
 #include <thrift/compiler/ast/t_const_value.h>
 #include <thrift/compiler/ast/t_enum.h>
 #include <thrift/compiler/ast/t_program.h>
-#include <thrift/compiler/ast/t_program_bundle.h>
+#include <thrift/compiler/ast/t_scope.h>
 #include <thrift/compiler/ast/t_service.h>
 #include <thrift/compiler/ast/t_structured.h>
 #include <thrift/compiler/ast/t_typedef.h>
@@ -61,10 +61,13 @@ class schematizer {
     InternFunc intern_value;
     bool use_hash = false; // Uses typeHashPrefixSha2_256 in typeUri and
                            // definitionKey instead of definitionId.
+    bool include_generated_ = false;
+    bool source_ranges_ = false;
+    bool only_root_program_ = false;
   };
 
-  explicit schematizer(const t_program_bundle* bundle, options opts)
-      : bundle_(bundle), opts_(std::move(opts)) {}
+  explicit schematizer(const t_scope& scope, options opts)
+      : scope_(scope), opts_(std::move(opts)) {}
 
   // Creates a constant of type schema.Struct describing the argument.
   // https://github.com/facebook/fbthrift/blob/main/thrift/lib/thrift/schema.thrift
@@ -82,9 +85,10 @@ class schematizer {
   // Gets a universally unique identifier for a definition that is consistent
   // across runs on different including programs.
   static std::string identify_definition(const t_named& node);
+  static int64_t identify_program(const t_program& node);
 
  private:
-  const t_program_bundle* bundle_;
+  const t_scope& scope_;
   options opts_;
 
   t_type_ref stdType(std::string_view uri);
@@ -119,6 +123,17 @@ class schematizer {
 // TODO: allow increasing type fidelity.
 std::unique_ptr<t_const_value> wrap_with_protocol_value(
     const t_const_value& value, t_type_ref ttype);
+
+// Tag for obtaining a compact-encoded schema for the root program via pluggable
+// function.
+struct GetSchemaTag {
+  static std::string defaultImpl(
+      schematizer::options& /* schema_opts */,
+      const source_manager& /* source_mgr */,
+      const t_program& /* root_program */) {
+    return {};
+  }
+};
 } // namespace compiler
 } // namespace thrift
 } // namespace apache

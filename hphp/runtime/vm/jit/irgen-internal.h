@@ -39,7 +39,6 @@
 
 namespace HPHP::jit::irgen {
 
-TRACE_SET_MOD(hhir);
 
 //////////////////////////////////////////////////////////////////////
 // Convenient short-hand state accessors
@@ -132,7 +131,13 @@ inline Block* defBlock(IRGS& env, Block::Hint hint = Block::Hint::Neither) {
 }
 
 inline void hint(IRGS& env, Block::Hint h) {
-  env.irb->curBlock()->setHint(h);
+  // Force IRBuilder to start a new block if we're currently at a block end,
+  // it's likely that the caller intended for only the ->next() branch of this
+  // block to be marked as unlikely.
+  if (!env.irb->inUnreachableState()) {
+    env.irb->ensureBlockAppendable();
+    env.irb->curBlock()->setHint(h);
+  }
 }
 
 /*
@@ -514,7 +519,7 @@ inline SSATmp* pop(IRGS& env, GuardConstraint gc = DataTypeSpecific) {
   auto const knownType = env.irb->stack(offset, gc).type;
   auto value = gen(env, LdStk, knownType, IRSPRelOffsetData{offset}, sp(env));
   env.irb->fs().decBCSPDepth();
-  FTRACE(2, "popping {}\n", *value->inst());
+  FTRACE_MOD(Trace::hhir, 2, "popping {}\n", *value->inst());
   return value;
 }
 
@@ -553,7 +558,7 @@ inline void popDecRef(IRGS& env,
 }
 
 inline SSATmp* push(IRGS& env, SSATmp* tmp) {
-  FTRACE(2, "pushing {}\n", *tmp->inst());
+  FTRACE_MOD(Trace::hhir, 2, "pushing {}\n", *tmp->inst());
   env.irb->fs().incBCSPDepth();
   auto const offset = offsetFromIRSP(env, BCSPRelOffset{0});
   gen(env, StStk, IRSPRelOffsetData{offset}, sp(env), tmp);
@@ -580,7 +585,7 @@ inline void allocActRec(IRGS& env) {
 
 inline Type topType(IRGS& env, BCSPRelOffset idx = BCSPRelOffset{0},
                     GuardConstraint gc = DataTypeSpecific) {
-  FTRACE(5, "Asking for type of stack elem {}\n", idx.offset);
+  FTRACE_MOD(Trace::hhir, 5, "Asking for type of stack elem {}\n", idx.offset);
   return env.irb->stack(offsetFromIRSP(env, idx), gc).type;
 }
 
@@ -610,7 +615,7 @@ inline SSATmp* apparate(IRGS& env, Type type) {
 
 inline BCMarker makeMarker(IRGS& env, SrcKey sk) {
   auto const stackOff = spOffBCFromStackBase(env);
-  FTRACE(2, "makeMarker: sk {} sp {}\n", showShort(sk), stackOff.offset);
+  FTRACE_MOD(Trace::hhir, 2, "makeMarker: sk {} sp {}\n", showShort(sk), stackOff.offset);
 
   return BCMarker {
     sk,
@@ -658,20 +663,36 @@ inline SSATmp* ldCtxCls(IRGS& env) {
 //////////////////////////////////////////////////////////////////////
 // Other common helpers
 
-inline bool classIsPersistentOrCtxParent(IRGS& env, const Class* cls) {
-  if (!cls) return false;
-  if (classHasPersistentRDS(cls)) return true;
-  if (!curClass(env)) return false;
-  return curClass(env)->classof(cls);
+inline const Class* lookupKnownWithUnit(IRGS& env, const Class* cls) {
+  auto const unit = curUnit(env);
+  if (cls && cls->preClass()->unit() == unit) return cls;
+  return Class::lookupKnown(cls, curClass(env));
 }
 
-inline const Class* lookupUniqueClass(IRGS& env,
-                                      const StringData* name,
-                                      bool trustUnit = false) {
-  // TODO: Once top level code is entirely dead it should be safe to always
-  // trust the unit.
-  return Class::lookupUniqueInContext(
-    name, curClass(env), trustUnit ? curUnit(env) : nullptr);
+inline const Class* lookupKnownWithUnit(IRGS& env, const StringData* name) {
+  auto const ne = NamedType::getOrCreate(name);
+  auto const cls = ne->clsList();
+  return lookupKnownWithUnit(env, cls);
+}
+
+inline const Class* lookupKnown(IRGS& env, const Class* cls) {
+  return Class::lookupKnown(cls, curClass(env));
+}
+
+inline const Class* lookupKnown(IRGS& env, const StringData* name) {
+  auto const ne = NamedType::getOrCreate(name);
+  auto const cls = ne->clsList();
+  return lookupKnown(env, cls);
+}
+
+inline Class::ClassLookup lookupKnownMaybe(IRGS& env, const Class* cls) {
+  return Class::lookupKnownMaybe(cls, curClass(env));
+}
+
+inline Class::ClassLookup lookupKnownMaybe(IRGS& env, const StringData* name) {
+  auto const ne = NamedType::getOrCreate(name);
+  auto const cls = ne->clsList();
+  return lookupKnownMaybe(env, cls);
 }
 
 inline SSATmp* ldCls(IRGS& env,
@@ -682,21 +703,26 @@ inline SSATmp* ldCls(IRGS& env,
   if (lazyClassOrName->hasConstVal()) {
     auto const cnameStr = isLazy ? lazyClassOrName->lclsVal().name() :
                                    lazyClassOrName->strVal();
-    if (auto const cls = lookupUniqueClass(env, cnameStr)) {
-      if (!classIsPersistentOrCtxParent(env, cls)) {
-        auto const clsName = isLazy ? cns(env, cnameStr) : lazyClassOrName;
-        gen(env, LdClsCached, LdClsFallbackData { fallback }, clsName);
-      }
+    auto const cls = lookupKnown(env, cnameStr);
+    if (cls) {
       return cns(env, cls);
+    } else {
+      auto const clsName = isLazy ? cns(env, cnameStr) : lazyClassOrName;
+      return gen(env, LdClsCached, LdClsFallbackData { fallback }, clsName);
     }
-    auto const clsName = isLazy ? cns(env, cnameStr) : lazyClassOrName;
-    return gen(env, LdClsCached, LdClsFallbackData { fallback }, clsName);
   }
   auto const ctxClass = curClass(env);
   auto const ctxTmp = ctxClass ? cns(env, ctxClass) : cns(env, nullptr);
   auto const clsName =
     isLazy ? gen(env, LdLazyClsName, lazyClassOrName) : lazyClassOrName;
   return gen(env, LdCls, LdClsFallbackData { fallback }, clsName, ctxTmp);
+}
+
+inline SSATmp* lookupCls(IRGS& env, const StringData* clsName) {
+  if (auto const knownCls = lookupKnown(env, clsName)) {
+    return cns(env, knownCls);
+  }
+  return gen(env, LookupClsCached, cns(env, clsName));
 }
 
 //////////////////////////////////////////////////////////////////////

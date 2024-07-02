@@ -40,6 +40,7 @@ namespace wangle {
 
 class AcceptObserver;
 class ManagedConnection;
+class PasswordInFileFactory;
 class SecurityProtocolContextManager;
 class SSLContextManager;
 
@@ -66,7 +67,7 @@ class Acceptor : public folly::AsyncServerSocket::AcceptCallback,
     kDone, // no longer accepting, and all connections finished
   };
 
-  explicit Acceptor(const ServerSocketConfig& accConfig);
+  explicit Acceptor(std::shared_ptr<const ServerSocketConfig> accConfig);
   ~Acceptor() override;
 
   /**
@@ -208,14 +209,14 @@ class Acceptor : public folly::AsyncServerSocket::AcceptCallback,
    * Will return an empty string if no name has been configured.
    */
   const std::string& getName() const {
-    return accConfig_.name;
+    return accConfig_->name;
   }
 
   /**
    * Returns the ssl handshake connection timeout of this VIP
    */
   std::chrono::milliseconds getSSLHandshakeTimeout() const {
-    return accConfig_.sslHandshakeTimeout;
+    return accConfig_->sslHandshakeTimeout;
   }
 
   /**
@@ -241,10 +242,10 @@ class Acceptor : public folly::AsyncServerSocket::AcceptCallback,
   virtual void forceStop();
 
   bool isSSL() const {
-    return accConfig_.isSSL();
+    return accConfig_->isSSL();
   }
 
-  const ServerSocketConfig& getConfig() const {
+  std::shared_ptr<const ServerSocketConfig> getConfig() const {
     return accConfig_;
   }
 
@@ -519,7 +520,7 @@ class Acceptor : public folly::AsyncServerSocket::AcceptCallback,
   void onConnectionAdded(const ManagedConnection*) override {}
   void onConnectionRemoved(const ManagedConnection*) override {}
 
-  const ServerSocketConfig accConfig_;
+  std::shared_ptr<const ServerSocketConfig> accConfig_;
 
   // Helper function to initialize downstreamConnectionManager_
   virtual void initDownstreamConnectionManager(folly::EventBase* eventBase);
@@ -527,14 +528,31 @@ class Acceptor : public folly::AsyncServerSocket::AcceptCallback,
   virtual DefaultToFizzPeekingCallback* getFizzPeeker() {
     return &defaultFizzPeeker_;
   }
-  virtual std::shared_ptr<fizz::server::FizzServerContext> createFizzContext();
+
+  /**
+   * Subclasses can override `createFizzContext(...)` to to customize the Fizz
+   * context that will be used when accepting TLS 1.3 connections.
+   */
+  virtual std::shared_ptr<fizz::server::FizzServerContext> createFizzContext(
+      const std::vector<SSLContextConfig>& sslContextConfigs,
+      const FizzConfig& fizzConfig,
+      bool strictSSL);
+
   virtual std::shared_ptr<fizz::server::TicketCipher> createFizzTicketCipher(
       const TLSTicketKeySeeds& seeds,
       std::shared_ptr<fizz::Factory> factory,
       std::shared_ptr<fizz::server::CertManager> certManager,
       folly::Optional<std::string> pskContext);
 
-  virtual std::unique_ptr<fizz::server::CertManager> createFizzCertManager();
+  /**
+   * Subclasses can override `createFizzCertManager` to return a different
+   * implementation `fizz::server::CertManager` which stores the server side TLS
+   * certificates for each SNI hosted on this Acceptor.
+   */
+  virtual std::unique_ptr<fizz::server::CertManager> createFizzCertManager(
+      const std::vector<SSLContextConfig>& sslContextConfigs,
+      const std::shared_ptr<PasswordInFileFactory>& pwFactory,
+      bool strictSSL);
 
   /**
    * Socket options to apply to the client socket

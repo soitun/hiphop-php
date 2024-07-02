@@ -17,18 +17,18 @@
 package thrift
 
 import (
-	"bytes"
+	"io"
 	"strings"
 	"testing"
 )
 
 func TestReadWriteCompactProtocol(t *testing.T) {
-	ReadWriteProtocolTest(t, func(transport Transport) Format { return NewCompactProtocol(transport) })
+	ReadWriteProtocolTest(t, func(transport io.ReadWriteCloser) Format { return NewCompactProtocol(transport) })
 	// CompactProtocol is capable of reading and writing in different goroutines.
-	ReadWriteProtocolParallelTest(t, func(transport Transport) Format { return NewCompactProtocol(transport) })
-	transports := []Transport{
+	ReadWriteProtocolParallelTest(t, func(transport io.ReadWriteCloser) Format { return NewCompactProtocol(transport) })
+	transports := []io.ReadWriteCloser{
 		NewMemoryBuffer(),
-		NewFramedTransport(NewMemoryBuffer()),
+		newFramedTransport(NewMemoryBuffer()),
 	}
 	for _, trans := range transports {
 		p := NewCompactProtocol(trans)
@@ -99,9 +99,7 @@ func TestInitialAllocationMapCompactProtocolLimitedR(t *testing.T) {
 
 	// attempts to allocate a map of 930M elements for a 9 byte message
 	data := []byte("%0\x88\x8a\x97\xb7\xc4\x030")
-	p := NewCompactProtocol(
-		NewStreamTransportLimitedR(bytes.NewBuffer(data), len(data)),
-	)
+	p := NewCompactProtocol(NewMemoryBufferWithData(data))
 
 	err := m.Read(p)
 	if err == nil {

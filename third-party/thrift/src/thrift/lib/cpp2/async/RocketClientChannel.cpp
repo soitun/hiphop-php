@@ -21,25 +21,20 @@
 
 #include <fmt/core.h>
 #include <folly/ExceptionString.h>
-#include <folly/GLog.h>
 #include <folly/Memory.h>
 #include <folly/Range.h>
 #include <folly/Try.h>
 #include <folly/compression/Compression.h>
-#include <folly/fibers/FiberManager.h>
 #include <folly/io/IOBuf.h>
 #include <folly/io/IOBufQueue.h>
 #include <folly/io/async/AsyncTransport.h>
 #include <folly/io/async/EventBase.h>
-#include <folly/io/async/Request.h>
 
 #include <thrift/lib/cpp/TApplicationException.h>
 #include <thrift/lib/cpp/protocol/TBase64Utils.h>
 #include <thrift/lib/cpp/protocol/TProtocolTypes.h>
 #include <thrift/lib/cpp/transport/THeader.h>
 #include <thrift/lib/cpp2/Flags.h>
-#include <thrift/lib/cpp2/async/HeaderChannel.h>
-#include <thrift/lib/cpp2/async/RequestChannel.h>
 #include <thrift/lib/cpp2/async/ResponseChannel.h>
 #include <thrift/lib/cpp2/async/RpcTypes.h>
 #include <thrift/lib/cpp2/protocol/CompactProtocol.h>
@@ -138,7 +133,7 @@ folly::Try<FirstResponsePayload> decodeResponseError(
     return folly::Try<FirstResponsePayload>(
         folly::make_exception_wrapper<TApplicationException>(fmt::format(
             "Error parsing error frame: {}",
-            folly::exceptionStr(std::current_exception()).toStdString())));
+            folly::exceptionStr(folly::current_exception()).toStdString())));
   }
 
   folly::Optional<std::string> exCode;
@@ -296,7 +291,7 @@ FOLLY_NODISCARD folly::exception_wrapper processFirstResponse(
               } catch (...) {
                 return TApplicationException(
                     "anyException deserialization failure: " +
-                    folly::exceptionStr(std::current_exception())
+                    folly::exceptionStr(folly::current_exception())
                         .toStdString());
               }
               if (*anyException.protocol_ref() == type::kNoProtocol) {

@@ -771,6 +771,7 @@ module Typing = struct
     | MultipleInstantiationInheritence [@value 4480]
     | InternalMethCaller [@value 4481]
     | ClassPointerToString [@value 4482]
+    | InvalidXhpAttributeValue [@value 4483]
   (* Add new Typing codes here! Comment out when deprecating. *)
   [@@deriving enum, show { with_path = false }]
 
@@ -784,6 +785,9 @@ module Warning = struct
     | SketchyNullCheck [@value 12003]
     | NonDisjointCheck [@value 12004]
     | CastNonPrimitive [@value 12005]
+    | TruthinessTest [@value 12006]
+    | EqualityCheck [@value 12007]
+    | Duplicate_properties [@value 12008]
   [@@deriving enum, show { with_path = false }]
 end
 

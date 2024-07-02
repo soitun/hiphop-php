@@ -358,7 +358,7 @@ let fresh_type ?variance env id_provider p =
     env
     id_provider
     p
-    (Reason.Rtype_variable p)
+    (Reason.type_variable p)
     ?variance
     ~is_error:false
 
@@ -424,7 +424,7 @@ let get_tyvar_eager_solve_fail env v =
 let expand_var env r v =
   let (env, ty) = get_type env r v in
   if get_tyvar_eager_solve_fail env v then
-    (env, mk (Reason.Rsolve_fail (Reason.to_pos r), get_node ty))
+    (env, mk (Reason.solve_fail (Reason.to_pos r), get_node ty))
   else
     (env, ty)
 
@@ -683,6 +683,7 @@ module Size = struct
       1 + ty_size env ct.ct_val + type_size_option ~f:(ty_size env) ct.ct_key
     | (_, Ttype_switch { predicate = _; ty_true; ty_false }) ->
       1 + ty_size env ty_true + ty_size env ty_false
+    | (_, Thas_const { name = _; ty }) -> 1 + ty_size env ty
 
   let internal_type_size env ty =
     match ty with

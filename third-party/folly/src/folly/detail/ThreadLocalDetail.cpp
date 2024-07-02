@@ -16,9 +16,11 @@
 
 #include <folly/detail/ThreadLocalDetail.h>
 
+#include <algorithm>
 #include <list>
 #include <mutex>
 
+#include <folly/detail/thread_local_globals.h>
 #include <folly/lang/Hint.h>
 #include <folly/memory/SanitizeLeak.h>
 #include <folly/synchronization/CallOnce.h>
@@ -28,6 +30,31 @@ constexpr auto kBigGrowthFactor = 1.7;
 
 namespace folly {
 namespace threadlocal_detail {
+
+bool ThreadEntrySet::basicSanity() const {
+  return //
+      threadEntries.size() == entryToVectorSlot.size() &&
+      std::all_of(
+          entryToVectorSlot.begin(),
+          entryToVectorSlot.end(),
+          [&](auto const& kvp) {
+            return kvp.second < threadEntries.size() &&
+                threadEntries[kvp.second] == kvp.first;
+          });
+}
+
+void ThreadEntrySet::compress() {
+  assert(compressible());
+  // compress the vector
+  threadEntries.shrink_to_fit();
+  // compress the index
+  EntryIndex newIndex;
+  newIndex.reserve(entryToVectorSlot.size());
+  while (!entryToVectorSlot.empty()) {
+    newIndex.insert(entryToVectorSlot.extract(entryToVectorSlot.begin()));
+  }
+  entryToVectorSlot = std::move(newIndex);
+}
 
 StaticMetaBase::StaticMetaBase(ThreadEntry* (*threadEntry)(), bool strict)
     : nextId_(1), threadEntry_(threadEntry), strict_(strict) {
@@ -56,38 +83,29 @@ ThreadEntryList* StaticMetaBase::getThreadEntryList() {
     pthread_key_t pthreadKey_;
   };
 
-  static thread_local ThreadEntryList* threadEntryListTL{};
-  if (kUseThreadLocal && threadEntryListTL) {
-    return threadEntryListTL;
-  }
   auto& instance = detail::createGlobal<PthreadKey, void>();
 
   ThreadEntryList* threadEntryList =
       static_cast<ThreadEntryList*>(pthread_getspecific(instance.get()));
 
   if (FOLLY_UNLIKELY(!threadEntryList)) {
-    threadEntryList = new ThreadEntryList();
-    int ret = pthread_setspecific(instance.get(), threadEntryList);
+    auto uptr = std::make_unique<ThreadEntryList>();
+    int ret = pthread_setspecific(instance.get(), uptr.get());
     checkPosixError(ret, "pthread_setspecific failed");
+    threadEntryList = uptr.release();
     threadEntryList->count = 1; // Pin once for own onThreadExit callback.
+    lsan_ignore_object(threadEntryList);
   }
 
-  if (kUseThreadLocal) {
-    threadEntryListTL = threadEntryList;
-  }
   return threadEntryList;
 }
 
 bool StaticMetaBase::dying() {
-  for (auto te = getThreadEntryList()->head; te; te = te->listNext) {
-    if (te->removed_) {
-      return true;
-    }
-  }
-  return false;
+  return folly::detail::thread_is_dying();
 }
 
 void StaticMetaBase::onThreadExit(void* ptr) {
+  folly::detail::thread_is_dying_mark();
   auto threadEntry = static_cast<ThreadEntry*>(ptr);
 
   {
@@ -96,16 +114,19 @@ void StaticMetaBase::onThreadExit(void* ptr) {
     // Make sure this ThreadEntry is available if ThreadLocal A is accessed in
     // ThreadLocal B destructor.
     pthread_setspecific(meta.pthreadKey_, threadEntry);
+
+    std::shared_lock forkRlock(meta.forkHandlerLock_);
     std::shared_lock rlock(meta.accessAllThreadsLock_, std::defer_lock);
     if (meta.strict_) {
       rlock.lock();
     }
+    meta.removeThreadEntryFromAllInMap(threadEntry);
+    forkRlock.unlock();
     {
       std::lock_guard<std::mutex> g(meta.lock_);
       // mark it as removed
       threadEntry->removed_ = true;
       auto elementsCapacity = threadEntry->getElementsCapacity();
-      meta.removeThreadEntryFromAllInMapLocked(threadEntry);
       auto beforeCount = meta.totalElementWrappers_.fetch_sub(elementsCapacity);
       DCHECK_GE(beforeCount, elementsCapacity);
       // No need to hold the lock any longer; the ThreadEntry is private to this
@@ -124,7 +145,7 @@ void StaticMetaBase::onThreadExit(void* ptr) {
           shouldRun = true;
         }
       }
-      DCHECK(threadEntry->meta->isThreadEntryRemovedFromAllInMap(threadEntry));
+      DCHECK(meta.isThreadEntryRemovedFromAllInMap(threadEntry, !meta.strict_));
     }
     pthread_setspecific(meta.pthreadKey_, nullptr);
   }
@@ -185,7 +206,7 @@ void StaticMetaBase::cleanupThreadEntriesAndList(
 
     // Fail safe check to make sure that the ThreadEntry is not present
     // before issuing a delete.
-    DCHECK(tmp->meta->isThreadEntryRemovedFromAllInMap(tmp));
+    DCHECK(tmp->meta->isThreadEntryRemovedFromAllInMap(tmp, true));
 
     delete tmp;
   }
@@ -205,20 +226,17 @@ uint32_t StaticMetaBase::allocate(EntryID* ent) {
   std::lock_guard<std::mutex> g(meta.lock_);
 
   id = ent->value.load(std::memory_order_relaxed);
-  if (id != kEntryIDInvalid) {
-    return id;
+
+  if (id == kEntryIDInvalid) {
+    if (!meta.freeIds_.empty()) {
+      id = meta.freeIds_.back();
+      meta.freeIds_.pop_back();
+    } else {
+      id = meta.nextId_++;
+    }
+    uint32_t old_id = ent->value.exchange(id, std::memory_order_release);
+    DCHECK_EQ(old_id, kEntryIDInvalid);
   }
-
-  if (!meta.freeIds_.empty()) {
-    id = meta.freeIds_.back();
-    meta.freeIds_.pop_back();
-  } else {
-    id = meta.nextId_++;
-  }
-
-  uint32_t old_id = ent->value.exchange(id, std::memory_order_release);
-  DCHECK_EQ(old_id, kEntryIDInvalid);
-
   return id;
 }
 
@@ -228,8 +246,10 @@ void StaticMetaBase::destroy(EntryID* ent) {
 
     // Elements in other threads that use this id.
     std::vector<ElementWrapper> elements;
+    ThreadEntrySet tmpEntrySet;
 
     {
+      std::shared_lock forkRlock(meta.forkHandlerLock_);
       std::unique_lock wlock(meta.accessAllThreadsLock_, std::defer_lock);
       if (meta.strict_) {
         /*
@@ -242,19 +262,17 @@ void StaticMetaBase::destroy(EntryID* ent) {
         wlock.lock();
       }
 
+      uint32_t id =
+          ent->value.exchange(kEntryIDInvalid, std::memory_order_acquire);
+      if (id == kEntryIDInvalid) {
+        return;
+      }
+      meta.allId2ThreadEntrySets_[id].swap(tmpEntrySet);
+      forkRlock.unlock();
+
       {
         std::lock_guard<std::mutex> g(meta.lock_);
-        uint32_t id =
-            ent->value.exchange(kEntryIDInvalid, std::memory_order_relaxed);
-        if (id == kEntryIDInvalid) {
-          return;
-        }
-
-        auto threadEntrySet = get_ptr(meta.allThreadEntryMap_, id);
-        if (!threadEntrySet) {
-          return;
-        }
-        for (auto& e : threadEntrySet->threadEntries) {
+        for (auto& e : tmpEntrySet.threadEntries) {
           auto elementsCapacity = e->getElementsCapacity();
           if (id < elementsCapacity) {
             if (e->elements[id].ptr) {
@@ -271,13 +289,10 @@ void StaticMetaBase::destroy(EntryID* ent) {
                * destructing.
                */
               e->elements[id].ptr = nullptr;
-              e->elements[id].deleter1 = nullptr;
-              e->elements[id].ownsDeleter = false;
+              e->elements[id].deleter = 0; // also unsets isLinked
             }
-            e->elements[id].isLinked = false;
           }
         }
-        meta.clearSetforIdInMapLocked(id);
         meta.freeIds_.push_back(id);
       }
     }
@@ -403,35 +418,29 @@ void StaticMetaBase::reserve(EntryID* id) {
 
     threadEntry->setElementsCapacity(newCapacity);
   }
-  for (size_t i = prevCapacity; i < newCapacity; ++i) {
-    threadEntry->elements[i].isLinked = false;
-  }
 
   meta.totalElementWrappers_ += (newCapacity - prevCapacity);
   free(reallocated);
 }
 
 /*
- * Evict threadEntry for @id from allThreadEntryMap_
- * ThreadEntry* set and release the element @id.
+ * release the element @id.
  */
 void* ThreadEntry::releaseElement(uint32_t id) {
+  auto rlocked = meta->allId2ThreadEntrySets_[id].rlock();
   return elements[id].release();
 }
 
 /*
- * Cleanup the element and set the thread entry in the map, if valid.
+ * Cleanup the element. Caller is holding rlock on the ThreadEntrySet
+ * corresponding to the id. Running destructors of user objects isn't ideal
+ * under lock but this is the historical behavior. It should be possible to
+ * restructure this if a need for it arises.
  */
-void ThreadEntry::cleanupElementAndSetThreadEntry(
-    uint32_t id, bool validThreadEntry) {
+void ThreadEntry::cleanupElement(uint32_t id) {
   elements[id].dispose(TLPDestructionMode::THIS_THREAD);
   // Cleanup
   elements[id].cleanup();
-  // Add the allThreadEntryMap_ only iff newPtr is not nullptr and threadEntry
-  // is not marked as removed
-  if (validThreadEntry) {
-    meta->addThreadEntryToMap(this, id);
-  }
 }
 
 FOLLY_STATIC_CTOR_PRIORITY_MAX

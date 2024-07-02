@@ -25,7 +25,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/golang/glog"
 
@@ -133,7 +132,7 @@ func main() {
 	// Startup thrift server
 	handler := &dataConformanceServiceHandler{registry}
 	proc := conformance.NewConformanceServiceProcessor(handler)
-	ts, err := newServer(
+	ts, addr, err := newServer(
 		proc,
 		// Ports must be dynamically allocated to prevent any conflicts.
 		// Allocating a free port is usually done by setting the port number as zero.
@@ -143,34 +142,26 @@ func main() {
 	if err != nil {
 		glog.Fatalf("failed to start server: %v", err)
 	}
+	fmt.Println(addr.(*net.TCPAddr).Port)
+	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
-		err := ts.Serve()
+		err := ts.ServeContext(ctx)
 		if err != nil {
 			glog.Fatalf("failed to start server")
 		}
 	}()
 
-	// When server is started, it must print the listening port to the standard output console.
-	for i := 1; i < 10; i++ {
-		// Unfortunately there is currently no way to tell
-		// if the server has started listening :(
-		time.Sleep(1 * time.Second)
-		addr := ts.ServerTransport().Addr()
-		if addr != nil {
-			fmt.Println(addr.(*net.TCPAddr).Port)
-			break
-		}
-	}
 	<-sigc
+	cancel()
 	os.Exit(0)
 }
 
-func newServer(processor thrift.ProcessorContext, addr string) (thrift.Server, error) {
+func newServer(processor thrift.ProcessorContext, addr string) (thrift.Server, net.Addr, error) {
 	socket, err := thrift.NewServerSocket(addr)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return thrift.NewSimpleServer(processor, socket, thrift.TransportIDHeader), nil
+	return thrift.NewSimpleServer(processor, socket, thrift.TransportIDHeader), socket.Addr(), nil
 }
 
 type dataConformanceServiceHandler struct {

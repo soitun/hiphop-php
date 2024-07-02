@@ -18,6 +18,7 @@
 
 #include <utility>
 
+#include <glog/logging.h>
 #include <folly/json.h>
 #include <folly/logging/xlog.h>
 #include <thrift/lib/cpp2/op/detail/BasePatch.h>
@@ -40,7 +41,8 @@ inline constexpr bool kProtocolSupportsDynamicPatch =
     std::is_same_v<Protocol, BinaryProtocolReader> ||
     std::is_same_v<Protocol, BinaryProtocolWriter> ||
     std::is_same_v<Protocol, CompactProtocolReader> ||
-    std::is_same_v<Protocol, CompactProtocolWriter>;
+    std::is_same_v<Protocol, CompactProtocolWriter> ||
+    std::is_same_v<Protocol, protocol::detail::ObjectWriter>;
 
 /// A patch adapter that only supports 'assign',
 /// which is the minimum any patch should support.
@@ -108,6 +110,7 @@ class AssignPatch : public BaseAssignPatch<Patch, AssignPatch<Patch>> {
       other.apply(*p);
     } else {
       dynPatch_ = std::move(other.dynPatch_);
+      DCHECK(dynPatch_.value().members());
     }
   }
 
@@ -130,6 +133,13 @@ class AssignPatch : public BaseAssignPatch<Patch, AssignPatch<Patch>> {
         protocol::detail::parseValue(prot, TType::T_STRUCT).as_object());
   }
 
+  bool empty() const { return !dynPatch_.has_value() && Base::empty(); }
+
+  void reset() {
+    dynPatch_.reset();
+    Base::reset();
+  }
+
  private:
   using Base::data_;
   std::optional<protocol::Object> dynPatch_;
@@ -140,6 +150,8 @@ class AssignPatch : public BaseAssignPatch<Patch, AssignPatch<Patch>> {
       dynPatch_.reset();
     } else {
       dynPatch_ = std::move(v);
+      Base::reset();
+      DCHECK(dynPatch_.value().members());
     }
   }
 
@@ -543,7 +555,7 @@ class BinaryPatch : public BaseStringPatch<Patch, BinaryPatch<Patch>> {
   void apply(std::string& val) const {
     folly::IOBuf buf;
     apply(buf);
-    val = buf.moveToFbString().toStdString();
+    val = buf.to<std::string>();
   }
 
  private:

@@ -17,22 +17,56 @@
 package thrift
 
 import (
+	"fmt"
 	"strings"
+	"time"
 )
 
 type httpProtocol struct {
 	Format
-	transport         *HTTPClient
+	transport         *httpClient
+	protoID           ProtocolID
 	persistentHeaders map[string]string
 }
 
 // NewHTTPProtocol creates a Protocol from a format that serializes directly to an HTTPClient.
-func NewHTTPProtocol(transport *HTTPClient, format Format) Protocol {
-	return &httpProtocol{
-		Format:            format,
-		transport:         transport,
-		persistentHeaders: make(map[string]string),
+func NewHTTPProtocol(url string) (Protocol, error) {
+	httpClient, err := newHTTPPostClient(url)
+	if err != nil {
+		return nil, err
 	}
+	p := &httpProtocol{
+		transport:         httpClient,
+		persistentHeaders: make(map[string]string),
+		protoID:           ProtocolIDCompact,
+	}
+	p.SetRequestHeader("User-Agent", "Go/THttpClient")
+	if err := p.resetProtocol(); err != nil {
+		return nil, err
+	}
+	return p, nil
+}
+
+func (p *httpProtocol) SetTimeout(timeout time.Duration) {
+	p.transport.client.Timeout = timeout
+}
+
+func (p *httpProtocol) resetProtocol() error {
+	switch p.protoID {
+	case ProtocolIDBinary:
+		// These defaults match cpp implementation
+		p.Format = NewBinaryProtocol(p.transport, false, true)
+	case ProtocolIDCompact:
+		p.Format = NewCompactProtocol(p.transport)
+	default:
+		return NewProtocolException(fmt.Errorf("Unknown protocol id: %#x", p.protoID))
+	}
+	return nil
+}
+
+func (p *httpProtocol) SetProtocolID(protoID ProtocolID) error {
+	p.protoID = protoID
+	return p.resetProtocol()
 }
 
 func (p *httpProtocol) Close() error {

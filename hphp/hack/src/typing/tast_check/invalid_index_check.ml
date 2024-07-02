@@ -66,7 +66,7 @@ let rec array_get ~array_pos ~expr_pos ~index_pos env array_ty index_ty =
       || Env.can_subtype env ty_expect (MakeType.nothing (get_reason ty_expect))
       )
       (* If the key is not even an arraykey, we've already produced an error *)
-      || (not (Env.can_subtype env ty_have (MakeType.arraykey Reason.Rnone)))
+      || (not (Env.can_subtype env ty_have (MakeType.arraykey Reason.none)))
          && should_enforce env
       (* Keytype of arraykey&dynamic happens when you assign a dynamic into a dict,
          but the above coercion doesn't work. *)
@@ -107,6 +107,16 @@ let rec array_get ~array_pos ~expr_pos ~index_pos env array_ty index_ty =
   | Tunion tyl ->
     List.iter tyl ~f:(fun ty ->
         array_get ~array_pos ~expr_pos ~index_pos env ty index_ty)
+  | Tclass ((pos, cn), _, _) when cn = SN.Collections.cVec ->
+    let (_ : (unit, unit) result) =
+      type_index
+        ~is_covariant_index:true
+        env
+        index_ty
+        (MakeType.int (Reason.idx_vector_from_decl pos))
+        (Reason.index_class cn)
+    in
+    ()
   | Tclass ((_, cn), _, key_ty :: _)
     when cn = SN.Collections.cDict || cn = SN.Collections.cKeyset ->
     (* dict and keyset are both covariant in their key types so it is only
@@ -118,7 +128,7 @@ let rec array_get ~array_pos ~expr_pos ~index_pos env array_ty index_ty =
        whilst allowing us to discern between it and errors which can be
        addressed with `UNSAFE_CAST`
     *)
-    let arraykey_ty = MakeType.arraykey (Reason.Ridx_dict array_pos) in
+    let arraykey_ty = MakeType.arraykey (Reason.idx_dict array_pos) in
     let array_key_res =
       type_index env index_ty arraykey_ty (Reason.index_class cn)
     in

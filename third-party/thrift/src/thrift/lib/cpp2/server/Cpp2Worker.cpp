@@ -95,7 +95,7 @@ void Cpp2Worker::onNewConnection(
   } catch (...) {
     FB_LOG_EVERY_MS(WARNING, 1000)
         << "Cpp2Worker::onNewConnection(...) caught an unhandled exception: "
-        << folly::exceptionStr(std::current_exception());
+        << folly::exceptionStr(folly::current_exception());
   }
 }
 
@@ -317,7 +317,7 @@ wangle::AcceptorHandshakeHelper::UniquePtr Cpp2Worker::createSSLHelper(
     const folly::SocketAddress& clientAddr,
     std::chrono::steady_clock::time_point acceptTime,
     wangle::TransportInfo& tInfo) {
-  if (accConfig_.fizzConfig.enableFizz) {
+  if (accConfig_->fizzConfig.enableFizz) {
     auto helper =
         fizzPeeker_.getThriftHelper(bytes, clientAddr, acceptTime, tInfo);
     if (!helper) {
@@ -352,7 +352,7 @@ bool Cpp2Worker::shouldPerformSSL(
 std::optional<ThriftParametersContext> Cpp2Worker::getThriftParametersContext(
     const folly::SocketAddress& clientAddr) {
   auto thriftConfigBase =
-      folly::get_ptr(accConfig_.customConfigMap, "thrift_tls_config");
+      folly::get_ptr(accConfig_->customConfigMap, "thrift_tls_config");
   if (!thriftConfigBase) {
     return std::nullopt;
   }
@@ -648,7 +648,7 @@ void Cpp2Worker::dispatchRequest(
     }
   } catch (...) {
     LOG(DFATAL) << "AsyncProcessor::process exception: "
-                << folly::exceptionStr(std::current_exception());
+                << folly::exceptionStr(folly::current_exception());
   }
 }
 

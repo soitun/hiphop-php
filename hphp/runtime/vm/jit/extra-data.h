@@ -113,7 +113,7 @@ struct ClassData : IRExtraData {
   }
 
   std::string show() const {
-    return folly::to<std::string>(cls->name()->data());
+    return cls->name()->data();
   }
 
   bool equals(const ClassData& o) const {
@@ -517,6 +517,23 @@ struct IndexData : IRExtraData {
   }
 
   uint32_t index;
+};
+
+/*
+ * ClassId.
+ */
+struct ClassIdData : IRExtraData {
+  explicit ClassIdData(ClassId id) : id(id) {}
+
+  std::string show() const { return fmt::format("{}", id.id()); }
+  size_t hash() const { return std::hash<ClassId::Id>()(id.id()); }
+  size_t stableHash() const { return std::hash<ClassId::Id>()(id.id()); }
+
+  bool equals(const ClassIdData& o) const {
+    return id == o.id;
+  }
+
+  ClassId id;
 };
 
 /*
@@ -1453,31 +1470,23 @@ struct ProfileSubClsCnsData : IRExtraData {
 };
 
 struct FuncNameData : IRExtraData {
-  FuncNameData(const StringData* name, const Class* context)
+  explicit FuncNameData(const StringData* name)
     : name(name)
-    , context(context)
   {}
 
-  std::string show() const {
-    return folly::to<std::string>(
-      name->data(), ",", context ? context->name()->data() : "{no context}");
+  std::string show() const { 
+    return name->toCppString();
   }
 
   size_t hash() const { return name->hash(); }
 
-  size_t stableHash() const {
-    return folly::hash::hash_combine(
-      name->hash(),
-      context ? context->stableHash() : 0
-    );
-  }
+  size_t stableHash() const { return name->hash(); }
 
   bool equals(const FuncNameData& o) const {
-    return name == o.name && context == o.context;
+    return name == o.name;
   }
 
   const StringData* name;
-  const Class* context;
 };
 
 struct FuncNameCtxData : IRExtraData {
@@ -3165,6 +3174,7 @@ X(CheckFuncNeedsCoverage,       FuncData);
 X(RecordFuncCall,               FuncData);
 X(LdClsPropAddrOrNull,          ReadonlyData);
 X(LdClsPropAddrOrRaise,         ReadonlyData);
+X(EqClassId,                    ClassIdData);
 X(LdMBase,                      AliasClassData);
 X(ThrowMustBeEnclosedInReadonly,ClassData);
 X(ThrowMustBeMutableException,  ClassData);

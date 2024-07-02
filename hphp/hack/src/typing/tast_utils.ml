@@ -80,7 +80,7 @@ let intersect_truthiness tr1 tr2 =
   | (Possibly_falsy, Possibly_falsy) -> Possibly_falsy
 
 let (tclass_is_falsy_when_empty, is_traversable) =
-  let r = Typing_reason.Rnone in
+  let r = Typing_reason.none in
   let mixed = MakeType.mixed r in
   let simple_xml_el = MakeType.class_type r "\\SimpleXMLElement" [] in
   let container_type = MakeType.container r mixed in
@@ -137,6 +137,7 @@ let rec truthiness env ty =
           Possibly_falsy
         | Ctrait -> Unknown)
     )
+  | Tlabel _ -> Always_truthy
   | Tprim Tresource -> Always_truthy
   | Tprim Tnull -> Always_falsy
   | Tprim Tvoid -> Always_falsy
@@ -256,6 +257,7 @@ let rec find_sketchy_types env acc ty =
   | Tvec_or_dict _
   | Tunapplied_alias _
   | Taccess _
+  | Tlabel _
   | Tneg _ ->
     acc
 

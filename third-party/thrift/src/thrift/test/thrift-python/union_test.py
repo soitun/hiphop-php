@@ -15,10 +15,16 @@
 import enum
 import importlib
 import unittest
+from datetime import datetime
+
+from thrift.test.thrift_python.union_test.thrift_mutable_types import (  # @manual=//thrift/test/thrift-python:union_test_thrift-python-types
+    TestUnion as TestUnionMutable,
+)
 
 from thrift.test.thrift_python.union_test.thrift_types import (
     TestStruct as TestStructImmutable,
     TestUnion as TestUnionImmutable,
+    TestUnionAdaptedTypes as TestUnionAdaptedTypesImmutable,
     TestUnionAmbiguousFromValueBoolInt as TestUnionAmbiguousFromValueBoolIntImmutable,
     TestUnionAmbiguousFromValueFloatInt as TestUnionAmbiguousFromValueFloatIntImmutable,
     TestUnionAmbiguousFromValueIntBool as TestUnionAmbiguousFromValueIntBoolImmutable,
@@ -46,6 +52,21 @@ class ThriftPython_ImmutableUnion_Test(unittest.TestCase):
         ):
             u2.int_field
 
+        with self.assertRaisesRegex(
+            TypeError, "got an unexpected keyword argument 'field_does_not_exist'"
+        ):
+            TestUnionImmutable(field_does_not_exist=123)
+
+        with self.assertRaisesRegex(
+            TypeError, "union may only take one keyword argument"
+        ):
+            TestUnionImmutable(string_field="hello", int_field=42)
+
+        with self.assertRaisesRegex(
+            TypeError, "is not a <class 'int'>, is actually of type <class 'str'>"
+        ):
+            TestUnionImmutable(int_field="hello!")
+
     def test_class_field_enum(self) -> None:
         # The "Type" class attribute is an enumeration type
         self.assertTrue(hasattr(TestUnionImmutable, "Type"))
@@ -69,13 +90,13 @@ class ThriftPython_ImmutableUnion_Test(unittest.TestCase):
 
         self.assertIs(fields_enum_type(0), fields_enum_type.EMPTY)
 
-        names_and_values = {
+        enum_names_and_values = {
             member.name: member.value
             for member in fields_enum_type.__members__.values()
         }
 
         self.assertEqual(
-            names_and_values,
+            enum_names_and_values,
             {"EMPTY": 0, "string_field": 1, "int_field": 2, "struct_field": 3},
         )
 
@@ -206,14 +227,152 @@ class ThriftPython_ImmutableUnion_Test(unittest.TestCase):
             TestUnionImmutable(int_field=42),
         )
 
+    def test_adapted_types(self) -> None:
+        u1 = TestUnionAdaptedTypesImmutable()
+        self.assertIs(u1.type, TestUnionAdaptedTypesImmutable.Type.EMPTY)
+        self.assertIsNone(u1.value)
+
+        with self.assertRaisesRegex(
+            AttributeError, "'int' object has no attribute 'timestamp'"
+        ):
+            TestUnionAdaptedTypesImmutable(adapted_i32_to_datetime=123)
+
+        u2 = TestUnionAdaptedTypesImmutable(
+            adapted_i32_to_datetime=datetime.fromtimestamp(1718728839)
+        )
+        self.assertIs(
+            u2.type, TestUnionAdaptedTypesImmutable.Type.adapted_i32_to_datetime
+        )
+
+        # BAD: The following assertions demonstrate the fact that (immutable) Thrift
+        # unions do not properly convert adapted fields on access. Indeed, u2.value
+        # should be a datetime instance, but instead is the underlying (int) value.
+        self.assertNotIsInstance(u2.value, datetime)
+        self.assertNotEqual(u2.value, datetime.fromtimestamp(1718728839))
+        self.assertIsInstance(u2.value, int)
+        self.assertEqual(u2.value, 1718728839)
+        self.assertIsNot(u2.value, u2.adapted_i32_to_datetime)
+
+        # Note that the behavior above differs when the field is accessed directly
+        # (instead of the auto-provided "value" attribute): the field value is then
+        # adapted (i.e., datetime instead of the underlying int value).
+        self.assertIsInstance(u2.adapted_i32_to_datetime, datetime)
+        self.assertEqual(u2.adapted_i32_to_datetime, datetime.fromtimestamp(1718728839))
+        self.assertNotIsInstance(u2.adapted_i32_to_datetime, int)
+        self.assertNotEqual(u2.adapted_i32_to_datetime, 1718728839)
+
+        # BAD: more "fromValue()" ambiguity: calling it with a datetime sets the
+        # adapted field, but calling it with an integer (or string) raises an error
+        # instead of setting one of the other fields.
+        self.assertEqual(
+            TestUnionAdaptedTypesImmutable.fromValue(
+                datetime.fromtimestamp(1718728839)
+            ),
+            u2,
+        )
+        with self.assertRaisesRegex(
+            AttributeError, "'int' object has no attribute 'timestamp'"
+        ):
+            TestUnionAdaptedTypesImmutable.fromValue(1718728839)
+        with self.assertRaisesRegex(
+            AttributeError, "'str' object has no attribute 'timestamp'"
+        ):
+            TestUnionAdaptedTypesImmutable.fromValue("1718728839"),
+
+        u3 = TestUnionAdaptedTypesImmutable(non_adapted_i32=1718728839)
+        self.assertIs(u3.type, TestUnionAdaptedTypesImmutable.Type.non_adapted_i32)
+        self.assertIs(u3.value, u3.non_adapted_i32)
+        self.assertEqual(u3.non_adapted_i32, 1718728839)
+
 
 class ThriftPython_MutableUnion_Test(unittest.TestCase):
     def setUp(self) -> None:
         # Disable maximum printed diff length.
         self.maxDiff = None
 
-    def test_import_fails_not_implemented_yet(self) -> None:
-        with self.assertRaises(NotImplementedError):
-            importlib.import_module(
-                "thrift.test.thrift_python.union_test.thrift_mutable_types"
-            )
+    def test_creation_and_read(self) -> None:
+        u = TestUnionMutable()
+        self.assertIs(
+            u.fbthrift_current_field,
+            TestUnionMutable.FbThriftUnionFieldEnum.FBTHRIFT_UNION_EMPTY,
+        )
+        self.assertIsNone(u.fbthrift_current_value)
+
+        u2 = TestUnionMutable(string_field="Hello, world!")
+        self.assertIs(
+            u2.fbthrift_current_field,
+            TestUnionMutable.FbThriftUnionFieldEnum.string_field,
+        )
+        self.assertEqual(u2.fbthrift_current_value, "Hello, world!")
+        self.assertEqual(u2.string_field, "Hello, world!")
+        with self.assertRaisesRegex(
+            AttributeError,
+            (
+                r"Error retrieving Thrift union \(TestUnion\) field: requested "
+                "'int_field', but currently holds 'string_field'."
+            ),
+        ):
+            u2.int_field
+
+        with self.assertRaisesRegex(
+            RuntimeError,
+            (
+                r"Cannot initialize Thrift union \(TestUnion\): unknown field "
+                r"\(field_does_not_exist\)."
+            ),
+        ):
+            TestUnionMutable(field_does_not_exist=123)
+
+        with self.assertRaisesRegex(
+            RuntimeError,
+            (
+                r"Cannot initialize Thrift union \(TestUnion\) with more than one "
+                r"keyword argument \(got non-None value for int_field, but already "
+                r"had one for string_field\)."
+            ),
+        ):
+            TestUnionMutable(string_field="hello", int_field=42)
+
+        with self.assertRaisesRegex(
+            TypeError, "is not a <class 'int'>, is actually of type <class 'str'>"
+        ):
+            TestUnionMutable(int_field="hello!")
+
+    def test_class_field_enum(self) -> None:
+        # NOTE: in the immutable version, this attribute is using the
+        # (unreserved) "Type" name.
+        self.assertTrue(hasattr(TestUnionMutable, "FbThriftUnionFieldEnum"))
+        fields_enum_type = TestUnionMutable.FbThriftUnionFieldEnum
+        self.assertTrue(issubclass(fields_enum_type, enum.Enum))
+        self.assertIsInstance(fields_enum_type, enum.EnumMeta)
+
+        # NOTE: Name differs from immutable version
+        self.assertEqual(fields_enum_type.__name__, "FbThriftUnionFieldEnum_TestUnion")
+
+        # NOTE: "empty" value for mutable is different from immutable.
+        self.assertCountEqual(
+            [
+                "string_field",
+                "int_field",
+                "struct_field",
+                "FBTHRIFT_UNION_EMPTY",
+            ],
+            fields_enum_type.__members__.keys(),
+        )
+
+        self.assertIs(fields_enum_type(0), fields_enum_type.FBTHRIFT_UNION_EMPTY)
+
+        enum_names_and_values = {
+            member.name: member.value
+            for member in fields_enum_type.__members__.values()
+        }
+
+        self.assertEqual(
+            enum_names_and_values,
+            {
+                "FBTHRIFT_UNION_EMPTY": 0,
+                "string_field": 1,
+                "int_field": 2,
+                "struct_field": 3,
+            },
+        )

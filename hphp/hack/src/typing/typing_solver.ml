@@ -75,6 +75,7 @@ let rec freshen_inside_ty env ty =
   | Tnonnull
   | Tdynamic
   | Tprim _
+  | Tlabel _
   | Tneg _ ->
     default ()
   | Tgeneric (name, tyl) ->
@@ -195,7 +196,7 @@ let bind env var (ty : locl_ty) =
   let ty =
     map_reason ty ~f:(fun r ->
         if Env.get_tyvar_eager_solve_fail env var then
-          Reason.Rsolve_fail (Reason.to_pos r)
+          Reason.solve_fail (Reason.to_pos r)
         else
           r)
   in
@@ -516,8 +517,8 @@ let rec always_solve_tyvar_down ~freshen env r var =
     (env, ty_err_opt1)
   else
     let r =
-      if Reason.is_none r then
-        Reason.Rwitness (Env.get_tyvar_pos env var)
+      if Reason.Predicates.is_none r then
+        Reason.witness (Env.get_tyvar_pos env var)
       else
         r
     in
@@ -608,8 +609,8 @@ let solve_tyvar_wrt_variance env r var =
     (env, None)
   else
     let r =
-      if Reason.is_none r then
-        Reason.Rwitness (Env.get_tyvar_pos env var)
+      if Reason.Predicates.is_none r then
+        Reason.witness (Env.get_tyvar_pos env var)
       else
         r
     in
@@ -695,7 +696,7 @@ let solve_all_unsolved_tyvars env =
       (Env.get_all_tyvars env)
       ~init:(env, [])
       ~f:(fun (env, ty_errs) var ->
-        match always_solve_tyvar env Reason.Rnone var with
+        match always_solve_tyvar env Reason.none var with
         | (env, Some ty_err) -> (env, ty_err :: ty_errs)
         | (env, _) -> (env, ty_errs))
   in
@@ -724,7 +725,7 @@ let expand_type_and_solve
     if Option.is_some default then
       default
     else if Tast.is_under_dynamic_assumptions env.Typing_env_types.checked then
-      Some (MakeType.dynamic (Reason.Rwitness p))
+      Some (MakeType.dynamic (Reason.witness p))
     else
       None
   in
@@ -877,7 +878,7 @@ let expand_type_and_narrow
     if Option.is_some default then
       default
     else if Tast.is_under_dynamic_assumptions env.Typing_env_types.checked then
-      Some (MakeType.dynamic (Reason.Rwitness p))
+      Some (MakeType.dynamic (Reason.witness p))
     else
       None
   in
@@ -936,7 +937,7 @@ let expand_type_and_narrow
                 TUtils.sub_type
                   env
                   widened_ty
-                  (MakeType.supportdyn_mixed (Reason.Rwitness p))
+                  (MakeType.supportdyn_mixed (Reason.witness p))
                 @@ Some (Typing_error.Reasons_callback.unify_error_at p)
               end else
                 (env, None)
@@ -967,7 +968,7 @@ let close_tyvars_and_solve env =
   let env = Env.close_tyvars env in
   let (env, ty_errs) =
     List.fold_left tyvars ~init:(env, []) ~f:(fun (env, ty_errs) tyvar ->
-        match solve_to_equal_bound_or_wrt_variance env Reason.Rnone tyvar with
+        match solve_to_equal_bound_or_wrt_variance env Reason.none tyvar with
         | (env, Some ty_err) -> (env, ty_err :: ty_errs)
         | (env, _) -> (env, ty_errs))
   in
@@ -1018,7 +1019,7 @@ let rec non_null env pos ty =
     end
   in
   let (env, ty) = make_concrete_super_types_nonnull#on_type env ty in
-  let r = Reason.Rwitness_from_decl pos in
+  let r = Reason.witness_from_decl pos in
   Inter.intersect env ~r ty (MakeType.nonnull r)
 
 let try_bind_to_equal_bound env v =

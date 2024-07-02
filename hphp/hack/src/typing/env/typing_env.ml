@@ -103,7 +103,7 @@ let expand_var env r v =
       (not (is_tyvar ty_solution))
       && TypecheckerOptions.yolo_extended_reasons env.genv.tcopt
     then
-      map_reason ty_solution ~f:(fun from -> Typing_reason.Rflow (from, r))
+      map_reason ty_solution ~f:(fun from -> Typing_reason.flow (from, r))
     else
       ty_solution
   in
@@ -143,7 +143,7 @@ let fresh_type_error env p =
       env.inference_env
       env.tvar_id_provider
       p
-      (Reason.Rtype_variable_error p)
+      (Reason.type_variable_error p)
   in
   ({ env with inference_env }, res)
 
@@ -157,7 +157,7 @@ let fresh_type_error_contravariant env p =
       env.inference_env
       env.tvar_id_provider
       p
-      (Reason.Rtype_variable_error p)
+      (Reason.type_variable_error p)
   in
   ({ env with inference_env }, res)
 
@@ -704,6 +704,10 @@ let get_package_by_name env pkg_name =
 let is_package_loaded env package = SSet.mem package env.loaded_packages
 
 let package_v2 env = TypecheckerOptions.package_v2 @@ get_tcopt env
+
+let package_v2_bypass_package_check_for_class_const env =
+  TypecheckerOptions.package_v2_bypass_package_check_for_class_const
+  @@ get_tcopt env
 
 let load_packages env packages =
   { env with loaded_packages = SSet.union env.loaded_packages packages }
@@ -1261,7 +1265,7 @@ let get_local_in_ctx ~undefined_err_fun env x ctx_opt =
     Some
       Typing_local_types.
         {
-          ty = Typing_make_type.nothing Reason.Rnone;
+          ty = Typing_make_type.nothing Reason.none;
           defined = false;
           bound_ty = None;
           pos = Pos.none;
@@ -1292,7 +1296,7 @@ let get_local_ty_in_ctx ~undefined_err_fun env x ctx_opt =
     ( false,
       Typing_local_types.
         {
-          ty = Typing_make_type.nothing Reason.Rnone;
+          ty = Typing_make_type.nothing Reason.none;
           defined = false;
           bound_ty = None;
           pos = Pos.none;
@@ -1304,7 +1308,7 @@ let get_local_ty_in_ctx ~undefined_err_fun env x ctx_opt =
       if local.defined then
         local.ty
       else
-        Typing_make_type.nothing Reason.Rnone
+        Typing_make_type.nothing Reason.none
     in
     (true, { local with ty })
 
@@ -1385,7 +1389,7 @@ let get_fake_members env =
   | Some next_cont -> next_cont.LEnvC.fake_members
 
 let update_lost_info name blame env ty =
-  let info r = Reason.Rlost_info (name, r, blame) in
+  let info r = Reason.lost_info (name, r, blame) in
   let rec update_ty (env, seen_tyvars) ty =
     let (env, ty) = expand_type env ty in
     match deref ty with
@@ -1663,6 +1667,7 @@ and get_tyvars_i env (ty : internal_type) =
         Tvid.Set.union positive1 positive2,
         Tvid.Set.union negative1 negative2 )
     | Tunapplied_alias _ -> (env, Tvid.Set.empty, Tvid.Set.empty)
+    | Tlabel _name -> (env, Tvid.Set.empty, Tvid.Set.empty)
     | Taccess (ty, _ids) -> get_tyvars env ty)
   | ConstraintType ty ->
     (match deref_constraint_type ty with
@@ -1714,7 +1719,8 @@ and get_tyvars_i env (ty : internal_type) =
       let (env, positive2, negative2) = get_tyvars env ty_false in
       ( env,
         Tvid.Set.union positive1 positive2,
-        Tvid.Set.union negative1 negative2 ))
+        Tvid.Set.union negative1 negative2 )
+    | (_, Thas_const { name = _; ty }) -> get_tyvars env ty)
 
 and get_tyvars_variance_list (env, acc_positive, acc_negative) variancel tyl =
   match (variancel, tyl) with

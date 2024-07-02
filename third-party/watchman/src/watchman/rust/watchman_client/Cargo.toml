@@ -1,6 +1,6 @@
 [package]
 name = "watchman_client"
-version = "0.8.0"
+version = "0.9.0"
 authors = ["Wez Furlong"]
 edition = "2021"
 description = "a client for the Watchman file watching service"
@@ -15,13 +15,13 @@ bytes = { version = "1.0", features = ["serde"] }
 futures = { version = "0.3.13", features = ["async-await", "compat"] }
 maplit = "1.0"
 serde = { version = "1.0.126", features = ["derive", "rc"] }
-serde_bser = { version = "0.3", path = "../serde_bser" }
+serde_bser = { version = "0.4", path = "../serde_bser" }
 thiserror = "1.0"
 tokio = { version = "1.7.1", features = ["full", "test-util"] }
 tokio-util = { version = "0.6", features = ["full"] }
 
-[dev-dependencies]
-structopt = "0.3"
-
 [target.'cfg(windows)'.dependencies]
-winapi = { version = "0.3", features = ["handleapi", "winuser"] }
+winapi = { version = "0.3", features = ["fileapi", "handleapi", "winbase", "winuser"] }
+
+[dev-dependencies]
+clap = { version = "4.5.7", features = ["derive"] }

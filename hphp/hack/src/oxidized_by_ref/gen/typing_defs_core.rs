@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<7998eb73219e1a4d2ccfb0c18911ff03>>
+// @generated SignedSource<<4157a6b3942cf9d00f2fdd03895a46bf>>
 //
 // To regenerate this file, run:
 //   hphp/hack/src/oxidized_regen.sh
@@ -399,7 +399,7 @@ arena_deserializer::impl_deserialize_in_arena!(FunImplicitParams<'arena>);
 pub struct FunParam<'a> {
     #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
     #[rust_to_ocaml(attr = "hash.ignore")]
-    #[rust_to_ocaml(attr = "equal fun _ -> fun _ -> true")]
+    #[rust_to_ocaml(attr = "equal fun _ _ -> true")]
     pub pos: &'a pos_or_decl::PosOrDecl<'a>,
     #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
     pub name: Option<&'a str>,
@@ -453,7 +453,38 @@ pub struct FunType<'a> {
 impl<'a> TrivialDrop for FunType<'a> {}
 arena_deserializer::impl_deserialize_in_arena!(FunType<'arena>);
 
-pub use oxidized::typing_defs_core::TypePredicate;
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Deserialize,
+    Eq,
+    EqModuloPos,
+    FromOcamlRepIn,
+    Hash,
+    NoPosHash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+    ToOcamlRep
+)]
+#[rust_to_ocaml(attr = "deriving (eq, ord, hash, (show { with_path = false }))")]
+#[repr(C, u8)]
+pub enum TypePredicate<'a> {
+    IsBool,
+    IsInt,
+    IsString,
+    IsArraykey,
+    IsFloat,
+    IsNum,
+    IsResource,
+    IsNull,
+    #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
+    IsTupleOf(&'a [TypePredicate<'a>]),
+}
+impl<'a> TrivialDrop for TypePredicate<'a> {}
+arena_deserializer::impl_deserialize_in_arena!(TypePredicate<'arena>);
 
 #[derive(
     Clone,
@@ -479,7 +510,7 @@ pub enum NegType<'a> {
     NegClass(&'a PosId<'a>),
     #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
     #[rust_to_ocaml(name = "Neg_predicate")]
-    NegPredicate(&'a oxidized::typing_defs_core::TypePredicate),
+    NegPredicate(&'a TypePredicate<'a>),
 }
 impl<'a> TrivialDrop for NegType<'a> {}
 arena_deserializer::impl_deserialize_in_arena!(NegType<'arena>);
@@ -703,6 +734,9 @@ pub enum Ty_<'a> {
     /// The negation of the type in neg_type
     #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
     Tneg(&'a NegType<'a>),
+    /// The type of the label expression #ID
+    #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
+    Tlabel(&'a str),
 }
 impl<'a> TrivialDrop for Ty_<'a> {}
 arena_deserializer::impl_deserialize_in_arena!(Ty_<'arena>);

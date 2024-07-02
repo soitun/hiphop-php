@@ -13,14 +13,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# pyre-strict
+
+import typing
 import unittest
 from sys import getrefcount
-from typing import Generator
 
 import thrift.python_capi.fixture as fixture
 
 from folly.iobuf import IOBuf
-from thrift.python.serializer import Protocol, serialize, serialize_iobuf
+from thrift.python.exceptions import GeneratedError
+from thrift.python.serializer import deserialize, Protocol, serialize, serialize_iobuf
+from thrift.python.types import Struct as PythonStruct, StructOrUnion
+from thrift.test.python_capi.containers.thrift_types import (
+    TemplateLists,
+    TemplateMaps,
+    TemplateSets,
+)
 from thrift.test.python_capi.module.thrift_types import (
     AdaptedFields,
     AnnoyingEnum,
@@ -49,6 +58,8 @@ from thrift.test.python_capi.thrift_dep.thrift_types import (
     SomeError,
 )
 
+sT = typing.TypeVar("sT", bound=typing.Union[StructOrUnion, GeneratedError])
+
 
 class PythonCapiFixture(unittest.TestCase):
     def my_struct(self) -> MyStruct:
@@ -63,7 +74,7 @@ class PythonCapiFixture(unittest.TestCase):
             intSetty={-1, 1, 2, 3, 5, 8},
         )
 
-    def my_union(self) -> Generator[MyUnion, None, None]:
+    def my_union(self) -> typing.Generator[MyUnion, None, None]:
         yield MyUnion()
         yield MyUnion(myEnum=MyEnum.MyValue1)
         yield MyUnion(myStruct=self.primitive())
@@ -146,18 +157,18 @@ class PythonCapiFixture(unittest.TestCase):
             encoded={b"abcd", b"bcda", b"cdab", b"dabc"},
             uidz={0, 10, 100, 1000, 10000},
             charz={0, 1, 2, 4, 8, 16},
-            setz=[{1, 2, 3}, {}, {2, 3}, {1, 2, 3}],
+            setz=[{1, 2, 3}, set(), {2, 3}, {1, 2, 3}],
         )
 
     def empty_sets(self) -> SetStruct:
         return SetStruct(
-            enumz={},
-            intz={},
-            binnaz={},
-            encoded={},
-            uidz={},
-            charz={},
-            setz=[{}],
+            enumz=set(),
+            intz=set(),
+            binnaz=set(),
+            encoded=set(),
+            uidz=set(),
+            charz=set(),
+            setz=[set()],
         )
 
     def map_struct(self) -> MapStruct:
@@ -234,14 +245,18 @@ class PythonCapiRoundtrip(PythonCapiFixture):
     def test_roundtrip_marshal_EmptyStruct(self) -> None:
         self.assertEqual(EmptyStruct(), fixture.roundtrip_EmptyStruct(EmptyStruct()))
         with self.assertRaises(TypeError):
+            # pyre-ignore[6]
             fixture.roundtrip_EmptyStruct(MyStruct())
 
     def test_roundtrip_TypeError(self) -> None:
         with self.assertRaises(TypeError):
+            # pyre-ignore[6]
             fixture.roundtrip_MyDataItem(MyEnum.MyValue1)
         with self.assertRaises(TypeError):
+            # pyre-ignore[6]
             fixture.roundtrip_MyUnion(MyEnum.MyValue1)
         with self.assertRaises(TypeError):
+            # pyre-ignore[6]
             fixture.roundtrip_MyEnum(self.my_struct())
 
     def test_roundtrip_OverflowError(self) -> None:
@@ -277,6 +292,7 @@ class PythonCapiRoundtrip(PythonCapiFixture):
         self.assertIsNone(unset_primitive.stringy)
         self.assertIsNone(unset_primitive.bytey)
         with self.assertRaises(TypeError):
+            # pyre-ignore[6]
             fixture.roundtrip_PrimitiveStruct(self.my_struct())
 
     def test_update_primitive(self) -> None:
@@ -292,11 +308,11 @@ class PythonCapiRoundtrip(PythonCapiFixture):
 
     def test_memleak_primitive(self) -> None:
         # Use non-singleton objects to avoid noise from runtime
-        short = 9001
-        f = 9001.0
-        bytes_ = b"bippity boppity boo"
+        short: int = 9001
+        f: float = 9001.0
+        bytes_: bytes = b"bippity boppity boo"
 
-        def make_primitive():
+        def make_primitive() -> PrimitiveStruct:
             return PrimitiveStruct(
                 shorty=short,
                 inty=short,
@@ -454,7 +470,7 @@ class PythonCapiTypeCheck(PythonCapiFixture):
 
 
 class PythonCapiSerializeParity(PythonCapiFixture):
-    def serialize(self, s: object) -> IOBuf:
+    def serialize(self, s: sT) -> IOBuf:
         return serialize_iobuf(s, protocol=Protocol.BINARY)
 
     def test_PrimitiveStruct_extract(self) -> None:
@@ -532,3 +548,79 @@ class PythonCapiSerializeParity(PythonCapiFixture):
             ValueError, "TProtocolException: .* exceeds size limit"
         ):
             fixture.gen_SerializedStruct(2**31)
+
+
+class PythonCapiContainerTemplateParity(PythonCapiFixture):
+    def serialize(self, s: StructOrUnion) -> bytes:
+        return bytes(serialize_iobuf(s, protocol=Protocol.BINARY))
+
+    def deserialize(self, kls: typing.Type[sT], buf: bytes) -> sT:
+        return deserialize(kls, buf, protocol=Protocol.BINARY)
+
+    def validate_not_empty(self, struct: PythonStruct) -> None:
+        for fld_name, fld_val in struct:
+            self.assertEqual(len(fld_val), 3, f"{fld_name} not populated")
+            for item in fld_val:
+                self.assertIsNotNone(item, f"{fld_name} has empty item")
+                self.assertGreaterEqual(
+                    len(item), 3, f"{item} of {fld_name} not populated"
+                )
+
+    def test_template_list_construct(self) -> None:
+        from_serialized = self.deserialize(
+            TemplateLists,
+            fixture.serialize_template_lists(),
+        )
+        self.validate_not_empty(from_serialized)
+        self.assertEqual(from_serialized, fixture.construct_template_lists())
+
+    def test_template_list_extract(self) -> None:
+        expected_serialized = fixture.serialize_template_lists()
+        from_serialized = self.deserialize(TemplateLists, expected_serialized)
+        self.assertEqual(
+            expected_serialized,
+            fixture.extract_template_lists(from_serialized),
+        )
+
+    def assert_set_equal(self, a: PythonStruct, b: PythonStruct) -> None:
+        self.assertEqual(len(a), len(b))
+        for field_name, a_val in a:
+            b_fld = getattr(b, field_name)
+            for k in a_val:
+                self.assertIn(k, b_fld)
+
+    def test_template_set_construct(self) -> None:
+        from_serialized = self.deserialize(
+            TemplateSets,
+            fixture.serialize_template_sets(),
+        )
+        self.validate_not_empty(from_serialized)
+        self.assertEqual(from_serialized, fixture.construct_template_sets())
+
+    def test_template_set_extract(self) -> None:
+        expected_serialized = fixture.serialize_template_sets()
+        from_serialized = self.deserialize(TemplateSets, expected_serialized)
+        self.assertEqual(
+            from_serialized,
+            self.deserialize(
+                TemplateSets, fixture.extract_template_sets(from_serialized)
+            ),
+        )
+
+    def test_template_map_construct(self) -> None:
+        from_serialized = self.deserialize(
+            TemplateMaps,
+            fixture.serialize_template_maps(),
+        )
+        self.validate_not_empty(from_serialized)
+        self.assertEqual(from_serialized, fixture.construct_template_maps())
+
+    def test_template_map_extract(self) -> None:
+        expected_serialized = fixture.serialize_template_maps()
+        from_serialized = self.deserialize(TemplateMaps, expected_serialized)
+        self.assertEqual(
+            from_serialized,
+            self.deserialize(
+                TemplateMaps, fixture.extract_template_maps(from_serialized)
+            ),
+        )

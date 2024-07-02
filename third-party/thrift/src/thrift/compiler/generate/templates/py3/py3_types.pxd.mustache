@@ -78,7 +78,7 @@ cdef class __{{struct:name}}Type(thrift.py3.types.CompiledEnum):
 
 
 cdef class {{struct:name}}({{> types/python_struct_class}}):
-    cdef shared_ptr[c{{struct:name}}] _cpp_obj
+    cdef shared_ptr[c{{struct:name}}] _cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE
     {{^struct:union?}}
     cdef _fbthrift_types_fields.__{{struct:name}}_FieldsSetter _fields_setter
     {{#struct:fields_and_mixin_fields}}
@@ -122,21 +122,26 @@ cdef class {{struct:name}}({{> types/python_struct_class}}):
     {{/struct:union?}}
 
     @staticmethod
-    cdef _fbthrift_create(shared_ptr[c{{struct:name}}])
+    cdef _create_FBTHRIFT_ONLY_DO_NOT_USE(shared_ptr[c{{struct:name}}])
 
 {{/program:filtered_structs}}
 
 {{#program:containerTypes}}
-cdef class {{> types/cython_python_type}}(thrift.py3.types.{{!
+cdef class {{type:flat_name}}(thrift.py3.types.{{!
         }}{{#type:list?}}List{{/type:list?}}{{!
         }}{{#type:set?}}Set{{/type:set?}}{{!
         }}{{#type:map?}}Map{{/type:map?}}{{!
         }}):
-    cdef shared_ptr[{{> types/cython_cpp_type}}] _cpp_obj
+    cdef shared_ptr[{{> types/cython_cpp_type}}] _cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE
     @staticmethod
-    cdef _fbthrift_create(shared_ptr[{{> types/cython_cpp_type}}])
-    @staticmethod
-    cdef shared_ptr[{{> types/cython_cpp_type}}] _make_instance(object items) except *
+    cdef _create_FBTHRIFT_ONLY_DO_NOT_USE(shared_ptr[{{> types/cython_cpp_type}}])
+    {{#type:list?}}
+    cdef _check_item_type(self, item)
+    {{/type:list?}}{{#type:map?}}
+    cdef _check_key_type(self, key)
+    {{/type:map?}}
+
+cdef shared_ptr[{{> types/cython_cpp_type}}] {{type:flat_name}}__make_instance(object items) except *
 
 {{/program:containerTypes}}
 

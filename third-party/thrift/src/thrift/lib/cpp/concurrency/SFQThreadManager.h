@@ -22,8 +22,8 @@
 #include <vector>
 
 #include <glog/logging.h>
+#include <folly/executors/FunctionScheduler.h>
 #include <folly/executors/MeteredExecutor.h>
-#include <folly/experimental/FunctionScheduler.h>
 #include <folly/hash/Hash.h>
 
 #include <thrift/lib/cpp/concurrency/Thread.h>
@@ -50,6 +50,13 @@ class SFQThreadManagerConfig {
   }
   size_t getNumFairQueuesForUpstream() const { return numQueues_; }
 
+  // Set maxInQueue for each queue's MeteredExecutor.
+  SFQThreadManagerConfig& setMaxInQueue(uint32_t maxInQueue) {
+    maxInQueue_ = maxInQueue;
+    return *this;
+  }
+  uint32_t getMaxInQueue() const { return maxInQueue_; }
+
   SFQThreadManagerConfig& setExecutors(
       std::array<std::shared_ptr<folly::Executor>, N_PRIORITIES> executors) {
     executors_ = std::move(executors);
@@ -62,6 +69,7 @@ class SFQThreadManagerConfig {
  private:
   std::chrono::milliseconds perturb_{std::chrono::seconds(30)};
   size_t numQueues_{1};
+  uint64_t maxInQueue_{1};
   std::array<std::shared_ptr<folly::Executor>, N_PRIORITIES> executors_;
 };
 
@@ -129,6 +137,13 @@ class SFQThreadManager : public ThreadManagerExecutorAdapter {
 
  private:
   using ExecutorPtr = std::unique_ptr<folly::DefaultKeepAliveExecutor>;
+
+  static ThreadManagerExecutorAdapter::Options adapterOptions(
+      const SFQThreadManagerConfig& config) {
+    ThreadManagerExecutorAdapter::Options options;
+    options.meteredExecutorMaxInQueue = config.getMaxInQueue();
+    return options;
+  }
 
   void initPerturbation() {
     perturbationSchedule_.addFunction(

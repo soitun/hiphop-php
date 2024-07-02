@@ -13,6 +13,8 @@ use hash::HashSet;
 use hh_autoimport_rust as hh_autoimport;
 use itertools::Itertools;
 use naming_special_names_rust as sn;
+use oxidized::experimental_features::FeatureName;
+use oxidized::experimental_features::FeatureStatus;
 use oxidized::namespace_env::Mode;
 use oxidized::parser_options::ParserOptions;
 use parser_core_types::indexed_source_text::IndexedSourceText;
@@ -33,11 +35,7 @@ use parser_core_types::syntax_error::{self as errors};
 use parser_core_types::syntax_trait::SyntaxTrait;
 use parser_core_types::syntax_tree::SyntaxTree;
 use parser_core_types::token_kind::TokenKind;
-use strum::Display;
-use strum::EnumIter;
-use strum::EnumString;
 use strum::IntoEnumIterator;
-use strum::IntoStaticStr;
 
 #[derive(Clone, PartialEq, Debug)]
 struct Location {
@@ -68,94 +66,42 @@ enum BinopAllowsAwaitInPositions {
     BinopAllowAwaitNone,
 }
 
-#[allow(dead_code)] // Deprecated is currently unused
-#[derive(Eq, PartialEq)]
-enum FeatureStatus {
-    Unstable,
-    Preview,
-    Migration,
-    Deprecated,
-    OngoingRelease,
-    // TODO: add other modes like "Advanced" or "Deprecated" if necessary.
-    // Those are just variants of "Preview" for the runtime's sake, though,
-    // and likely only need to be distinguished in the lint rule rather than here
-}
-
-#[derive(Clone, Copy, Eq, Display, Hash, PartialEq)]
-#[derive(EnumIter, EnumString, IntoStaticStr)]
-#[strum(serialize_all = "snake_case")]
-pub enum UnstableFeatures {
-    // TODO: rename this from unstable to something else
-    UnionIntersectionTypeHints,
-    ClassLevelWhere,
-    ExpressionTrees,
-    Readonly,
-    ModuleReferences,
-    ClassConstDefault,
-    TypeConstMultipleBounds,
-    TypeConstSuperBound,
-    TypeRefinements,
-    ContextAliasDeclaration,
-    ContextAliasDeclarationShort,
-    MethodTraitDiamond,
-    UpcastExpression,
-    RequireClass,
-    NewtypeSuperBounds,
-    ExpressionTreeBlocks,
-    Package,
-    PackageV2,
-    CaseTypes,
-    ModuleLevelTraits,
-    ModuleLevelTraitsExtensions,
-    TypedLocalVariables,
-    PipeAwait,
-    MatchStatements,
-    StrictSwitch,
-    ClassType,
-    FunctionReferences,
-    FunctionTypeOptionalParams,
-    ExpressionTreeMap,
-    ExpressionTreeNest,
-    SealedMethods,
-}
-impl UnstableFeatures {
-    // Preview features are allowed to run in prod. This function decides
-    // whether the feature is considered Unstable or Preview.
-    fn get_feature_status(&self) -> FeatureStatus {
-        use FeatureStatus::*;
-        match self {
-            UnstableFeatures::UnionIntersectionTypeHints => Unstable,
-            UnstableFeatures::ClassLevelWhere => Unstable,
-            UnstableFeatures::ExpressionTrees => Unstable,
-            UnstableFeatures::Readonly => Preview,
-            UnstableFeatures::ModuleReferences => Unstable,
-            UnstableFeatures::ContextAliasDeclaration => Unstable,
-            UnstableFeatures::ContextAliasDeclarationShort => Preview,
-            UnstableFeatures::TypeConstMultipleBounds => Preview,
-            UnstableFeatures::TypeConstSuperBound => Unstable,
-            UnstableFeatures::ClassConstDefault => Migration,
-            UnstableFeatures::TypeRefinements => OngoingRelease,
-            UnstableFeatures::MethodTraitDiamond => OngoingRelease,
-            UnstableFeatures::UpcastExpression => Unstable,
-            UnstableFeatures::RequireClass => OngoingRelease,
-            UnstableFeatures::NewtypeSuperBounds => Unstable,
-            UnstableFeatures::ExpressionTreeBlocks => OngoingRelease,
-            UnstableFeatures::Package => OngoingRelease,
-            UnstableFeatures::PackageV2 => Unstable,
-            UnstableFeatures::CaseTypes => Preview,
-            UnstableFeatures::ModuleLevelTraits => OngoingRelease,
-            UnstableFeatures::ModuleLevelTraitsExtensions => OngoingRelease,
-            UnstableFeatures::TypedLocalVariables => Preview,
-            UnstableFeatures::PipeAwait => Preview,
-            UnstableFeatures::MatchStatements => Unstable,
-            UnstableFeatures::StrictSwitch => Unstable,
-            UnstableFeatures::ClassType => Unstable,
-            UnstableFeatures::FunctionReferences => Unstable,
-            UnstableFeatures::FunctionTypeOptionalParams => OngoingRelease,
-            UnstableFeatures::ExpressionTreeMap => OngoingRelease,
-            UnstableFeatures::ExpressionTreeNest => Preview,
-            UnstableFeatures::SealedMethods => Unstable,
-        }
+// Preview features are allowed to run in prod. This function decides
+// whether the feature is considered Unstable or Preview.
+fn get_feature_status(name: &FeatureName) -> FeatureStatus {
+    use FeatureStatus::*;
+    match name {
+        FeatureName::UnionIntersectionTypeHints => Unstable,
+        FeatureName::ClassLevelWhere => Unstable,
+        FeatureName::ExpressionTrees => Unstable,
+        FeatureName::Readonly => Preview,
+        FeatureName::ModuleReferences => Unstable,
+        FeatureName::ContextAliasDeclaration => Unstable,
+        FeatureName::ContextAliasDeclarationShort => Preview,
+        FeatureName::TypeConstMultipleBounds => Preview,
+        FeatureName::TypeConstSuperBound => Unstable,
+        FeatureName::ClassConstDefault => Migration,
+        FeatureName::TypeRefinements => OngoingRelease,
+        FeatureName::MethodTraitDiamond => OngoingRelease,
+        FeatureName::UpcastExpression => Unstable,
+        FeatureName::RequireClass => OngoingRelease,
+        FeatureName::NewtypeSuperBounds => Unstable,
+        FeatureName::ExpressionTreeBlocks => OngoingRelease,
+        FeatureName::Package => OngoingRelease,
+        FeatureName::CaseTypes => Preview,
+        FeatureName::ModuleLevelTraits => OngoingRelease,
+        FeatureName::ModuleLevelTraitsExtensions => OngoingRelease,
+        FeatureName::TypedLocalVariables => Preview,
+        FeatureName::PipeAwait => Preview,
+        FeatureName::MatchStatements => Unstable,
+        FeatureName::StrictSwitch => Unstable,
+        FeatureName::ClassType => Unstable,
+        FeatureName::FunctionReferences => Unstable,
+        FeatureName::FunctionTypeOptionalParams => OngoingRelease,
+        FeatureName::ExpressionTreeMap => OngoingRelease,
+        FeatureName::ExpressionTreeNest => Preview,
+        FeatureName::SealedMethods => Unstable,
+        FeatureName::AwaitInSplice => Preview,
     }
 }
 
@@ -267,7 +213,7 @@ struct Context<'a> {
     pub active_callable_attr_spec: Option<S<'a>>,
     pub active_const: Option<S<'a>>,
     pub active_enum_class: Option<S<'a>>,
-    pub active_unstable_features: HashSet<UnstableFeatures>,
+    pub active_unstable_features: HashSet<FeatureName>,
 }
 
 struct Env<'a, State> {
@@ -1239,11 +1185,11 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
         match &arg.children {
             LiteralExpression(x) => {
                 let text = self.text(&x.expression);
-                match UnstableFeatures::from_str(escaper::unquote_str(text)) {
+                match FeatureName::from_str(escaper::unquote_str(text)) {
                     Ok(feature) => {
                         if !self.env.parser_options.allow_unstable_features
                             && !self.env.is_hhi_mode()
-                            && feature.get_feature_status() == FeatureStatus::Unstable
+                            && get_feature_status(&feature) == FeatureStatus::Unstable
                         {
                             self.errors.push(make_error_from_node(
                                 node,
@@ -1264,7 +1210,7 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
                         format!(
                             "there is no feature named {}.\nAvailable features are:\n\t{}",
                             text,
-                            UnstableFeatures::iter().join("\n\t")
+                            FeatureName::iter().join("\n\t")
                         )
                         .as_str(),
                     ),
@@ -1278,19 +1224,19 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
         self.uses_readonly = true;
     }
 
-    fn check_can_use_feature(&mut self, node: S<'a>, feature: &UnstableFeatures) {
+    fn check_can_use_feature(&mut self, node: S<'a>, feature: &FeatureName) {
         let parser_options = &self.env.parser_options;
         let enabled = match feature {
-            UnstableFeatures::UnionIntersectionTypeHints => {
+            FeatureName::UnionIntersectionTypeHints => {
                 parser_options.union_intersection_type_hints
             }
-            UnstableFeatures::ClassLevelWhere => parser_options.enable_class_level_where_clauses,
+            FeatureName::ClassLevelWhere => parser_options.enable_class_level_where_clauses,
 
             _ => false,
         } || self.env.context.active_unstable_features.contains(feature)
           // Preview features with an ongoing release should be allowed by the
           // runtime, but not the typechecker
-          || (feature.get_feature_status() == FeatureStatus::OngoingRelease
+          || (get_feature_status(feature) == FeatureStatus::OngoingRelease
             && matches!(self.env.mode, Mode::ForCodegen));
 
         if !enabled {
@@ -2244,7 +2190,7 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
                 };
 
                 if self.attr_spec_contains_sealed(method_attrs) {
-                    self.check_can_use_feature(node, &UnstableFeatures::SealedMethods);
+                    self.check_can_use_feature(node, &FeatureName::SealedMethods);
                 }
             }
             _ => {}
@@ -2870,6 +2816,10 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
                     break;
                 }
                 LambdaExpression(x) if std::ptr::eq(node, &x.body) => break,
+                ETSpliceExpression(_) => {
+                    self.check_can_use_feature(node, &FeatureName::AwaitInSplice);
+                    break;
+                }
                 PrefixUnaryExpression(x) if token_kind(&x.operator) == Some(TokenKind::Await) => {
                     let (feature, enabled) = self.is_pipe_await_enabled();
                     if !enabled {
@@ -3020,12 +2970,12 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
         }
     }
 
-    fn is_pipe_await_enabled(&self) -> (UnstableFeatures, bool) {
-        let feature = UnstableFeatures::PipeAwait;
+    fn is_pipe_await_enabled(&self) -> (FeatureName, bool) {
+        let feature = FeatureName::PipeAwait;
         // Preview features with an ongoing release should be allowed by the
         // runtime, but not the typechecker
         let enabled = self.env.context.active_unstable_features.contains(&feature)
-            || (feature.get_feature_status() == FeatureStatus::OngoingRelease
+            || (get_feature_status(&feature) == FeatureStatus::OngoingRelease
                 && matches!(self.env.mode, Mode::ForCodegen));
         (feature, enabled)
     }
@@ -4096,10 +4046,10 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
                     },
                 );
                 if super_count != 0 {
-                    self.check_can_use_feature(node, &UnstableFeatures::TypeConstSuperBound);
+                    self.check_can_use_feature(node, &FeatureName::TypeConstSuperBound);
                 }
                 if super_count > 1 || as_count > 1 {
-                    self.check_can_use_feature(node, &UnstableFeatures::TypeConstMultipleBounds);
+                    self.check_can_use_feature(node, &FeatureName::TypeConstMultipleBounds);
                 }
             }
         }
@@ -4177,7 +4127,7 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
                 for n in ad.constraint.syntax_node_to_list_skip_separator() {
                     if let TypeConstraint(c) = &n.children {
                         if let Some(TokenKind::Super) = token_kind(&c.keyword) {
-                            self.check_can_use_feature(n, &UnstableFeatures::NewtypeSuperBounds);
+                            self.check_can_use_feature(n, &FeatureName::NewtypeSuperBounds);
                             break;
                         }
                     };
@@ -4200,9 +4150,9 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
         } else if let ContextAliasDeclaration(cad) = &node.children {
             if cad.equal.is_missing() {
                 // short newctx X as []; syntax
-                self.check_can_use_feature(node, &UnstableFeatures::ContextAliasDeclarationShort);
+                self.check_can_use_feature(node, &FeatureName::ContextAliasDeclarationShort);
             } else {
-                self.check_can_use_feature(node, &UnstableFeatures::ContextAliasDeclaration);
+                self.check_can_use_feature(node, &FeatureName::ContextAliasDeclaration);
             }
             let attrs = &cad.attribute_spec;
             self.check_attr_enabled(attrs);
@@ -4226,7 +4176,7 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
                 self.check_alias_name(&cad.name, name, location)
             }
         } else if let CaseTypeDeclaration(ctd) = &node.children {
-            self.check_can_use_feature(node, &UnstableFeatures::CaseTypes);
+            self.check_can_use_feature(node, &FeatureName::CaseTypes);
 
             let attrs = &ctd.attribute_spec;
             self.check_attr_enabled(attrs);
@@ -4714,7 +4664,7 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
     fn const_decl_errors(&mut self, node: S<'a>) {
         if let ConstantDeclarator(cd) = &node.children {
             if self.constant_abstract_with_initializer(&cd.initializer) {
-                self.check_can_use_feature(node, &UnstableFeatures::ClassConstDefault);
+                self.check_can_use_feature(node, &FeatureName::ClassConstDefault);
             }
 
             self.produce_error(
@@ -5374,7 +5324,7 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
             FileAttributeSpecification(_) => self.file_attribute_spec(node),
             ModuleDeclaration(x) => {
                 if !x.exports.is_missing() || !x.imports.is_missing() {
-                    self.check_can_use_feature(node, &UnstableFeatures::ModuleReferences);
+                    self.check_can_use_feature(node, &FeatureName::ModuleReferences);
                 }
             }
             ModuleMembershipDeclaration(_) => {
@@ -5502,7 +5452,7 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
                 }
             }
             ClassArgsTypeSpecifier(_) => {
-                self.check_can_use_feature(node, &UnstableFeatures::ClassType);
+                self.check_can_use_feature(node, &FeatureName::ClassType);
             }
             _ => {}
         }
@@ -5526,25 +5476,23 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
 
         match &node.children {
             UnionTypeSpecifier(_) | IntersectionTypeSpecifier(_) => {
-                self.check_can_use_feature(node, &UnstableFeatures::UnionIntersectionTypeHints)
+                self.check_can_use_feature(node, &FeatureName::UnionIntersectionTypeHints)
             }
             DeclareLocalStatement(_) => {
-                self.check_can_use_feature(node, &UnstableFeatures::TypedLocalVariables)
+                self.check_can_use_feature(node, &FeatureName::TypedLocalVariables)
             }
             ClassishDeclaration(x) => match &x.where_clause.children {
                 WhereClause(_) => {
-                    self.check_can_use_feature(&x.where_clause, &UnstableFeatures::ClassLevelWhere)
+                    self.check_can_use_feature(&x.where_clause, &FeatureName::ClassLevelWhere)
                 }
                 _ => {}
             },
-            UpcastExpression(_) => {
-                self.check_can_use_feature(node, &UnstableFeatures::UpcastExpression)
-            }
+            UpcastExpression(_) => self.check_can_use_feature(node, &FeatureName::UpcastExpression),
             OldAttributeSpecification(x) => {
                 self.old_attr_spec(node, &x.attributes);
             }
             MatchStatement(_) => {
-                self.check_can_use_feature(node, &UnstableFeatures::MatchStatements);
+                self.check_can_use_feature(node, &FeatureName::MatchStatements);
             }
             _ => {}
         }
@@ -5569,7 +5517,7 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
                             errors::invalid_use_of_enable_unstable_feature(
                                 format!(
                                     "you didn't select a feature. Available features are:\n\t{}",
-                                    UnstableFeatures::iter().join("\n\t")
+                                    FeatureName::iter().join("\n\t")
                                 )
                                 .as_str(),
                             ),
@@ -5580,7 +5528,6 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
                     }
                 }
                 Some(sn::user_attributes::PACKAGE_OVERRIDE) => {
-                    self.check_can_use_feature(node, &UnstableFeatures::PackageV2);
                     if let Some(args) = self.attr_args(node) {
                         let mut count = 0;
                         args.for_each(|_| count += 1);
@@ -5708,7 +5655,7 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
                 .push(make_error_from_node(prefix, errors::expression_tree_name))
         }
         if self.context.expression_tree_depth > 0 && !self.context.active_expression_tree {
-            self.check_can_use_feature(node, &UnstableFeatures::ExpressionTreeNest)
+            self.check_can_use_feature(node, &FeatureName::ExpressionTreeNest)
         }
 
         *prev_context = Some(self.env.context.clone());
@@ -5736,7 +5683,7 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
         let attributes = self.text(attributes).split(',');
         attributes.for_each(|attr| match attr.trim() {
             sn::user_attributes::STRICT_SWITCH => {
-                self.check_can_use_feature(node, &UnstableFeatures::StrictSwitch)
+                self.check_can_use_feature(node, &FeatureName::StrictSwitch)
             }
             _ => {}
         });
@@ -5776,7 +5723,7 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
         hhi_mode: bool,
         mode: Mode,
         systemlib: bool,
-        default_unstable_features: HashSet<UnstableFeatures>,
+        default_unstable_features: HashSet<FeatureName>,
     ) -> (Vec<SyntaxError>, bool) {
         let env = Env {
             parser_options,
@@ -5807,7 +5754,7 @@ pub fn parse_errors<'a, State: Clone>(
     hhi_mode: bool,
     ns_mode: Mode,
     systemlib: bool,
-    default_unstable_features: HashSet<UnstableFeatures>,
+    default_unstable_features: HashSet<FeatureName>,
 ) -> (Vec<SyntaxError>, bool) {
     <ParserErrors<'a, State>>::parse_errors(
         tree,
@@ -5829,7 +5776,7 @@ pub fn parse_errors_with_text<'a, State: Clone>(
     hhi_mode: bool,
     ns_mode: Mode,
     systemlib: bool,
-    default_unstable_features: HashSet<UnstableFeatures>,
+    default_unstable_features: HashSet<FeatureName>,
 ) -> (Vec<SyntaxError>, bool) {
     <ParserErrors<'a, State>>::parse_errors(
         tree,

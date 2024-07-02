@@ -107,7 +107,7 @@ let dynamic r = mk (r, Tdynamic)
 let like r ty = mk (r, Tlike ty)
 
 let locl_like r ty =
-  if is_dynamic ty then
+  if Typing_defs.is_dynamic ty then
     ty
   else
     match get_node ty with
@@ -139,7 +139,7 @@ let closed_shape r map = shape r (nothing r) map
 
 let open_shape ~kind r map = shape r kind map
 
-let supportdyn_mixed ?(mixed_reason = Reason.Rnone) r =
+let supportdyn_mixed ?(mixed_reason = Reason.none) r =
   supportdyn r (mixed mixed_reason)
 
 let hh_formatstring r ty =
@@ -180,6 +180,9 @@ let intersection r tyl =
 
 let function_ref r ty = mk (r, Tnewtype (SN.Classes.cFunctionRef, [ty], ty))
 
+let label r ty_in ty_out =
+  mk (r, Tnewtype (SN.Classes.cEnumClassLabel, [ty_in; ty_out], mixed r))
+
 let has_member r ~name ~ty ~class_id ~explicit_targs =
   ConstraintType
     (mk_constraint_type
@@ -219,7 +222,7 @@ let simple_variadic_splat r ty =
 let capability r name : locl_ty = class_type r name []
 
 let default_capability p : locl_ty =
-  let r = Reason.Rdefault_capability p in
+  let r = Reason.default_capability p in
   intersection
     r
     SN.Capabilities.
@@ -233,7 +236,7 @@ let default_capability p : locl_ty =
       ]
 
 let default_capability_decl p : decl_ty =
-  let r = Reason.Rdefault_capability p in
+  let r = Reason.default_capability p in
   intersection
     r
     SN.Capabilities.
@@ -246,4 +249,4 @@ let default_capability_decl p : decl_ty =
         apply r (p, io) [];
       ]
 
-let default_capability_unsafe p : locl_ty = mixed (Reason.Rhint p)
+let default_capability_unsafe p : locl_ty = mixed (Reason.hint p)

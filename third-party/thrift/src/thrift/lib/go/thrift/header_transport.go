@@ -23,6 +23,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"net"
 )
 
 const (
@@ -31,7 +32,7 @@ const (
 )
 
 type headerTransport struct {
-	transport Transport
+	conn *connTimeout
 
 	// Used on read
 	rbuf       *bufio.Reader
@@ -42,7 +43,6 @@ type headerTransport struct {
 
 	// Used on write
 	wbuf                       *bytes.Buffer
-	identity                   string
 	writeInfoHeaders           map[string]string
 	persistentWriteInfoHeaders map[string]string
 
@@ -58,10 +58,11 @@ type headerTransport struct {
 }
 
 // newHeaderTransport creates a new transport with defaults.
-func newHeaderTransport(transport Transport) *headerTransport {
+func newHeaderTransport(c net.Conn) *headerTransport {
+	conn := &connTimeout{Conn: c}
 	return &headerTransport{
-		transport: transport,
-		rbuf:      bufio.NewReader(transport),
+		conn:      conn,
+		rbuf:      bufio.NewReader(conn),
 		framebuf:  newLimitedByteReader(bytes.NewReader(nil), 0),
 		frameSize: 0,
 
@@ -84,23 +85,6 @@ func (t *headerTransport) SetSeqID(seq uint32) {
 
 func (t *headerTransport) SeqID() uint32 {
 	return t.readSeqID
-}
-
-func (t *headerTransport) Identity() string {
-	return t.identity
-}
-
-func (t *headerTransport) SetIdentity(identity string) {
-	t.identity = identity
-}
-
-func (t *headerTransport) peerIdentity() string {
-	v, ok := t.GetResponseHeader(IdentityHeader)
-	vers, versok := t.GetResponseHeader(IDVersionHeader)
-	if ok && versok && vers == IDVersion {
-		return v
-	}
-	return ""
 }
 
 func (t *headerTransport) SetPersistentHeader(key, value string) {
@@ -305,7 +289,7 @@ func (t *headerTransport) ResetProtocol() error {
 
 // Close closes the internal transport
 func (t *headerTransport) Close() error {
-	return t.transport.Close()
+	return t.conn.Close()
 }
 
 // Read reads from the current framebuffer. EOF if the frame is done.
@@ -411,11 +395,6 @@ func (t *headerTransport) flushHeader() error {
 	hdr.clientType = t.clientType
 	hdr.flags = t.flags
 
-	if t.identity != "" {
-		hdr.headers[IdentityHeader] = t.identity
-		hdr.headers[IDVersionHeader] = IDVersion
-	}
-
 	outbuf, err := applyTransforms(t.wbuf, t.writeTransforms)
 	if err != nil {
 		return NewTransportExceptionFromError(err)
@@ -428,7 +407,7 @@ func (t *headerTransport) flushHeader() error {
 		return NewTransportExceptionFromError(err)
 	}
 
-	err = hdr.Write(t.transport)
+	err = hdr.Write(t.conn)
 	return NewTransportExceptionFromError(err)
 }
 
@@ -442,7 +421,7 @@ func (t *headerTransport) flushFramed() error {
 		)
 	}
 
-	err := binary.Write(t.transport, binary.BigEndian, framesize)
+	err := binary.Write(t.conn, binary.BigEndian, framesize)
 	return NewTransportExceptionFromError(err)
 }
 
@@ -471,7 +450,7 @@ func (t *headerTransport) Flush() error {
 
 	// Writeout the payload
 	if t.wbuf.Len() > 0 {
-		_, err = t.wbuf.WriteTo(t.transport)
+		_, err = t.wbuf.WriteTo(t.conn)
 		if err != nil {
 			t.wbuf.Reset() // reset on return
 			return NewTransportExceptionFromError(err)
@@ -480,8 +459,6 @@ func (t *headerTransport) Flush() error {
 
 	// Remove the non-persistent headers on flush
 	t.clearRequestHeaders()
-
-	err = t.transport.Flush()
 
 	t.wbuf.Reset() // reset incase wbuf pointer changes in xform
 	return NewTransportExceptionFromError(err)

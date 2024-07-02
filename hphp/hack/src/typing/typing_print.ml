@@ -868,7 +868,7 @@ module Full = struct
         else
           (* Don't show "as mixed" if we're not printing supportdyn *)
           TySet.remove
-            Typing_make_type.(supportdyn Reason.Rnone (mixed Reason.Rnone))
+            Typing_make_type.(supportdyn Reason.none (mixed Reason.none))
             upper
       in
       (* If we have an equality we can ignore the other bounds *)
@@ -898,14 +898,8 @@ module Full = struct
   let rec locl_ty ~fuel : _ -> _ -> _ -> locl_ty -> Fuel.t * Doc.t =
    fun to_doc st penv ty ->
     Fuel.provide fuel (fun ~fuel ->
-        let (r, x) = deref ty in
-        let (fuel, d) = locl_ty_ ~fuel to_doc st penv x in
-        let d =
-          match r with
-          | Reason.Rsolve_fail _ -> Concat [text "{suggest:"; d; text "}"]
-          | _ -> d
-        in
-        (fuel, d))
+        let (_r, x) = deref ty in
+        locl_ty_ ~fuel to_doc st penv x)
 
   and locl_ty_ ~fuel : _ -> _ -> penv -> locl_phase ty_ -> Fuel.t * Doc.t =
    fun to_doc st penv x ->
@@ -941,7 +935,7 @@ module Full = struct
       let (_, ety) =
         Typing_inference_env.expand_type
           env.inference_env
-          (mk (Reason.Rnone, Tvar n))
+          (mk (Reason.none, Tvar n))
       in
       begin
         match deref ety with
@@ -1172,9 +1166,12 @@ module Full = struct
       let (fuel, root_ty_doc) = k ~fuel root_ty in
       let access_doc = Concat [root_ty_doc; text "::"; to_doc (snd id)] in
       (fuel, access_doc)
+    | Tlabel name ->
+      let label_doc = Concat [text "#"; text name] in
+      (fuel, label_doc)
 
   and type_predicate ~fuel ~negate predicate =
-    let predicate_doc =
+    let rec predicate_doc predicate =
       match predicate with
       | IsBool -> text "bool"
       | IsInt -> text "int"
@@ -1184,6 +1181,10 @@ module Full = struct
       | IsNum -> text "num"
       | IsResource -> text "resource"
       | IsNull -> text "null"
+      | IsTupleOf predicates ->
+        let texts = List.map predicates ~f:predicate_doc in
+        Concat
+          ([text "("] @ List.intersperse texts ~sep:(text ", ") @ [text ")"])
     in
     let doc =
       Concat
@@ -1194,7 +1195,7 @@ module Full = struct
             "not "
           else
             "is ");
-          predicate_doc;
+          predicate_doc predicate;
         ]
     in
     (fuel, doc)
@@ -1249,17 +1250,16 @@ module Full = struct
           ]
       in
       (fuel, ttype_switch_doc)
+    | Thas_const { name; ty } ->
+      let (fuel, ty_doc) = k ~fuel ty in
+      let has_const_doc =
+        Concat [text "has_const("; text name; text ":"; Space; ty_doc; text ")"]
+      in
+      (fuel, has_const_doc)
 
   and constraint_type ~fuel to_doc st penv ty =
-    let (r, x) = deref_constraint_type ty in
-    let (fuel, constraint_ty_doc) = constraint_type_ ~fuel to_doc st penv x in
-    let constraint_ty_doc =
-      match r with
-      | Reason.Rsolve_fail _ ->
-        Concat [text "{suggest:"; constraint_ty_doc; text "}"]
-      | _ -> constraint_ty_doc
-    in
-    (fuel, constraint_ty_doc)
+    let (_r, x) = deref_constraint_type ty in
+    constraint_type_ ~fuel to_doc st penv x
 
   let internal_type ~fuel to_doc st penv ty =
     match ty with
@@ -1540,9 +1540,10 @@ module ErrorString = struct
          prints with a different function (namely Full.locl_ty) *)
       failwith "Tunapplied_alias is not a type"
     | Taccess (_ty, _id) -> (fuel, "a type constant")
+    | Tlabel name -> (fuel, Printf.sprintf "a label (#%s)" name)
     | Tneg (Neg_class (_, c)) -> (fuel, "anything but a " ^ strip_ns c)
     | Tneg (Neg_predicate predicate) ->
-      let str =
+      let rec str predicate =
         match predicate with
         | IsBool -> "a bool"
         | IsInt -> "an int"
@@ -1552,8 +1553,11 @@ module ErrorString = struct
         | IsNum -> "a num"
         | IsResource -> "a resource"
         | IsNull -> "null"
+        | IsTupleOf predicates ->
+          let strings = List.map predicates ~f:str in
+          "(" ^ String.concat ~sep:", " strings ^ ")"
       in
-      (fuel, "is not " ^ str)
+      (fuel, "is not " ^ str predicate)
 
   and dependent dep =
     let x = strip_ns @@ DependentKind.to_string dep in
@@ -1734,7 +1738,7 @@ module Json = struct
       obj @@ kind p "primitive" @ name (Aast_defs.string_of_tprim tp)
     | (p, Tneg (Neg_class (_, c))) -> obj @@ kind p "negation" @ name c
     | (p, Tneg (Neg_predicate predicate)) ->
-      let predicate_json =
+      let rec predicate_json predicate =
         match predicate with
         | IsBool -> name "isbool"
         | IsInt -> name "isint"
@@ -1744,8 +1748,13 @@ module Json = struct
         | IsNum -> name "isnum"
         | IsResource -> name "isresource"
         | IsNull -> name "isnull"
+        | IsTupleOf predicates ->
+          let predicates_json =
+            List.map predicates ~f:(fun p -> obj @@ predicate_json p)
+          in
+          name "istuple" @ [("args", JSON_Array predicates_json)]
       in
-      obj @@ kind p "negation" @ predicate_json
+      obj @@ kind p "negation" @ predicate_json predicate
     | (p, Tclass ((_, cid), e, tys)) ->
       obj @@ kind p "class" @ name cid @ args tys @ refs e
     | (p, Tshape { s_origin = _; s_unknown_value = shape_kind; s_fields = fl })
@@ -1823,6 +1832,7 @@ module Json = struct
       obj @@ kind p "vec_or_dict" @ args [ty1; ty2]
     (* TODO akenn *)
     | (p, Taccess (ty, _id)) -> obj @@ kind p "type_constant" @ args [ty]
+    | (p, Tlabel s) -> obj @@ kind p "label" @ name s
 
   type deserialized_result = (locl_ty, deserialization_error) result
 
@@ -1871,6 +1881,9 @@ module Json = struct
         | "mixed" -> ty (Toption (mk (reason, Tnonnull)))
         | "nonnull" -> ty Tnonnull
         | "dynamic" -> ty Tdynamic
+        | "label" ->
+          get_string "name" (json, keytrace) >>= fun (name, _name_keytrace) ->
+          ty (Tlabel name)
         | "generic" ->
           get_string "name" (json, keytrace) >>= fun (name, _name_keytrace) ->
           get_bool "is_array" (json, keytrace)
@@ -2069,9 +2082,9 @@ module Json = struct
             >>= fun (fields_known, _fields_known_keytrace) ->
             let shape_kind =
               if fields_known then
-                Typing_make_type.nothing Reason.Rnone
+                Typing_make_type.nothing Reason.none
               else
-                Typing_make_type.mixed Reason.Rnone
+                Typing_make_type.mixed Reason.none
             in
             let fields =
               List.fold fields ~init:TShapeMap.empty ~f:(fun shape_map (k, v) ->

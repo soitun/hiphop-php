@@ -179,7 +179,7 @@ void cgLdCls(IRLS& env, const IRInstruction* inst) {
   implLdOrLookupCls(env, inst, false, extra->fallback);
 }
 
-void cgLookupClsRDS(IRLS& env, const IRInstruction* inst) {
+void cgLookupCls(IRLS& env, const IRInstruction* inst) {
   implLdOrLookupCls(env, inst, true, LdClsFallback::Fatal /* unused */);
 }
 
@@ -270,6 +270,7 @@ void implLdCached(IRLS& env, const IRInstruction* inst,
       }
     );
   } else {
+    assertx(rds::isPersistentHandle(ch));
     auto const pptr = rds::handleToPtr<LowPtr<T>, rds::Mode::Persistent>(ch);
     markRDSAccess(v, ch);
     auto const ptr = v.makeReg();
@@ -286,11 +287,11 @@ void implLdCached(IRLS& env, const IRInstruction* inst,
 template<Opcode opc>
 void ldFuncCachedHelper(IRLS& env, const IRInstruction* inst,
                         const CallSpec& call) {
-  auto const extra = inst->extra<opc>();
+  auto const funcName = inst->extra<opc>()->name;
 
-  implLdCached<Func>(env, inst, extra->name, [&] (Vout& v, rds::Handle) {
+  implLdCached<Func>(env, inst, funcName, [&] (Vout& v, rds::Handle) {
     auto const ptr = v.makeReg();
-    auto const args = argGroup(env, inst).immPtr(extra->name);
+    auto const args = argGroup(env, inst).immPtr(funcName);
     cgCallHelper(v, env, call, callDest(ptr), SyncOptions::Sync, args);
     return ptr;
   });
@@ -319,6 +320,13 @@ void cgLdClsCached(IRLS& env, const IRInstruction* inst) {
   });
 }
 
+void cgLookupClsCached(IRLS& env, const IRInstruction* inst) {
+  auto const name = inst->src(0)->strVal();
+  implLdCached<Class>(env, inst, name, [&] (Vout& v, rds::Handle) {
+    return v.cns(nullptr);
+  });
+}
+
 void cgLdFuncCached(IRLS& env, const IRInstruction* inst) {
   ldFuncCachedHelper<LdFuncCached>(
     env, inst, CallSpec::direct(loadUnknownFunc)
@@ -329,26 +337,6 @@ void cgLookupFuncCached(IRLS& env, const IRInstruction* inst) {
   ldFuncCachedHelper<LookupFuncCached>(
     env, inst, CallSpec::direct(lookupUnknownFunc)
   );
-}
-
-void cgLdClsCachedSafe(IRLS& env, const IRInstruction* inst) {
-  auto const name = inst->src(0)->strVal();
-  auto const dst = dstLoc(env, inst, 0).reg();
-  auto const ch = handleFrom<Class>(name);
-  auto& v = vmain(env);
-
-  if (rds::isNormalHandle(ch)) {
-    auto const sf = checkRDSHandleInitialized(v, ch);
-    fwdJcc(v, env, CC_NE, sf, inst->taken());
-    markRDSAccess(v, ch);
-    emitLdLowPtr(v, rvmtl()[ch], dst, sizeof(LowPtr<Class>));
-  } else {
-    assertx(rds::isPersistentHandle(ch));
-    auto const pptr =
-      rds::handleToPtr<LowPtr<Class>, rds::Mode::Persistent>(ch);
-    markRDSAccess(v, ch);
-    emitLdLowPtr(v, *v.cns(pptr), dst, sizeof(LowPtr<Class>));
-  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////

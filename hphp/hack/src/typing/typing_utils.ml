@@ -252,19 +252,19 @@ let is_class_i ty =
   | LoclType ty -> is_class ty
 
 let is_mixed_i env ty =
-  let mixed = LoclType (MakeType.mixed Reason.Rnone) in
+  let mixed = LoclType (MakeType.mixed Reason.none) in
   is_sub_type_for_union_i env mixed ty
 
 let is_mixed env ty = is_mixed_i env (LoclType ty)
 
 let is_nothing_i env ty =
-  let nothing = LoclType (MakeType.nothing Reason.Rnone) in
+  let nothing = LoclType (MakeType.nothing Reason.none) in
   is_sub_type_for_union_i env ty nothing
 
 let is_nothing env ty = is_nothing_i env (LoclType ty)
 
 let is_dynamic env ty =
-  let dynamic = MakeType.dynamic Reason.Rnone in
+  let dynamic = MakeType.dynamic Reason.none in
   (is_sub_type_for_union env dynamic ty && not (is_mixed env ty))
   || (is_sub_type_for_union env ty dynamic && not (is_nothing env ty))
 
@@ -304,18 +304,6 @@ let is_tyvar_error Typing_env_types.{ inference_env; _ } ty =
   match deref ty with
   | (_, Tvar tvid) -> Typing_inference_env.is_error inference_env tvid
   | _ -> false
-
-(** Simplify unions and intersections of constraint
-types which involve mixed or nothing. *)
-let simplify_constraint_type env ty =
-  match deref_constraint_type ty with
-  | (_, Thas_member _)
-  | (_, Thas_type_member _)
-  | (_, Tcan_index _)
-  | (_, Tcan_traverse _)
-  | (_, Ttype_switch _)
-  | (_, Tdestructure _) ->
-    (env, ConstraintType ty)
 
 let contains_unresolved_tyvars env ty =
   let finder =
@@ -658,7 +646,7 @@ let default_fun_param ~readonly ?(pos = Pos_or_decl.none) ty : 'a fun_param =
 
 let tany = Env.tany
 
-let mk_tany env p = mk (Reason.Rwitness p, tany env)
+let mk_tany env p = mk (Reason.witness p, tany env)
 
 let collect_enum_class_upper_bounds env name =
   (* the boolean ok is here to see if we find anything at all,
@@ -677,7 +665,7 @@ let collect_enum_class_upper_bounds env name =
              * reason is not useful. We could add a dedicated reason
              * for more precise error reporting.
              *)
-            let r = Reason.Rnone in
+            let r = Reason.none in
             mk (r, Tintersection [result; lty])
           in
           (seen, true, result)
@@ -687,7 +675,7 @@ let collect_enum_class_upper_bounds env name =
       upper_bounds
       (seen, ok, result)
   in
-  let mixed = MakeType.mixed Reason.Rnone in
+  let mixed = MakeType.mixed Reason.none in
   let (_, ok, upper_bound) = collect SSet.empty false mixed name in
   if ok then
     let (env, upper_bound) = simplify_intersections env upper_bound in
@@ -757,25 +745,31 @@ let has_ancestor_including_req_refl =
 
 (* search through tyl, and any unions directly-recursively contained in tyl,
    and return those that satisfy f, and those that do not, separately.*)
-let rec partition_union ~f tyl =
+let rec partition_union ~f env tyl =
   match tyl with
   | [] -> ([], [])
   | t :: tyl ->
-    let (dyns, nondyns) = partition_union ~f tyl in
-    if f t then
-      (t :: dyns, nondyns)
-    else (
-      match get_node t with
-      | Tunion tyl ->
-        (match strip_union ~f tyl with
-        | Some (sub_dyns, sub_nondyns) ->
-          (sub_dyns @ dyns, MakeType.union (get_reason t) sub_nondyns :: nondyns)
-        | None -> (dyns, t :: nondyns))
-      | _ -> (dyns, t :: nondyns)
-    )
+    let (_, t) = Env.expand_type env t in
+    (match get_node t with
+    | Tunion tyl' when not (List.is_empty tyl') ->
+      partition_union ~f env (tyl' @ tyl)
+    | _ ->
+      let (dyns, nondyns) = partition_union ~f env tyl in
+      if f t then
+        (t :: dyns, nondyns)
+      else (
+        match get_node t with
+        | Tunion tyl ->
+          (match strip_union ~f env tyl with
+          | Some (sub_dyns, sub_nondyns) ->
+            ( sub_dyns @ dyns,
+              MakeType.union (get_reason t) sub_nondyns :: nondyns )
+          | None -> (dyns, t :: nondyns))
+        | _ -> (dyns, t :: nondyns)
+      ))
 
-and strip_union tyl ~f =
-  let (dyns, nondyns) = partition_union ~f tyl in
+and strip_union ~f env tyl =
+  let (dyns, nondyns) = partition_union ~f env tyl in
   match (dyns, nondyns) with
   | ([], _) -> None
   | (_, _) -> Some (dyns, nondyns)
@@ -794,6 +788,7 @@ let rec try_strip_dynamic_from_union ?(accept_intersections = false) env tyl =
   match
     strip_union
       ~f:(is_dynamic_or_intersection_with_dynamic ~accept_intersections env)
+      env
       tyl
   with
   | Some (ty :: _, tyl) -> Some (ty, tyl)
@@ -825,7 +820,7 @@ and strip_dynamic env ty =
   | Some ty -> ty
 
 let is_supportdyn env ty =
-  is_sub_type_for_union env ty (MakeType.supportdyn_mixed Reason.Rnone)
+  is_sub_type_for_union env ty (MakeType.supportdyn_mixed Reason.none)
 
 let rec make_supportdyn r env ty =
   let (env, ty) = Env.expand_type env ty in

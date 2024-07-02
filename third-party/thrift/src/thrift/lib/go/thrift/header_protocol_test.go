@@ -16,12 +16,20 @@
 
 package thrift
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestHeaderProtocolHeaders(t *testing.T) {
 	mockSocket := newMockSocket()
-	proto1 := NewHeaderProtocol(mockSocket)
-	proto2 := NewHeaderProtocol(mockSocket)
+	proto1, err := NewHeaderProtocol(mockSocket)
+	if err != nil {
+		t.Fatalf("failed to create header protocol: %s", err)
+	}
+	proto2, err := NewHeaderProtocol(mockSocket)
+	if err != nil {
+		t.Fatalf("failed to create header protocol: %s", err)
+	}
 
 	proto1.(RequestHeaders).SetRequestHeader("preferred_cheese", "cheddar")
 	if v, _ := proto1.(RequestHeaders).GetRequestHeader("preferred_cheese"); v != "cheddar" {
@@ -39,8 +47,8 @@ func TestHeaderProtocolHeaders(t *testing.T) {
 		t.Fatalf("wrong number of headers")
 	}
 
-	proto1.(*headerProtocol).SetIdentity("batman")
-	if proto1.(*headerProtocol).Identity() != "batman" {
+	SetIdentity(proto1, "batman")
+	if gotIdentity, ok := proto1.GetPersistentHeader(IdentityHeader); !ok || gotIdentity != "batman" {
 		t.Fatalf("failed to set identity")
 	}
 
@@ -48,7 +56,7 @@ func TestHeaderProtocolHeaders(t *testing.T) {
 	proto1.WriteMessageEnd()
 	proto1.Flush()
 
-	_, _, _, err := proto2.ReadMessageBegin()
+	_, _, _, err = proto2.ReadMessageBegin()
 	if err != nil {
 		t.Fatalf("failed to read message from proto1 in proto2")
 	}
@@ -57,7 +65,7 @@ func TestHeaderProtocolHeaders(t *testing.T) {
 		t.Fatalf("failed to read header, got: %s", v)
 	}
 
-	if proto2.(*headerProtocol).peerIdentity() != "batman" {
+	if peerIdentity(proto2.(*headerProtocol).trans) != "batman" {
 		t.Fatalf("failed to peer identity")
 	}
 }

@@ -18,6 +18,7 @@ use oxidized::ast::Def;
 use oxidized::ast::Pos;
 use oxidized::ast::Program;
 use oxidized::errors;
+use oxidized::experimental_features::FeatureName;
 use oxidized::namespace_env::Mode;
 use oxidized::parser_options::ParserOptions;
 use parser_core_types::indexed_source_text::IndexedSourceText;
@@ -32,7 +33,6 @@ use regex::Match;
 use regex::Regex;
 use relative_path::Prefix;
 use relative_path::RelativePath;
-use rust_parser_errors::UnstableFeatures;
 use syn::parse::ParseStream;
 use syn::parse::Parser;
 use syn::punctuated::Punctuated;
@@ -495,8 +495,8 @@ fn parse_aast_from_string(input: &str, internal_offset: usize, span: Span) -> Re
     let indexed_source_text = IndexedSourceText::new(source_text);
 
     let mut default_unstable_features = HashSet::default();
-    default_unstable_features.insert(UnstableFeatures::TypedLocalVariables);
-    default_unstable_features.insert(UnstableFeatures::PipeAwait);
+    default_unstable_features.insert(FeatureName::TypedLocalVariables);
+    default_unstable_features.insert(FeatureName::PipeAwait);
 
     let aast =
         aast_parser::AastParser::from_text(&env, &indexed_source_text, default_unstable_features)

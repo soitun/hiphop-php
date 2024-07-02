@@ -111,6 +111,12 @@ struct watchman_pending_fs : watchman::PendingChange {
 /**
  * Holds a linked list of watchman_pending_fs instances and a trie that
  * efficiently prunes redundant changes.
+ *
+ * PendingChanges is only intended to be accessed by one thread at a time.
+ * If you would like to use a single pending changes object accross
+ * threads, you should use PendingCollection which puts a lock around
+ * accesses to the unerlying PendingChanges object. If you only intend to
+ * use the object on one thread, then you can use PendingChanges directly.
  */
 class PendingChanges {
  public:
@@ -172,10 +178,14 @@ class PendingChanges {
    */
   uint32_t getPendingItemCount() const;
 
+  void startRefusingSyncs(std::string_view reason);
+
  protected:
   art_tree<std::shared_ptr<watchman_pending_fs>, w_string> tree_;
   std::shared_ptr<watchman_pending_fs> pending_;
   std::vector<folly::Promise<folly::Unit>> syncs_;
+  bool refuseSyncs_{false}; // true if we should refuse to add any more syncs
+  std::string refuseSyncsReason_{};
 
  private:
   void maybePruneObsoletedChildren(w_string path, PendingFlags flags);

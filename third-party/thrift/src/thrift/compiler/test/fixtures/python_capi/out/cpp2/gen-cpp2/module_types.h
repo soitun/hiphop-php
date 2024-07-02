@@ -9,7 +9,6 @@
 #include <thrift/lib/cpp2/gen/module_types_h.h>
 
 
-#include "thrift/lib/thrift/gen-cpp2/patch_types.h"
 #include "thrift/compiler/test/fixtures/python_capi/src/gen-cpp2/thrift_dep_types.h"
 #include "thrift/compiler/test/fixtures/python_capi/src/gen-cpp2/serialized_dep_types.h"
 #include "thrift/lib/thrift/gen-cpp2/id_types.h"
@@ -102,7 +101,7 @@ struct intSet;
 struct myString;
 struct doubleList;
 struct strMap;
-struct adaptedInt;
+struct adapted_int;
 } // namespace ident
 namespace detail {
 #ifndef APACHE_THRIFT_ACCESSOR_inty
@@ -405,9 +404,9 @@ APACHE_THRIFT_DEFINE_ACCESSOR(doubleList);
 #define APACHE_THRIFT_ACCESSOR_strMap
 APACHE_THRIFT_DEFINE_ACCESSOR(strMap);
 #endif
-#ifndef APACHE_THRIFT_ACCESSOR_adaptedInt
-#define APACHE_THRIFT_ACCESSOR_adaptedInt
-APACHE_THRIFT_DEFINE_ACCESSOR(adaptedInt);
+#ifndef APACHE_THRIFT_ACCESSOR_adapted_int
+#define APACHE_THRIFT_ACCESSOR_adapted_int
+APACHE_THRIFT_DEFINE_ACCESSOR(adapted_int);
 #endif
 } // namespace detail
 } // namespace thrift
@@ -588,6 +587,8 @@ class MyDataItem final  {
   using __fbthrift_cpp2_type = MyDataItem;
   static constexpr bool __fbthrift_cpp2_is_union =
     false;
+  static constexpr bool __fbthrift_cpp2_uses_op_encode =
+    false;
 
 
  public:
@@ -757,6 +758,8 @@ class MyStruct final  {
  public:
   using __fbthrift_cpp2_type = MyStruct;
   static constexpr bool __fbthrift_cpp2_is_union =
+    false;
+  static constexpr bool __fbthrift_cpp2_uses_op_encode =
     false;
 
 
@@ -1272,6 +1275,8 @@ class TransitiveDoubler final  {
   using __fbthrift_cpp2_type = TransitiveDoubler;
   static constexpr bool __fbthrift_cpp2_is_union =
     false;
+  static constexpr bool __fbthrift_cpp2_uses_op_encode =
+    false;
 
 
  public:
@@ -1369,6 +1374,8 @@ class DoubledPair final  {
  public:
   using __fbthrift_cpp2_type = DoubledPair;
   static constexpr bool __fbthrift_cpp2_is_union =
+    false;
+  static constexpr bool __fbthrift_cpp2_uses_op_encode =
     false;
 
 
@@ -1583,6 +1590,8 @@ class StringPair final  {
   using __fbthrift_cpp2_type = StringPair;
   static constexpr bool __fbthrift_cpp2_is_union =
     false;
+  static constexpr bool __fbthrift_cpp2_uses_op_encode =
+    true;
 
 
  public:
@@ -1778,6 +1787,8 @@ class VapidStruct final  {
   using __fbthrift_cpp2_type = VapidStruct;
   static constexpr bool __fbthrift_cpp2_is_union =
     false;
+  static constexpr bool __fbthrift_cpp2_uses_op_encode =
+    false;
 
 
  public:
@@ -1902,6 +1913,8 @@ class PrimitiveStruct final  {
  public:
   using __fbthrift_cpp2_type = PrimitiveStruct;
   static constexpr bool __fbthrift_cpp2_is_union =
+    false;
+  static constexpr bool __fbthrift_cpp2_uses_op_encode =
     false;
 
 
@@ -2829,6 +2842,8 @@ class AdaptedFields final  {
   using __fbthrift_cpp2_type = AdaptedFields;
   static constexpr bool __fbthrift_cpp2_is_union =
     false;
+  static constexpr bool __fbthrift_cpp2_uses_op_encode =
+    true;
 
 
  public:
@@ -3128,6 +3143,8 @@ class ListStruct final  {
  public:
   using __fbthrift_cpp2_type = ListStruct;
   static constexpr bool __fbthrift_cpp2_is_union =
+    false;
+  static constexpr bool __fbthrift_cpp2_uses_op_encode =
     false;
 
 
@@ -3688,6 +3705,8 @@ class SetStruct final  {
   using __fbthrift_cpp2_type = SetStruct;
   static constexpr bool __fbthrift_cpp2_is_union =
     false;
+  static constexpr bool __fbthrift_cpp2_uses_op_encode =
+    false;
 
 
  public:
@@ -4153,6 +4172,8 @@ class MapStruct final  {
  public:
   using __fbthrift_cpp2_type = MapStruct;
   static constexpr bool __fbthrift_cpp2_is_union =
+    false;
+  static constexpr bool __fbthrift_cpp2_uses_op_encode =
     false;
 
 
@@ -4772,6 +4793,8 @@ class ComposeStruct final  {
   using __fbthrift_cpp2_type = ComposeStruct;
   static constexpr bool __fbthrift_cpp2_is_union =
     false;
+  static constexpr bool __fbthrift_cpp2_uses_op_encode =
+    false;
 
 
  public:
@@ -5343,7 +5366,7 @@ class Shallot final  {
     ::apache::thrift::ident::myString,
     ::apache::thrift::ident::doubleList,
     ::apache::thrift::ident::strMap,
-    ::apache::thrift::ident::adaptedInt
+    ::apache::thrift::ident::adapted_int
   >;
 
   static constexpr std::int16_t __fbthrift_reflection_field_id_list[] = {0,1,2,6,4,8,9,10};
@@ -5383,6 +5406,8 @@ class Shallot final  {
   using __fbthrift_cpp2_type = Shallot;
   static constexpr bool __fbthrift_cpp2_is_union =
     true;
+  static constexpr bool __fbthrift_cpp2_uses_op_encode =
+    true;
 
 
  public:
@@ -5394,7 +5419,7 @@ class Shallot final  {
     myString = 4,
     doubleList = 8,
     strMap = 9,
-    adaptedInt = 10,
+    adapted_int = 10,
   } ;
 
   Shallot()
@@ -5420,7 +5445,7 @@ class Shallot final  {
       }
       case Type::intSet:
       {
-        set_intSet(std::move(rhs.value_.intSet));
+        set_intSet(std::move(*rhs.value_.intSet));
         break;
       }
       case Type::myString:
@@ -5430,17 +5455,17 @@ class Shallot final  {
       }
       case Type::doubleList:
       {
-        set_doubleList(std::move(rhs.value_.doubleList));
+        set_doubleList(std::move(*rhs.value_.doubleList));
         break;
       }
       case Type::strMap:
       {
-        set_strMap(std::move(rhs.value_.strMap));
+        set_strMap(std::move(*rhs.value_.strMap));
         break;
       }
-      case Type::adaptedInt:
+      case Type::adapted_int:
       {
-        set_adaptedInt(std::move(rhs.value_.adaptedInt));
+        set_adapted_int(std::move(rhs.value_.adapted_int));
         break;
       }
       default:
@@ -5474,7 +5499,7 @@ class Shallot final  {
       }
       case Type::intSet:
       {
-        set_intSet(std::move(rhs.value_.intSet));
+        set_intSet(std::move(*rhs.value_.intSet));
         break;
       }
       case Type::myString:
@@ -5484,17 +5509,17 @@ class Shallot final  {
       }
       case Type::doubleList:
       {
-        set_doubleList(std::move(rhs.value_.doubleList));
+        set_doubleList(std::move(*rhs.value_.doubleList));
         break;
       }
       case Type::strMap:
       {
-        set_strMap(std::move(rhs.value_.strMap));
+        set_strMap(std::move(*rhs.value_.strMap));
         break;
       }
-      case Type::adaptedInt:
+      case Type::adapted_int:
       {
-        set_adaptedInt(std::move(rhs.value_.adaptedInt));
+        set_adapted_int(std::move(rhs.value_.adapted_int));
         break;
       }
       default:
@@ -5514,11 +5539,11 @@ class Shallot final  {
   union storage_type {
     ::test::fixtures::python_capi::MyEnum myEnum;
     ::test::fixtures::python_capi::PrimitiveStruct myStruct;
-    ::std::set<::std::int64_t> intSet;
+    ::apache::thrift::detail::boxed_value_ptr<::std::set<::std::int64_t>> intSet;
     ::std::string myString;
-    ::std::vector<double> doubleList;
-    ::std::map<::std::string, ::std::string> strMap;
-    ::apache::thrift::type::ProtocolId adaptedInt;
+    ::std::shared_ptr<const ::std::vector<double>> doubleList;
+    ::std::unique_ptr<::std::map<::std::string, ::std::string>> strMap;
+    ::apache::thrift::type::ProtocolId adapted_int;
 
     storage_type() {}
     ~storage_type() {}
@@ -5564,33 +5589,19 @@ class Shallot final  {
     ::new (std::addressof(value_.myStruct)) ::test::fixtures::python_capi::PrimitiveStruct(std::forward<T>(t)...);
     return value_.myStruct;
   }
-
-  template <typename... A, std::enable_if_t<!sizeof...(A), int> = 0>
-  ::std::set<::std::int64_t>& set_intSet(::std::set<::std::int64_t> const &t) {
-    using T0 = ::std::set<::std::int64_t>;
-    using T = folly::type_t<T0, A...>;
+ private:
+  ::apache::thrift::detail::boxed_value_ptr<::std::set<::std::int64_t>>& set_intSet(::apache::thrift::detail::boxed_value_ptr<::std::set<::std::int64_t>> t);
+  ::apache::thrift::detail::boxed_value_ptr<::std::set<::std::int64_t>>& set_intSet(::std::set<::std::int64_t> const &t);
+  ::apache::thrift::detail::boxed_value_ptr<::std::set<::std::int64_t>>& set_intSet(::std::set<::std::int64_t>&& t);
+  template<typename... T, typename = ::apache::thrift::safe_overload_t<::std::set<::std::int64_t>, T...>> ::apache::thrift::detail::boxed_value_ptr<::std::set<::std::int64_t>>& set_intSet(T&&... t) {
+    // defer resolution of ref_ in case ref_::element_type would here be incomplete
+    using ref_ = folly::conditional_t<(sizeof...(T) < size_t(-1)), ::apache::thrift::detail::boxed_value_ptr<::std::set<::std::int64_t>>, void>;
     __fbthrift_clear();
     type_ = folly::to_underlying(Type::intSet);
-    ::new (std::addressof(value_.intSet)) T(t);
+    ::new (std::addressof(value_.intSet)) ref_(typename ref_::element_type(std::forward<T>(t)...));
     return value_.intSet;
   }
-
-  template <typename... A, std::enable_if_t<!sizeof...(A), int> = 0>
-  ::std::set<::std::int64_t>& set_intSet(::std::set<::std::int64_t>&& t) {
-    using T0 = ::std::set<::std::int64_t>;
-    using T = folly::type_t<T0, A...>;
-    __fbthrift_clear();
-    type_ = folly::to_underlying(Type::intSet);
-    ::new (std::addressof(value_.intSet)) T(std::move(t));
-    return value_.intSet;
-  }
-
-  template<typename... T, typename = ::apache::thrift::safe_overload_t<::std::set<::std::int64_t>, T...>> ::std::set<::std::int64_t>& set_intSet(T&&... t) {
-    __fbthrift_clear();
-    type_ = folly::to_underlying(Type::intSet);
-    ::new (std::addressof(value_.intSet)) ::std::set<::std::int64_t>(std::forward<T>(t)...);
-    return value_.intSet;
-  }
+ public:
 
   template <typename... A, std::enable_if_t<!sizeof...(A), int> = 0>
   ::std::string& set_myString(::std::string const &t) {
@@ -5619,69 +5630,37 @@ class Shallot final  {
     return value_.myString;
   }
 
-
-  template <typename... A, std::enable_if_t<!sizeof...(A), int> = 0>
-  ::std::vector<double>& set_doubleList(::std::vector<double> const &t) {
-    using T0 = ::std::vector<double>;
-    using T = folly::type_t<T0, A...>;
+  ::std::shared_ptr<const ::std::vector<double>>& set_doubleList(::std::shared_ptr<const ::std::vector<double>> t);
+  ::std::shared_ptr<const ::std::vector<double>>& set_doubleList(::std::vector<double> const &t);
+  ::std::shared_ptr<const ::std::vector<double>>& set_doubleList(::std::vector<double>&& t);
+  template<typename... T, typename = ::apache::thrift::safe_overload_t<::std::vector<double>, T...>> ::std::shared_ptr<const ::std::vector<double>>& set_doubleList(T&&... t) {
+    // defer resolution of ref_ in case ref_::element_type would here be incomplete
+    using ref_ = folly::conditional_t<(sizeof...(T) < size_t(-1)), ::std::shared_ptr<const ::std::vector<double>>, void>;
     __fbthrift_clear();
     type_ = folly::to_underlying(Type::doubleList);
-    ::new (std::addressof(value_.doubleList)) T(t);
+    ::new (std::addressof(value_.doubleList)) ref_(new typename ref_::element_type(std::forward<T>(t)...));
     return value_.doubleList;
   }
-
-  template <typename... A, std::enable_if_t<!sizeof...(A), int> = 0>
-  ::std::vector<double>& set_doubleList(::std::vector<double>&& t) {
-    using T0 = ::std::vector<double>;
-    using T = folly::type_t<T0, A...>;
-    __fbthrift_clear();
-    type_ = folly::to_underlying(Type::doubleList);
-    ::new (std::addressof(value_.doubleList)) T(std::move(t));
-    return value_.doubleList;
-  }
-
-  template<typename... T, typename = ::apache::thrift::safe_overload_t<::std::vector<double>, T...>> ::std::vector<double>& set_doubleList(T&&... t) {
-    __fbthrift_clear();
-    type_ = folly::to_underlying(Type::doubleList);
-    ::new (std::addressof(value_.doubleList)) ::std::vector<double>(std::forward<T>(t)...);
-    return value_.doubleList;
-  }
-
-  template <typename... A, std::enable_if_t<!sizeof...(A), int> = 0>
-  ::std::map<::std::string, ::std::string>& set_strMap(::std::map<::std::string, ::std::string> const &t) {
-    using T0 = ::std::map<::std::string, ::std::string>;
-    using T = folly::type_t<T0, A...>;
+  ::std::unique_ptr<::std::map<::std::string, ::std::string>>& set_strMap(::std::unique_ptr<::std::map<::std::string, ::std::string>> t);
+  ::std::unique_ptr<::std::map<::std::string, ::std::string>>& set_strMap(::std::map<::std::string, ::std::string> const &t);
+  ::std::unique_ptr<::std::map<::std::string, ::std::string>>& set_strMap(::std::map<::std::string, ::std::string>&& t);
+  template<typename... T, typename = ::apache::thrift::safe_overload_t<::std::map<::std::string, ::std::string>, T...>> ::std::unique_ptr<::std::map<::std::string, ::std::string>>& set_strMap(T&&... t) {
+    // defer resolution of ref_ in case ref_::element_type would here be incomplete
+    using ref_ = folly::conditional_t<(sizeof...(T) < size_t(-1)), ::std::unique_ptr<::std::map<::std::string, ::std::string>>, void>;
     __fbthrift_clear();
     type_ = folly::to_underlying(Type::strMap);
-    ::new (std::addressof(value_.strMap)) T(t);
+    ::new (std::addressof(value_.strMap)) ref_(new typename ref_::element_type(std::forward<T>(t)...));
     return value_.strMap;
   }
 
   template <typename... A, std::enable_if_t<!sizeof...(A), int> = 0>
-  ::std::map<::std::string, ::std::string>& set_strMap(::std::map<::std::string, ::std::string>&& t) {
-    using T0 = ::std::map<::std::string, ::std::string>;
-    using T = folly::type_t<T0, A...>;
-    __fbthrift_clear();
-    type_ = folly::to_underlying(Type::strMap);
-    ::new (std::addressof(value_.strMap)) T(std::move(t));
-    return value_.strMap;
-  }
-
-  template<typename... T, typename = ::apache::thrift::safe_overload_t<::std::map<::std::string, ::std::string>, T...>> ::std::map<::std::string, ::std::string>& set_strMap(T&&... t) {
-    __fbthrift_clear();
-    type_ = folly::to_underlying(Type::strMap);
-    ::new (std::addressof(value_.strMap)) ::std::map<::std::string, ::std::string>(std::forward<T>(t)...);
-    return value_.strMap;
-  }
-
-  template <typename... A, std::enable_if_t<!sizeof...(A), int> = 0>
-  ::apache::thrift::type::ProtocolId& set_adaptedInt(::apache::thrift::type::ProtocolId t = ::apache::thrift::type::ProtocolId()) {
+  ::apache::thrift::type::ProtocolId& set_adapted_int(::apache::thrift::type::ProtocolId t = ::apache::thrift::type::ProtocolId()) {
     using T0 = ::apache::thrift::type::ProtocolId;
     using T = folly::type_t<T0, A...>;
     __fbthrift_clear();
-    type_ = folly::to_underlying(Type::adaptedInt);
-    ::new (std::addressof(value_.adaptedInt)) T(t);
-    return value_.adaptedInt;
+    type_ = folly::to_underlying(Type::adapted_int);
+    ::new (std::addressof(value_.adapted_int)) T(t);
+    return value_.adapted_int;
   }
 
 
@@ -5703,7 +5682,7 @@ class Shallot final  {
     if (getType() != Type::intSet) {
       ::apache::thrift::detail::throw_on_bad_union_field_access();
     }
-    return value_.intSet;
+    return *value_.intSet;
   }
 
   ::std::string const& get_myString() const {
@@ -5713,25 +5692,25 @@ class Shallot final  {
     return value_.myString;
   }
 
-  ::std::vector<double> const& get_doubleList() const {
+  ::std::shared_ptr<const ::std::vector<double>> const& get_doubleList() const {
     if (getType() != Type::doubleList) {
       ::apache::thrift::detail::throw_on_bad_union_field_access();
     }
     return value_.doubleList;
   }
 
-  ::std::map<::std::string, ::std::string> const& get_strMap() const {
+  ::std::unique_ptr<::std::map<::std::string, ::std::string>> const& get_strMap() const {
     if (getType() != Type::strMap) {
       ::apache::thrift::detail::throw_on_bad_union_field_access();
     }
     return value_.strMap;
   }
 
-  ::apache::thrift::type::ProtocolId const& get_adaptedInt() const {
-    if (getType() != Type::adaptedInt) {
+  ::apache::thrift::type::ProtocolId const& get_adapted_int() const {
+    if (getType() != Type::adapted_int) {
       ::apache::thrift::detail::throw_on_bad_union_field_access();
     }
-    return value_.adaptedInt;
+    return value_.adapted_int;
   }
 
   ::test::fixtures::python_capi::MyEnum& mutable_myEnum() {
@@ -5744,7 +5723,7 @@ class Shallot final  {
     return value_.myStruct;
   }
 
-  ::std::set<::std::int64_t>& mutable_intSet() {
+  ::apache::thrift::detail::boxed_value_ptr<::std::set<::std::int64_t>>& mutable_intSet() {
     assert(getType() == Type::intSet);
     return value_.intSet;
   }
@@ -5754,19 +5733,19 @@ class Shallot final  {
     return value_.myString;
   }
 
-  ::std::vector<double>& mutable_doubleList() {
+  ::std::shared_ptr<const ::std::vector<double>>& mutable_doubleList() {
     assert(getType() == Type::doubleList);
     return value_.doubleList;
   }
 
-  ::std::map<::std::string, ::std::string>& mutable_strMap() {
+  ::std::unique_ptr<::std::map<::std::string, ::std::string>>& mutable_strMap() {
     assert(getType() == Type::strMap);
     return value_.strMap;
   }
 
-  ::apache::thrift::type::ProtocolId& mutable_adaptedInt() {
-    assert(getType() == Type::adaptedInt);
-    return value_.adaptedInt;
+  ::apache::thrift::type::ProtocolId& mutable_adapted_int() {
+    assert(getType() == Type::adapted_int);
+    return value_.adapted_int;
   }
 
   ::test::fixtures::python_capi::MyEnum move_myEnum() {
@@ -5779,7 +5758,7 @@ class Shallot final  {
     return std::move(value_.myStruct);
   }
 
-  ::std::set<::std::int64_t> move_intSet() {
+  ::apache::thrift::detail::boxed_value_ptr<::std::set<::std::int64_t>> move_intSet() {
     assert(getType() == Type::intSet);
     return std::move(value_.intSet);
   }
@@ -5789,19 +5768,19 @@ class Shallot final  {
     return std::move(value_.myString);
   }
 
-  ::std::vector<double> move_doubleList() {
+  ::std::shared_ptr<const ::std::vector<double>> move_doubleList() {
     assert(getType() == Type::doubleList);
     return std::move(value_.doubleList);
   }
 
-  ::std::map<::std::string, ::std::string> move_strMap() {
+  ::std::unique_ptr<::std::map<::std::string, ::std::string>> move_strMap() {
     assert(getType() == Type::strMap);
     return std::move(value_.strMap);
   }
 
-  ::apache::thrift::type::ProtocolId move_adaptedInt() {
-    assert(getType() == Type::adaptedInt);
-    return std::move(value_.adaptedInt);
+  ::apache::thrift::type::ProtocolId move_adapted_int() {
+    assert(getType() == Type::adapted_int);
+    return std::move(value_.adapted_int);
   }
 
   template <typename..., typename T = ::test::fixtures::python_capi::MyEnum>
@@ -5842,22 +5821,22 @@ class Shallot final  {
   FOLLY_ERASE ::apache::thrift::union_field_ref<T&&> myStruct_ref() && {
     return {std::move(value_.myStruct), type_, folly::to_underlying(Type::myStruct), this, ::apache::thrift::detail::union_field_ref_owner_vtable_for<decltype(*this)>};
   }
-  template <typename..., typename T = ::std::set<::std::int64_t>>
+  template <typename..., typename T = ::apache::thrift::detail::boxed_value_ptr<::std::set<::std::int64_t>>>
   FOLLY_ERASE ::apache::thrift::union_field_ref<const T&> intSet_ref() const& {
     return {value_.intSet, type_, folly::to_underlying(Type::intSet), this, ::apache::thrift::detail::union_field_ref_owner_vtable_for<decltype(*this)>};
   }
 
-  template <typename..., typename T = ::std::set<::std::int64_t>>
+  template <typename..., typename T = ::apache::thrift::detail::boxed_value_ptr<::std::set<::std::int64_t>>>
   FOLLY_ERASE ::apache::thrift::union_field_ref<const T&&> intSet_ref() const&& {
     return {std::move(value_.intSet), type_, folly::to_underlying(Type::intSet), this, ::apache::thrift::detail::union_field_ref_owner_vtable_for<decltype(*this)>};
   }
 
-  template <typename..., typename T = ::std::set<::std::int64_t>>
+  template <typename..., typename T = ::apache::thrift::detail::boxed_value_ptr<::std::set<::std::int64_t>>>
   FOLLY_ERASE ::apache::thrift::union_field_ref<T&> intSet_ref() & {
     return {value_.intSet, type_, folly::to_underlying(Type::intSet), this, ::apache::thrift::detail::union_field_ref_owner_vtable_for<decltype(*this)>};
   }
 
-  template <typename..., typename T = ::std::set<::std::int64_t>>
+  template <typename..., typename T = ::apache::thrift::detail::boxed_value_ptr<::std::set<::std::int64_t>>>
   FOLLY_ERASE ::apache::thrift::union_field_ref<T&&> intSet_ref() && {
     return {std::move(value_.intSet), type_, folly::to_underlying(Type::intSet), this, ::apache::thrift::detail::union_field_ref_owner_vtable_for<decltype(*this)>};
   }
@@ -5880,62 +5859,62 @@ class Shallot final  {
   FOLLY_ERASE ::apache::thrift::union_field_ref<T&&> myString_ref() && {
     return {std::move(value_.myString), type_, folly::to_underlying(Type::myString), this, ::apache::thrift::detail::union_field_ref_owner_vtable_for<decltype(*this)>};
   }
-  template <typename..., typename T = ::std::vector<double>>
+  template <typename..., typename T = ::std::shared_ptr<const ::std::vector<double>>>
   FOLLY_ERASE ::apache::thrift::union_field_ref<const T&> doubleList_ref() const& {
     return {value_.doubleList, type_, folly::to_underlying(Type::doubleList), this, ::apache::thrift::detail::union_field_ref_owner_vtable_for<decltype(*this)>};
   }
 
-  template <typename..., typename T = ::std::vector<double>>
+  template <typename..., typename T = ::std::shared_ptr<const ::std::vector<double>>>
   FOLLY_ERASE ::apache::thrift::union_field_ref<const T&&> doubleList_ref() const&& {
     return {std::move(value_.doubleList), type_, folly::to_underlying(Type::doubleList), this, ::apache::thrift::detail::union_field_ref_owner_vtable_for<decltype(*this)>};
   }
 
-  template <typename..., typename T = ::std::vector<double>>
+  template <typename..., typename T = ::std::shared_ptr<const ::std::vector<double>>>
   FOLLY_ERASE ::apache::thrift::union_field_ref<T&> doubleList_ref() & {
     return {value_.doubleList, type_, folly::to_underlying(Type::doubleList), this, ::apache::thrift::detail::union_field_ref_owner_vtable_for<decltype(*this)>};
   }
 
-  template <typename..., typename T = ::std::vector<double>>
+  template <typename..., typename T = ::std::shared_ptr<const ::std::vector<double>>>
   FOLLY_ERASE ::apache::thrift::union_field_ref<T&&> doubleList_ref() && {
     return {std::move(value_.doubleList), type_, folly::to_underlying(Type::doubleList), this, ::apache::thrift::detail::union_field_ref_owner_vtable_for<decltype(*this)>};
   }
-  template <typename..., typename T = ::std::map<::std::string, ::std::string>>
+  template <typename..., typename T = ::std::unique_ptr<::std::map<::std::string, ::std::string>>>
   FOLLY_ERASE ::apache::thrift::union_field_ref<const T&> strMap_ref() const& {
     return {value_.strMap, type_, folly::to_underlying(Type::strMap), this, ::apache::thrift::detail::union_field_ref_owner_vtable_for<decltype(*this)>};
   }
 
-  template <typename..., typename T = ::std::map<::std::string, ::std::string>>
+  template <typename..., typename T = ::std::unique_ptr<::std::map<::std::string, ::std::string>>>
   FOLLY_ERASE ::apache::thrift::union_field_ref<const T&&> strMap_ref() const&& {
     return {std::move(value_.strMap), type_, folly::to_underlying(Type::strMap), this, ::apache::thrift::detail::union_field_ref_owner_vtable_for<decltype(*this)>};
   }
 
-  template <typename..., typename T = ::std::map<::std::string, ::std::string>>
+  template <typename..., typename T = ::std::unique_ptr<::std::map<::std::string, ::std::string>>>
   FOLLY_ERASE ::apache::thrift::union_field_ref<T&> strMap_ref() & {
     return {value_.strMap, type_, folly::to_underlying(Type::strMap), this, ::apache::thrift::detail::union_field_ref_owner_vtable_for<decltype(*this)>};
   }
 
-  template <typename..., typename T = ::std::map<::std::string, ::std::string>>
+  template <typename..., typename T = ::std::unique_ptr<::std::map<::std::string, ::std::string>>>
   FOLLY_ERASE ::apache::thrift::union_field_ref<T&&> strMap_ref() && {
     return {std::move(value_.strMap), type_, folly::to_underlying(Type::strMap), this, ::apache::thrift::detail::union_field_ref_owner_vtable_for<decltype(*this)>};
   }
   template <typename..., typename T = ::apache::thrift::type::ProtocolId>
-  FOLLY_ERASE ::apache::thrift::union_field_ref<const T&> adaptedInt_ref() const& {
-    return {value_.adaptedInt, type_, folly::to_underlying(Type::adaptedInt), this, ::apache::thrift::detail::union_field_ref_owner_vtable_for<decltype(*this)>};
+  FOLLY_ERASE ::apache::thrift::union_field_ref<const T&> adapted_int_ref() const& {
+    return {value_.adapted_int, type_, folly::to_underlying(Type::adapted_int), this, ::apache::thrift::detail::union_field_ref_owner_vtable_for<decltype(*this)>};
   }
 
   template <typename..., typename T = ::apache::thrift::type::ProtocolId>
-  FOLLY_ERASE ::apache::thrift::union_field_ref<const T&&> adaptedInt_ref() const&& {
-    return {std::move(value_.adaptedInt), type_, folly::to_underlying(Type::adaptedInt), this, ::apache::thrift::detail::union_field_ref_owner_vtable_for<decltype(*this)>};
+  FOLLY_ERASE ::apache::thrift::union_field_ref<const T&&> adapted_int_ref() const&& {
+    return {std::move(value_.adapted_int), type_, folly::to_underlying(Type::adapted_int), this, ::apache::thrift::detail::union_field_ref_owner_vtable_for<decltype(*this)>};
   }
 
   template <typename..., typename T = ::apache::thrift::type::ProtocolId>
-  FOLLY_ERASE ::apache::thrift::union_field_ref<T&> adaptedInt_ref() & {
-    return {value_.adaptedInt, type_, folly::to_underlying(Type::adaptedInt), this, ::apache::thrift::detail::union_field_ref_owner_vtable_for<decltype(*this)>};
+  FOLLY_ERASE ::apache::thrift::union_field_ref<T&> adapted_int_ref() & {
+    return {value_.adapted_int, type_, folly::to_underlying(Type::adapted_int), this, ::apache::thrift::detail::union_field_ref_owner_vtable_for<decltype(*this)>};
   }
 
   template <typename..., typename T = ::apache::thrift::type::ProtocolId>
-  FOLLY_ERASE ::apache::thrift::union_field_ref<T&&> adaptedInt_ref() && {
-    return {std::move(value_.adaptedInt), type_, folly::to_underlying(Type::adaptedInt), this, ::apache::thrift::detail::union_field_ref_owner_vtable_for<decltype(*this)>};
+  FOLLY_ERASE ::apache::thrift::union_field_ref<T&&> adapted_int_ref() && {
+    return {std::move(value_.adapted_int), type_, folly::to_underlying(Type::adapted_int), this, ::apache::thrift::detail::union_field_ref_owner_vtable_for<decltype(*this)>};
   }
   Type getType() const { return static_cast<Type>(type_); }
 

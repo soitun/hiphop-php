@@ -26,7 +26,7 @@ func TestHTTPClient(t *testing.T) {
 	if l != nil {
 		defer l.Close()
 	}
-	trans, err := NewHTTPPostClient("http://" + l.Addr().String())
+	trans, err := newHTTPPostClient("http://" + l.Addr().String())
 	if err != nil {
 		l.Close()
 		t.Fatalf("Unable to connect to %s: %s", l.Addr().String(), err)
@@ -39,12 +39,12 @@ func TestHTTPClientHeaders(t *testing.T) {
 	if l != nil {
 		defer l.Close()
 	}
-	trans, err := NewHTTPPostClient("http://" + l.Addr().String())
+	trans, err := newHTTPPostClient("http://" + l.Addr().String())
 	if err != nil {
 		l.Close()
 		t.Fatalf("Unable to connect to %s: %s", l.Addr().String(), err)
 	}
-	TransportHeaderTest(t, trans, trans)
+	transportHTTPClientTest(t, trans, trans)
 }
 
 func TestHTTPCustomClient(t *testing.T) {
@@ -52,14 +52,14 @@ func TestHTTPCustomClient(t *testing.T) {
 	if l != nil {
 		defer l.Close()
 	}
-	trans, err := NewHTTPPostClient("http://" + l.Addr().String())
+	httpClient, err := newHTTPPostClient("http://" + l.Addr().String())
 	if err != nil {
 		l.Close()
 		t.Fatalf("Unable to connect to %s: %s", l.Addr().String(), err)
 	}
 	httpTransport := &customHTTPTransport{}
-	trans.(*HTTPClient).client.Transport = httpTransport
-	TransportHeaderTest(t, trans, trans)
+	httpClient.client.Transport = httpTransport
+	transportHTTPClientTest(t, httpClient, httpClient)
 
 	if !httpTransport.hit {
 		t.Fatalf("Custom client was not used")

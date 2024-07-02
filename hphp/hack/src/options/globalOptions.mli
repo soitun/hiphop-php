@@ -258,6 +258,9 @@ type t = {
   tco_allowed_files_for_ignore_readonly: string list;
   tco_package_v2: bool;
       (** Option to bypass package boundary violation errors to enable v0 of intern-prod separation *)
+  tco_package_v2_bypass_package_check_for_class_const: bool;
+      (** Option for package v2 to bypass package boundary violation errors on ::class during
+          the ::class to nameof migration to unblock V0 of intern-prod separation *)
   preexisting_warnings: bool;
       (** Whether to show preexisting warnings from typechecked files *)
   re_no_cache: bool;
@@ -266,6 +269,8 @@ type t = {
   hh_distc_should_disable_trace_store: bool;
       (** Disable trace store when calling hh_distc. Useful for performance testing.
         Corresponds to the `--trace-store-mode local` options of hh_distc.*)
+  tco_enable_abstract_method_optional_parameters: bool;
+      (** Enable use of optional on parameters in abstract methods *)
 }
 [@@deriving eq, show]
 
@@ -369,9 +374,11 @@ val set :
   ?tco_strict_switch:bool ->
   ?tco_allowed_files_for_ignore_readonly:string list ->
   ?tco_package_v2:bool ->
+  ?tco_package_v2_bypass_package_check_for_class_const:bool ->
   ?preexisting_warnings:bool ->
   ?re_no_cache:bool ->
   ?hh_distc_should_disable_trace_store:bool ->
+  ?tco_enable_abstract_method_optional_parameters:bool ->
   t ->
   t
 

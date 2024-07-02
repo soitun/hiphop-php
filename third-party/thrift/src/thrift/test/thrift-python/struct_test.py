@@ -24,7 +24,7 @@ import thrift.python.mutable_serializer as mutable_serializer
 import thrift.python.serializer as immutable_serializer
 
 from parameterized import parameterized
-from thrift.python.mutable_containers import MutableList, MutableSet
+from thrift.python.mutable_containers import MutableList, MutableMap, MutableSet
 
 from thrift.python.mutable_types import (
     MutableStruct,
@@ -38,6 +38,17 @@ from thrift.python.types import (
 )
 
 from thrift.test.thrift_python.struct_test.thrift_mutable_types import (  # @manual=//thrift/test/thrift-python:struct_test_thrift-python-types
+    bool_constant,
+    byte_constant,
+    double_constant,
+    float_constant,
+    i16_constant,
+    i32_constant,
+    i64_constant,
+    list_constant,
+    map_constant,
+    set_constant,
+    string_constant,
     TestStruct as TestStructMutable,
     TestStructAdaptedTypes as MutableTestStructAdaptedTypes,
     TestStructAllThriftContainerTypes as MutableTestStructAllThriftContainerTypes,
@@ -45,8 +56,12 @@ from thrift.test.thrift_python.struct_test.thrift_mutable_types import (  # @man
     TestStructAllThriftPrimitiveTypesWithDefaultValues as TestStructAllThriftPrimitiveTypesWithDefaultValuesMutable,
     TestStructEmpty as TestStructEmptyMutable,
     TestStructEmptyAlias as TestStructEmptyAliasMutable,
+    TestStructNested_0 as TestStructNested_0_Mutable,
+    TestStructNested_1 as TestStructNested_1_Mutable,
+    TestStructNested_2 as TestStructNested_2_Mutable,
     TestStructWithDefaultValues as TestStructWithDefaultValuesMutable,
     TestStructWithTypedefField as TestStructWithTypedefFieldMutable,
+    TestStructWithUnionField as TestStructWithUnionFieldMutable,
 )
 
 from thrift.test.thrift_python.struct_test.thrift_types import (
@@ -366,15 +381,18 @@ class ThriftPython_MutableStruct_Test(unittest.TestCase):
         self.assertNotIn(w_mutable, (w_mutable2,))
 
     def test_ordering(self) -> None:
-        # DO_BEFORE(aristidis, 20240515): ordering for mutable thrift-python
-        with self.assertRaisesRegex(
-            TypeError,
-            "'<' not supported between instances of 'TestStruct' and 'TestStruct'",
-        ):
-            self.assertLess(
-                TestStructMutable(unqualified_string="a"),
-                TestStructMutable(unqualified_string="b"),
-            )
+        self.assertLess(
+            TestStructMutable(unqualified_string="a"),
+            TestStructMutable(unqualified_string="b"),
+        )
+        self.assertLess(
+            TestStructMutable(unqualified_string="a", optional_string="z"),
+            TestStructMutable(unqualified_string="b", optional_string="a"),
+        )
+        self.assertGreater(
+            TestStructMutable(unqualified_string="b", optional_string="z"),
+            TestStructMutable(unqualified_string="b", optional_string="a"),
+        )
 
     def test_subclass(self) -> None:
         with self.assertRaisesRegex(
@@ -973,3 +991,275 @@ class ThriftPython_MutableStruct_Test(unittest.TestCase):
         self.assertEqual(set(), s.unqualified_set_string)
         self.assertEqual(set(), set1)
         self.assertEqual(set(), set2)
+
+    def test_create_and_assign_for_map(self) -> None:
+        s = MutableTestStructAllThriftContainerTypes(
+            unqualified_map_string_i32={"a": 1, "b": 2}
+        )
+
+        self.assertEqual(2, len(s.unqualified_map_string_i32))
+        self.assertEqual({"a": 1, "b": 2}, s.unqualified_map_string_i32)
+
+        with self.assertRaisesRegex(
+            TypeError, "Thrift container types do not support direct assignment."
+        ):
+            s.unqualified_map_string_i32 = {"a": 1, "b": 2}
+
+        map1 = s.unqualified_map_string_i32
+        map2 = s.unqualified_map_string_i32
+
+        # maps are instance of thrift.python.mutable_containers.MutableMap
+        self.assertTrue(isinstance(map1, MutableMap))
+        self.assertTrue(isinstance(map2, MutableMap))
+
+        # map1 and map2 are the same instances
+        self.assertIs(map1, map2)
+
+        # Update on any variable is reflected on others
+        map1["c"] = 3
+        self.assertEqual({"a": 1, "b": 2, "c": 3}, s.unqualified_map_string_i32)
+        self.assertEqual({"a": 1, "b": 2, "c": 3}, map1)
+        self.assertEqual({"a": 1, "b": 2, "c": 3}, map2)
+
+        # `__contains__()`
+        self.assertIn("a", s.unqualified_map_string_i32)
+        self.assertIn("b", s.unqualified_map_string_i32)
+        self.assertNotIn("x", s.unqualified_map_string_i32)
+        self.assertNotIn("y", s.unqualified_map_string_i32)
+
+        # `__contains__()` is type checked
+        self.assertIn("a", s.unqualified_map_string_i32)
+        with self.assertRaisesRegex(
+            TypeError, "Expected type <class 'str'>, got: <class 'int'>"
+        ):
+            self.assertIn(1, s.unqualified_map_string_i32)
+
+        # `__getitem__()`
+        self.assertEqual(1, s.unqualified_map_string_i32["a"])
+        self.assertEqual(2, s.unqualified_map_string_i32["b"])
+        self.assertEqual(3, s.unqualified_map_string_i32["c"])
+
+        with self.assertRaises(KeyError):
+            s.unqualified_map_string_i32["Not Exists"]
+
+        # `__getitem__()` is type checked
+        with self.assertRaisesRegex(
+            TypeError, "Expected type <class 'str'>, got: <class 'int'>"
+        ):
+            s.unqualified_map_string_i32[999]
+
+        # `get()`
+        self.assertEqual(1, s.unqualified_map_string_i32.get("a"))
+        # `get(, default=None)`
+        self.assertEqual(None, s.unqualified_map_string_i32.get("Not Exists"))
+        self.assertEqual(
+            "MyDefaultValue",
+            s.unqualified_map_string_i32.get("Not Exists", "MyDefaultValue"),
+        )
+
+        # `get()` is type checked
+        with self.assertRaisesRegex(
+            TypeError, "Expected type <class 'str'>, got: <class 'int'>"
+        ):
+            s.unqualified_map_string_i32.get(999, "MyDefaultValue")
+
+        # `__setitem__()`
+        self.assertEqual(1, s.unqualified_map_string_i32["a"])
+        s.unqualified_map_string_i32["a"] = 11
+        self.assertEqual(11, s.unqualified_map_string_i32["a"])
+        s.unqualified_map_string_i32["a"] = 1
+        self.assertEqual(1, s.unqualified_map_string_i32["a"])
+
+        # `__setitem__()` is type checked for both key and value
+        with self.assertRaisesRegex(
+            TypeError, "not a <class 'int'>, is actually of type <class 'str'>"
+        ):
+            s.unqualified_map_string_i32["a"] = "Not an integer"
+
+        with self.assertRaisesRegex(
+            TypeError, "Expected type <class 'str'>, got: <class 'int'>"
+        ):
+            s.unqualified_map_string_i32[999] = 11
+
+        # `__iter__()`
+        python_set = {"a", "b", "c"}
+        for key in s.unqualified_map_string_i32:
+            # `remove()` raises a `KeyError` if key is absent
+            python_set.remove(key)
+
+        self.assertEqual(0, len(python_set))
+
+        # `keys()`
+        self.assertEqual(3, len(s.unqualified_map_string_i32.keys()))
+
+        python_set = {"a", "b", "c"}
+        for key in s.unqualified_map_string_i32.keys():
+            # `remove()` raises a `KeyError` if key is absent
+            python_set.remove(key)
+
+        # `keys()` returns a view
+        keys = s.unqualified_map_string_i32.keys()
+        self.assertEqual(3, len(keys))
+        self.assertEqual({"a", "b", "c"}, set(keys))
+
+        s.unqualified_map_string_i32["d"] = 4
+
+        self.assertEqual(4, len(keys))
+        self.assertEqual({"a", "b", "c", "d"}, set(keys))
+
+        # `values()`
+        self.assertEqual(4, len(s.unqualified_map_string_i32.values()))
+
+        python_list = [1, 2, 3, 4]
+        for value in s.unqualified_map_string_i32.values():
+            python_list.remove(value)
+
+        # `values()` returns a view
+        values = s.unqualified_map_string_i32.values()
+        self.assertEqual(4, len(values))
+        self.assertEqual([1, 2, 3, 4], sorted(values))
+
+        s.unqualified_map_string_i32["e"] = 5
+
+        self.assertEqual(5, len(values))
+        self.assertEqual([1, 2, 3, 4, 5], sorted(values))
+
+        # `items()`
+        self.assertEqual(5, len(s.unqualified_map_string_i32.items()))
+        self.assertEqual(
+            [("a", 1), ("b", 2), ("c", 3), ("d", 4), ("e", 5)],
+            sorted(s.unqualified_map_string_i32.items()),
+        )
+
+        # `items()` returns a view
+        items = s.unqualified_map_string_i32.items()
+        self.assertEqual(5, len(items))
+        self.assertEqual(
+            [("a", 1), ("b", 2), ("c", 3), ("d", 4), ("e", 5)],
+            sorted(items),
+        )
+
+        s.unqualified_map_string_i32["f"] = 6
+
+        self.assertEqual(6, len(items))
+        self.assertEqual(
+            [("a", 1), ("b", 2), ("c", 3), ("d", 4), ("e", 5), ("f", 6)],
+            sorted(items),
+        )
+
+        # `MutableMap` instances are not hashable
+        with self.assertRaisesRegex(
+            TypeError, "unhashable type: 'thrift.python.mutable_containers.MutableMap'"
+        ):
+            hash(s.unqualified_map_string_i32)
+
+        _thrift_serialization_round_trip(self, mutable_serializer, s)
+
+        # `clear()`
+        s.unqualified_map_string_i32.clear()
+        self.assertEqual({}, s.unqualified_map_string_i32)
+        self.assertEqual({}, map1)
+        self.assertEqual({}, map2)
+
+    def test_constants(self) -> None:
+        s = TestStructAllThriftPrimitiveTypesMutable()
+
+        self.assertEqual(False, s.unqualified_bool)
+        s.unqualified_bool = bool_constant
+        self.assertEqual(True, s.unqualified_bool)
+
+        self.assertEqual(0, s.unqualified_byte)
+        s.unqualified_byte = byte_constant
+        self.assertEqual(-10, s.unqualified_byte)
+
+        self.assertEqual(0, s.unqualified_i16)
+        s.unqualified_i16 = i16_constant
+        self.assertEqual(200, s.unqualified_i16)
+
+        self.assertEqual(0, s.unqualified_i32)
+        s.unqualified_i32 = i32_constant
+        self.assertEqual(0xFA12EE, s.unqualified_i32)
+
+        self.assertEqual(0, s.unqualified_i64)
+        s.unqualified_i64 = i64_constant
+        self.assertEqual(0xFFFFFFFFFF, s.unqualified_i64)
+
+        self.assertEqual(0, s.unqualified_float)
+        s.unqualified_float = float_constant
+        self.assertEqual(2.718281828459, s.unqualified_float)
+
+        self.assertEqual(0, s.unqualified_double)
+        s.unqualified_double = double_constant
+        self.assertEqual(2.718281828459, s.unqualified_double)
+
+        self.assertEqual("", s.unqualified_string)
+        s.unqualified_string = string_constant
+        self.assertEqual("June 28, 2017", s.unqualified_string)
+
+        s = MutableTestStructAllThriftContainerTypes()
+
+        self.assertEqual([], s.unqualified_list_i32)
+        s.unqualified_list_i32.extend(list_constant)
+        self.assertEqual([2, 3, 5, 7], s.unqualified_list_i32)
+
+        s = MutableTestStructAllThriftContainerTypes(
+            unqualified_set_string=set_constant
+        )
+        self.assertEqual({"foo", "bar", "baz"}, s.unqualified_set_string)
+
+        s = MutableTestStructAllThriftContainerTypes(
+            unqualified_map_string_i32=map_constant
+        )
+        self.assertEqual({"foo": 1, "bar": 2}, s.unqualified_map_string_i32)
+
+    def test_nested_structs_init(self) -> None:
+        """
+        struct TestStructNested_2 {
+          1: i32 i32_field;
+        }
+
+        struct TestStructNested_1 {
+          1: i32 i32_field;
+          2: TestStructNested_2 nested_2;
+        }
+
+        struct TestStructNested_0 {
+          1: i32 i32_field;
+          2: TestStructNested_1 nested_1;
+        }
+        """
+        s2 = TestStructNested_2_Mutable(i32_field=2)
+        s1 = TestStructNested_1_Mutable(i32_field=3, nested_2=s2)
+        s0 = TestStructNested_0_Mutable(i32_field=5, nested_1=s1)
+
+        self.assertEqual(s2, s0.nested_1.nested_2)
+        self.assertEqual(s1, s0.nested_1)
+
+        self.assertEqual(2, s0.nested_1.nested_2.i32_field)
+        self.assertEqual(3, s0.nested_1.i32_field)
+
+        # Update on `s2` updates both `s1` and `s2`
+        self.assertEqual(2, s0.nested_1.nested_2.i32_field)
+        self.assertEqual(2, s1.nested_2.i32_field)
+        s2.i32_field = 7
+        self.assertEqual(7, s0.nested_1.nested_2.i32_field)
+        self.assertEqual(7, s1.nested_2.i32_field)
+
+        # Accessing the same field returns the same instances
+        my_s2_var1 = s0.nested_1.nested_2
+        my_s2_var2 = s0.nested_1.nested_2
+
+        self.assertIs(my_s2_var1, my_s2_var2)
+
+        # Update on `my_s2_var1` or `my_s2_var2` updates all references
+        my_s2_var1.i32_field = 11
+        self.assertEqual(11, s0.nested_1.nested_2.i32_field)
+        self.assertEqual(11, s1.nested_2.i32_field)
+        self.assertEqual(11, s2.i32_field)
+
+        # Unfortunately, this is not intuitive, `my_s2_var1` is not `s1`
+        self.assertIs(my_s2_var1, my_s2_var2)
+        self.assertIsNot(s1, my_s2_var2)
+
+    def test_create_for_struct_with_union_field(self) -> None:
+        _ = TestStructWithUnionFieldMutable()

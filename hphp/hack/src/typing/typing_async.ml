@@ -21,7 +21,7 @@ module MakeType = Typing_make_type
      e : ?Awaitable<T> |- await e : ?T
 *)
 let overload_extract_from_awaitable_with_ty_err env ~p opt_ty_maybe =
-  let r = Reason.Rwitness p in
+  let r = Reason.witness p in
   let rec extract_inner env opt_ty_maybe =
     let ((env, e1), e_opt_ty) =
       Typing_solver.expand_type_and_solve
@@ -74,6 +74,7 @@ let overload_extract_from_awaitable_with_ty_err env ~p opt_ty_maybe =
     | Ttuple _
     | Tshape _
     | Taccess _
+    | Tlabel _
     | Tneg _ ->
       let (env, type_var) =
         if TUtils.is_tyvar_error env e_opt_ty then
@@ -103,6 +104,7 @@ let overload_extract_from_awaitable_with_ty_err env ~p opt_ty_maybe =
         | Tunion _
         | Tshape _
         | Taccess _
+        | Tlabel _
         | Tneg _ ->
           type_var
       in
@@ -121,6 +123,7 @@ let overload_extract_from_awaitable_with_ty_err env ~p opt_ty_maybe =
   let ((env, ty_err_opt), ty) = extract_inner env opt_ty_maybe in
   let (env, err) = Typing_solver.close_tyvars_and_solve env in
   Option.iter ~f:(Typing_error_utils.add_typing_error ~env) ty_err_opt;
+  let (env, ty) = Typing_union.simplify_unions env ty in
   ((env, err), ty)
 
 let overload_extract_from_awaitable env ~p opt_ty_maybe =

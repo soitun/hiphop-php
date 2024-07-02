@@ -97,6 +97,7 @@ pub fn desugar(
         global_function_pointers: vec![],
         static_method_pointers: vec![],
         errors: vec![],
+        contains_spliced_await: false,
     };
     let rewritten_expr = state.rewrite_expr(e, visitor_name);
 
@@ -115,7 +116,7 @@ pub fn desugar(
                 &et_literal_pos,
             )]),
         };
-        let mut typing_fun_ = wrap_fun_(typing_fun_body, vec![], et_literal_pos.clone());
+        let mut typing_fun_ = wrap_fun_(false, typing_fun_body, vec![], et_literal_pos.clone());
         typing_fun_.ctxs = Some(aast::Contexts(
             et_literal_pos.clone(),
             vec![ast::Hint(
@@ -195,25 +196,30 @@ pub fn desugar(
                 )),
             )),
         ),
-        is_variadic: false,
         pos: visitor_pos.clone(),
         name: visitor_variable(),
-        expr: None,
+        info: ast::FunParamInfo::ParamRequired,
         callconv: ParamKind::Pnormal,
         readonly: None,
         user_attributes: Default::default(),
         visibility: None,
     };
-    let visitor_fun_ = wrap_fun_(visitor_body, vec![param], et_literal_pos.clone());
+    let visitor_fun_ = wrap_fun_(false, visitor_body, vec![param], et_literal_pos.clone());
     let visitor_lambda = Expr::new(
         (),
         et_literal_pos.clone(),
         Expr_::mk_lfun(visitor_fun_, vec![]),
     );
 
+    let spliced_await = env.in_async && state.contains_spliced_await;
+
     // Create assignment of the extracted expressions to temporary variables
     // `$0splice0 = spliced_expr0;`
-    let splice_assignments: Vec<Stmt> = create_temp_statements(state.splices, temp_splice_lvar);
+    let splice_assignments: Vec<Stmt> = if spliced_await {
+        create_temp_statement_parallel(&et_literal_pos, state.splices, temp_splice_lvar)
+    } else {
+        create_temp_statements(state.splices, temp_splice_lvar)
+    };
     // `$0fp0 = foo<>;`
     let function_pointer_assignments: Vec<Stmt> =
         create_temp_statements(state.global_function_pointers, temp_function_pointer_lvar);
@@ -249,7 +255,7 @@ pub fn desugar(
             _ => vec![],
         };
 
-        immediately_invoked_lambda(&et_literal_pos, body, lambda_args)
+        immediately_invoked_lambda(spliced_await, &et_literal_pos, body, lambda_args)
     };
 
     let expr = Expr::new(
@@ -272,7 +278,12 @@ fn wrap_return(e: Expr, pos: &Pos) -> Stmt {
 }
 
 /// Wrap a FuncBody into an anonymous Fun_
-fn wrap_fun_(body: ast::FuncBody, params: Vec<ast::FunParam>, span: Pos) -> ast::Fun_ {
+fn wrap_fun_(
+    async_: bool,
+    body: ast::FuncBody,
+    params: Vec<ast::FunParam>,
+    span: Pos,
+) -> ast::Fun_ {
     ast::Fun_ {
         span,
         readonly_this: None,
@@ -281,7 +292,11 @@ fn wrap_fun_(body: ast::FuncBody, params: Vec<ast::FunParam>, span: Pos) -> ast:
         ret: ast::TypeHint((), None),
         params,
         body,
-        fun_kind: ast::FunKind::FSync,
+        fun_kind: if async_ {
+            ast::FunKind::FAsync
+        } else {
+            ast::FunKind::FSync
+        },
         ctxs: None,        // TODO(T70095684)
         unsafe_ctxs: None, // TODO(T70095684)
         user_attributes: Default::default(),
@@ -540,6 +555,36 @@ fn merge_positions(positions: &[&Pos]) -> Pos {
         .unwrap_or(Pos::NONE)
 }
 
+fn create_temp_statement_parallel(
+    pos: &Pos,
+    exprs: Vec<Expr>,
+    mk_lvar: fn(&Pos, usize) -> Expr,
+) -> Vec<Stmt> {
+    if exprs.len() < 2 {
+        return create_temp_statements(exprs, mk_lvar);
+    }
+    let lhss = exprs
+        .iter()
+        .enumerate()
+        .map(|(i, expr)| (mk_lvar(&expr.1, i)))
+        .collect();
+    // assign a tuple to a list to ensure any awaits can execute concurrently.
+    // We don't use a concurrent statement because that requires each rhs to have
+    // an await, and that might not be the case here.
+    vec![Stmt::new(
+        pos.clone(),
+        Stmt_::Expr(Box::new(Expr::new(
+            (),
+            pos.clone(),
+            Expr_::Binop(Box::new(aast::Binop {
+                bop: Bop::Eq(None),
+                lhs: Expr::new((), pos.clone(), Expr_::List(lhss)),
+                rhs: Expr::new((), pos.clone(), Expr_::Tuple(exprs)),
+            })),
+        ))),
+    )]
+}
+
 fn create_temp_statements(exprs: Vec<Expr>, mk_lvar: fn(&Pos, usize) -> Expr) -> Vec<Stmt> {
     exprs
         .into_iter()
@@ -653,6 +698,7 @@ struct RewriteState {
     global_function_pointers: Vec<Expr>,
     static_method_pointers: Vec<Expr>,
     errors: Vec<(Pos, String)>,
+    contains_spliced_await: bool,
 }
 
 impl RewriteState {
@@ -1234,12 +1280,15 @@ impl RewriteState {
 
                 let mut param_names = Vec::with_capacity(fun_.params.len());
                 for param in &fun_.params {
-                    if param.expr.is_some() {
-                        self.errors.push((
-                            param.pos.clone(),
-                            "Expression trees do not support parameters with default values."
-                                .into(),
-                        ));
+                    match param.info {
+                        ast::FunParamInfo::ParamOptional(Some(_)) => {
+                            self.errors.push((
+                                param.pos.clone(),
+                                "Expression trees do not support parameters with default values."
+                                    .into(),
+                            ));
+                        }
+                        _ => {}
                     }
                     param_names.push(string_literal(param.pos.clone(), &param.name));
                 }
@@ -1289,6 +1338,7 @@ impl RewriteState {
             ETSplice(box aast::EtSplice {
                 spliced_expr,
                 extract_client_type,
+                contains_await,
             }) => {
                 let len = self.splices.len();
                 let expr_pos = spliced_expr.1.clone();
@@ -1298,6 +1348,7 @@ impl RewriteState {
                     ETSplice(Box::new(aast::EtSplice {
                         spliced_expr,
                         extract_client_type: false,
+                        contains_await,
                     })),
                 ));
                 let temp_variable = temp_splice_lvar(&expr_pos, len);
@@ -1313,8 +1364,10 @@ impl RewriteState {
                     ETSplice(Box::new(aast::EtSplice {
                         spliced_expr: temp_variable,
                         extract_client_type,
+                        contains_await,
                     })),
                 );
+                self.contains_spliced_await |= contains_await;
                 RewriteResult {
                     virtual_expr,
                     desugar_expr,
@@ -1754,6 +1807,7 @@ impl RewriteState {
 }
 
 fn immediately_invoked_lambda(
+    async_: bool,
     pos: &Pos,
     stmts: Vec<Stmt>,
     captured_arguments: Vec<((String, Pos), Expr)>,
@@ -1767,10 +1821,9 @@ fn immediately_invoked_lambda(
             ast::FunParam {
                 annotation: (),
                 type_hint: ast::TypeHint((), None),
-                is_variadic: false,
                 pos,
                 name,
-                expr: None,
+                info: ast::FunParamInfo::ParamRequired,
                 callconv: ParamKind::Pnormal,
                 readonly: None,
                 user_attributes: Default::default(),
@@ -1787,10 +1840,10 @@ fn immediately_invoked_lambda(
     let func_body = ast::FuncBody {
         fb_ast: ast::Block(stmts),
     };
-    let fun_ = wrap_fun_(func_body, fun_params, pos.clone());
+    let fun_ = wrap_fun_(async_, func_body, fun_params, pos.clone());
     let lambda_expr = Expr::new((), pos.clone(), Expr_::mk_lfun(fun_, vec![]));
 
-    Expr::new(
+    let call = Expr::new(
         (),
         pos.clone(),
         Expr_::Call(Box::new(ast::CallExpr {
@@ -1799,7 +1852,12 @@ fn immediately_invoked_lambda(
             args: call_args,
             unpacked_arg: None,
         })),
-    )
+    );
+    if async_ {
+        Expr::new((), pos.clone(), Expr_::Await(Box::new(call)))
+    } else {
+        call
+    }
 }
 
 /// Is this is a typechecker pseudo function like `hh_show` that

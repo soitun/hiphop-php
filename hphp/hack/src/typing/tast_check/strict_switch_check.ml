@@ -103,7 +103,7 @@ module Value = struct
       ([Int], Some (Int (Some literal)))
     | String literal -> ([String], Some (String (Some literal)))
     | Class_const ((_, _, CI (_, class_)), (_, const)) ->
-      let rnone = Reason.Rnone in
+      let rnone = Reason.none in
       let (int, string, arraykey) =
         Typing_make_type.(int rnone, string rnone, arraykey rnone)
       in
@@ -300,6 +300,7 @@ let rec symbolic_dnf_values env ty : ValueSet.t =
           else
             ValueSet.singleton (Value.Enum info))
   | Tdynamic -> ValueSet.singleton Value.Dynamic
+  | Tlabel _
   | Ttuple _
   | Tshape _
   | Tvec_or_dict _

@@ -16,11 +16,15 @@
 
 package thrift
 
-import "context"
+import (
+	"context"
+	"net"
+)
 
 // Server is a thrift server
 type Server interface {
-	ServerTransport() ServerTransport
+	// Addr returns the address the server is listening on.
+	Addr() net.Addr
 	// Serve starts the server
 	Serve() error
 	// ServeContext starts the server, and stops it when the context is cancelled

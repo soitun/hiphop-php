@@ -19,7 +19,9 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <vector>
 
+#include <thrift/compiler/ast/t_program.h>
 #include <thrift/compiler/ast/t_struct.h>
 #include <thrift/compiler/ast/t_typedef.h>
 
@@ -29,11 +31,11 @@ namespace compiler {
 namespace rust {
 
 struct rust_crate {
-  std::string name;
-  std::optional<std::string> multifile_module;
+  std::vector<std::string> dependency_path;
+  bool multifile = false;
   std::string label;
 
-  std::string import_name() const;
+  std::string import_name(const t_program* program) const;
 };
 
 struct rust_crate_map {
@@ -42,9 +44,27 @@ struct rust_crate_map {
   std::map<std::string, rust_crate> cratemap;
 };
 
+class rust_crate_index {
+ public:
+  rust_crate_index() = default;
+  rust_crate_index(
+      const t_program* current_program,
+      std::map<std::string, rust_crate> cratemap);
+  const rust_crate* find(const t_program* program) const;
+  std::vector<const rust_crate*> direct_dependencies() const;
+
+ private:
+  void compute_absolute_paths_of_includes(
+      const t_program* program, const std::string& absolute_path);
+
+  std::map<std::string, rust_crate> cratemap;
+  std::map<const t_program*, std::string> thrift_file_absolute_paths;
+};
+
 rust_crate_map load_crate_map(const std::string& path);
 
 std::string mangle(const std::string& name);
+std::string mangle_crate_name(const std::string& name);
 std::string mangle_type(const std::string& name);
 std::string snakecase(const std::string& name);
 std::string camelcase(const std::string& name);
@@ -63,6 +83,8 @@ inline std::string typedef_rust_name(const t_typedef* typedef_) {
 inline std::string struct_rust_name(const t_structured* struct_) {
   return type_rust_name(struct_);
 }
+
+std::string multifile_module_name(const t_program* program);
 
 } // namespace rust
 } // namespace compiler

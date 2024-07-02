@@ -42,7 +42,7 @@ let loclty_of_hint unchecked_tparams env h =
   in
   let tyl =
     List.map unchecked_tparams ~f:(fun t ->
-        mk (Reason.Rwitness_from_decl (fst t.tp_name), Typing_defs.make_tany ()))
+        mk (Reason.witness_from_decl (fst t.tp_name), Typing_defs.make_tany ()))
   in
   let subst = Inst.make_subst unchecked_tparams tyl in
   let decl_ty = Inst.instantiate subst decl_ty in
@@ -251,18 +251,31 @@ and contexts env (_, hl) = List.concat_map ~f:(context_hint env) hl
 
 and contexts_opt env = Option.value_map ~default:[] ~f:(contexts env)
 
-let hint ?(in_signature = true) env (p, h) =
+let hint
+    ?(in_signature = true)
+    ?(in_typeconst = false)
+    ?(in_typehint = false)
+    env
+    (p, h) =
   (* Do not use this one recursively to avoid quadratic runtime! *)
-  Typing_kinding.Simple.check_well_kinded_hint ~in_signature env.tenv (p, h);
+  Typing_kinding.Simple.check_well_kinded_hint
+    ~in_signature
+    ~in_typeconst
+    ~in_typehint
+    env.tenv
+    (p, h);
   hint_ ~in_signature env p h
 
-let hint_opt ?in_signature env =
-  Option.value_map ~default:[] ~f:(hint ?in_signature env)
+let hint_opt ?in_signature ?in_typeconst env =
+  Option.value_map ~default:[] ~f:(hint ?in_signature ?in_typeconst env)
 
 let hints ?in_signature env = List.concat_map ~f:(hint ?in_signature env)
 
 let type_hint env th =
-  Option.value_map ~default:[] ~f:(hint env) (hint_of_type_hint th)
+  Option.value_map
+    ~default:[]
+    ~f:(hint ~in_typehint:true env)
+    (hint_of_type_hint th)
 
 let fun_param env param = type_hint env param.param_type_hint
 
@@ -313,13 +326,14 @@ let consts env cs = List.concat_map ~f:(const env) cs
 
 let typeconsts env tcs =
   let f tconst =
+    let in_typeconst = true in
     match tconst.c_tconst_kind with
     | TCAbstract { c_atc_as_constraint; c_atc_super_constraint; c_atc_default }
       ->
-      hint_opt env c_atc_as_constraint
-      @ hint_opt env c_atc_super_constraint
-      @ hint_opt env c_atc_default
-    | TCConcrete { c_tc_type } -> hint env c_tc_type
+      hint_opt ~in_typeconst env c_atc_as_constraint
+      @ hint_opt ~in_typeconst env c_atc_super_constraint
+      @ hint_opt ~in_typeconst env c_atc_default
+    | TCConcrete { c_tc_type } -> hint ~in_typeconst env c_tc_type
   in
   List.concat_map ~f tcs
 
@@ -439,9 +453,9 @@ let class_ tenv c =
         []);
       tparams env c_tparams;
       where_constrs env c_where_constraints;
-      (* Classes inherited are not signatures from the point of view of modules because the trait
-         being use'd does not need to be seen by users of the class *)
-      hints ~in_signature:false env c_extends;
+      (* Extends clause must be checked, so that we reject public classes extending internal ones *)
+      hints ~in_signature:true env c_extends;
+      (* But for interfaces and trait use, we allow internal *)
       hints ~in_signature:false env c_implements;
       hints ~in_signature:false env c_uses;
       (if TypecheckerOptions.strict_wellformedness (Env.get_tcopt env.tenv) > 0
@@ -507,15 +521,23 @@ let typedef tenv t =
      parameters of typedefs by Tany, which makes the kind check moot *)
   maybe
     (* We always check the constraints for internal types, so treat in_signature:true *)
-    (Typing_kinding.Simple.check_well_kinded_hint ~in_signature:true)
+    (Typing_kinding.Simple.check_well_kinded_hint
+       ~in_signature:true
+       ~in_typeconst:false
+       ~in_typehint:false)
     tenv_with_typedef_tparams
     t_as_constraint;
   maybe
-    (Typing_kinding.Simple.check_well_kinded_hint ~in_signature:true)
+    (Typing_kinding.Simple.check_well_kinded_hint
+       ~in_signature:true
+       ~in_typeconst:false
+       ~in_typehint:false)
     tenv_with_typedef_tparams
     t_super_constraint;
   Typing_kinding.Simple.check_well_kinded_hint
     ~in_signature:should_check_internal_signature
+    ~in_typeconst:false
+    ~in_typehint:false
     tenv_with_typedef_tparams
     t_kind;
   let env =

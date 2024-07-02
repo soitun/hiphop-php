@@ -34,17 +34,22 @@ class ServiceInterceptorBase {
  public:
   virtual ~ServiceInterceptorBase() = default;
 
+  virtual std::string getName() const = 0;
+
   struct InitParams {};
   virtual folly::coro::Task<void> co_onStartServing(InitParams);
 
   struct ConnectionInfo {
     const Cpp2ConnContext* context = nullptr;
+    detail::ServiceInterceptorOnConnectionStorage* storage = nullptr;
   };
-  virtual void internal_onConnection(ConnectionInfo) = 0;
+  virtual void internal_onConnection(ConnectionInfo) noexcept = 0;
+  virtual void internal_onConnectionClosed(ConnectionInfo) noexcept = 0;
 
   struct RequestInfo {
     const Cpp2RequestContext* context = nullptr;
     detail::ServiceInterceptorOnRequestStorage* storage = nullptr;
+    detail::ServiceInterceptorOnRequestArguments arguments;
   };
   virtual folly::coro::Task<void> internal_onRequest(
       ConnectionInfo, RequestInfo) = 0;
@@ -55,6 +60,11 @@ class ServiceInterceptorBase {
   };
   virtual folly::coro::Task<void> internal_onResponse(
       ConnectionInfo, ResponseInfo) = 0;
+
+  static constexpr std::size_t kMaxRequestStateSize =
+      detail::ServiceInterceptorOnRequestStorage::max_size();
+  static constexpr std::size_t kMaxConnectionStateSize =
+      detail::ServiceInterceptorOnConnectionStorage::max_size();
 };
 
 #endif // FOLLY_HAS_COROUTINES

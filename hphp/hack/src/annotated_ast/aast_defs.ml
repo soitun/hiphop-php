@@ -362,6 +362,10 @@ and ('ex, 'en) as_ = {
 
 and ('ex, 'en) et_splice = {
   extract_client_type: bool;
+      (** The spliced_expr should have type Spliceble<t1, t2, t3>, and if extract_client_type is true, the
+          overall type should be t3. If false, the entire Spliceable should be the type. *)
+  contains_await: bool;
+      (** Does the spliced_expr contain an await expression *)
   spliced_expr: ('ex, 'en) expr;
 }
 
@@ -802,15 +806,21 @@ and ('ex, 'en) xhp_attribute =
   | Xhp_simple of ('ex, 'en) xhp_simple
   | Xhp_spread of ('ex, 'en) expr
 
-and is_variadic = bool [@@transform.opaque]
+(**
+ * Param_optional None = `optional int $i`
+ * Param_optional (Some e) = `int $i = e`
+ *)
+and ('ex, 'en) fun_param_info =
+  | Param_optional of ('ex, 'en) expr option
+  | Param_required
+  | Param_variadic
 
 and ('ex, 'en) fun_param = {
   param_annotation: 'ex;
   param_type_hint: 'ex type_hint;
-  param_is_variadic: is_variadic;
   param_pos: pos; [@transform.opaque]
   param_name: string;
-  param_expr: ('ex, 'en) expr option;
+  param_info: ('ex, 'en) fun_param_info;
   param_readonly: Ast_defs.readonly_kind option; [@transform.opaque]
   param_callconv: Ast_defs.param_kind; [@transform.opaque]
   param_user_attributes: ('ex, 'en) user_attributes;

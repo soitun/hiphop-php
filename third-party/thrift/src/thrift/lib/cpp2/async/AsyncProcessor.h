@@ -27,8 +27,8 @@
 #include <folly/String.h>
 #include <folly/Synchronized.h>
 #include <folly/Unit.h>
+#include <folly/concurrency/memory/PrimaryPtr.h>
 #include <folly/container/F14Map.h>
-#include <folly/experimental/PrimaryPtr.h>
 #include <folly/futures/Future.h>
 #include <folly/io/async/EventBase.h>
 #include <folly/lang/Badge.h>
@@ -59,7 +59,7 @@
 #include <thrift/lib/cpp2/server/ResourcePoolHandle.h>
 #include <thrift/lib/cpp2/util/Checksum.h>
 #include <thrift/lib/cpp2/util/IntrusiveSharedPtr.h>
-#include <thrift/lib/cpp2/util/TypeErasedStorage.h>
+#include <thrift/lib/cpp2/util/TypeErasedValue.h>
 #include <thrift/lib/thrift/gen-cpp2/RpcMetadata_types.h>
 #include <thrift/lib/thrift/gen-cpp2/metadata_types.h>
 
@@ -208,6 +208,8 @@ class AsyncProcessorFactory {
           interactionName(other.interactionName),
           createsInteraction(other.createsInteraction) {}
 
+    std::string describeFields() const;
+
    public:
     virtual ~MethodMetadata() = default;
 
@@ -222,6 +224,8 @@ class AsyncProcessorFactory {
       isWildcard_.compare_exchange_strong(expected, status);
       return status == WildcardStatus::YES;
     }
+
+    virtual std::string describe() const;
 
     const ExecutorType executorType{ExecutorType::UNKNOWN};
     const InteractionType interactionType{InteractionType::UNKNOWN};
@@ -248,6 +252,8 @@ class AsyncProcessorFactory {
     WildcardMethodMetadata() : WildcardMethodMetadata(ExecutorType::UNKNOWN) {}
     WildcardMethodMetadata(const WildcardMethodMetadata&) = delete;
     WildcardMethodMetadata& operator=(const WildcardMethodMetadata&) = delete;
+
+    std::string describe() const override;
   };
 
   /**
@@ -258,6 +264,9 @@ class AsyncProcessorFactory {
    */
   using MethodMetadataMap =
       folly::F14FastMap<std::string, std::shared_ptr<const MethodMetadata>>;
+
+  static std::string describe(const MethodMetadataMap&);
+
   /**
    * A marker struct indicating that the AsyncProcessor supports any method, or
    * a list of methods that is not enumerable. This applies to AsyncProcessor
@@ -273,8 +282,13 @@ class AsyncProcessorFactory {
     MethodMetadataMap knownMethods;
   };
 
+  static std::string describe(const WildcardMethodMetadataMap&);
+
   using CreateMethodMetadataResult =
       std::variant<MethodMetadataMap, WildcardMethodMetadataMap>;
+
+  static std::string describe(const CreateMethodMetadataResult&);
+
   /**
    * This function enumerates the list of methods supported by the
    * AsyncProcessor returned by getProcessor(), if possible. The return value
@@ -1189,13 +1203,14 @@ class HandlerCallbackBase;
 
 namespace detail {
 // These functions allow calling the function within generated code since
-// doException is protected
+// the corresponding functions are protected in HandlerCallbackBase
 
 bool shouldProcessServiceInterceptorsOnRequest(HandlerCallbackBase&);
 
 #if FOLLY_HAS_COROUTINES
 folly::coro::Task<void> processServiceInterceptorsOnRequest(
-    HandlerCallbackBase&);
+    HandlerCallbackBase&,
+    detail::ServiceInterceptorOnRequestArguments arguments);
 #endif // FOLLY_HAS_COROUTINES
 } // namespace detail
 
@@ -1382,8 +1397,9 @@ class HandlerCallbackBase {
 
 #if FOLLY_HAS_COROUTINES
   template <class T>
-  void startOnExecutor(
-      folly::coro::Task<T>&& task, folly::Executor::KeepAlive<> executor) {
+  void startOnExecutor(folly::coro::Task<T>&& task) {
+    folly::Executor::KeepAlive<> executor =
+        executor_ ? executor_ : folly::getKeepAliveToken(eb_);
     if (executor.get() == eb_ && eb_->isInEventBaseThread()) {
       // Avoid rescheduling in the common case where result() is called inline
       // on the EB thread where request execution began
@@ -1402,8 +1418,9 @@ class HandlerCallbackBase {
       std::forward<DoExceptionFunc>(doException)(*this);
       return;
     }
-    auto task = [](Ptr callback,
-                   DoExceptionFunc doException) -> folly::coro::Task<void> {
+    const auto doProcess =
+        [](Ptr callback,
+           DoExceptionFunc doException_1) -> folly::coro::Task<void> {
       folly::Try<void> onResponseResult = co_await folly::coro::co_awaitTry(
           callback->processServiceInterceptorsOnResponse());
       if (onResponseResult.hasException()) {
@@ -1413,10 +1430,10 @@ class HandlerCallbackBase {
         LOG(ERROR) << "Exception in ServiceInterceptor::onResponse: "
                    << folly::exceptionStr(onResponseResult.exception());
       }
-      std::forward<DoExceptionFunc>(doException)(*callback);
-    }(sharedFromThis(), std::forward<DoExceptionFunc>(doException));
-    startOnExecutor(
-        std::move(task), executor_ ? executor_ : folly::getKeepAliveToken(eb_));
+      std::forward<DoExceptionFunc>(doException_1)(*callback);
+    };
+    startOnExecutor(doProcess(
+        sharedFromThis(), std::forward<DoExceptionFunc>(doException)));
 #else
     std::forward<DoExceptionFunc>(doException)(*this);
 #endif // FOLLY_HAS_COROUTINES
@@ -1448,11 +1465,13 @@ class HandlerCallbackBase {
   bool shouldProcessServiceInterceptorsOnResponse() const;
 
 #if FOLLY_HAS_COROUTINES
-  folly::coro::Task<void> processServiceInterceptorsOnRequest();
+  folly::coro::Task<void> processServiceInterceptorsOnRequest(
+      detail::ServiceInterceptorOnRequestArguments arguments);
   folly::coro::Task<void> processServiceInterceptorsOnResponse();
 
   friend folly::coro::Task<void> detail::processServiceInterceptorsOnRequest(
-      HandlerCallbackBase&);
+      HandlerCallbackBase&,
+      detail::ServiceInterceptorOnRequestArguments arguments);
 #endif // FOLLY_HAS_COROUTINES
 
 #if !FOLLY_HAS_COROUTINES
@@ -1545,7 +1564,8 @@ class HandlerCallback : public HandlerCallbackBase {
       // where they will be unused.
       doResult(std::forward<InputType>(r));
     } else {
-      auto task = [](Ptr callback, auto result) -> folly::coro::Task<void> {
+      const auto doProcess = [](Ptr callback,
+                                auto result) -> folly::coro::Task<void> {
         folly::Try<void> onResponseResult = co_await folly::coro::co_awaitTry(
             callback->processServiceInterceptorsOnResponse());
         if (onResponseResult.hasException()) {
@@ -1554,10 +1574,9 @@ class HandlerCallback : public HandlerCallbackBase {
         } else {
           callback->doResult(std::move(result));
         }
-      }(sharedFromThis(), std::decay_t<InputType>(std::move(r)));
+      };
       startOnExecutor(
-          std::move(task),
-          executor_ ? executor_ : folly::getKeepAliveToken(eb_));
+          doProcess(sharedFromThis(), std::decay_t<InputType>(std::move(r))));
     }
 #else
     doResult(std::forward<InputType>(r));
@@ -1628,7 +1647,7 @@ class HandlerCallback<void> : public HandlerCallbackBase {
       // where they will be unused.
       doDone();
     } else {
-      auto task = [](Ptr callback) -> folly::coro::Task<void> {
+      const auto doProcess = [](Ptr callback) -> folly::coro::Task<void> {
         folly::Try<void> onResponseResult = co_await folly::coro::co_awaitTry(
             callback->processServiceInterceptorsOnResponse());
         if (onResponseResult.hasException()) {
@@ -1637,10 +1656,8 @@ class HandlerCallback<void> : public HandlerCallbackBase {
         } else {
           callback->doDone();
         }
-      }(sharedFromThis());
-      startOnExecutor(
-          std::move(task),
-          executor_ ? executor_ : folly::getKeepAliveToken(eb_));
+      };
+      startOnExecutor(doProcess(sharedFromThis()));
     }
 #else
     doDone();
@@ -1727,7 +1744,7 @@ void GeneratedAsyncProcessorBase::deserializeRequest(
     throw TrustedServerException::requestParsingError(ex.what());
   } catch (...) {
     throw TrustedServerException::requestParsingError(
-        folly::exceptionStr(std::current_exception()).c_str());
+        folly::exceptionStr(folly::current_exception()).c_str());
   }
   if (c) {
     c->postRead(nullptr, bytes);
@@ -1746,7 +1763,7 @@ void GeneratedAsyncProcessorBase::simpleDeserializeRequest(
     throw TrustedServerException::requestParsingError(ex.what());
   } catch (...) {
     throw TrustedServerException::requestParsingError(
-        folly::exceptionStr(std::current_exception()).c_str());
+        folly::exceptionStr(folly::current_exception()).c_str());
   }
 }
 

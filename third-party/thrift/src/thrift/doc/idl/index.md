@@ -170,7 +170,7 @@ The following tokens serve as operators and punctuation in Thrift:
 
 A Thrift file starts with an optional package declaration and a, possibly empty, sequence of include and namespace directives. It is followed by a sequence of definitions which can also be empty. There can be at most one package declaration and it is normally placed at the beginning of a source file.
 
-You may also see Thrift Files referred to as "Programs" in this document, as this is the internal name that thrift files are referred to in the thrift source code.
+You may also see Thrift Files referred to as "Programs" in this document, as this is the internal name that Thrift files are referred to in the thrift source code.
 
 ```grammar
 thrift_file ::=
@@ -261,10 +261,10 @@ A package name is a string containing a domain name and a path separated with `/
 package "meta.com/search"
 ```
 
-You should pick a unique package name for a `.thrift` file or a set of closely related files. To this end combine a domain name that belongs to you or your organization with a path, possibly consisting of multiple components, that uniquely identifies this set of files within the domain/organization.
+You should choose a unique package name for a `.thrift` file or a set of closely related files. To this end combine a domain name that belongs to you or your organization with a path, possibly consisting of multiple components, that uniquely identifies this set of files within the domain/organization.
 
 :::caution
-Package name conflicts can be difficult to resolve, so pick these names carefully and prefer longer, more specific names to shorter, generic ones.
+Package name conflicts can be difficult to resolve, so choose these names carefully and prefer longer, more specific names to shorter, generic ones.
 :::
 
 <!-- package_name is defined here and not in Lexical Elements because its components are used to specify the default namespace rules. -->
@@ -556,7 +556,7 @@ Removing and adding enum values can be dangerous - see [Schema Compatibility](/f
 
 ### Typedefs
 
-Thrift IDL types can be *aliased* in source thrift files by using the `typedef`
+Thrift IDL types can be *aliased* in source Thrift files by using the `typedef`
 keyword.
 
 ```grammar

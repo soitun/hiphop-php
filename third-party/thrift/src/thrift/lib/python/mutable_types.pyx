@@ -21,10 +21,13 @@ from cpython.ref cimport Py_INCREF, Py_DECREF
 from cpython.tuple cimport PyTuple_New, PyTuple_SET_ITEM
 from cpython.unicode cimport PyUnicode_AsUTF8String
 
+import enum
+
 from thrift.python.mutable_serializer cimport cserialize, cdeserialize
 from thrift.python.mutable_typeinfos cimport (
     MutableListTypeInfo,
     MutableSetTypeInfo,
+    MutableMapTypeInfo,
 )
 from thrift.python.types cimport (
     AdaptedTypeInfo,
@@ -33,6 +36,7 @@ from thrift.python.types cimport (
     TypeInfoBase,
     getCTypeInfo,
     set_struct_field,
+    _fbthrift_compare_struct_less,
 )
 
 from cython.operator cimport dereference as deref
@@ -41,7 +45,7 @@ cdef extern from "<Python.h>":
     cdef const char * PyUnicode_AsUTF8(object unicode)
 
 
-def fill_specs(*struct_types):
+def fill_specs(*structured_thrift_classes):
     """
     Completes the initialization of the given Thrift-generated Struct (and
     Union) classes.
@@ -56,15 +60,18 @@ def fill_specs(*struct_types):
     class creation, hence this call.
 
     Args:
-        *struct_types: Sequence of class objects, each one of which corresponds
-        to a `Struct` (i.e., created by/instance of `MutableStructMeta`)
+        *structured_thrift_classes: Sequence of class objects, each one of which
+            corresponds to a `MutableStruct` (i.e., created by/instance of
+            `MutableStructMeta`) or a `MutableUnion` (i.e., created by/instance
+            of `MutableUnionMeta`).
     """
 
-    for cls in struct_types:
+    for cls in structured_thrift_classes:
         cls._fbthrift_fill_spec()
 
-    for cls in struct_types:
-        cls._fbthrift_store_field_values()
+    for cls in structured_thrift_classes:
+        if not isinstance(cls, MutableUnionMeta):
+            cls._fbthrift_store_field_values()
 
 
 class _MutableStructField:
@@ -88,7 +95,7 @@ class _MutableStructField:
 
 
 cdef is_cacheable_non_primitive(ThriftIdlType idl_type):
-    return idl_type == ThriftIdlType.String
+    return idl_type in (ThriftIdlType.String, ThriftIdlType.Struct)
 
 
 class _MutableStructCachedField:
@@ -254,6 +261,12 @@ cdef class MutableStruct(MutableStructOrUnion):
 
         return True
 
+    def __lt__(self, other):
+        return _fbthrift_compare_struct_less(self, other, False)
+
+    def __le__(self, other):
+        return _fbthrift_compare_struct_less(self, other, True)
+
     def __iter__(self):
         cdef MutableStructInfo info = self._fbthrift_mutable_struct_info
         for name in info.name_to_index:
@@ -364,6 +377,7 @@ cdef class MutableStructInfo:
 
             Py_INCREF(field_type_info)
             PyTuple_SET_ITEM(type_infos, idx, field_type_info)
+            field_info.type_info = field_type_info
             self.name_to_index[field_info.py_name] = idx
             dynamic_struct_info.addFieldInfo(
                 field_info.id,
@@ -508,13 +522,317 @@ class MutableStructMeta(type):
             yield name, None
 
 
+cdef class MutableUnionInfo:
+    def __cinit__(self, union_name: str, field_infos: tuple[FieldInfo, ...]):
+        self.fields = field_infos
+        self.cpp_obj = make_unique[cDynamicStructInfo](
+            PyUnicode_AsUTF8(union_name),
+            len(field_infos),
+            True, # isUnion
+        )
+        self.type_infos = {}
+        self.id_to_adapter_info = {}
+        self.name_to_index = {}
+
+    cdef void _fill_mutable_union_info(self) except *:
+        cdef cDynamicStructInfo* dynamic_struct_info = self.cpp_obj.get()
+        for idx, field_info in enumerate(self.fields):
+            # type_info can be a lambda function so types with dependencies
+            # won't need to be defined in order
+            if callable(field_info.type_info):
+                field_info.type_info = field_info.type_info()
+            self.type_infos[field_info.id] = field_info.type_info
+            self.id_to_adapter_info[field_info.id] = field_info.adapter_info
+            self.name_to_index[field_info.py_name] = idx
+            dynamic_struct_info.addFieldInfo(
+                field_info.id,
+                field_info.qualifier,
+                PyUnicode_AsUTF8(field_info.name),
+                getCTypeInfo(field_info.type_info)
+            )
+
+cdef tuple _validate_union_init_kwargs(object mutable_union_class, dict kwargs):
+    """
+    Validates the given Thrift union initialization keyword arguments and returns the
+    data needed to set the corresponding field (if any).
+
+    Returns: tuple[field_enum, field_value], where:
+        `field_enum` corresponds to the field being initialized, and must be one of the
+        values in the `FbThriftUnionFieldEnum` enumeration type of the given
+        `mutable_union_class`. If no field is being initialized (i.e., the Thrift union
+        is empty), the `FBTHRIFT_UNION_EMPTY` member of that enumeration type is
+        returned.
+
+        `field_value` holds the value specified for the corresponding field, in "python
+        value" format (as opposed to "internal data", see `TypeInfoBase`). If no field
+        is specified (see `field_enum` above), then this value is `None`.
+
+    Raises: Exception if the given keyword arguments are invalid.
+    """
+
+    current_field_name = None
+    current_field_value = None
+    for field_name, field_value in kwargs.items():
+        if field_value is None:
+            continue
+
+        if current_field_name is not None:
+            raise RuntimeError(
+                f"Cannot initialize Thrift union ({mutable_union_class.__name__}) with "
+                f"more than one keyword argument (got non-None value for {field_name}, "
+                f"but already had one for {current_field_name})."
+            )
+
+        current_field_name = field_name
+        current_field_value = field_value
+
+    fields_enum_type = mutable_union_class.FbThriftUnionFieldEnum
+    if current_field_name is None:
+        assert current_field_value is None
+        return (fields_enum_type.FBTHRIFT_UNION_EMPTY, None)
+
+    try:
+        field_enum = fields_enum_type[current_field_name]
+    except KeyError as e:
+        raise RuntimeError(
+            f"Cannot initialize Thrift union ({mutable_union_class.__name__}): unknown "
+            f"field ({current_field_name})."
+        ) from e
+    else:
+        return (field_enum, current_field_value)
+
+
+cdef class MutableUnion(MutableStructOrUnion):
+    def __cinit__(self):
+        self._fbthrift_data = createUnionTuple()
+
+    def __init__(self, **kwargs):
+        field_enum, field_python_value = _validate_union_init_kwargs(
+            type(self), kwargs
+        )
+        cdef int field_id = field_enum.value
+
+        # If no field is specified, exit early.
+        if field_id == 0:
+            self._fbthrift_update_current_field_attributes()
+            return
+
+        self._fbthrift_set_mutable_union_value(field_id, field_python_value)
+
+    cdef void _fbthrift_set_mutable_union_value(
+        self, int field_id, object field_python_value
+    ) except *:
+        """
+        Updates this union to hold the given value (corresponding to the given field).
+
+        Args:
+            field_id: Thrift field ID of the field being set (or 0 to "clear" this union
+                and mark it as empty).
+            field_python_value: Value for the given field, in "python value" format (as
+                opposed to "internal data", see `TypeInfoBase`). If `field_id` is 0,
+                this must be `None`.
+        """
+        field_internal_value = (
+            self._fbthrift_convert_field_python_value_to_internal_data(
+                field_id, field_python_value
+            )
+        )
+
+        Py_INCREF(field_id)
+        old_field_id = self._fbthrift_data[0]
+        PyTuple_SET_ITEM(self._fbthrift_data, 0, field_id)
+        Py_DECREF(old_field_id)
+
+        old_value = self._fbthrift_data[1]
+        Py_INCREF(field_internal_value)
+        PyTuple_SET_ITEM(self._fbthrift_data, 1, field_internal_value)
+        Py_DECREF(old_value)
+
+        self._fbthrift_update_current_field_attributes()
+
+    cdef object _fbthrift_convert_field_python_value_to_internal_data(
+        self, int field_id, object field_python_value
+    ):
+        """
+        Converts the given python value to its "internal data" representation, assuming
+        it is a value for a field of this Thrift union with id `field_id`.
+
+        If `field_id` is the special value 0 (corresponding to the case where the Thrift
+        union is "empty", i.e. does not have any field set), `field_python_value` MUST
+        be `None` and the returned value will always be `None`.
+
+        Raises:
+            AssertionError if `field_id` is 0 (i.e., FBTHRIFT_UNION_EMPTY) but
+            `field_python_value` is not `None`.
+
+            Exception if the operation cannot be completely successfully.
+        """
+        if field_id == 0:
+            assert field_python_value is None
+            return None
+
+        cdef MutableUnionInfo union_info = <MutableUnionInfo>(
+            type(self)._fbthrift_mutable_struct_info
+        )
+
+        adapter_info = union_info.id_to_adapter_info[field_id]
+        if adapter_info:
+            adapter_class, transitive_annotation = adapter_info
+            field_python_value = adapter_class.to_thrift_field(
+                field_python_value,
+                field_id,
+                self,
+                transitive_annotation=transitive_annotation(),
+            )
+
+        cdef TypeInfoBase type_info = <TypeInfoBase>union_info.type_infos[field_id]
+        return type_info.to_internal_data(field_python_value)
+
+    cdef void _fbthrift_update_current_field_attributes(self) except *:
+        """
+        Updates the `fbthrift_current_*` attributes of this instance with the
+        information of the current field for this union (or the corresponding field enum
+        value if this union is empty).
+        """
+        cdef int current_field_enum_value = self._fbthrift_data[0]
+        self.fbthrift_current_field  = type(self).FbThriftUnionFieldEnum(
+            current_field_enum_value
+        )
+        self.fbthrift_current_value = self._fbthrift_get_current_field_python_value(
+            current_field_enum_value
+        )
+
+    cdef object _fbthrift_get_current_field_python_value(
+        self, int current_field_enum_value
+    ):
+        """
+        Returns the current value for this union, in "python" format (as opposed to
+        "internal data", see `TypeInfoBase`).
+
+        Args:
+            current_field_enum_value: the field ID of the current field, read from
+                `self._fbthrift_data[0]` and passed in to avoid unnecessarily reading it
+                again.
+        """
+        field_internal_data = self._fbthrift_data[1]
+
+        if current_field_enum_value == 0:
+            assert field_internal_data is None
+
+        # DO_BEFORE(aristidis,20240701): Determine logic for accessing adapted fields
+        # in unions (there seems to be a discrepancy with structs, see 
+        # `MutableStruct._fbthrift_get_field_value()`).
+        if field_internal_data is None:
+            return None
+
+        cdef MutableUnionInfo union_info = (
+            <MutableUnionInfo>type(self)._fbthrift_mutable_struct_info
+        )
+        cdef TypeInfoBase type_info = (
+            <TypeInfoBase>union_info.type_infos[current_field_enum_value]
+        )
+        return type_info.to_python_value(field_internal_data)
+
+
+    cdef object _fbthrift_get_field_value(self, int16_t field_id):
+        """
+        Returns the value of the field with the given `field_id` if it is indeed the
+        field that is (currently) set for this union.
+
+        Raises:
+            ValueError if `field_id` does not correspond to a valid field id for this
+                Thrift union.
+
+            AttributeError if this union does not currently hold a value for the given
+                `field_id` (i.e., it either holds a value for another field, or is
+                empty).
+        """
+        current_field_enum = self.fbthrift_current_field
+        cdef int current_field_enum_value = current_field_enum.value
+        if (current_field_enum_value == field_id):
+            return self.fbthrift_current_value
+
+        # ERROR: Requested field_id does not match current field.
+        union_class = type(self)
+        requested_field_enum = union_class.FbThriftUnionFieldEnum(field_id)
+        raise AttributeError(
+            f"Error retrieving Thrift union ({union_class.__name__}) field: requested "
+            f"'{requested_field_enum.name}', but currently holds "
+            f"'{current_field_enum.name}'."
+        )
+
+    @classmethod
+    def _fbthrift_create(cls, data):
+        cdef MutableUnion inst = cls.__new__(cls)
+        inst._fbthrift_data = data
+        return inst
+
+
+def _gen_mutable_union_field_enum_members(field_infos):
+    yield ("FBTHRIFT_UNION_EMPTY", 0)
+    for f in field_infos:
+        yield (f.py_name, f.id)
+
+
+cdef _make_fget_union(field_id, adapter_info):
+    """
+    Returns a function that takes a `Union` instance and returns the value of the field
+    with the given `field_id`.
+
+    If `adapter_info` is not None, the corresponding adapter will be called with the
+    field value prior to returning.
+
+    Args:
+        field_id (int)
+        adapter_info (typing.Optional[object])
+    """
+    if adapter_info:
+        adapter_class, transitive_annotation = adapter_info
+        return property(
+            lambda self: adapter_class.from_thrift_field(
+                (<MutableUnion>self)._fbthrift_get_field_value(field_id),
+                field_id,
+                self,
+                transitive_annotation=transitive_annotation(),
+            ),
+        )
+    else:
+        return property(
+            lambda self: (<MutableUnion>self)._fbthrift_get_field_value(field_id)
+        )
+
+
 class MutableUnionMeta(type):
     """Metaclass for all generated (mutable) thrift-python Union types."""
 
-    def __new__(cls, cls_name, bases, dct):
+    def __new__(cls, union_name, bases, union_class_namespace):
         """
         Returns a new Thrift Union class with the given name and members.
         """
-        raise NotImplementedError(
-            "Mutable thrift-python Unions are not implemented yet."
+        if bases:
+            raise TypeError(
+                "Inheriting from thrift-python data types is forbidden: "
+                f"'{union_name}' cannot inherit from '{bases[0].__name__}'"
+            )
+
+        field_infos = union_class_namespace.pop('_fbthrift_SPEC')
+        num_fields = len(field_infos)
+
+        union_class_namespace["_fbthrift_mutable_struct_info"] = MutableUnionInfo(
+            union_name, field_infos
         )
+
+        union_class_namespace["FbThriftUnionFieldEnum"] = enum.Enum(
+            f"FbThriftUnionFieldEnum_{union_name}",
+            _gen_mutable_union_field_enum_members(field_infos)
+        )
+
+        for field_info in field_infos:
+            union_class_namespace[field_info.py_name] = _make_fget_union(
+                field_info.id, field_info.adapter_info
+            )
+
+        return super().__new__(cls, union_name, (MutableUnion,), union_class_namespace)
+
+    def _fbthrift_fill_spec(cls):
+        (<MutableUnionInfo>cls._fbthrift_mutable_struct_info)._fill_mutable_union_info()

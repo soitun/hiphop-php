@@ -146,7 +146,10 @@ Cpp2Connection::Cpp2Connection(
           worker_->getServer()->getEventBaseManager(),
           nullptr,
           worker_->getServer()->getClientIdentityHook(),
-          worker_.get()),
+          worker_.get(),
+          apache::thrift::detail::getServiceInterceptorsIfServerIsSetUp(
+              *worker_->getServer())
+              .size()),
       transport_(transport),
       executor_(worker_->getServer()->getHandlerExecutor_deprecated().get()),
       metricCollector_{worker_->getServer()->getMetricCollector()} {
@@ -164,17 +167,37 @@ Cpp2Connection::Cpp2Connection(
   for (const auto& handler : worker_->getServer()->getEventHandlersUnsafe()) {
     handler->newConnection(&context_);
   }
+
+#if FOLLY_HAS_COROUTINES
+  const auto& serviceInterceptorsInfo =
+      apache::thrift::detail::getServiceInterceptorsIfServerIsSetUp(
+          *worker_->getServer());
+  for (std::size_t i = 0; i < serviceInterceptorsInfo.size(); ++i) {
+    ServiceInterceptorBase::ConnectionInfo connectionInfo{
+        &context_,
+        context_.getStorageForServiceInterceptorOnConnectionByIndex(i)};
+    serviceInterceptorsInfo[i].interceptor->internal_onConnection(
+        connectionInfo);
+  }
+#endif // FOLLY_HAS_COROUTINES
 }
 
 Cpp2Connection::~Cpp2Connection() {
+#if FOLLY_HAS_COROUTINES
+  const auto& serviceInterceptorsInfo =
+      apache::thrift::detail::getServiceInterceptorsIfServerIsSetUp(
+          *worker_->getServer());
+  for (std::size_t i = 0; i < serviceInterceptorsInfo.size(); ++i) {
+    ServiceInterceptorBase::ConnectionInfo connectionInfo{
+        &context_,
+        context_.getStorageForServiceInterceptorOnConnectionByIndex(i)};
+    serviceInterceptorsInfo[i].interceptor->internal_onConnectionClosed(
+        connectionInfo);
+  }
+#endif // FOLLY_HAS_COROUTINES
+
   for (const auto& handler : worker_->getServer()->getEventHandlersUnsafe()) {
     handler->connectionDestroyed(&context_);
-  }
-
-  if (connectionAdded_) {
-    if (auto* observer = worker_->getServer()->getObserver()) {
-      observer->connClosed();
-    }
   }
 
   channel_.reset();
@@ -203,6 +226,15 @@ void Cpp2Connection::stop() {
 
     // Release the socket to avoid long CLOSE_WAIT times
     channel_->closeNow();
+  }
+
+  if (connectionAdded_) {
+    if (auto* observer = worker_->getServer()->getObserver()) {
+      observer->connClosed(server::TServerObserver::ConnectionInfo(
+          reinterpret_cast<uint64_t>(transport_.get()),
+          context_.getSecurityProtocol()));
+      connectionAdded_ = false;
+    }
   }
 
   transport_.reset();

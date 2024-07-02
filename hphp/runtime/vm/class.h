@@ -74,6 +74,24 @@ struct StringData;
 struct c_Awaitable;
 struct c_Collection;
 
+// Unique identifier for every Class*
+struct ClassId {
+  
+  using Id = uint32_t;
+  static constexpr Id Invalid = std::numeric_limits<uint32_t>::max();
+  explicit ClassId(Id id) : m_id(id) {}
+
+  bool isInvalid() const { return m_id == Invalid; }
+
+  bool operator==(const ClassId& id) const {
+    return m_id == id.m_id;
+  }
+  Id id() const { return m_id; }
+
+private:
+  Id m_id;
+};
+
 struct MemberLookupContext {
   MemberLookupContext(const Class*, const Func*);
   MemberLookupContext(const Class*, const StringData*);
@@ -599,7 +617,6 @@ public:
    */
   bool classof(const Class*) const;
   bool classofNonIFace(const Class*) const;
-  bool subtypeOf(const Class*) const;
 
   /*
    * Whether this class implements an interface called `name'.
@@ -612,12 +629,6 @@ public:
    */
   const Class* commonAncestor(const Class* cls) const;
 
-  /*
-   * Given that this class exists, return a class named "name" that is
-   * also guaranteed to exist, or nullptr if there is none.
-   */
-  const Class* getClassDependency(const StringData* name) const;
-
   /////////////////////////////////////////////////////////////////////////////
   // Basic info.                                                        [const]
 
@@ -627,6 +638,7 @@ public:
   const StringData* name() const;
   const PreClass* preClass() const;
   Class* parent() const;
+  const ClassId classId() const;
 
   /*
    * A hash for this class that will remain constant across process restarts.
@@ -697,7 +709,7 @@ public:
    */
   Optional<int64_t> dynConstructSampleRate() const;
 
-
+  void setNewClassId();
   /////////////////////////////////////////////////////////////////////////////
   // Magic methods.                                                     [const]
 
@@ -1374,6 +1386,10 @@ public:
     return offsetof(Class, m_extra);
   }
 
+  static constexpr size_t classIdOffset() {
+    return offsetof(Class, m_classId);
+  }
+
   /*
    * Get the offset into the extra structure of m_handles.
    * Used by the JIT.
@@ -1405,6 +1421,16 @@ public:
   void setInstanceBitsAndParents();
   void setInstanceBitsIndex(unsigned int bit);
   bool checkInstanceBit(unsigned int bit) const;
+
+  /*
+   * Increase the counter for instanceof checks against this class.
+   */
+  void incInstanceCheckCount(uint64_t inc) const;
+
+  /*
+   * Get the frequency of instanceof checks against this class.
+   */
+  uint64_t getInstanceCheckCount() const;
 
   /*
    * Get the underlying enum base type if this is an enum.
@@ -1511,12 +1537,24 @@ public:
    *
    * Return nullptr if there is no such class.
    */
-  static const Class* lookupUniqueInContext(const NamedType* ne,
-                                            const Class* ctx,
-                                            const Unit* unit);
-  static const Class* lookupUniqueInContext(const StringData* name,
-                                            const Class* ctx,
-                                            const Unit* unit);
+
+  enum class ClassLookupResult {
+    None,
+    Exact,
+    Maybe,
+  };
+
+  struct ClassLookup {
+    ClassLookupResult tag;
+    const Class* cls;
+  };
+  static ClassLookup lookupKnownMaybe(const Class* cls, const Class* ctx);
+  static const Class* lookupKnown(const NamedType* ne,
+                                  const Class* ctx);
+  static const Class* lookupKnown(const StringData* name,
+                                  const Class* ctx);
+  static const Class* lookupKnown(const Class* cls,
+                                  const Class* ctx);
 
   /*
    * Same as Class::load but also checks for module boundary violations
@@ -1866,13 +1904,20 @@ private:
    */
   uint8_t m_RTAttrs;
 
-  /*
-   * Bitmap of parent classes and implemented interfaces.
-   *
-   * Each bit corresponds to a commonly used class name, determined during the
-   * profiling warmup requests.
-   */
-  InstanceBits::BitSet m_instanceBits;
+  union {
+    /*
+     * Bitmap of parent classes and implemented interfaces.
+     *
+     * Each bit corresponds to a commonly used class name, determined during the
+     * profiling. This bitmap is only valid when the lowest bit is set to 1.
+     */
+    InstanceBits::BitSet m_instanceBits;
+    /*
+     * m_instanceCheckCount is only valid during profiling, when the lowest bit
+     * is set to 0.
+     */
+    mutable std::atomic_uint64_t m_instanceCheckCount{0};
+  };
 
   /*
    * Map from logical slot to physical memory index for object properties.
@@ -2043,6 +2088,8 @@ private:
   // For asserts only.
   uint32_t m_magic;
 #endif
+
+  ClassId m_classId{ClassId::Invalid};
 
   /*
    * Vector of Class pointers that encodes the inheritance hierarchy, including

@@ -24,7 +24,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"thrift/conformance/rpc"
 	"thrift/lib/go/thrift"
@@ -42,7 +41,7 @@ func main() {
 
 	handler := &rpcConformanceServiceHandler{}
 	proc := rpc.NewRPCConformanceServiceProcessor(handler)
-	ts, err := newServer(
+	ts, addr, err := newServer(
 		proc,
 		"[::]:0",
 	)
@@ -50,35 +49,26 @@ func main() {
 		glog.Fatalf("failed to start server: %v", err)
 	}
 
+	fmt.Println(addr.(*net.TCPAddr).Port)
+	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
-		err := ts.Serve()
+		err := ts.ServeContext(ctx)
 		if err != nil {
 			glog.Fatalf("failed to start server")
 		}
 	}()
 
-	for i := 1; i < 10; i++ {
-		// Unfortunately there is currently no way to tell
-		// if the server has started listening :(
-		time.Sleep(1 * time.Second)
-		addr := ts.ServerTransport().Addr()
-		if addr != nil {
-			// Print port for the test runner
-			fmt.Println(addr.(*net.TCPAddr).Port)
-			break
-		}
-	}
-
 	<-sigc
+	cancel()
 	os.Exit(0)
 }
 
-func newServer(processor thrift.ProcessorContext, addr string) (thrift.Server, error) {
+func newServer(processor thrift.ProcessorContext, addr string) (thrift.Server, net.Addr, error) {
 	socket, err := thrift.NewServerSocket(addr)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return thrift.NewSimpleServer(processor, socket, thrift.TransportIDHeader), nil
+	return thrift.NewSimpleServer(processor, socket, thrift.TransportIDHeader), socket.Addr(), nil
 }
 
 type rpcConformanceServiceHandler struct {

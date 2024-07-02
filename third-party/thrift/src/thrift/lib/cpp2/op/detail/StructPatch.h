@@ -276,7 +276,10 @@ class BaseEnsurePatch : public BaseClearPatch<Patch, Derived> {
   ///       void assign(const MyClass&);
   ///       void clear();
   ///       template<class Id> void patchIfSet(const FieldPatch&);
-  ///       template<class Id> void ensure(const FieldPatch&);
+  ///       // For optional fields in structs and fields in unions
+  ///       template<class Id> void ensure(const op::get_native_type<Id>&);
+  ///       // For non-optional fields in structs
+  ///       template<class Id> void ensure();
   ///     }
   ///
   /// For example, let's assume you have the following thrift struct:
@@ -316,7 +319,6 @@ class BaseEnsurePatch : public BaseClearPatch<Patch, Derived> {
           if constexpr (type::is_optional_or_union_field_v<T, Id>) {
             v.template ensure<Id>(FieldType<Id>{});
           }
-          v.template patchIfSet<Id>(FieldPatchType{});
         }
       });
     }

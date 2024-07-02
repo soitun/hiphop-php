@@ -17,6 +17,7 @@
 #include "squangle/mysql_client/MysqlConnectionHolder.h"
 #include "squangle/mysql_client/Operation.h"
 #include "squangle/mysql_client/Query.h"
+#include "squangle/mysql_client/QueryGenerator.h"
 
 namespace facebook::common::mysql_client {
 
@@ -185,6 +186,21 @@ class Connection {
 
   template <typename... Args>
   DbMultiQueryResult multiQuery(Args&&... args);
+
+  template <typename... Args>
+  DbQueryResult queryWithGenerator(
+      QueryGenerator&& query_generator,
+      Args&&... args);
+
+  template <typename... Args>
+  DbMultiQueryResult multiQueryWithGenerators(
+      std::vector<std::unique_ptr<QueryGenerator>>&& query_generators,
+      Args&&... args);
+
+  template <typename... Args>
+  DbMultiQueryResult multiQueryWithGenerators(
+      std::unique_ptr<QueryGenerator>&& query_generator,
+      Args&&... args);
 
   // EXPERIMENTAL
 
@@ -363,9 +379,10 @@ class Connection {
     return false;
   }
 
-  // Don't actually store the new schema at this point - just the presence of an
-  // updated schema is sufficient to indicate we shouldn't reuse the connection
-  // for pooling as it means that someone ran a "USE <dbname>" command.
+  // Don't actually store the new schema at this point - just the presence of
+  // an updated schema is sufficient to indicate we shouldn't reuse the
+  // connection for pooling as it means that someone ran a "USE <dbname>"
+  // command.
   void setCurrentSchema(std::string_view /*schema*/) const {
     CHECK_THROW(mysql_connection_ != nullptr, db::InvalidConnectionException);
     mysql_connection_->setReusable(false);
@@ -467,9 +484,9 @@ class Connection {
     mysql_connection_ = std::move(mysql_connection);
   }
 
-  // If this is set and other necessary conditions are met, we clone Connection
-  // object in its destructor to properly reset the connection by sending
-  // COM_RESET_CONNECTION before it is completed destructed.
+  // If this is set and other necessary conditions are met, we clone
+  // Connection object in its destructor to properly reset the connection by
+  // sending COM_RESET_CONNECTION before it is completed destructed.
   bool needToCloneConnection_{true};
 
   static std::shared_ptr<ResetOperation> resetConn(
@@ -608,6 +625,40 @@ class Connection {
 
   Connection(const Connection&) = delete;
   Connection& operator=(const Connection&) = delete;
+
+  // Query
+
+  // This method holds the core logic for query() and can be
+  // overridden in derived class
+  virtual DbQueryResult
+  internalQuery(Query&& query, QueryCallback&& cb, QueryOptions&& options);
+
+  // MultiQuery
+
+  // This method holds the core logic for multiQuery() and can be
+  // overridden in derived class
+  virtual DbMultiQueryResult internalMultiQuery(
+      std::vector<Query>&& queries,
+      MultiQueryCallback&& cb,
+      QueryOptions&& options);
+
+  // QueryWithGenerator
+
+  // This method holds the core logic for queryWithGenerator and can be
+  // overridden in derived class
+  virtual DbQueryResult internalQueryWithGenerator(
+      QueryGenerator&& query_Generator,
+      QueryCallback&& cb,
+      QueryOptions&& options);
+
+  // MultiQueryWithGenerator
+
+  // This method holds the core logic for multiQueryWithGenerator and can be
+  // overridden in derived class.
+  virtual DbMultiQueryResult internalMultiQueryWithGenerators(
+      std::vector<std::unique_ptr<QueryGenerator>>&& query_generators,
+      MultiQueryCallback&& cb,
+      QueryOptions&& options);
 };
 
 template <>

@@ -612,7 +612,7 @@ To string conversions:
   Checks if the two arguments represent the same underlying ArrayData. That is,
   that they point at the same underlying storage.
 
-| ProfileInstanceCheck, ND, C(StaticStr), NF
+| ProfileInstanceCheck, ND, S(Cls), NF
 
   Profile that S0 has been used as the RHS of an instance check.
 
@@ -625,8 +625,7 @@ To string conversions:
 | InstanceOfIface, D(Bool), S(Cls) CStr, NF
 
   Fast path for interface checks. Sets D based on whether S0 implements S1, but
-  S1 must be a unique interface. This should only be used in repo-authoritative
-  mode.
+  S1 must be a known interface.
 
 | InstanceOfIfaceVtable<iface,canOptimize>, D(Bool), S(Cls), NF
 
@@ -1011,19 +1010,19 @@ To string conversions:
   Loads the class named S0 via the RDS. Invokes autoload and may raise an error
   if the class is not defined.
 
-| LdClsCachedSafe, D(Cls), CStr, B
+| LookupCls, D(Cls|Nullptr), S(Str), NF
 
-  Loads the class whose name is S0 out of the RDS. If the class is not defined,
-  branch to B.
+  Looks up the class named S0 via the RDS. Returns nullptr if the class is not
+  defined. Does not invoke autoload.
+
+| LookupClsCached, D(Cls|Nullptr), CStr, NF
+
+  Looks up the class named S0 via the RDS. Returns nullptr if the class is not
+  defined. Does not invoke autoload.
 
 | LdClsInitData, D(PtrToClsInit), S(Cls), NF
 
   Loads the pointer to the property initializer array for class S0.
-
-| LookupClsRDS, D(Cls|Nullptr), S(Str), NF
-
-  Lookup the cached-class RDS handle for a given class name. Dereference that
-  handle and return the associated Class, or null if not present.
 
 | LdCns, D(InitCell), CStr, B
 
@@ -1081,6 +1080,10 @@ To string conversions:
 | LdClsCnsVecLen, D(Int), S(Cls), NF
 
   Load the size of S0's constant table.
+
+| EqClassId<classId>, ND, S(Cls), B
+
+  Check if the ClassId for S0 matches classId. Branch to B if not.
 
 | LdResolvedTypeCns<slot>, D(StaticDict), S(Cls), B|LA
 

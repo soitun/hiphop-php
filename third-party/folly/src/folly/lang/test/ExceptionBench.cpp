@@ -21,6 +21,24 @@
 #include <folly/Benchmark.h>
 #include <folly/lang/Keep.h>
 
+extern "C" FOLLY_KEEP int check_std_uncaught_exceptions() {
+  return std::uncaught_exceptions();
+}
+
+extern "C" FOLLY_KEEP int check_folly_uncaught_exceptions() {
+  return folly::uncaught_exceptions();
+}
+
+extern "C" FOLLY_KEEP void check_std_current_exception() {
+  auto eptr = std::current_exception();
+  folly::detail::keep_sink_nx();
+}
+
+extern "C" FOLLY_KEEP void check_folly_current_exception() {
+  auto eptr = folly::current_exception();
+  folly::detail::keep_sink_nx();
+}
+
 namespace {
 
 template <int I>
@@ -66,6 +84,104 @@ extern "C" FOLLY_KEEP A0* //
 check_folly_exception_ptr_get_object_hint_vmi( //
     std::exception_ptr const& ptr) {
   return folly::exception_ptr_get_object_hint<A0>(ptr, folly::tag<B1, C, B2>);
+}
+
+BENCHMARK(std_uncaught_exceptions, iters) {
+  int s = 0;
+  while (iters--) {
+    int u = std::uncaught_exceptions();
+    folly::compiler_must_not_predict(u);
+    s ^= u;
+  }
+  folly::compiler_must_not_elide(s);
+}
+
+BENCHMARK(folly_uncaught_exceptions, iters) {
+  int s = 0;
+  while (iters--) {
+    int u = folly::uncaught_exceptions();
+    folly::compiler_must_not_predict(u);
+    s ^= u;
+  }
+  folly::compiler_must_not_elide(s);
+}
+
+BENCHMARK(std_current_exception_empty, iters) {
+  while (iters--) {
+    auto eptr = std::current_exception();
+    folly::compiler_must_not_elide(eptr);
+  }
+}
+
+BENCHMARK(std_current_exception_primary, iters) {
+  folly::BenchmarkSuspender braces;
+  try {
+    throw std::exception();
+  } catch (...) {
+    braces.dismissing([&] {
+      while (iters--) {
+        auto eptr = std::current_exception();
+        folly::compiler_must_not_elide(eptr);
+      }
+    });
+  }
+}
+
+BENCHMARK(std_current_exception_dependent, iters) {
+  folly::BenchmarkSuspender braces;
+  try {
+    throw std::exception();
+  } catch (...) {
+    try {
+      throw;
+    } catch (...) {
+      braces.dismissing([&] {
+        while (iters--) {
+          auto eptr = std::current_exception();
+          folly::compiler_must_not_elide(eptr);
+        }
+      });
+    }
+  }
+}
+
+BENCHMARK(folly_current_exception_empty, iters) {
+  while (iters--) {
+    auto eptr = folly::current_exception();
+    folly::compiler_must_not_elide(eptr);
+  }
+}
+
+BENCHMARK(folly_current_exception_primary, iters) {
+  folly::BenchmarkSuspender braces;
+  try {
+    throw std::exception();
+  } catch (...) {
+    braces.dismissing([&] {
+      while (iters--) {
+        auto eptr = folly::current_exception();
+        folly::compiler_must_not_elide(eptr);
+      }
+    });
+  }
+}
+
+BENCHMARK(folly_current_exception_dependent, iters) {
+  folly::BenchmarkSuspender braces;
+  try {
+    throw std::exception();
+  } catch (...) {
+    try {
+      throw;
+    } catch (...) {
+      braces.dismissing([&] {
+        while (iters--) {
+          auto eptr = folly::current_exception();
+          folly::compiler_must_not_elide(eptr);
+        }
+      });
+    }
+  }
 }
 
 BENCHMARK(get_object_fail, iters) {
@@ -304,7 +420,8 @@ BENCHMARK(try_get_object_exact_fast_vmi_pass, iters) {
   folly::compiler_must_not_elide(result);
 }
 
-int main() {
+int main(int argc, char** argv) {
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
   folly::runBenchmarks();
   return 0;
 }

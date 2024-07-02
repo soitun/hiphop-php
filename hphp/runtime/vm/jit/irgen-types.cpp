@@ -54,29 +54,6 @@ const StaticString
 //////////////////////////////////////////////////////////////////////
 
 /*
- * Returns a {Cls|Nullptr} suitable for use in instance checks.
- */
-SSATmp* ldClassSafe(IRGS& env, const StringData* className) {
-  if (auto const knownCls = lookupUniqueClass(env, className)) {
-    return cns(env, knownCls);
-  }
-
-  return cond(
-    env,
-    [&] (Block* taken) {
-      return gen(env, LdClsCachedSafe, taken, cns(env, className));
-    },
-    [&] (SSATmp* cls) { // next
-      return cls;
-    },
-    [&] { // taken
-      hint(env, Block::Hint::Unlikely);
-      return cns(env, nullptr);
-    }
-  );
-}
-
-/*
  * Returns a Bool value indicating if src (which must be <= TObj) is an
  * instance of the class given in className, or nullptr if we don't have an
  * efficient translation of the required check. checkCls must be the TCls for
@@ -93,7 +70,7 @@ SSATmp* implInstanceCheck(IRGS& env, SSATmp* src, const StringData* className,
   }
 
   auto knownCls = checkCls->hasConstVal(TCls) ? checkCls->clsVal() : nullptr;
-  assertx(IMPLIES(knownCls, classIsPersistentOrCtxParent(env, knownCls)));
+  assertx(IMPLIES(knownCls, lookupKnown(env, knownCls)));
   assertx(IMPLIES(knownCls, knownCls->name()->tsame(className)));
 
   auto const srcType = src->type();
@@ -120,7 +97,7 @@ SSATmp* implInstanceCheck(IRGS& env, SSATmp* src, const StringData* className,
   auto const objClass     = gen(env, LdObjClass, src);
 
   if (env.context.kind == TransKind::Profile && !InstanceBits::initted()) {
-    gen(env, ProfileInstanceCheck, cns(env, className));
+    gen(env, ProfileInstanceCheck, cns(env, knownCls));
   } else if (env.context.kind == TransKind::Optimize ||
              InstanceBits::initted()) {
     InstanceBits::init();
@@ -354,7 +331,7 @@ void verifyTypeImpl(IRGS& env,
       // Non-union:
       assertx(tc.isSubObject() || tc.isUnresolved());
       auto const clsName = tc.isSubObject() ? tc.clsName() : tc.typeName();
-      auto const checkCls = ldClassSafe(env, clsName);
+      auto const checkCls = lookupCls(env, clsName);
       auto const fastIsInstance = implInstanceCheck(env, val, clsName, checkCls);
       if (fastIsInstance) {
         ifThen(
@@ -402,7 +379,7 @@ void verifyTypeImpl(IRGS& env,
     auto const clsName = tc.isSubObject() ? tc.clsName() : tc.typeName();
     if (cls->name()->same(clsName)) return AnnotAction::Pass;
 
-    if (auto const knownCls = lookupUniqueClass(env, clsName)) {
+    if (auto const knownCls = lookupKnown(env, clsName)) {
       // Subclass of a unique class.
       if (cls->classof(knownCls)) return AnnotAction::Pass;
     }
@@ -714,7 +691,7 @@ SSATmp* implInstanceOfD(IRGS& env, SSATmp* src, const StringData* className) {
     return cns(env, res);
   }
 
-  auto const checkCls = ldClassSafe(env, className);
+  auto const checkCls = lookupCls(env, className);
   if (auto isInstance = implInstanceCheck(env, src, className, checkCls)) {
     return isInstance;
   }
@@ -746,7 +723,7 @@ void emitInstanceOf(IRGS& env) {
   if (!t1->isA(TStr)) PUNT(InstanceOf-NotStr);
 
   if (t2->isA(TObj)) {
-    auto const c1 = gen(env, LookupClsRDS, t1);
+    auto const c1 = gen(env, LookupCls, t1);
     auto const c2  = gen(env, LdObjClass, t2);
     push(env, gen(env, InstanceOf, c2, c1));
     decRef(env, t2, DecRefProfileId::InstanceOfSrc2);
@@ -1000,10 +977,8 @@ bool emitIsTypeStructWithoutResolvingIfPossible(
   auto const classnameForResolvedClass = [&](const ArrayData* arr) -> const StringData* {
     auto const clsname = get_ts_classname(arr);
     if (arr->exists(s_generic_types)) {
-      auto cls = lookupUniqueClass(env, clsname);
-      if ((classIsPersistentOrCtxParent(env, cls) &&
-           cls->hasReifiedGenerics()) ||
-          !isTSAllWildcards(arr)) {
+      auto cls = lookupKnown(env, clsname);
+      if ((cls && cls->hasReifiedGenerics()) || !isTSAllWildcards(arr)) {
         // If it is a reified class or has non wildcard generics,
         // we need to bail
         return nullptr;

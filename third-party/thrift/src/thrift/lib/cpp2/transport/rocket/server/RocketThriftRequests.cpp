@@ -339,7 +339,7 @@ FOLLY_NODISCARD std::optional<ResponseRpcError> processFirstResponseHelper(
         ResponseRpcErrorCode::UNKNOWN,
         fmt::format(
             "Invalid response payload envelope: {}",
-            folly::exceptionStr(std::current_exception()).toStdString()),
+            folly::exceptionStr(folly::current_exception()).toStdString()),
         metadata);
   }
   return {};
@@ -605,6 +605,7 @@ ThriftServerRequestStream::ThriftServerRequestStream(
   if (auto compressionConfig = getCompressionConfig()) {
     clientCallback_->setCompressionConfig(*compressionConfig);
   }
+  clientCallback_->setRpcMethodName(getMethodName());
   scheduleTimeouts();
 }
 

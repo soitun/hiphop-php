@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<4f60dda126691867f41728e611ff545b>>
+// @generated SignedSource<<95ef87950883a72e163afe614f87ff8a>>
 //
 // To regenerate this file, run:
 //   hphp/hack/src/oxidized_regen.sh
@@ -687,7 +687,11 @@ pub struct As_<Ex, En> {
 #[rust_to_ocaml(and)]
 #[repr(C)]
 pub struct EtSplice<Ex, En> {
+    /// The spliced_expr should have type Spliceble<t1, t2, t3>, and if extract_client_type is true, the
+    /// overall type should be t3. If false, the entire Spliceable should be the type.
     pub extract_client_type: bool,
+    /// Does the spliced_expr contain an await expression
+    pub contains_await: bool,
     pub spliced_expr: Expr<Ex, En>,
 }
 
@@ -1344,9 +1348,32 @@ pub enum XhpAttribute<Ex, En> {
     XhpSpread(Expr<Ex, En>),
 }
 
+/// Param_optional None = `optional int $i`
+/// Param_optional (Some e) = `int $i = e`
+#[derive(
+    Clone,
+    Debug,
+    Deserialize,
+    Eq,
+    FromOcamlRep,
+    Hash,
+    NoPosHash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+    ToOcamlRep
+)]
 #[rust_to_ocaml(and)]
-#[rust_to_ocaml(attr = "transform.opaque")]
-pub type IsVariadic = bool;
+#[repr(C, u8)]
+pub enum FunParamInfo<Ex, En> {
+    #[rust_to_ocaml(name = "Param_optional")]
+    ParamOptional(Option<Expr<Ex, En>>),
+    #[rust_to_ocaml(name = "Param_required")]
+    ParamRequired,
+    #[rust_to_ocaml(name = "Param_variadic")]
+    ParamVariadic,
+}
 
 #[derive(
     Clone,
@@ -1368,11 +1395,10 @@ pub type IsVariadic = bool;
 pub struct FunParam<Ex, En> {
     pub annotation: Ex,
     pub type_hint: TypeHint<Ex>,
-    pub is_variadic: IsVariadic,
     #[rust_to_ocaml(attr = "transform.opaque")]
     pub pos: Pos,
     pub name: String,
-    pub expr: Option<Expr<Ex, En>>,
+    pub info: FunParamInfo<Ex, En>,
     #[rust_to_ocaml(attr = "transform.opaque")]
     pub readonly: Option<ast_defs::ReadonlyKind>,
     #[rust_to_ocaml(attr = "transform.opaque")]

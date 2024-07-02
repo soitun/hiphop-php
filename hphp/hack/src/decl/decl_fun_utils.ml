@@ -31,7 +31,7 @@ let hint_to_type ~default env hint =
   Option.value (hint_to_type_opt env hint) ~default
 
 let make_wildcard_ty pos =
-  mk (Reason.Rwitness_from_decl pos, Typing_defs.Twildcard)
+  mk (Reason.witness_from_decl pos, Typing_defs.Twildcard)
 
 let make_param_ty env param =
   let param_pos = Decl_env.make_decl_pos env param.param_pos in
@@ -42,12 +42,12 @@ let make_param_ty env param =
       (hint_of_type_hint param.param_type_hint)
   in
   let ty =
-    match get_node ty with
-    | t when param.param_is_variadic ->
+    if Aast_utils.is_param_variadic param then
       (* When checking a call f($a, $b) to a function f(C ...$args),
        * both $a and $b must be of type C *)
-      mk (Reason.Rvar_param_from_decl param_pos, t)
-    | _ -> ty
+      mk (Reason.var_param_from_decl param_pos, get_node ty)
+    else
+      ty
   in
   let mode = get_param_mode param.param_callconv in
   {
@@ -64,7 +64,7 @@ let make_param_ty env param =
         ~mode
         ~accept_disposable:
           (has_accept_disposable_attribute param.param_user_attributes)
-        ~has_default:(Option.is_some param.param_expr)
+        ~has_default:(Option.is_some (Aast_utils.get_param_default param))
         ~readonly:(Option.is_some param.param_readonly)
         ~ignore_readonly_error:
           (has_ignore_readonly_error_attribute param.param_user_attributes);
@@ -75,7 +75,7 @@ let ret_from_fun_kind ?(is_constructor = false) env (pos : pos) kind hint =
   let pos = Decl_env.make_decl_pos env pos in
   let ret_ty () =
     if is_constructor then
-      mk (Reason.Rwitness_from_decl pos, Tprim Tvoid)
+      mk (Reason.witness_from_decl pos, Tprim Tvoid)
     else
       hint_to_type ~default:(make_wildcard_ty pos) env hint
   in
@@ -83,20 +83,20 @@ let ret_from_fun_kind ?(is_constructor = false) env (pos : pos) kind hint =
   | None ->
     (match kind with
     | Ast_defs.FGenerator ->
-      let r = Reason.Rret_fun_kind_from_decl (pos, kind) in
+      let r = Reason.ret_fun_kind_from_decl (pos, kind) in
       mk
         ( r,
           Tapply
             ((pos, SN.Classes.cGenerator), [ret_ty (); ret_ty (); ret_ty ()]) )
     | Ast_defs.FAsyncGenerator ->
-      let r = Reason.Rret_fun_kind_from_decl (pos, kind) in
+      let r = Reason.ret_fun_kind_from_decl (pos, kind) in
       mk
         ( r,
           Tapply
             ( (pos, SN.Classes.cAsyncGenerator),
               [ret_ty (); ret_ty (); ret_ty ()] ) )
     | Ast_defs.FAsync ->
-      let r = Reason.Rret_fun_kind_from_decl (pos, kind) in
+      let r = Reason.ret_fun_kind_from_decl (pos, kind) in
       mk (r, Tapply ((pos, SN.Classes.cAwaitable), [ret_ty ()]))
     | Ast_defs.FSync -> ret_ty ())
   | Some _ -> ret_ty ()
@@ -120,18 +120,20 @@ let check_params paraml =
     match paraml with
     | [] -> None
     | param :: rl ->
-      if param.param_is_variadic then
+      if Aast_utils.is_param_variadic param then
         None
       (* Assume that a variadic parameter is the last one we need
             to check. We've already given a parse error if the variadic
             parameter is not last. *)
-      else if seen_default && Option.is_none param.param_expr then
+      else if
+        seen_default && Option.is_none (Aast_utils.get_param_default param)
+      then
         Some Typing_error.(primary @@ Primary.Previous_default param.param_pos)
       (* We've seen at least one required parameter, and there's an
           optional parameter after it.  Given an error, and then stop looking
           for more errors in this parameter list. *)
       else
-        loop (Option.is_some param.param_expr) rl
+        loop (Option.is_some (Aast_utils.get_param_default param)) rl
   in
   loop false paraml
 
