@@ -49,6 +49,8 @@ enum class AnnotMetaType : uint8_t {
   Classname = 11,
   SubObject = 12,
   Unresolved = 13,
+  Class = 14,
+  ClassOrClassname = 15,
 };
 
 enum class AnnotType : uint16_t {
@@ -76,6 +78,9 @@ enum class AnnotType : uint16_t {
   Classname  = (uint16_t)AnnotMetaType::Classname << 8  | (uint8_t)KindOfUninit,
   SubObject  = (uint16_t)AnnotMetaType::SubObject << 8  | (uint8_t)KindOfUninit,
   Unresolved = (uint16_t)AnnotMetaType::Unresolved << 8 | (uint8_t)KindOfUninit,
+  Class      = (uint16_t)AnnotMetaType::Class << 8      | (uint8_t)KindOfUninit,
+  ClassOrClassname = (uint16_t)AnnotMetaType::ClassOrClassname << 8
+                                                        | (uint8_t)KindOfUninit,
 };
 
 constexpr const char* kAnnotTypeVarrayStr = "HH\\varray";
@@ -88,7 +93,9 @@ constexpr const char* annotNullableTypeName(AnnotType ty) {
     case AnnotType::ArrayLike: return "?HH\\AnyArray";
     case AnnotType::Bool: return "?HH\\bool";
     case AnnotType::Callable: return "?callable";
+    case AnnotType::Class: return "?HH\\class";
     case AnnotType::Classname: return "?HH\\classname";
+    case AnnotType::ClassOrClassname: return "?HH\\class_or_classname";
     case AnnotType::Dict: return "?HH\\dict";
     case AnnotType::Float: return "?HH\\float";
     case AnnotType::Int: return "?HH\\int";
@@ -177,6 +184,7 @@ enum class AnnotAction {
   WarnLazyClassToString,
   ConvertLazyClassToString,
   WarnClassname,
+  WarnClass,
 };
 
 /*
@@ -222,6 +230,9 @@ enum class AnnotAction {
  * and Cfg::Eval::ClassnameNoticesSampleRate is on. The 'dt' is compatible
  * with 'at' but raises a notice at runtime.
  *
+ * WarnClass: 'at' is class and 'dt' is a String and
+ * Cfg::Eval::ClassNoticesSampleRate is on. The 'dt' is compatible with 'at'
+ * but raises a notice at runtime.
  */
 AnnotAction
 annotCompat(DataType dt, AnnotType at, const StringData* annotClsName);
