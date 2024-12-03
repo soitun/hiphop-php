@@ -69,6 +69,8 @@ pub mod classes {
 
     pub const TYPE_NAME: &str = "\\HH\\typename";
 
+    pub const CLASS_OR_CLASSNAME: &str = "\\HH\\class_or_classname";
+
     pub const IDISPOSABLE: &str = "\\IDisposable";
 
     pub const IASYNC_DISPOSABLE: &str = "\\IAsyncDisposable";
@@ -642,6 +644,8 @@ pub mod typehints {
     pub const HH_SUPPORTDYN: &str = "\\HH\\supportdyn";
 
     pub const POISON_MARKER: &str = "\\HH\\FIXME\\POISON_MARKER";
+
+    pub const HH_CLASS: &str = "\\HH\\class";
 
     pub const WILDCARD: &str = "_";
 

@@ -102,12 +102,14 @@
 #include "hphp/util/capability.h"
 #include "hphp/util/compatibility.h"
 #include "hphp/util/configs/adminserver.h"
+#include "hphp/util/configs/debug.h"
 #include "hphp/util/configs/debugger.h"
 #include "hphp/util/configs/errorhandling.h"
 #include "hphp/util/configs/eval.h"
 #include "hphp/util/configs/jit.h"
 #include "hphp/util/configs/log.h"
 #include "hphp/util/configs/server.h"
+#include "hphp/util/configs/xenon.h"
 #include "hphp/util/embedded-data.h"
 #include "hphp/util/exception.h"
 #include "hphp/util/hardware-counter.h"
@@ -810,7 +812,7 @@ init_command_line_globals(
     RID().setTimeout(Cfg::Server::RequestTimeoutSeconds);
   }
 
-  if (RuntimeOption::XenonForceAlwaysOn) {
+  if (Cfg::Xenon::ForceAlwaysOn) {
     Xenon::getInstance().surpriseAll();
   }
 
@@ -829,7 +831,7 @@ void execute_command_line_end(bool coverage, const char *program,
                               bool runCleanup) {
   auto& ti = RI();
   if (coverage && ti.m_reqInjectionData.getCoverage() &&
-      !RuntimeOption::CodeCoverageOutputFile.empty()) {
+      !Cfg::Eval::CodeCoverageOutputFile.empty()) {
     ti.m_coverage.dumpOnExit();
   }
   g_context->onShutdownPostSend(); // runs more php
@@ -1159,8 +1161,8 @@ static void set_execution_mode(ExecutionMode mode) {
 
 static void init_repo_file() {
   if (!Cfg::Repo::Authoritative) return;
-  assertx(!RO::RepoPath.empty());
-  RepoFile::init(RO::RepoPath);
+  assertx(!Cfg::Repo::Path.empty());
+  RepoFile::init(Cfg::Repo::Path);
 }
 
 static int start_server(const std::string &username) {
@@ -1218,8 +1220,8 @@ static int start_server(const std::string &username) {
     (RuntimeOption::AccessLogDefaultFormat, RuntimeOption::AccessLogs,
      username);
   AdminRequestHandler::GetAccessLog().init
-    (RuntimeOption::AdminLogFormat, Cfg::Log::BaseDirectory, RuntimeOption::AdminLogSymLink,
-     RuntimeOption::AdminLogFile,
+    (Cfg::Log::AdminLogFormat, Cfg::Log::BaseDirectory, Cfg::Log::AdminLogSymLink,
+     Cfg::Log::AdminLogFile,
      username);
   XboxRequestHandler::GetAccessLog().init
     (RuntimeOption::AccessLogDefaultFormat, RuntimeOption::RPCLogs,
@@ -1798,7 +1800,7 @@ static int execute_program_impl(int argc, char** argv) {
   rds::local::init();
   SCOPE_EXIT { rds::local::fini(); };
   tl_heap.getCheck();
-  if (RuntimeOption::ServerExecutionMode()) {
+  if (Cfg::Server::Mode) {
     // Create the hardware counter before reading options,
     // so that the main thread never has inherit set in server
     // mode
@@ -1995,7 +1997,7 @@ static int execute_program_impl(int argc, char** argv) {
     proc::daemonize();
   }
 
-  if (RuntimeOption::ServerExecutionMode()) {
+  if (Cfg::Server::Mode) {
     for (auto const& m : messages) {
       Logger::Info(m);
     }
@@ -2023,7 +2025,7 @@ static int execute_program_impl(int argc, char** argv) {
   }
 
 #if USE_JEMALLOC_EXTENT_HOOKS
-  if (RuntimeOption::ServerExecutionMode()) {
+  if (Cfg::Server::Mode) {
     purge_all();
     setup_arena0({Cfg::Eval::Num1GPagesForA0,
                   Cfg::Eval::Num2MPagesForA0});
@@ -2176,7 +2178,7 @@ static int execute_program_impl(int argc, char** argv) {
       }
     } catch (const FatalErrorException& e) {
       Cfg::ErrorHandling::CallUserHandlerOnFatals = false;
-      RuntimeOption::AlwaysLogUnhandledExceptions = false;
+      Cfg::Log::AlwaysLogUnhandledExceptions = false;
       g_context->onFatalError(e);
       return HPHP_EXIT_FAILURE;
     }
@@ -2356,7 +2358,7 @@ static int execute_program_impl(int argc, char** argv) {
   }
 
   if (po.mode == ExecutionMode::REPLAY && !po.args.empty()) {
-      RuntimeOption::RecordInput = false;
+      Cfg::Debug::RecordInput = false;
       set_execution_mode(ExecutionMode::SERVER);
 
       HttpServer server; // so we initialize runtime properly
@@ -2611,7 +2613,7 @@ void hphp_process_init(bool skipExtensions) {
   InitFiniNode::ProcessPreInit();
   // TODO(9795696): Race in thread map may trigger spurious logging at
   // thread exit, so for now, only spawn threads if we're a server.
-  const uint32_t maxWorkers = RuntimeOption::ServerExecutionMode() ? 3 : 0;
+  const uint32_t maxWorkers = Cfg::Server::Mode ? 3 : 0;
   InitFiniNode::ProcessInitConcurrentStart(maxWorkers);
   SCOPE_EXIT {
     InitFiniNode::ProcessInitConcurrentWaitForEnd();
@@ -2667,7 +2669,7 @@ void hphp_process_init(bool skipExtensions) {
   StaticContentCache::load();
 
   if (Cfg::Repo::Authoritative &&
-      !RuntimeOption::EvalJitSerdesFile.empty() &&
+      !Cfg::Jit::SerdesFile.empty() &&
       jit::mcgen::retranslateAllEnabled()) {
     auto const mode = RuntimeOption::EvalJitSerdesMode;
     auto const numWorkers = Cfg::Jit::WorkerThreadsForSerdes ?
@@ -2681,7 +2683,7 @@ void hphp_process_init(bool skipExtensions) {
       setup_extra_arenas(numArenas);
 #endif
       return f(
-        RO::EvalJitSerdesFile,
+        Cfg::Jit::SerdesFile,
         Cfg::Jit::ParallelDeserialize ? numWorkers : 1,
         false
       );
@@ -2704,51 +2706,51 @@ void hphp_process_init(bool skipExtensions) {
       if (!jit::serializeOptProfEnabled()) return;
       if (!Cfg::Jit::SerializeOptProfRestart) return;
 
-      if (RO::ServerExecutionMode()) {
+      if (Cfg::Server::Mode) {
         Logger::FInfo("Attempting to deserialize partial profile-data file: {}",
-                      RO::EvalJitSerdesFile);
+                      Cfg::Jit::SerdesFile);
       }
 
       auto const success = deserialize(jit::tryDeserializePartialProfData);
       if (success) {
-        if (RO::ServerExecutionMode()) {
+        if (Cfg::Server::Mode) {
           Logger::FInfo("Successfully deserialized partial profile-data file. "
                         "Loaded {} units with {} workers",
                         numLoadedUnits(), numWorkers);
         }
         rta("jit::tryDeserializePartialProfData", true);
-      } else if (RO::ServerExecutionMode()) {
+      } else if (Cfg::Server::Mode) {
         Logger::FInfo("Failed deserializing partial profile-data file. "
                       "Proceeding normally");
       }
     };
 
     if (isJitDeserializing()) {
-      if (RuntimeOption::ServerExecutionMode()) {
+      if (Cfg::Server::Mode) {
         Logger::FInfo("JitDeserializeFrom: {}",
-                      RuntimeOption::EvalJitSerdesFile);
+                      Cfg::Jit::SerdesFile);
       }
 
       auto const errMsg = deserialize(jit::deserializeProfData);
 
       if (mode == JitSerdesMode::DeserializeAndDelete) {
         // Delete the serialized profile data when we finish reading
-        if (RuntimeOption::ServerExecutionMode()) {
+        if (Cfg::Server::Mode) {
           Logger::FInfo("Deleting serialized profile-data file: {}",
-                        RuntimeOption::EvalJitSerdesFile);
+                        Cfg::Jit::SerdesFile);
         }
-        unlink(RuntimeOption::EvalJitSerdesFile.c_str());
+        unlink(Cfg::Jit::SerdesFile.c_str());
       }
 
       if (errMsg.empty()) {
-        if (RuntimeOption::ServerExecutionMode()) {
+        if (Cfg::Server::Mode) {
           Logger::FInfo("JitDeserialize: Loaded {} Units with {} workers",
                         numLoadedUnits(), numWorkers);
         }
         rta("jit::deserializeProfData", false);
 
         if (mode == JitSerdesMode::DeserializeAndExit) {
-          if (RuntimeOption::ServerExecutionMode()) {
+          if (Cfg::Server::Mode) {
             Logger::Info("JitDeserialize finished; exiting");
           }
           if (jit::tc::dumpEnabled()) {

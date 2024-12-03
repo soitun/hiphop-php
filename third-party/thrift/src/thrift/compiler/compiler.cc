@@ -102,8 +102,19 @@ Options:
   -r[ecurse]  Also generate included files
   -debug      Parse debug trace to stdout
   --allow-neg-keys
-              Allow negative field keys (Used to preserve protocol compatibility
-              with older .thrift files).
+              Allow negative field keys (DEPRECATED and IGNORED: this is now
+              enabled by default, and this flag is completely ignored. See
+              --ignore-non-positive-keys to disable).
+  --ignore-non-positive-keys
+              UNSAFE: ignores explicitly provided field ids that are
+              non-positive, and instead auto-generates (implicit) negative field
+              ids. This is strongly discouraged, and is only provided as a
+              temporary killswitch to effectively "undo" the deprecation of the
+              "--allow-neg-keys" option which is now always enabled by default.
+              Note that since --allow-neg-keys is ignored, if both of these
+              options are provided, only "--ignore-non-positive-keys" takes
+              effect, and non-positive field ids are ignored.
+              This option is temporary, and will be removed in H1'2025.
   --allow-neg-enum-vals
               Allow negative enum vals (DEPRECATED)
   --allow-64bit-consts
@@ -124,7 +135,7 @@ Options:
               If --skip-gen is specified, no --gen argument may be
               given (see above).
   --record-genfiles FILE
-              Save the list of generated files to FILE,
+              Save the list of generated files to FILE
   --inject-schema-const
               Inject generated schema constant (must use thrift2ast)
   --extra-validation
@@ -321,7 +332,13 @@ std::string parse_args(
     } else if (flag == "r" || flag == "recurse") {
       gparams.gen_recurse = true;
     } else if (flag == "allow-neg-keys") {
-      pparams.allow_neg_field_keys = true;
+      fprintf(
+          stderr,
+          "NOTE: The --allow-neg-keys option is deprecated and ignored.\n");
+      // no-op
+    } else if (flag == "ignore-non-positive-keys") {
+      // DO_BEFORE(aristidis,20250301): Remove --ignore-non-positive-keys
+      pparams.allow_neg_field_keys = false;
     } else if (flag == "allow-neg-enum-vals") {
       // no-op
     } else if (flag == "allow-64bit-consts") {
@@ -747,27 +764,29 @@ std::unique_ptr<t_program_bundle> parse_and_mutate(
   const std::string schema_path = "thrift/lib/thrift/schema.thrift";
   found_or_error =
       source_mgr.find_include_file(schema_path, "", pparams.incl_searchpath);
-  if (found_or_error.index() == 0 &&
-      !program_bundle->find_program(schema_path)) {
-    sema_context stdlib_ctx(
-        source_mgr,
-        [&](diagnostic&& d) {
-          ctx.report(
-              source_location{},
-              diagnostic_level::debug,
-              "Could not load Thrift standard libraries: {}",
-              d);
-        },
-        diagnostic_params::only_errors());
-    std::unique_ptr<t_program_bundle> inc = parse_ast(
-        source_mgr,
-        stdlib_ctx,
-        schema_path,
-        pparams,
-        nullptr,
-        program_bundle.get());
-    if (inc && !stdlib_ctx.has_errors()) {
-      program_bundle->add_implicit_includes(std::move(inc));
+  if (found_or_error.index() == 0) {
+    if (!program_bundle->find_program_by_full_path(
+            std::get<0>(found_or_error))) {
+      sema_context stdlib_ctx(
+          source_mgr,
+          [&](diagnostic&& d) {
+            ctx.report(
+                source_location{},
+                diagnostic_level::debug,
+                "Could not load Thrift standard libraries: {}",
+                d);
+          },
+          diagnostic_params::only_errors());
+      std::unique_ptr<t_program_bundle> inc = parse_ast(
+          source_mgr,
+          stdlib_ctx,
+          schema_path,
+          pparams,
+          nullptr,
+          program_bundle.get());
+      if (inc && !stdlib_ctx.has_errors()) {
+        program_bundle->add_implicit_includes(std::move(inc));
+      }
     }
   }
 

@@ -15,6 +15,20 @@ The format can be found in hphp/tools/configs/generate_configs.rs
   Need to use staticdefault because we sometimes changes the value between static
   init and config load
 
+- std::string Repo.Local.Path = "", UNKNOWN, postprocess
+- std::string Repo.Central.Path = "", UNKNOWN, postprocess
+- int32_t Repo.Central.FileMode = 0, UNKNOWN
+- std::string Repo.Central.FileUser = "", UNKNOWN
+- std::string Repo.Central.FileGroup = "", UNKNOWN
+- bool Repo.AllowFallbackPath = true, UNKNOWN
+- std::string Repo.Journal = "delete", UNKNOWN
+- bool Repo.Commit = true, UNKNOWN
+- uint32_t Repo.BusyTimeoutMS = 15000, UNKNOWN
+
+- std::string Repo.Path = Repo.Path, UNKNOWN, postprocess|staticdefault("")
+- bool Repo.LitstrLazyLoad = true, UNKNOWN
+- bool Repo.DebugInfo = Repo.DebugInfo, UNKNOWN, unitcacheflag|compileroption(Repo.DebugInfo)|staticdefault(true)
+
 # Server
 
   A lot of configs uses Server.Mode but not Repo so put this second
@@ -313,6 +327,36 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - std::vector<std::string> Autoload.IndexedMethodAttributes = {}, UNKNOWN, repooptionsflag(Autoload)|lookuppath(IndexedMethodAttributes)
 - std::vector<std::string> Autoload.RepoBuildSearchDirs = {}, UNKNOWN, repooptionsflag(Autoload)|lookuppath(RepoBuildSearchDirs)
 
+# CodeCache (Eval.Jit)
+
+- uint32_t CodeCache.ASize = 60 << 20, UNKNOWN
+- uint32_t CodeCache.AColdSize = 24 << 20, UNKNOWN
+- uint32_t CodeCache.AFrozenSize = 40 << 20, UNKNOWN
+- uint32_t CodeCache.ABytecodeSize = 0, UNKNOWN
+- uint32_t CodeCache.AMaxUsage = 0, UNKNOWN, nobind
+- uint32_t CodeCache.AColdMaxUsage = 0, UNKNOWN, nobind
+- uint32_t CodeCache.AFrozenMaxUsage = 0, UNKNOWN, nobind
+- uint32_t CodeCache.GlobalDataSize, UNKNOWN
+- bool CodeCache.MapTCHuge, UNKNOWN, lookuppath(Eval.MapTCHuge)
+- uint32_t CodeCache.TCNumHugeHotMB = 64, UNKNOWN, lookuppath(Eval.TCNumHugeHotMB)
+- uint32_t CodeCache.TCNumHugeMainMB = 16, UNKNOWN, lookuppath(Eval.TCNumHugeMainMB)
+- uint32_t CodeCache.TCNumHugeColdMB = 4, UNKNOWN, lookuppath(Eval.TCNumHugeColdMB)
+- uint32_t CodeCache.AutoTCShift = 1, UNKNOWN
+
+# Debug
+
+- bool Debug.NativeStackTrace = false, UNKNOWN
+- bool Debug.ServerErrorMessage = false, UNKNOWN
+- bool Debug.RecordInput = false, UNKNOWN
+- bool Debug.ClearInputOnSuccess = true, UNKNOWN
+- std::string Debug.ProfilerOutputDir = "/tmp", UNKNOWN
+- std::string Debug.CoreDumpEmail = "", UNKNOWN
+- bool Debug.CoreDumpReport = true, UNKNOWN
+- std::string Debug.CoreDumpReportDirectory, UNKNOWN
+- std::string Debug.StackTraceFilename, UNKNOWN, nobind
+- int Debug.StackTraceTimeout = 0, UNKNOWN
+- std::string Debug.RemoteTraceOutputDir = "/tmp", UNKNOWN
+
 # Debugger (Eval.Debugger.)
 
 - bool Debugger.EnableHphpd = false, UNKNOWN, lookuppath(Eval.Debugger.EnableDebugger)
@@ -359,6 +403,32 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 
 # Eval
 
+- bool Eval.EnableXHP = true, UNKNOWN, unitcacheflag|compileroption(EnableXHP)
+
+- bool Eval.TimeoutsUseWallTime = true, UNKNOWN
+
+- bool Eval.RecordCodeCoverage = false, UNKNOWN
+
+- bool Eval.CheckSymLink = true, UNKNOWN, postprocess
+
+- bool Eval.TrustAutoloaderPath = false, UNKNOWN
+
+- bool Eval.KeepProfData, UNKNOWN
+
+- int Eval.ProfDataTTLHours = 24, UNKNOWN
+
+- std::string Eval.ProfDataTag = "", UNKNOWN
+
+- bool Eval.DisableSmallAllocator, UNKNOWN
+
+- std::string Eval.CodeCoverageOutputFile = "", UNKNOWN
+
+- bool Eval.EnableArgsInBacktraces, UNKNOWN, globaldata
+
+- bool Eval.AuthoritativeMode = false, UNKNOWN, postprocess
+
+- int Eval.CheckCLIClientCommands = 1, UNKNOWN
+
 - int32_t Eval.CheckPropTypeHints = 3, UNKNOWN, globaldata|compileroption(CheckPropTypeHints)
 
   CheckPropTypeHints:
@@ -393,9 +463,12 @@ The format can be found in hphp/tools/configs/generate_configs.rs
   Raise a notice if a Class type is passed to function that expects a
   string
 
-- bool Eval.StringPassesClass = true, UNKNOWN, globaldata|unitcacheflag
+- uint32_t Eval.ClassTypeLevel = 0, vmladenov, globaldata
 
-  When this options is on, class type-hints accept strings
+  The level at which we enforce the class<C> type.
+  0 = string, lazy class, and class is admitted, optional notice on string
+  1 = lazy class and class are admitted
+  TODO: T199611023 add more levels
 
 - bool Eval.ClassPassesClassname = true, UNKNOWN, globaldata|unitcacheflag
 
@@ -556,6 +629,7 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - int Eval.StackCheckLeafPadding = 100, UNKNOWN
 
 - bool Eval.EnableAsyncJIT = false, UNKNOWN
+- bool Eval.EnableAsyncJITLive = false, arnabde
 
 - int Eval.AsyncJitWorkerThreads = 4, UNKNOWN
 
@@ -899,13 +973,13 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 
 - bool Eval.EnableCallBuiltin = true, UNKNOWN, unitcacheflag
 
-- bool Eval.EnableNuma, UNKNOWN
+- bool Eval.EnableNuma, UNKNOWN, postprocess
 
 - bool Eval.EnableReusableTC, UNKNOWN
 
 - bool Eval.LogServerRestartStats = false, UNKNOWN
 
-- uint32_t Eval.ReusableTCPadding = 128, UNKNOWN
+- uint32_t Eval.ReusableTCPadding = 128, UNKNOWN, postprocess
 
   Extra bytes added to each area (Hot/Cold/Frozen) of a translation.
   If we don't end up using a reusable TC, we'll drop the padding.
@@ -1306,7 +1380,7 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 
   Whether to remove the existence of the REQUEST superglobal
 
-- bool Eval.FastMethodIntercept = false, UNKNOWN
+- bool Eval.FastMethodIntercept = false, UNKNOWN, postprocess
 
   Enables the non-surprise flag based implementation of
   fb_intercept2
@@ -1332,7 +1406,7 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - bool Hack.Lang.AllowUnstableFeatures = false, UNKNOWN, repooptionsflag(Parser)|hackc(parser)
 - bool Hack.Lang.EnableXHPClassModifier = true, UNKNOWN, repooptionsflag(Parser)|hackc(parser)
 - bool Hack.Lang.DisableXHPElementMangling = true, UNKNOWN, repooptionsflag(Parser)|hackc(parser)
-- bool Hack.Lang.EnableClassPointerHint = false, vmladenov, repooptionsflag(Parser)|hackc(parser)
+- bool Hack.Lang.EnableClassPointerHint = true, vmladenov, repooptionsflag(Parser)|hackc(parser)
 
   Killswitch for the class<T> type. When false, lowerer and direct decl parser
   erase it to classname<T>.
@@ -1431,7 +1505,7 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 
 - uint32_t GC.HeapAllocSampleBytes = 256 * 1024, UNKNOWN
 
-- uint32_t GC.SlabAllocAlign = GC.SlabAllocAlign, UNKNOWN, staticdefault(64)
+- uint32_t GC.SlabAllocAlign = GC.SlabAllocAlign, UNKNOWN, postprocess|staticdefault(64)
 
   The value is used before we load the config so we have to use staticdefault
 
@@ -1518,10 +1592,21 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - bool HHIR.AllocSIMDRegs = true, UNKNOWN
 - uint32_t HHIR.SpecializedDestructorThreshold = 80, UNKNOWN
 
+# Http
+
+- int Http.DefaultTimeout = 30, UNKNOWN
+
+  seconds
+
+- int Http.SlowQueryThreshold = 5000, UNKNOWN
+
+  milliseconds
+
 # Jit (Eval.Jit)
 
 - bool Jit.Enabled = true, UNKNOWN, lookuppath(Eval.Jit)
 - bool Jit.EvaledCode = true, UNKNOWN
+- std::string Jit.SerdesFile = "", UNKNOWN, postprocess
 - bool Jit.RequireWriteLease = false, UNKNOWN
 - uint64_t Jit.RelocationSize = 1 << 20, UNKNOWN
 - uint64_t Jit.MatureSize = 125 << 20, UNKNOWN
@@ -1615,7 +1700,7 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - uint64_t Jit.PGOThreshold, UNKNOWN
 - bool Jit.PGOOnly = false, UNKNOWN
 - bool Jit.PGOUsePostConditions = true, UNKNOWN
-- bool Jit.PGOUseAddrCountedCheck = false, UNKNOWN
+- bool Jit.PGOUseAddrCountedCheck = false, UNKNOWN, postprocess
 - uint32_t Jit.PGOUnlikelyIncRefCountedPercent = 2, UNKNOWN
 - uint32_t Jit.PGOUnlikelyIncRefIncrementPercent = 5, UNKNOWN
 - uint32_t Jit.PGOUnlikelyDecRefReleasePercent = 5, UNKNOWN
@@ -1681,6 +1766,11 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - std::set<std::string> Jit.TraceUploadFunctions = {}, paulbiss
 
   Functions to upload traces from to the blob store.
+
+# Mail
+
+- std::string Mail.SendmailPath = "/usr/lib/sendmail -t -i", UNKNOWN
+- std::string Mail.ForceExtraParameters = "", UNKNOWN
 
 # PCRE (Eval.PCRE)
 
@@ -1804,6 +1894,14 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - std::string Sandbox.DefaultUserFile = "", UNKNOWN
 - std::string Sandbox.HostAlias = "", UNKNOWN
 
+# SetProfile
+
+- bool SetProfile.NullThisObject = true, UNKNOWN
+
+# SimpleXML
+
+- bool SimpleXML.EmptyNamespaceMatchesAll = false, UNKNOWN
+
 # Stats
 
 - bool Stats.Enable = false, UNKNOWN
@@ -1826,6 +1924,15 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - int32_t Stats.ProfilerMaxTraceBuffer = 0, UNKNOWN
 - bool Stats.TrackPerUnitMemory = false, UNKNOWN
 
+# Strobelight
+
+- bool Strobelight.Enabled = false, UNKNOWN
+
+# Watchman
+
+- std::string Watchman.Socket.Default = "", UNKNOWN, lookuppath(watchman.socket.default)
+- std::string Watchman.Socket.Root = "", UNKNOWN, lookuppath(watchman.socket.root)
+
 # Xbox
 
 - int Xbox.ServerInfo.ThreadCount = 10, UNKNOWN
@@ -1839,11 +1946,30 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - bool Xbox.ServerInfo.LogInfo = false, UNKNOWN
 - std::string Xbox.ProcessMessageFunc = "xbox_process_message", UNKNOWN
 
+# Xenon
+
+- double Xenon.PeriodSeconds = 0.0, UNKNOWN
+- uint32_t Xenon.RequestFreq = 1, UNKNOWN
+- bool Xenon.ForceAlwaysOn = false, UNKNOWN
+- bool Xenon.TrackActiveWorkers = false, UNKNOWN
+
 # Log
 
+- std::string Log.File = "", UNKNOWN
+- std::string Log.FileSymLink = "", UNKNOWN, lookuppath(Log.Symlink)
+- uint16_t Log.FilePeriodMultiplier = 0, UNKNOWN, lookuppath(Log.PeriodMultiplier)
+- bool Log.AlwaysLogUnhandledExceptions = true, UNKNOWN
+- int Log.HeaderMangle = 0, UNKNOWN
+- bool Log.NoSilencer = false, UNKNOWN
+- int Log.ForceErrorReportingLevel = 0, UNKNOWN
+- std::string Log.AccessLogDefaultFormat = "%h %l %u %t \"%r\" %>s %b", UNKNOWN
 - std::string Log.BaseDirectory = "", UNKNOWN
 
   Base directory for all logfiles
+
+- std::string Log.AdminLog.Format = "%h %t %s %U", UNKNOWN
+- std::string Log.AdminLog.File = "", UNKNOWN
+- std::string Log.AdminLog.SymLink = "", UNKNOWN
 
 # AdminServer
 

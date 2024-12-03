@@ -29,8 +29,6 @@ from thrift.py3.types cimport (
     init_unicode_from_cpp as __init_unicode_from_cpp,
     set_iter as __set_iter,
     map_iter as __map_iter,
-    map_contains as __map_contains,
-    map_getitem as __map_getitem,
     reference_shared_ptr as __reference_shared_ptr,
     get_field_name_by_index as __get_field_name_by_index,
     reset_field as __reset_field,
@@ -66,14 +64,14 @@ cdef object get_types_reflection():
         "b.types_reflection"
     )
 
-
 cdef vector[_c_cbindings.cC] List__c_C__make_instance(object items) except *:
     cdef vector[_c_cbindings.cC] c_inst
-    if items is not None:
-        for item in items:
-            if not isinstance(item, _c_types.C):
-                raise TypeError(f"{item!r} is not of type _c_types.C")
-            c_inst.push_back(deref((<_c_types.C>item)._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE))
+    if items is None:
+        return cmove(c_inst)
+    for item in items:
+        if not isinstance(item, _c_types.C):
+            raise TypeError(f"{item!r} is not of type _c_types.C")
+        c_inst.push_back(deref((<_c_types.C>item)._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE))
     return cmove(c_inst)
 
 cdef object List__c_C__from_cpp(const vector[_c_cbindings.cC]& c_vec) except *:

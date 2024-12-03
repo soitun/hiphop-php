@@ -257,10 +257,6 @@ struct RuntimeOption {
     std::vector<std::string>* messages = nullptr,
     std::string cmd = "");
 
-  static bool ServerExecutionMode() {
-    return Cfg::Server::Mode;
-  }
-
   static bool GcSamplingEnabled() {
     return Cfg::GC::SampleRate > 0;
   }
@@ -304,26 +300,14 @@ struct RuntimeOption {
   static std::string PidFile;
 
   static std::map<std::string, ErrorLogFileData> ErrorLogs;
-  static std::string LogFile;
-  static std::string LogFileSymLink;
-  static uint16_t LogFilePeriodMultiplier;
 
-  static int LogHeaderMangle;
-  static bool AlwaysEscapeLog;
-  static bool AlwaysLogUnhandledExceptions;
-  static bool NoSilencer;
   static int RuntimeErrorReportingLevel;
-  static int ForceErrorReportingLevel; // Bitmask ORed with the reporting level
 
   static int RaiseDebuggingFrequency;
   static int64_t SerializationSizeLimit;
 
   static std::string AccessLogDefaultFormat;
   static std::map<std::string, AccessLogFileData> AccessLogs;
-
-  static std::string AdminLogFormat;
-  static std::string AdminLogFile;
-  static std::string AdminLogSymLink;
 
   static std::map<std::string, AccessLogFileData> RPCLogs;
 
@@ -351,51 +335,21 @@ struct RuntimeOption {
   static std::set<std::string> StaticFileGenerators;
   static std::vector<std::shared_ptr<FilesMatch>> FilesMatches;
 
-  static int  HttpDefaultTimeout;
-  static int  HttpSlowQueryThreshold;
-
-  static bool NativeStackTrace;
-  static bool ServerErrorMessage;
-  static bool RecordInput;
-  static bool ClearInputOnSuccess;
-  static std::string ProfilerOutputDir;
-  static std::string CoreDumpEmail;
-  static bool CoreDumpReport;
-  static std::string CoreDumpReportDirectory;
-  static std::string StackTraceFilename;
-  static int StackTraceTimeout;
-  static std::string RemoteTraceOutputDir;
   static std::set<std::string, stdltistr> TraceFunctions;
 
   static int64_t MaxSQLRowCount;
   static int64_t SocketDefaultTimeout;
-
-  static bool DisableSmallAllocator;
 
   static std::map<std::string, std::string> ServerVariables;
 
   static std::map<std::string, std::string> EnvVariables;
 
   // Eval options
-  static bool EnableXHP;
-  static bool CheckSymLink;
-  static bool TrustAutoloaderPath;
-  static bool EnableArgsInBacktraces;
   static bool EnableZendIniCompat;
-  static bool TimeoutsUseWallTime;
-  static bool EvalAuthoritativeMode;
-  static int CheckCLIClientCommands;
   static JitSerdesMode EvalJitSerdesMode;
-  static int ProfDataTTLHours;
-  static std::string EvalJitSerdesFile;
-  static std::string ProfDataTag;
   static bool DumpPreciseProfData;
-  static bool KeepProfData;
 
   static std::string EvalSBSerdesFile;
-
-  static std::string WatchmanRootSocket;
-  static std::string WatchmanDefaultSocket;
 
   static hphp_string_map<TypedValue> ConstantFunctions;
 
@@ -427,39 +381,15 @@ public:
   EVALFLAGS()
 #undef F
 
-  static bool RecordCodeCoverage;
-  static std::string CodeCoverageOutputFile;
-
-  // Repo (hhvm bytecode repository) options
-  static std::string RepoPath;
-  static bool RepoLitstrLazyLoad;
-  static bool RepoDebugInfo;
-  
   // These are (functionally) unused
   static RepoMode RepoLocalMode;
-  static std::string RepoLocalPath;
   static RepoMode RepoCentralMode;
-  static std::string RepoCentralPath;
-  static int32_t RepoCentralFileMode;
-  static std::string RepoCentralFileUser;
-  static std::string RepoCentralFileGroup;
-  static bool RepoAllowFallbackPath;
-  static std::string RepoJournal;
-  static bool RepoCommit;
-  static uint32_t RepoBusyTimeoutMS;
 
   // pprof/hhprof options
   static bool HHProfEnabled;
   static bool HHProfActive;
   static bool HHProfAccum;
   static bool HHProfRequest;
-
-  // Mail options
-  static std::string SendmailPath;
-  static std::string MailForceExtraParameters;
-
-  // SimpleXML options
-  static bool SimpleXMLEmptyNamespaceMatchesAll;
 
 #ifdef HHVM_FACEBOOK
   // ThriftFBServer
@@ -495,17 +425,6 @@ public:
   // utilization is above this threshold.
   static double ServerThreadTuneThreadUtilizationThreshold;
 #endif
-
-  // Xenon options
-  static double XenonPeriodSeconds;
-  static uint32_t XenonRequestFreq;
-  static bool XenonForceAlwaysOn;
-  static bool XenonTrackActiveWorkers;
-
-  // Strobelight options
-  static bool StrobelightEnabled;
-
-  static bool SetProfileNullThisObject;
 
   static bool funcIsRenamable(const StringData* name);
 };
