@@ -8,6 +8,8 @@
 from __future__ import annotations
 
 import folly.iobuf as _fbthrift_iobuf
+
+import test.fixtures.python_capi.module.thrift_types as _fbthrift_current_module
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
 
@@ -1408,66 +1410,13 @@ class Onion(metaclass=_fbthrift_python_types.UnionMeta):
 
 # This unfortunately has to be down here to prevent circular imports
 import test.fixtures.python_capi.module.thrift_metadata
-
-
-class MyEnum(_fbthrift_python_types.Enum, int):
-    MyValue1 = 0
-    MyValue2 = 1
-    @staticmethod
-    def __get_thrift_name__() -> str:
-        return "module.MyEnum"
-
-    @staticmethod
-    def __get_thrift_uri__():
-        return "test.dev/fixtures/python_capi/MyEnum"
-
-    @staticmethod
-    def __get_metadata__():
-        return test.fixtures.python_capi.module.thrift_metadata.gen_metadata_enum_MyEnum()
-
-    def _to_python(self):
-        return self
-
-    def _to_py3(self):
-        import importlib
-        py3_types = importlib.import_module("test.fixtures.python_capi.module.types")
-        return py3_types.MyEnum(self.value)
-
-    def _to_py_deprecated(self):
-        return self.value
-
-
-class AnnoyingEnum(_fbthrift_python_types.Enum, int):
-    FOO = 1
-    BAR = 2
-    @staticmethod
-    def __get_thrift_name__() -> str:
-        return "module.AnnoyingEnum"
-
-    @staticmethod
-    def __get_thrift_uri__():
-        return "test.dev/fixtures/python_capi/AnnoyingEnum"
-
-    @staticmethod
-    def __get_metadata__():
-        return test.fixtures.python_capi.module.thrift_metadata.gen_metadata_enum_AnnoyingEnum()
-
-    def _to_python(self):
-        return self
-
-    def _to_py3(self):
-        import importlib
-        py3_types = importlib.import_module("test.fixtures.python_capi.module.types")
-        return py3_types.AnnoyingEnum(self.value)
-
-    def _to_py_deprecated(self):
-        return self.value
-
+from test.fixtures.python_capi.module.thrift_enums import *
 
 _fbthrift_all_enums = [
     MyEnum,
     AnnoyingEnum,
 ]
+
 
 def _fbthrift_metadata__struct_MyStruct():
     return test.fixtures.python_capi.module.thrift_metadata.gen_metadata_struct_MyStruct()
@@ -1543,4 +1492,4 @@ ui64 = int
 signed_byte = int
 IOBuf = _fbthrift_iobuf.IOBuf
 IOBufPtr = _fbthrift_iobuf.IOBuf
-ListAlias = ListStruct
+ListAlias = _fbthrift_current_module.ListStruct

@@ -8,13 +8,15 @@
 from __future__ import annotations
 
 import folly.iobuf as _fbthrift_iobuf
+
+import test.namespace_from_package.module.thrift_types as _fbthrift_current_module
+from abc import ABCMeta as _fbthrift_ABCMeta
 import test.namespace_from_package.module.thrift_abstract_types as _fbthrift_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
 
 
 
-@_fbthrift_abstract_types.Foo.register
 class Foo(metaclass=_fbthrift_python_types.StructMeta):
     _fbthrift_SPEC = (
         _fbthrift_python_types.FieldInfo(
@@ -67,12 +69,15 @@ class Foo(metaclass=_fbthrift_python_types.StructMeta):
             py_asyncio_types = importlib.import_module("test.namespace_from_package.module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.Foo, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.Foo, Foo)
+
 # This unfortunately has to be down here to prevent circular imports
 import test.namespace_from_package.module.thrift_metadata
-
+from test.namespace_from_package.module.thrift_enums import *
 
 _fbthrift_all_enums = [
 ]
+
 
 def _fbthrift_metadata__struct_Foo():
     return test.namespace_from_package.module.thrift_metadata.gen_metadata_struct_Foo()

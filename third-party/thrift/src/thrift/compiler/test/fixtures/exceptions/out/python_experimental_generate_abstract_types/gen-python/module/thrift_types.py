@@ -8,6 +8,9 @@
 from __future__ import annotations
 
 import folly.iobuf as _fbthrift_iobuf
+
+import module.thrift_types as _fbthrift_current_module
+from abc import ABCMeta as _fbthrift_ABCMeta
 import module.thrift_abstract_types as _fbthrift_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
@@ -482,10 +485,11 @@ class Banal(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
 
 # This unfortunately has to be down here to prevent circular imports
 import module.thrift_metadata
-
+from module.thrift_enums import *
 
 _fbthrift_all_enums = [
 ]
+
 
 def _fbthrift_metadata__exception_Fiery():
     return module.thrift_metadata.gen_metadata_exception_Fiery()

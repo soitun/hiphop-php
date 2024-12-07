@@ -42,6 +42,8 @@ EnumMeta = _fbthrift_python_EnumMeta
 __all__ = ['Struct', 'BadEnum', 'Union', 'Enum', 'Flag', 'EnumMeta']
 
 
+_fbthrift__module_name__ = "thrift.py3.types"
+
 # This isn't exposed to the module dict
 Object = cython.fused_type(Struct, GeneratedError)
 
@@ -95,6 +97,11 @@ cdef class StructMeta(type):
             # Unify different exception types to ValueError
             raise ValueError(e)
 
+    # make the __module__ customizable
+    # this just enables the slot; impl here is ignored
+    def __module__(cls):
+        pass
+
     def __iter__(cls):
         for i in range(cls._fbthrift_get_struct_size()):
             yield cls._fbthrift_get_field_name_by_index(i), None
@@ -146,6 +153,8 @@ cdef class Struct:
     """
     Base class for all thrift structs
     """
+    __module__ = _fbthrift__module_name__
+
     cdef IOBuf _fbthrift_serialize(self, Protocol proto):
         return IOBuf(b'')
 
@@ -237,6 +246,8 @@ cdef class Union(Struct):
     """
     Base class for all thrift Unions
     """
+    __module__ = _fbthrift__module_name__
+
     cdef bint _fbthrift_noncomparable_eq(self, other):
         return self.type == other.type and self.value == other.value
 
@@ -272,6 +283,11 @@ cdef class UnionMeta(type):
             cls._fbthrift_get_field_name_by_index(i)
             for i in range(cls._fbthrift_get_struct_size())
         ] + ["type", "value"]
+
+    # make the __module__ customizeable
+    # this just enables the slot; impl here is ignored
+    def __module__(cls):
+        pass
 
 
 SetMetaClass(<PyTypeObject*> Union, <PyTypeObject*> UnionMeta)
@@ -534,59 +550,13 @@ cdef inline _fbthrift_set_to_py_set(Set self, other):
 cdef inline _py_set_to_fbthrift_set_unchecked(Set self, py_set):
     return self._child_cls(py_set, _fbthrift_set_private_ctor)
 
-@cython.auto_pickle(False)
-cdef class Map(Container):
-    """
-    Base class for all thrift maps
-    """
-
-    def __eq__(self, other):
-        if not (isinstance(self, Mapping) and isinstance(other, Mapping)):
-            return False
-        if len(self) != len(other):
-            return False
-
-        for key in self:
-            if key not in other:
-                return False
-            if other[key] != self[key]:
-                return False
-
-        return True
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-    def __hash__(self):
-        if not self._fbthrift_hash:
-            self._fbthrift_hash = hash(tuple(self.items()))
-        return self._fbthrift_hash
-
-    def __repr__(self):
-        if not self:
-            return 'i{}'
-        return f'i{{{", ".join(map(lambda i: f"{repr(i[0])}: {repr(i[1])}", self.items()))}}}'
-
-    def __reduce__(self):
-        return (type(self), (dict(self), ))
-
-    def keys(self):
-        return self.__iter__()
-
-    def get(self, key, default=None):
-        try:
-            return self.__getitem__(key)
-        except KeyError:
-            return default
-
-
 cdef class _MapPrivateCtorToken:
     pass
 
 _fbthrift_map_private_ctor = _MapPrivateCtorToken()
 
 @cython.auto_pickle(False)
-cdef class MapNew(Container):
+cdef class Map(Container):
     """
     Base class for pure python thrift maps
     """
@@ -594,10 +564,10 @@ cdef class MapNew(Container):
         self._py_obj = py_obj
         self._child_cls = child_cls
 
-    def __len__(MapNew self):
+    def __len__(Map self):
         return len(self._py_obj)
 
-    def __eq__(MapNew self, other):
+    def __eq__(Map self, other):
         if not isinstance(other, Mapping):
             return False
         if len(self._py_obj) != len(other):
@@ -611,15 +581,15 @@ cdef class MapNew(Container):
 
         return True
 
-    def __ne__(self, other):
+    def __ne__(Map self, other):
         return not self.__eq__(other)
 
-    def __hash__(self):
+    def __hash__(Map self):
         if not self._fbthrift_hash:
             self._fbthrift_hash = hash(tuple(self.items()))
         return self._fbthrift_hash
 
-    def __repr__(self):
+    def __repr__(Map self):
         if not self:
             return 'i{}'
         # print in sorted order for backward compatibility
@@ -629,22 +599,22 @@ cdef class MapNew(Container):
             key_val = self.items()
         return f'i{{{", ".join(map(lambda i: f"{repr(i[0])}: {repr(i[1])}", key_val))}}}'
 
-    def __reduce__(self):
+    def __reduce__(Map self):
         return (type(self), (dict(self._py_obj), ))
 
-    def __copy__(self):
+    def __copy__(Map self):
         return self._child_cls(
             dict(self._py_obj),
             private_ctor_token=_fbthrift_map_private_ctor
         )
 
-    def __contains__(self, key):
+    def __contains__(Map self, key):
         key = self._child_cls._check_key_type_or_none(key)
         if not self or key is None:
             return False
         return key in self._py_obj
 
-    def __getitem__(self, key):
+    def __getitem__(Map self, key):
         err = KeyError(f'{key}')
         key = self._child_cls._check_key_type_or_none(key)
         if key is None:
@@ -654,26 +624,26 @@ cdef class MapNew(Container):
             raise err
         return item
 
-    def get(self, key, default=None):
+    def get(Map self, key, default=None):
         try:
             return self._py_obj[key]
         except KeyError:
             return default
 
-    def __iter__(self):
+    def __iter__(Map self):
         if not self:
             return
         yield from self._py_obj
 
-    def keys(self):
+    def keys(Map self):
         return self.__iter__()
 
-    def values(self):
+    def values(Map self):
         if not self:
             return
         yield from self._py_obj.values()
 
-    def items(self):
+    def items(Map self):
         if not self:
             return
         yield from self._py_obj.items()
@@ -705,5 +675,5 @@ def _is_python_struct(obj):
 def _is_python_enum(obj):
     return (
         isinstance(obj, _fbthrift_python_Enum) and
-        obj.__class__.__module__.endswith(".thrift_types")
+        obj.__class__.__module__.endswith(".thrift_enums")
     )

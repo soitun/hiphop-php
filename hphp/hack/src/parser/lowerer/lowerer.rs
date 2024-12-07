@@ -187,11 +187,13 @@ pub struct Env<'a> {
     pub empty_ns_env: Arc<NamespaceEnv>,
 
     // Whether we have encountered an yield expression
-    pub found_yield: bool,
+    found_yield: bool,
     // Whether we have encountered an await expression
     found_await: bool,
     // Whether we are in the body of an async function
     pub in_async: bool,
+    // Whether we are in an expression tree
+    in_expr_tree: bool,
 
     pub indexed_source_text: &'a IndexedSourceText<'a>,
     pub parser_options: &'a ParserOptions,
@@ -229,6 +231,7 @@ impl<'a> Env<'a> {
             found_yield: false,
             found_await: false,
             in_async: false,
+            in_expr_tree: false,
             indexed_source_text,
             parser_options,
             pos_none: Pos::NONE,
@@ -369,18 +372,25 @@ impl<'a> Env<'a> {
     where
         F: FnOnce(S<'a>, &mut Env<'a>) -> Result<R>,
     {
-        let outer_found_yield = self.found_yield;
-        let outer_found_await = self.found_await;
-        let outer_in_async = self.in_async;
-        self.found_yield = false;
-        self.found_await = false;
-        self.in_async = matches!(async_, SuspensionKind::SKAsync);
-        let r = p(node, self);
-        let found_yield = self.found_yield;
-        self.found_yield = outer_found_yield;
-        self.found_await = outer_found_await;
-        self.in_async = outer_in_async;
-        Ok((r?, found_yield))
+        if self.in_expr_tree {
+            // Inside of an expression tree, we are going to lower a client
+            // lambda, which shouldn't disturb our tracking of hack-level
+            // await/yield/async
+            Ok((p(node, self)?, false))
+        } else {
+            let outer_found_yield = self.found_yield;
+            let outer_found_await = self.found_await;
+            let outer_in_async = self.in_async;
+            self.found_yield = false;
+            self.found_await = false;
+            self.in_async = matches!(async_, SuspensionKind::SKAsync);
+            let r = p(node, self);
+            let found_yield = self.found_yield;
+            self.found_yield = outer_found_yield;
+            self.found_await = outer_found_await;
+            self.in_async = outer_in_async;
+            Ok((r?, found_yield))
+        }
     }
 }
 
@@ -1531,27 +1541,21 @@ fn p_expr<'a>(node: S<'a>, env: &mut Env<'a>) -> Result<ast::Expr> {
     p_expr_with_loc(ExprLocation::TopLevel, node, env, None)
 }
 
-fn p_expr_for_function_call_arguments<'a>(
-    node: S<'a>,
-    env: &mut Env<'a>,
-) -> Result<(ast::ParamKind, ast::Expr)> {
+fn p_expr_for_function_call_arguments<'a>(node: S<'a>, env: &mut Env<'a>) -> Result<ast::Argument> {
     match &node.children {
         DecoratedExpression(DecoratedExpressionChildren {
             decorator,
             expression,
-        }) if token_kind(decorator) == Some(TK::Inout) => Ok((
-            ast::ParamKind::Pinout(p_pos(decorator, env)),
+        }) if token_kind(decorator) == Some(TK::Inout) => Ok(aast::Argument::Ainout(
+            p_pos(decorator, env),
             p_expr(expression, env)?,
         )),
-        _ => Ok((ast::ParamKind::Pnormal, p_expr(node, env)?)),
+        _ => Ok(aast::Argument::Anormal(p_expr(node, env)?)),
     }
 }
 
-fn p_expr_for_normal_argument<'a>(
-    node: S<'a>,
-    env: &mut Env<'a>,
-) -> Result<(ast::ParamKind, ast::Expr)> {
-    Ok((ast::ParamKind::Pnormal, p_expr(node, env)?))
+fn p_expr_for_normal_argument<'a>(node: S<'a>, env: &mut Env<'a>) -> Result<ast::Argument> {
+    Ok(ast::Argument::Anormal(p_expr(node, env)?))
 }
 
 fn p_expr_with_loc<'a>(
@@ -1699,7 +1703,7 @@ fn p_expr_recurse<'a>(
 fn split_args_vararg<'a>(
     arg_list_node: S<'a>,
     e: &mut Env<'a>,
-) -> Result<(Vec<(ast::ParamKind, ast::Expr)>, Option<ast::Expr>)> {
+) -> Result<(Vec<ast::Argument>, Option<ast::Expr>)> {
     let mut arg_list: Vec<_> = arg_list_node.syntax_node_to_list_skip_separator().collect();
     if let Some(last_arg) = arg_list.last() {
         if let DecoratedExpression(c) = &last_arg.children {
@@ -2161,7 +2165,7 @@ fn p_pre_post_unary_decorated_expr<'a>(node: S<'a>, env: &mut Env<'a>, pos: Pos)
                     Expr_::mk_id(ast::Id(pos, special_functions::ECHO.into())),
                 ),
                 targs: vec![],
-                args: vec![(ast::ParamKind::Pnormal, expr)],
+                args: vec![aast::Argument::Anormal(expr)],
                 unpacked_arg: None,
             })),
             Some(TK::Dollar) => {
@@ -2377,14 +2381,14 @@ fn p_prefixed_code_expr<'a>(
         }
         (Err(e), _) => Err(e),
     }?;
+    env.in_expr_tree = true;
     let src_expr = if !c.body.is_compound_statement() {
         p_expr(&c.body, env)?
     } else {
         let pos = p_pos(&c.body, env);
         let suspension_kind = SuspensionKind::SKSync;
         // Take the body and create a no argument lambda expression
-        let (body, yield_) =
-            env.reset_for_function_body(&c.body, suspension_kind, p_function_body)?;
+        let body = p_function_body(&c.body, env)?;
         let external = c.body.is_external();
         let fun = ast::Fun_ {
             span: pos.clone(),
@@ -2393,7 +2397,7 @@ fn p_prefixed_code_expr<'a>(
             readonly_ret: None,
             ret: ast::TypeHint((), None),
             body: ast::FuncBody { fb_ast: body },
-            fun_kind: mk_fun_kind(suspension_kind, yield_),
+            fun_kind: mk_fun_kind(suspension_kind, false),
             params: vec![],
             ctxs: None,
             unsafe_ctxs: None,
@@ -2419,6 +2423,9 @@ fn p_prefixed_code_expr<'a>(
     if clear_et_class_at_end {
         env.expression_tree_class = None;
     }
+    // Since expression trees can't directly nest, we don't need to restore the
+    // old value, it must be false.
+    env.in_expr_tree = false;
 
     Ok(desugar_result.expr.2)
 }
@@ -2427,11 +2434,15 @@ fn p_et_splice_expr<'a>(expr: S<'a>, env: &mut Env<'a>, location: ExprLocation) 
     // Clear out found awaits since we want to see if there is one in this splice expression.
     let old_found_await = env.found_await;
     env.found_await = false;
+    env.in_expr_tree = false;
     let inner_pos = p_pos(expr, env);
     let inner_expr_ = p_expr_recurse(location, expr, env, None)?;
     let spliced_expr = ast::Expr::new((), inner_pos, inner_expr_);
     let contains_await = env.found_await;
     env.found_await |= old_found_await;
+    // Since splices can't directly nest, we don't need to restore the old value,
+    // it must be true
+    env.in_expr_tree = true;
     Ok(Expr_::ETSplice(Box::new(aast::EtSplice {
         spliced_expr,
         contains_await,
@@ -2499,7 +2510,7 @@ fn p_constructor_call<'a>(
     Ok(Expr_::mk_new(
         ast::ClassId((), pos, ast::ClassId_::CIexpr(e)),
         hl,
-        args.into_iter().map(|(_, e)| e).collect(),
+        args.into_iter().map(ast::Argument::to_expr).collect(),
         varargs,
         (),
     ))
@@ -2916,15 +2927,9 @@ fn p_bop<'a>(
 ) -> Result<Expr_> {
     use ast::Bop::*;
     let mk = |bop, lhs, rhs| Ok(Expr_::mk_binop(Binop { bop, lhs, rhs }));
-    let mk_eq = |op, lhs, rhs| {
-        Ok(Expr_::mk_binop(Binop {
-            bop: Eq(Some(Box::new(op))),
-            lhs,
-            rhs,
-        }))
-    };
+    let mk_eq = |op, lhs, rhs| Ok(Expr_::mk_assign(lhs, Some(op), rhs));
     match token_kind(node) {
-        Some(TK::Equal) => mk(Eq(None), lhs, rhs),
+        Some(TK::Equal) => Ok(Expr_::mk_assign(lhs, None, rhs)),
         Some(TK::Bar) => mk(Bar, lhs, rhs),
         Some(TK::Ampersand) => mk(Amp, lhs, rhs),
         Some(TK::Plus) => mk(Plus, lhs, rhs),
@@ -5254,16 +5259,16 @@ fn p_class_elt<'a>(class: &mut ast::Class_, node: S<'a>, env: &mut Env<'a>) {
                 (
                     ast::Stmt::new(
                         p.clone(),
-                        ast::Stmt_::mk_expr(e(Expr_::mk_binop(Binop {
-                            bop: ast::Bop::Eq(None),
-                            lhs: e(Expr_::mk_obj_get(
+                        ast::Stmt_::mk_expr(e(Expr_::mk_assign(
+                            e(Expr_::mk_obj_get(
                                 e(Expr_::mk_lvar(lid(special_idents::THIS))),
                                 e(Expr_::mk_id(ast::Id(p.clone(), cvname.to_string()))),
                                 ast::OgNullFlavor::OGNullthrows,
                                 ast::PropOrMethod::IsProp,
                             )),
-                            rhs: e(Expr_::mk_lvar(lid(&param.name))),
-                        }))),
+                            None,
+                            e(Expr_::mk_lvar(lid(&param.name))),
+                        ))),
                     ),
                     ast::ClassVar {
                         final_: false,

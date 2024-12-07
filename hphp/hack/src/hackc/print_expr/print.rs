@@ -29,7 +29,6 @@ use lazy_static::lazy_static;
 use naming_special_names_rust::classes;
 use oxidized::ast;
 use oxidized::ast_defs;
-use oxidized::ast_defs::ParamKind;
 use oxidized::local_id;
 use regex::Regex;
 use write_bytes::write_bytes;
@@ -380,6 +379,16 @@ fn print_expr(
             w.write_all(b" ")?;
             print_expr(ctx, w, env, rhs)
         }
+        Expr_::Assign(x) => {
+            let (lhs, bop, rhs) = &**x;
+            print_expr(ctx, w, env, lhs)?;
+            w.write_all(b" ")?;
+            if let Some(bop) = bop {
+                print_bop(w, bop)?
+            }
+            w.write_all(b"= ")?;
+            print_expr(ctx, w, env, rhs)
+        }
         Expr_::Call(c) => {
             let ast::CallExpr {
                 func,
@@ -397,9 +406,9 @@ fn print_expr(
                 }
             };
             write::paren(w, |w| {
-                write::concat_by(w, ", ", args, |w, (pk, e)| match pk {
-                    ParamKind::Pnormal => print_expr(ctx, w, env, e),
-                    ParamKind::Pinout(_) => Err(Error::fail("illegal default value").into()),
+                write::concat_by(w, ", ", args, |w, arg| match arg {
+                    ast::Argument::Anormal(e) => print_expr(ctx, w, env, e),
+                    ast::Argument::Ainout(_, _) => Err(Error::fail("illegal default value").into()),
                 })?;
                 match unpacked_arg {
                     None => Ok(()),
@@ -919,11 +928,6 @@ fn print_bop(w: &mut dyn Write, bop: &ast_defs::Bop) -> Result<()> {
         Bop::Eqeq => w.write_all(b"=="),
         Bop::Eqeqeq => w.write_all(b"==="),
         Bop::Starstar => w.write_all(b"**"),
-        Bop::Eq(None) => w.write_all(b"="),
-        Bop::Eq(Some(bop)) => {
-            w.write_all(b"=")?;
-            print_bop(w, bop)
-        }
         Bop::Ampamp => w.write_all(b"&&"),
         Bop::Barbar => w.write_all(b"||"),
         Bop::Lt => w.write_all(b"<"),

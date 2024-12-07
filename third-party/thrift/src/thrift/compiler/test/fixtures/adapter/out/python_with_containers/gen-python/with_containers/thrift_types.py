@@ -8,6 +8,8 @@
 from __future__ import annotations
 
 import folly.iobuf as _fbthrift_iobuf
+
+import with_containers.thrift_types as _fbthrift_current_module
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
 
@@ -126,10 +128,11 @@ MyStruct = my.AdaptedType[_fbthrift_unadapted_MyStruct]
 
 # This unfortunately has to be down here to prevent circular imports
 import with_containers.thrift_metadata
-
+from with_containers.thrift_enums import *
 
 _fbthrift_all_enums = [
 ]
+
 
 def _fbthrift_metadata__struct__fbthrift_unadapted_AnnotationWithContainers():
     return with_containers.thrift_metadata.gen_metadata_struct__fbthrift_unadapted_AnnotationWithContainers()

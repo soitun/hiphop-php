@@ -494,6 +494,17 @@ SSATmp* opt_get_class(IRGS& env, const ParamPrep& params) {
   return nullptr;
 }
 
+SSATmp* opt_get_class_from_object(IRGS& env, const ParamPrep& params) {
+  if (params.size() != 1) return nullptr;
+
+  auto const val = params[0].value;
+  if (val->type() <= TObj) {
+    return gen(env, LdObjClass, val);
+  }
+
+  return nullptr;
+}
+
 SSATmp* opt_sqrt(IRGS& env, const ParamPrep& params) {
   if (params.size() != 1) return nullptr;
 
@@ -1305,6 +1316,7 @@ const hphp_fast_string_fmap<OptEmitFn> s_opt_emit_fns{
   {"ini_get", opt_ini_get},
   {"in_array", opt_in_array},
   {"get_class", opt_get_class},
+  {"HH\\get_class_from_object", opt_get_class_from_object},
   {"sqrt", opt_sqrt},
   {"strlen", opt_strlen},
   {"clock_gettime_ns", opt_clock_gettime_ns},
@@ -1958,6 +1970,14 @@ Type builtinOutType(const Func* builtin, uint32_t i) {
       if (!Cfg::Eval::ClassPassesClassname) {
         return TStr;
       }
+      return TStr | TCls | TLazyCls;
+    case AnnotMetaType::Class:
+      // TODO(T199611023) add more levels
+      if (Cfg::Eval::ClassTypeLevel > 0) {
+        return TCls | TLazyCls;
+      }
+      return TStr | TCls | TLazyCls;
+    case AnnotMetaType::ClassOrClassname:
       return TStr | TCls | TLazyCls;
     case AnnotMetaType::Nonnull:
     case AnnotMetaType::NoReturn:

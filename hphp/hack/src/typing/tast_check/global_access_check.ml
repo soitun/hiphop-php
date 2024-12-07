@@ -331,9 +331,9 @@ let check_super_global_method expr env external_fun_name =
                be the global var; and if it's a string literal, we simply use
                it, otherwise we don't know and use default name. *)
             (match args with
-            | (_, (_, _, para_expr)) :: _ ->
-              (match para_expr with
-              | String s -> "$" ^ s
+            | arg :: _ ->
+              (match Aast_utils.arg_to_expr arg with
+              | (_, _, String s) -> "$" ^ s
               | _ -> default_global_var_name)
             | [] -> default_global_var_name)
         in
@@ -682,7 +682,8 @@ let rec get_data_srcs_from_expr env ctx (tp, _, te) =
       (match func_expr with
       | Id (_, func_id) when SSet.mem func_id src_from_first_para_func_ids ->
         (match args with
-        | (_, para_expr) :: _ -> get_data_srcs_from_expr env ctx para_expr
+        | para_expr :: _ ->
+          get_data_srcs_from_expr env ctx (Aast_utils.arg_to_expr para_expr)
         | [] -> DataSourceSet.singleton Unknown)
       | Id (_, func_id) ->
         if SSet.mem func_id safe_func_ids then
@@ -691,10 +692,13 @@ let rec get_data_srcs_from_expr env ctx (tp, _, te) =
           List.fold
             args
             ~init:DataSourceSet.empty
-            ~f:(fun cur_src_set (_, para_expr) ->
+            ~f:(fun cur_src_set para_expr ->
               DataSourceSet.union
                 cur_src_set
-                (get_data_srcs_from_expr env ctx para_expr))
+                (get_data_srcs_from_expr
+                   env
+                   ctx
+                   (Aast_utils.arg_to_expr para_expr)))
         else
           DataSourceSet.singleton Unknown
       | Class_const ((_, _, CI (_, class_name)), _) ->
@@ -729,7 +733,8 @@ let rec get_data_srcs_from_expr env ctx (tp, _, te) =
     get_data_srcs_of_expr_list el
   | Cast (_, e) -> get_data_srcs_from_expr env ctx e
   | Unop (_, e) -> get_data_srcs_from_expr env ctx e
-  | Binop { lhs; rhs; _ } ->
+  | Binop { lhs; rhs; _ }
+  | Assign (lhs, _, rhs) ->
     DataSourceSet.union
       (get_data_srcs_from_expr env ctx lhs)
       (get_data_srcs_from_expr env ctx rhs)
@@ -888,7 +893,7 @@ let visitor =
             when SSet.mem func_id check_non_null_func_ids ->
             (match args with
             | [] -> None
-            | (_, para_expr) :: _ -> Some (para_expr, true))
+            | para_expr :: _ -> Some (Aast_utils.arg_to_expr para_expr, true))
           (* For the condition of format "expr is nonnull", "expr !== null" or "expr != null",
              return expr and false (i.e. else branch). *)
           | Is (cond_expr, (_, Hnonnull))
@@ -905,7 +910,7 @@ let visitor =
             when SSet.mem func_id check_non_null_func_ids ->
             (match args with
             | [] -> None
-            | (_, para_expr) :: _ -> Some (para_expr, false))
+            | para_expr :: _ -> Some (Aast_utils.arg_to_expr para_expr, false))
           | _ -> None
         in
         let () =
@@ -1027,12 +1032,19 @@ let visitor =
               GlobalAccessCheck.DefiniteGlobalRead
           | None -> ());
         (* Lastly, check if a global variable is used as the parameter. *)
-        List.iter args ~f:(fun (pk, ((ty, pos, _) as expr)) ->
-            let e_global_opt =
-              match pk with
-              | Ast_defs.Pinout _ -> get_global_vars_from_expr env ctx expr
-              | Ast_defs.Pnormal ->
-                get_global_vars_from_expr ~include_immutable:false env ctx expr
+        List.iter args ~f:(fun arg ->
+            let (ty, pos, e_global_opt) =
+              match arg with
+              | Aast_defs.Ainout (_, ((ty, pos, _) as expr)) ->
+                (ty, pos, get_global_vars_from_expr env ctx expr)
+              | Aast_defs.Anormal ((ty, pos, _) as expr) ->
+                ( ty,
+                  pos,
+                  get_global_vars_from_expr
+                    ~include_immutable:false
+                    env
+                    ctx
+                    expr )
             in
             if Option.is_some e_global_opt then
               raise_global_access_error
@@ -1043,7 +1055,7 @@ let visitor =
                 (GlobalAccessPatternSet.singleton NoPattern)
                 GlobalAccessCheck.PossibleGlobalWriteViaFunctionCall);
         super#on_expr (env, (ctx, fun_name)) te
-      | Binop { bop = Ast_defs.Eq bop_opt; lhs; rhs } ->
+      | Assign (lhs, bop_opt, rhs) ->
         let () = self#on_expr (env, (ctx, fun_name)) rhs in
         let re_ty = Tast_env.print_ty env (Tast.get_type rhs) in
         let le_global_opt = get_global_vars_from_expr env ctx lhs in

@@ -14,6 +14,7 @@ from __future__ import annotations
 import abc as _abc
 import typing as _typing
 
+import test.fixtures.interactions.module.thrift_abstract_types as _fbthrift_current_module
 _fbthrift_property = property
 
 
@@ -21,7 +22,7 @@ import folly.iobuf as _fbthrift_iobuf
 import thrift.python.abstract_types as _fbthrift_python_abstract_types
 import test.fixtures.another_interactions.shared.thrift_abstract_types as _fbthrift__test__fixtures__another_interactions__shared__thrift_abstract_types
 
-
+from test.fixtures.interactions.module.thrift_enums import *
 class CustomException(_fbthrift_python_abstract_types.AbstractGeneratedError):
     @_fbthrift_property
     def message(self) -> str: ...

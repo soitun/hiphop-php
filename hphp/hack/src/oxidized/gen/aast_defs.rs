@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<5276513781460c921ef927e568c45b06>>
+// @generated SignedSource<<234ceba63fc3a09cb4f5acb3ce24c376>>
 //
 // To regenerate this file, run:
 //   hphp/hack/src/oxidized_regen.sh
@@ -945,6 +945,8 @@ pub enum Expr_<Ex, En> {
     ///
     ///     $foo + $bar
     Binop(Box<Binop<Ex, En>>),
+    #[rust_to_ocaml(inline_tuple)]
+    Assign(Box<(Expr<Ex, En>, Option<ast_defs::Bop>, Expr<Ex, En>)>),
     /// Pipe expression. The lid is the ID of the $$ that is implicitly
     /// declared by this pipe.
     ///
@@ -1584,9 +1586,30 @@ pub struct CallExpr<Ex, En> {
     /// explicit type annotations
     pub targs: Vec<Targ<Ex>>,
     /// positional args, plus their calling convention
-    pub args: Vec<(ast_defs::ParamKind, Expr<Ex, En>)>,
+    pub args: Vec<Argument<Ex, En>>,
     /// unpacked arg
     pub unpacked_arg: Option<Expr<Ex, En>>,
+}
+
+#[derive(
+    Clone,
+    Debug,
+    Deserialize,
+    Eq,
+    FromOcamlRep,
+    Hash,
+    NoPosHash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+    ToOcamlRep
+)]
+#[rust_to_ocaml(and)]
+#[repr(C, u8)]
+pub enum Argument<Ex, En> {
+    Ainout(Pos, Expr<Ex, En>),
+    Anormal(Expr<Ex, En>),
 }
 
 #[derive(

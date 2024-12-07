@@ -115,7 +115,7 @@ impl ConfigValue {
             ConfigValue::Const(v) => v.to_owned(),
             ConfigValue::Name(v) => {
                 for sn in section_names {
-                    if v.starts_with(sn) {
+                    if v.starts_with(&(sn.to_owned() + ".")) {
                         return format!(
                             "Cfg::{}::{}",
                             sn.replace('.', ""),
@@ -831,7 +831,7 @@ private:
                     config.type_.str(),
                     section_shortname,
                     shortname,
-                    if config.features.has_no_bind {
+                    if config.features.has_no_bind && config.default_value.is_some() {
                         config
                             .default_value
                             .as_ref()
@@ -1261,6 +1261,11 @@ private:
                             shortname, section_shortname, shortname
                         ));
                     }
+                } else if config.default_value.is_none() {
+                    bind_calls.push(format!(
+                        r#"  Cfg::{}::{} = {};"#,
+                        section_shortname, shortname, default_value
+                    ));
                 }
                 debug_calls.push(format!(
                     r#"  fmt::format_to(std::back_inserter(out), "Cfg::{}::{} = {{}}\n", Cfg::{}::{});"#,

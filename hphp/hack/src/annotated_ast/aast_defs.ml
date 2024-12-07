@@ -601,6 +601,10 @@ and ('ex, 'en) expr_ =
       (** Binary operator.
        *
        *     $foo + $bar *)
+  | Assign of
+      ('ex, 'en) expr
+      * (Ast_defs.bop[@transform.opaque]) option
+      * ('ex, 'en) expr
   | Pipe of lid * ('ex, 'en) expr * ('ex, 'en) expr
       (** Pipe expression. The lid is the ID of the $$ that is implicitly
        * declared by this pipe.
@@ -881,11 +885,15 @@ and ('ex, 'en) call_expr = {
       (** function *)
   targs: 'ex targ list;
       (** explicit type annotations *)
-  args: ((Ast_defs.param_kind[@transform.opaque]) * ('ex, 'en) expr) list;
+  args: ('ex, 'en) argument list;
       (** positional args, plus their calling convention *)
   unpacked_arg: ('ex, 'en) expr option;
       (** unpacked arg *)
 }
+
+and ('ex, 'en) argument =
+  | Ainout of (pos[@transform.opaque]) * ('ex, 'en) expr
+  | Anormal of ('ex, 'en) expr
 
 and ('ex, 'en) user_attribute = {
   ua_name: sid;

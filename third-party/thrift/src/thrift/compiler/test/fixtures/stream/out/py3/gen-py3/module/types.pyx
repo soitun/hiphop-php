@@ -29,8 +29,6 @@ from thrift.py3.types cimport (
     init_unicode_from_cpp as __init_unicode_from_cpp,
     set_iter as __set_iter,
     map_iter as __map_iter,
-    map_contains as __map_contains,
-    map_getitem as __map_getitem,
     reference_shared_ptr as __reference_shared_ptr,
     get_field_name_by_index as __get_field_name_by_index,
     reset_field as __reset_field,
@@ -57,6 +55,7 @@ from folly.coro cimport bridgeCoroTaskWith
 import module.thrift_types as _fbthrift_python_types
 
 
+_fbthrift__module_name__ = "module.types"
 
 cdef object get_types_reflection():
     return importlib.import_module(
@@ -65,6 +64,8 @@ cdef object get_types_reflection():
 
 @__cython.auto_pickle(False)
 cdef class FooStreamEx(thrift.py3.exceptions.GeneratedError):
+    __module__ = _fbthrift__module_name__
+
     def __init__(FooStreamEx self, *args, **kwargs):
         self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = make_shared[_module_cbindings.cFooStreamEx]()
         self._fields_setter = _fbthrift_types_fields.__FooStreamEx_FieldsSetter._fbthrift_create(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE.get())
@@ -161,6 +162,8 @@ cdef class FooStreamEx(thrift.py3.exceptions.GeneratedError):
 
 @__cython.auto_pickle(False)
 cdef class FooEx(thrift.py3.exceptions.GeneratedError):
+    __module__ = _fbthrift__module_name__
+
     def __init__(FooEx self, *args, **kwargs):
         self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = make_shared[_module_cbindings.cFooEx]()
         self._fields_setter = _fbthrift_types_fields.__FooEx_FieldsSetter._fbthrift_create(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE.get())
@@ -257,6 +260,8 @@ cdef class FooEx(thrift.py3.exceptions.GeneratedError):
 
 @__cython.auto_pickle(False)
 cdef class FooEx2(thrift.py3.exceptions.GeneratedError):
+    __module__ = _fbthrift__module_name__
+
     def __init__(FooEx2 self, *args, **kwargs):
         self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = make_shared[_module_cbindings.cFooEx2]()
         self._fields_setter = _fbthrift_types_fields.__FooEx2_FieldsSetter._fbthrift_create(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE.get())

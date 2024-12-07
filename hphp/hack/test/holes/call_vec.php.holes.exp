@@ -70,14 +70,13 @@
                 ((void), [13:3-8],
                  (Call
                     { func = (((function(vec<int> $e): void)), [13:3-4], (Id ([13:3-4], "\\e"))); 
-                      targs = []; args = [(Pnormal, ((vec<float>), [13:5-7], (Hole (((vec<float>), [13:5-7], (Lvar ([13:5-7], $e))), (vec<float>), (vec<int>), Typing))))]; 
+                      targs = []; args = [(Anormal ((vec<float>), [13:5-7], (Hole (((vec<float>), [13:5-7], (Lvar ([13:5-7], $e))), (vec<float>), (vec<int>), Typing))))]; 
                       unpacked_arg = None }))));
              ([15:3-24],
               (Expr
                  ((exact TestVec), [15:3-23],
-                  (Binop
-                     { bop = (Eq None); lhs = ((exact TestVec), [15:3-7], (Lvar ([15:3-7], $foo)));
-                       rhs = ((exact TestVec), [15:10-23], (New (((exact TestVec), [15:14-21], (CI ([15:14-21], "\\TestVec"))), [], [], None, ((function(): void))))) }))));
+                  (Assign (((exact TestVec), [15:3-7], (Lvar ([15:3-7], $foo))), None,
+                     ((exact TestVec), [15:10-23], (New (((exact TestVec), [15:14-21], (CI ([15:14-21], "\\TestVec"))), [], [], None, ((function(): void))))))))));
              ([18:3-15],
               (Expr
                  ((void), [18:3-14],
@@ -85,7 +84,7 @@
                      { func =
                        (((function(vec<int> $e): void)), [18:3-10],
                         (Obj_get (((exact TestVec), [18:3-7], (Lvar ([18:3-7], $foo))), (((function(vec<int> $e): void)), [18:9-10], (Id ([18:9-10], "e"))), OG_nullthrows, Is_method)));
-                       targs = []; args = [(Pnormal, ((vec<float>), [18:11-13], (Hole (((vec<float>), [18:11-13], (Lvar ([18:11-13], $e))), (vec<float>), (vec<int>), Typing))))]; 
+                       targs = []; args = [(Anormal ((vec<float>), [18:11-13], (Hole (((vec<float>), [18:11-13], (Lvar ([18:11-13], $e))), (vec<float>), (vec<int>), Typing))))]; 
                        unpacked_arg = None }))))
              ]
            };
@@ -118,20 +117,19 @@
                     { func = (((function(vec<int> $e): void)), [25:3-4], (Id ([25:3-4], "\\e"))); 
                       targs = [];
                       args =
-                      [(Pnormal,
-                        ((~vec<int>), [25:5-51],
-                         (Hole (((vec<float>), [25:48-50], (Lvar ([25:48-50], $e))), (vec<float>), (vec<int>),
-                            (UnsafeCast
-                               [([25:27-37], (Happly (([25:27-30], "\\HH\\vec"), [([25:31-36], (Hprim Tfloat))]))); ([25:38-46], (Happly (([25:38-41], "\\HH\\vec"), [([25:42-45], (Hprim Tint))])))])
-                            ))))
+                      [(Anormal
+                          ((~vec<int>), [25:5-51],
+                           (Hole (((vec<float>), [25:48-50], (Lvar ([25:48-50], $e))), (vec<float>), (vec<int>),
+                              (UnsafeCast
+                                 [([25:27-37], (Happly (([25:27-30], "\\HH\\vec"), [([25:31-36], (Hprim Tfloat))]))); ([25:38-46], (Happly (([25:38-41], "\\HH\\vec"), [([25:42-45], (Hprim Tint))])))])
+                              ))))
                         ];
                       unpacked_arg = None }))));
              ([27:3-24],
               (Expr
                  ((exact TestVec), [27:3-23],
-                  (Binop
-                     { bop = (Eq None); lhs = ((exact TestVec), [27:3-7], (Lvar ([27:3-7], $foo)));
-                       rhs = ((exact TestVec), [27:10-23], (New (((exact TestVec), [27:14-21], (CI ([27:14-21], "\\TestVec"))), [], [], None, ((function(): void))))) }))));
+                  (Assign (((exact TestVec), [27:3-7], (Lvar ([27:3-7], $foo))), None,
+                     ((exact TestVec), [27:10-23], (New (((exact TestVec), [27:14-21], (CI ([27:14-21], "\\TestVec"))), [], [], None, ((function(): void))))))))));
              ([30:3-59],
               (Expr
                  ((~void), [30:3-58],
@@ -141,12 +139,13 @@
                         (Obj_get (((exact TestVec), [30:3-7], (Lvar ([30:3-7], $foo))), (((function(vec<int> $e): void)), [30:9-10], (Id ([30:9-10], "e"))), OG_nullthrows, Is_method)));
                        targs = [];
                        args =
-                       [(Pnormal,
-                         ((~vec<int>), [30:11-57],
-                          (Hole (((vec<float>), [30:54-56], (Lvar ([30:54-56], $e))), (vec<float>), (vec<int>),
-                             (UnsafeCast
-                                [([30:33-43], (Happly (([30:33-36], "\\HH\\vec"), [([30:37-42], (Hprim Tfloat))]))); ([30:44-52], (Happly (([30:44-47], "\\HH\\vec"), [([30:48-51], (Hprim Tint))])))])
-                             ))))
+                       [(Anormal
+                           ((~vec<int>), [30:11-57],
+                            (Hole (((vec<float>), [30:54-56], (Lvar ([30:54-56], $e))), (vec<float>), (vec<int>),
+                               (UnsafeCast
+                                  [([30:33-43], (Happly (([30:33-36], "\\HH\\vec"), [([30:37-42], (Hprim Tfloat))]))); (
+                                    [30:44-52], (Happly (([30:44-47], "\\HH\\vec"), [([30:48-51], (Hprim Tint))])))])
+                               ))))
                          ];
                        unpacked_arg = None }))))
              ]
@@ -229,20 +228,19 @@
                     { func = (((function(vec<int> $e): void)), [25:3-4], (Id ([25:3-4], "\\e"))); 
                       targs = [];
                       args =
-                      [(Pnormal,
-                        ((~vec<int>), [25:5-51],
-                         (Hole (((dynamic), [25:48-50], (Lvar ([25:48-50], $e))), (vec<float>), (vec<int>),
-                            (UnsafeCast
-                               [([25:27-37], (Happly (([25:27-30], "\\HH\\vec"), [([25:31-36], (Hprim Tfloat))]))); ([25:38-46], (Happly (([25:38-41], "\\HH\\vec"), [([25:42-45], (Hprim Tint))])))])
-                            ))))
+                      [(Anormal
+                          ((~vec<int>), [25:5-51],
+                           (Hole (((dynamic), [25:48-50], (Lvar ([25:48-50], $e))), (vec<float>), (vec<int>),
+                              (UnsafeCast
+                                 [([25:27-37], (Happly (([25:27-30], "\\HH\\vec"), [([25:31-36], (Hprim Tfloat))]))); ([25:38-46], (Happly (([25:38-41], "\\HH\\vec"), [([25:42-45], (Hprim Tint))])))])
+                              ))))
                         ];
                       unpacked_arg = None }))));
              ([27:3-24],
               (Expr
                  ((exact TestVec), [27:3-23],
-                  (Binop
-                     { bop = (Eq None); lhs = ((exact TestVec), [27:3-7], (Lvar ([27:3-7], $foo)));
-                       rhs = ((exact TestVec), [27:10-23], (New (((exact TestVec), [27:14-21], (CI ([27:14-21], "\\TestVec"))), [], [], None, ((function(): void))))) }))));
+                  (Assign (((exact TestVec), [27:3-7], (Lvar ([27:3-7], $foo))), None,
+                     ((exact TestVec), [27:10-23], (New (((exact TestVec), [27:14-21], (CI ([27:14-21], "\\TestVec"))), [], [], None, ((function(): void))))))))));
              ([30:3-59],
               (Expr
                  ((~void), [30:3-58],
@@ -252,12 +250,13 @@
                         (Obj_get (((exact TestVec), [30:3-7], (Lvar ([30:3-7], $foo))), (((function(vec<int> $e): void)), [30:9-10], (Id ([30:9-10], "e"))), OG_nullthrows, Is_method)));
                        targs = [];
                        args =
-                       [(Pnormal,
-                         ((~vec<int>), [30:11-57],
-                          (Hole (((dynamic), [30:54-56], (Lvar ([30:54-56], $e))), (vec<float>), (vec<int>),
-                             (UnsafeCast
-                                [([30:33-43], (Happly (([30:33-36], "\\HH\\vec"), [([30:37-42], (Hprim Tfloat))]))); ([30:44-52], (Happly (([30:44-47], "\\HH\\vec"), [([30:48-51], (Hprim Tint))])))])
-                             ))))
+                       [(Anormal
+                           ((~vec<int>), [30:11-57],
+                            (Hole (((dynamic), [30:54-56], (Lvar ([30:54-56], $e))), (vec<float>), (vec<int>),
+                               (UnsafeCast
+                                  [([30:33-43], (Happly (([30:33-36], "\\HH\\vec"), [([30:37-42], (Hprim Tfloat))]))); (
+                                    [30:44-52], (Happly (([30:44-47], "\\HH\\vec"), [([30:48-51], (Hprim Tint))])))])
+                               ))))
                          ];
                        unpacked_arg = None }))))
              ]

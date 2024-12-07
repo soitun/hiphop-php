@@ -36,7 +36,6 @@
 #include <thrift/compiler/generate/python/util.h>
 #include <thrift/compiler/generate/t_mstch_generator.h>
 #include <thrift/compiler/sema/ast_validator.h>
-#include <thrift/compiler/sema/explicit_include_validator.h>
 
 namespace apache::thrift::compiler {
 
@@ -130,6 +129,7 @@ class python_mstch_program : public mstch_program {
         this,
         {
             {"program:module_path", &python_mstch_program::module_path},
+            {"program:safe_patch?", &python_mstch_program::safe_patch},
             {"program:safe_patch_module_path",
              &python_mstch_program::safe_patch_module_path},
             {"program:module_mangle", &python_mstch_program::module_mangle},
@@ -201,6 +201,11 @@ class python_mstch_program : public mstch_program {
   mstch::node module_path() {
     return get_py3_namespace_with_name_and_prefix(
         program_, get_option("root_module_prefix"));
+  }
+
+  mstch::node safe_patch() {
+    constexpr std::string_view prefix = "gen_safe_patch_";
+    return program_->name().substr(0, prefix.size()) == prefix;
   }
 
   mstch::node safe_patch_module_path() {
@@ -1091,13 +1096,6 @@ class t_mstch_python_generator : public t_mstch_generator {
         enum_member_union_field_names_validator::validate_enum);
     validator.add_struct_visitor(
         enum_member_union_field_names_validator::validate_structured);
-    if (!has_option("disable_explicit_include_validator")) {
-      add_explicit_include_validators(
-          validator,
-          diagnostic_level::error,
-          /* skip_annotations*/ true,
-          /* skip_service_includes*/ true);
-    }
     if (get_py3_namespace(program_).empty()) {
       validator.add_structured_definition_visitor(
           module_name_collision_validator::validate_named);
