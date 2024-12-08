@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import typing as _typing
 
+import module.thrift_mutable_types as _fbthrift_current_module
 import folly.iobuf as _fbthrift_iobuf
 import module.thrift_abstract_types as _fbthrift_python_abstract_types
 import thrift.python.types as _fbthrift_python_types
@@ -41,7 +42,7 @@ class Fiery(_fbthrift_python_mutable_exceptions.MutableGeneratedError, _fbthrift
     @property
     def message(self) -> str: ...
     @message.setter
-    def message(self, value: str): ...
+    def message(self, value: str) -> None: ...
 
     def __init__(
         self, *,
@@ -64,7 +65,7 @@ class Serious(_fbthrift_python_mutable_exceptions.MutableGeneratedError, _fbthri
     @property
     def not_sonnet(self) -> _typing.Optional[str]: ...
     @not_sonnet.setter
-    def not_sonnet(self, value: _typing.Optional[str]): ...
+    def not_sonnet(self, value: _typing.Optional[str]) -> None: ...
 
     def __init__(
         self, *,
@@ -87,13 +88,13 @@ class ComplexFieldNames(_fbthrift_python_mutable_exceptions.MutableGeneratedErro
     @property
     def error_message(self) -> str: ...
     @error_message.setter
-    def error_message(self, value: str): ...
+    def error_message(self, value: str) -> None: ...
 
 
     @property
     def internal_error_message(self) -> str: ...
     @internal_error_message.setter
-    def internal_error_message(self, value: str): ...
+    def internal_error_message(self, value: str) -> None: ...
 
     def __init__(
         self, *,
@@ -117,13 +118,13 @@ class CustomFieldNames(_fbthrift_python_mutable_exceptions.MutableGeneratedError
     @property
     def error_message(self) -> str: ...
     @error_message.setter
-    def error_message(self, value: str): ...
+    def error_message(self, value: str) -> None: ...
 
 
     @property
     def internal_error_message(self) -> str: ...
     @internal_error_message.setter
-    def internal_error_message(self, value: str): ...
+    def internal_error_message(self, value: str) -> None: ...
 
     def __init__(
         self, *,
@@ -147,13 +148,13 @@ class ExceptionWithPrimitiveField(_fbthrift_python_mutable_exceptions.MutableGen
     @property
     def message(self) -> str: ...
     @message.setter
-    def message(self, value: str): ...
+    def message(self, value: str) -> None: ...
 
 
     @property
     def error_code(self) -> int: ...
     @error_code.setter
-    def error_code(self, value: int): ...
+    def error_code(self, value: int) -> None: ...
 
     def __init__(
         self, *,
@@ -177,13 +178,13 @@ class ExceptionWithStructuredAnnotation(_fbthrift_python_mutable_exceptions.Muta
     @property
     def message_field(self) -> str: ...
     @message_field.setter
-    def message_field(self, value: str): ...
+    def message_field(self, value: str) -> None: ...
 
 
     @property
     def error_code(self) -> int: ...
     @error_code.setter
-    def error_code(self, value: int): ...
+    def error_code(self, value: int) -> None: ...
 
     def __init__(
         self, *,
@@ -252,21 +253,21 @@ class _fbthrift_Raiser_doRaise_args(_fbthrift_python_types.Struct):
 
 class _fbthrift_Raiser_doRaise_result(_fbthrift_python_types.Struct):
     success: _typing.Final[None]
-    b: _typing.Final[Banal]
-    f: _typing.Final[Fiery]
-    s: _typing.Final[Serious]
+    b: _typing.Final[_fbthrift_current_module.Banal]
+    f: _typing.Final[_fbthrift_current_module.Fiery]
+    s: _typing.Final[_fbthrift_current_module.Serious]
 
     def __init__(
-        self, *, success: _typing.Optional[None] = ..., b: _typing.Optional[Banal]=..., f: _typing.Optional[Fiery]=..., s: _typing.Optional[Serious]=...
+        self, *, success: _typing.Optional[None] = ..., b: _typing.Optional[_fbthrift_current_module.Banal]=..., f: _typing.Optional[_fbthrift_current_module.Fiery]=..., s: _typing.Optional[_fbthrift_current_module.Serious]=...
     ) -> None: ...
 
     def __iter__(self) -> _typing.Iterator[_typing.Tuple[
         str,
         _typing.Union[
             None,
-            Banal,
-            Fiery,
-            Serious,
+            _fbthrift_current_module.Banal,
+            _fbthrift_current_module.Fiery,
+            _fbthrift_current_module.Serious,
         ]]]: ...
 
 
@@ -308,19 +309,19 @@ class _fbthrift_Raiser_get500_args(_fbthrift_python_types.Struct):
 
 class _fbthrift_Raiser_get500_result(_fbthrift_python_types.Struct):
     success: _typing.Final[str]
-    f: _typing.Final[Fiery]
-    b: _typing.Final[Banal]
-    s: _typing.Final[Serious]
+    f: _typing.Final[_fbthrift_current_module.Fiery]
+    b: _typing.Final[_fbthrift_current_module.Banal]
+    s: _typing.Final[_fbthrift_current_module.Serious]
 
     def __init__(
-        self, *, success: _typing.Optional[str] = ..., f: _typing.Optional[Fiery]=..., b: _typing.Optional[Banal]=..., s: _typing.Optional[Serious]=...
+        self, *, success: _typing.Optional[str] = ..., f: _typing.Optional[_fbthrift_current_module.Fiery]=..., b: _typing.Optional[_fbthrift_current_module.Banal]=..., s: _typing.Optional[_fbthrift_current_module.Serious]=...
     ) -> None: ...
 
     def __iter__(self) -> _typing.Iterator[_typing.Tuple[
         str,
         _typing.Union[
             str,
-            Fiery,
-            Banal,
-            Serious,
+            _fbthrift_current_module.Fiery,
+            _fbthrift_current_module.Banal,
+            _fbthrift_current_module.Serious,
         ]]]: ...

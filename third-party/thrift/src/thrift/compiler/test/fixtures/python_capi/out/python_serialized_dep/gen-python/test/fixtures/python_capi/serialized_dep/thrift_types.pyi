@@ -9,11 +9,14 @@ from __future__ import annotations
 
 import typing as _typing
 
+import test.fixtures.python_capi.serialized_dep.thrift_types as _fbthrift_current_module
 import enum
 
 import folly.iobuf as _fbthrift_iobuf
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
+
+from test.fixtures.python_capi.serialized_dep.thrift_enums import *
 
 
 class _fbthrift_compatible_with_SerializedStruct:
@@ -65,7 +68,6 @@ class SerializedUnion(_fbthrift_python_types.Union, _fbthrift_compatible_with_Se
         s: SerializedUnion.Type = ...
         i: SerializedUnion.Type = ...
 
-    FbThriftUnionFieldEnum = Type
 
     @classmethod
     def fromValue(cls, value: _typing.Union[None, str, int]) -> SerializedUnion: ...
@@ -147,7 +149,6 @@ class MarshalUnion(_fbthrift_python_types.Union, _fbthrift_compatible_with_Marsh
         s: MarshalUnion.Type = ...
         i: MarshalUnion.Type = ...
 
-    FbThriftUnionFieldEnum = Type
 
     @classmethod
     def fromValue(cls, value: _typing.Union[None, str, int]) -> MarshalUnion: ...

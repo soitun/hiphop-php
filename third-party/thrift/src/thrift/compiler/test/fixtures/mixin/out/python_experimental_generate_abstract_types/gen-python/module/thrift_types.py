@@ -8,13 +8,15 @@
 from __future__ import annotations
 
 import folly.iobuf as _fbthrift_iobuf
+
+import module.thrift_types as _fbthrift_current_module
+from abc import ABCMeta as _fbthrift_ABCMeta
 import module.thrift_abstract_types as _fbthrift_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
 
 
 
-@_fbthrift_abstract_types.Mixin1.register
 class Mixin1(metaclass=_fbthrift_python_types.StructMeta):
     _fbthrift_SPEC = (
         _fbthrift_python_types.FieldInfo(
@@ -67,8 +69,9 @@ class Mixin1(metaclass=_fbthrift_python_types.StructMeta):
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.Mixin1, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.Mixin1, Mixin1)
 
-@_fbthrift_abstract_types.Mixin2.register
+
 class Mixin2(metaclass=_fbthrift_python_types.StructMeta):
     _fbthrift_SPEC = (
         _fbthrift_python_types.FieldInfo(
@@ -132,8 +135,9 @@ class Mixin2(metaclass=_fbthrift_python_types.StructMeta):
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.Mixin2, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.Mixin2, Mixin2)
 
-@_fbthrift_abstract_types.Mixin3Base.register
+
 class Mixin3Base(metaclass=_fbthrift_python_types.StructMeta):
     _fbthrift_SPEC = (
         _fbthrift_python_types.FieldInfo(
@@ -186,8 +190,9 @@ class Mixin3Base(metaclass=_fbthrift_python_types.StructMeta):
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.Mixin3Base, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.Mixin3Base, Mixin3Base)
 
-@_fbthrift_abstract_types.Foo.register
+
 class Foo(metaclass=_fbthrift_python_types.StructMeta):
     _fbthrift_SPEC = (
         _fbthrift_python_types.FieldInfo(
@@ -262,12 +267,15 @@ class Foo(metaclass=_fbthrift_python_types.StructMeta):
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.Foo, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.Foo, Foo)
+
 # This unfortunately has to be down here to prevent circular imports
 import module.thrift_metadata
-
+from module.thrift_enums import *
 
 _fbthrift_all_enums = [
 ]
+
 
 def _fbthrift_metadata__struct_Mixin1():
     return module.thrift_metadata.gen_metadata_struct_Mixin1()
@@ -293,4 +301,4 @@ _fbthrift_all_structs = [
 ]
 _fbthrift_python_types.fill_specs(*_fbthrift_all_structs)
 
-Mixin3 = Mixin3Base
+Mixin3 = _fbthrift_current_module.Mixin3Base

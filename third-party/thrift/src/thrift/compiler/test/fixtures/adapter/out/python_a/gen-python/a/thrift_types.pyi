@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import typing as _typing
 
+import a.thrift_types as _fbthrift_current_module
 import folly.iobuf as _fbthrift_iobuf
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
@@ -19,6 +20,8 @@ import c.thrift_types as _fbthrift__c__thrift_types
 import typeshed_three
 import typeshed_two
 import typeshed_one
+
+from a.thrift_enums import *
 
 
 class _fbthrift_compatible_with_MyStruct:

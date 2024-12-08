@@ -25,6 +25,7 @@ Generated Python classes for abstract thrift-python types.
 
 import abc as _abc
 import typing as _typing
+{{> types/set_current_module}}
 
 {{!
     If any type has a field named property, then the use of the built-in property will conflict
@@ -48,12 +49,7 @@ import {{included_module_path}}.thrift_abstract_types as {{included_module_mangl
 {{#program:adapter_type_hint_modules}}
 import {{module_path}}
 {{/program:adapter_type_hint_modules}}
-
-{{#program:enums}}
-class {{enum:name}}:
-    pass
-
-{{/program:enums}}
+{{> types/import_enums}}
 {{#program:structs}}
 
 class {{> structs/unadapted_name}}({{!
@@ -70,9 +66,7 @@ class {{> structs/unadapted_name}}({{!
     {{/struct:fields_ordered_by_id}}
     {{^struct:union?}}
 {{> fields/maybe_abstract_method_annotation}}
-    def __iter__(self) -> _typing.Iterator[_typing.Tuple[str, _typing.Union[{{^struct:fields_ordered_by_id}}None{{/struct:fields_ordered_by_id}}{{!
-        }}{{#struct:fields_ordered_by_id}}{{^first?}}, {{/first?}}{{> fields/adapted_type}}{{!
-        }}{{/struct:fields_ordered_by_id}}]]]: ...
+    def __iter__(self) -> {{> types/iter_return_type}}: ...
     {{/struct:union?}}
     {{#struct:legacy_api?}}
 {{#program:generate_to_mutable_python_conversion_methods?}}
@@ -98,9 +92,12 @@ class {{> structs/unadapted_name}}({{!
         used in immutable thrift-python, which is the name
         of the Union (sigh!)
     }}FbThriftUnionFieldEnum.__name__ = "{{struct:py_name}}"
-
-    fbthrift_current_value: _typing.Final[{{ > types/field_value_pep484_union_type}}]
-    fbthrift_current_field: _typing.Final[FbThriftUnionFieldEnum]
+    @_fbthrift_property
+{{> fields/maybe_abstract_method_annotation}}
+    def fbthrift_current_value(self) -> _typing.Final[{{> types/field_value_pep484_union_type}}]: ...
+    @_fbthrift_property
+{{> fields/maybe_abstract_method_annotation}}
+    def fbthrift_current_field(self) -> _typing.Final[FbThriftUnionFieldEnum]: ...
 
     {{/struct:union?}}
 {{#struct:has_adapter?}}

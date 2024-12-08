@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import typing as _typing
 
+import test.namespace_from_package.module.thrift_mutable_types as _fbthrift_current_module
 import folly.iobuf as _fbthrift_iobuf
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.mutable_types as _fbthrift_python_mutable_types
@@ -40,7 +41,7 @@ class Foo(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_wit
     @property
     def MyInt(self) -> int: ...
     @MyInt.setter
-    def MyInt(self, value: int): ...
+    def MyInt(self, value: int) -> None: ...
 
     def __init__(
         self, *,

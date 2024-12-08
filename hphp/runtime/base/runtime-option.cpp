@@ -50,7 +50,6 @@
 #include "hphp/runtime/server/files-match.h"
 #include "hphp/runtime/server/virtual-host.h"
 #include "hphp/runtime/server/server-stats.h"
-#include "hphp/runtime/vm/jit/code-cache.h"
 #include "hphp/runtime/vm/jit/mcgen-translate.h"
 #include "hphp/runtime/vm/treadmill.h"
 #include "hphp/util/arch.h"
@@ -58,8 +57,10 @@
 #include "hphp/util/build-info.h"
 #include "hphp/util/bump-mapper.h"
 #include "hphp/util/configs/adminserver.h"
+#include "hphp/util/configs/debug.h"
 #include "hphp/util/configs/eval.h"
 #include "hphp/util/configs/gc.h"
+#include "hphp/util/configs/mail.h"
 #include "hphp/util/configs/repo.h"
 #include "hphp/util/configs/sandbox.h"
 #include "hphp/util/configs/server.h"
@@ -476,7 +477,7 @@ std::string getCacheBreakerSchemaHash(std::string_view root,
     root,
     optsHash
   );
-  if (RO::ServerExecutionMode() && !is_cli_server_mode()) {
+  if (Cfg::Server::Mode && !is_cli_server_mode()) {
     Logger::FInfo(logStr);
   } else {
     Logger::FVerbose(logStr);
@@ -607,38 +608,19 @@ std::string RuntimeOption::DeploymentId;
 int64_t RuntimeOption::ConfigId = 0;
 std::string RuntimeOption::PidFile = "www.pid";
 
-bool RuntimeOption::EnableXHP = true;
-bool RuntimeOption::CheckSymLink = true;
-bool RuntimeOption::TrustAutoloaderPath = false;
-bool RuntimeOption::EnableArgsInBacktraces = true;
 bool RuntimeOption::EnableZendIniCompat = true;
-bool RuntimeOption::TimeoutsUseWallTime = true;
-bool RuntimeOption::EvalAuthoritativeMode = false;
 bool RuntimeOption::DumpPreciseProfData = true;
-bool RuntimeOption::KeepProfData = arch_any(Arch::ARM);
 
 JitSerdesMode RuntimeOption::EvalJitSerdesMode{};
-int RuntimeOption::ProfDataTTLHours = 24;
-std::string RuntimeOption::ProfDataTag;
-std::string RuntimeOption::EvalJitSerdesFile;
 
 std::string RuntimeOption::EvalSBSerdesFile;
 
 std::map<std::string, ErrorLogFileData> RuntimeOption::ErrorLogs = {
   {Logger::DEFAULT, ErrorLogFileData()},
 };
-// these hold the DEFAULT logger
-std::string RuntimeOption::LogFile;
-std::string RuntimeOption::LogFileSymLink;
-uint16_t RuntimeOption::LogFilePeriodMultiplier;
 
-int RuntimeOption::LogHeaderMangle = 0;
-bool RuntimeOption::AlwaysLogUnhandledExceptions = true;
-bool RuntimeOption::AlwaysEscapeLog = true;
-bool RuntimeOption::NoSilencer = false;
 int RuntimeOption::RuntimeErrorReportingLevel =
   static_cast<int>(ErrorMode::HPHP_ALL);
-int RuntimeOption::ForceErrorReportingLevel = 0;
 
 std::vector<std::string> RuntimeOption::TzdataSearchPaths;
 hphp_fast_string_set RuntimeOption::ActiveExperiments;
@@ -649,10 +631,6 @@ int64_t RuntimeOption::SerializationSizeLimit = StringData::MaxSize;
 
 std::string RuntimeOption::AccessLogDefaultFormat = "%h %l %u %t \"%r\" %>s %b";
 std::map<std::string, AccessLogFileData> RuntimeOption::AccessLogs;
-
-std::string RuntimeOption::AdminLogFormat = "%h %t %s %U";
-std::string RuntimeOption::AdminLogFile;
-std::string RuntimeOption::AdminLogSymLink;
 
 std::map<std::string, AccessLogFileData> RuntimeOption::RPCLogs;
 
@@ -665,43 +643,13 @@ hphp_string_imap<std::string> RuntimeOption::StaticFileExtensions;
 hphp_string_imap<std::string> RuntimeOption::PhpFileExtensions;
 std::vector<std::shared_ptr<FilesMatch>> RuntimeOption::FilesMatches;
 
-int RuntimeOption::HttpDefaultTimeout = 30;
-int RuntimeOption::HttpSlowQueryThreshold = 5000; // ms
-
-bool RuntimeOption::NativeStackTrace = false;
-bool RuntimeOption::ServerErrorMessage = false;
-bool RuntimeOption::RecordInput = false;
-bool RuntimeOption::ClearInputOnSuccess = true;
-std::string RuntimeOption::ProfilerOutputDir = "/tmp";
-std::string RuntimeOption::CoreDumpEmail;
-bool RuntimeOption::CoreDumpReport = true;
-std::string RuntimeOption::CoreDumpReportDirectory =
-#if defined(HPHP_OSS)
-  "/tmp";
-#else
-  "/var/tmp/cores";
-#endif
-std::string RuntimeOption::StackTraceFilename;
-int RuntimeOption::StackTraceTimeout = 0; // seconds; 0 means unlimited
-std::string RuntimeOption::RemoteTraceOutputDir = "/tmp";
 std::set<std::string, stdltistr> RuntimeOption::TraceFunctions;
 
 int64_t RuntimeOption::MaxSQLRowCount = 0;
 int64_t RuntimeOption::SocketDefaultTimeout = 60;
 
-#if FOLLY_SANITIZE
-bool RuntimeOption::DisableSmallAllocator = true;
-#else
-bool RuntimeOption::DisableSmallAllocator = false;
-#endif
-
 std::map<std::string, std::string> RuntimeOption::ServerVariables;
 std::map<std::string, std::string> RuntimeOption::EnvVariables;
-
-std::string RuntimeOption::WatchmanRootSocket;
-std::string RuntimeOption::WatchmanDefaultSocket;
-
-int RuntimeOption::CheckCLIClientCommands = 0;
 
 const std::string& RuntimeOption::GetServerPrimaryIPv4() {
    static std::string serverPrimaryIPv4 = GetPrimaryIPv4();
@@ -730,7 +678,7 @@ static inline uint64_t pgoThresholdDefault() {
 }
 
 static inline bool hugePagesSoundNice() {
-  return RuntimeOption::ServerExecutionMode();
+  return Cfg::Server::Mode;
 }
 
 static inline uint32_t hotTextHugePagesDefault() {
@@ -801,7 +749,7 @@ bool RuntimeOption::ReadPerUserSettings(const std::filesystem::path& confFileNam
 
 std::string RuntimeOption::getTraceOutputFile() {
   return folly::sformat("{}/hphp.{}.log",
-                        RuntimeOption::RemoteTraceOutputDir, (int64_t)getpid());
+                        Cfg::Debug::RemoteTraceOutputDir, (int64_t)getpid());
 }
 
 using std::string;
@@ -811,33 +759,13 @@ EVALFLAGS();
 #undef F
 hphp_string_map<TypedValue> RuntimeOption::ConstantFunctions;
 
-bool RuntimeOption::RecordCodeCoverage = false;
-std::string RuntimeOption::CodeCoverageOutputFile;
-
-std::string RuntimeOption::RepoPath;
 RepoMode RuntimeOption::RepoLocalMode = RepoMode::ReadOnly;
-std::string RuntimeOption::RepoLocalPath;
 RepoMode RuntimeOption::RepoCentralMode = RepoMode::ReadWrite;
-std::string RuntimeOption::RepoCentralPath;
-int32_t RuntimeOption::RepoCentralFileMode;
-std::string RuntimeOption::RepoCentralFileUser;
-std::string RuntimeOption::RepoCentralFileGroup;
-std::string RuntimeOption::RepoJournal = "delete";
-bool RuntimeOption::RepoAllowFallbackPath = true;
-bool RuntimeOption::RepoCommit = true;
-bool RuntimeOption::RepoDebugInfo = true;
-bool RuntimeOption::RepoLitstrLazyLoad = true;
-uint32_t RuntimeOption::RepoBusyTimeoutMS = 15000;
 
 bool RuntimeOption::HHProfEnabled = false;
 bool RuntimeOption::HHProfActive = false;
 bool RuntimeOption::HHProfAccum = false;
 bool RuntimeOption::HHProfRequest = false;
-
-std::string RuntimeOption::SendmailPath = "sendmail -t -i";
-std::string RuntimeOption::MailForceExtraParameters;
-
-bool RuntimeOption::SimpleXMLEmptyNamespaceMatchesAll = false;
 
 #ifdef HHVM_FACEBOOK
 
@@ -860,15 +788,6 @@ double RuntimeOption::ServerThreadTuneStepPct = 5;
 double RuntimeOption::ServerThreadTuneCPUThreshold = 95.0;
 double RuntimeOption::ServerThreadTuneThreadUtilizationThreshold = 90.0;
 #endif
-
-double RuntimeOption::XenonPeriodSeconds = 0.0;
-uint32_t RuntimeOption::XenonRequestFreq = 1;
-bool RuntimeOption::XenonForceAlwaysOn = false;
-bool RuntimeOption::XenonTrackActiveWorkers = false;
-
-bool RuntimeOption::StrobelightEnabled = false;
-
-bool RuntimeOption::SetProfileNullThisObject = true;
 
 std::map<std::string, std::string> RuntimeOption::CustomSettings;
 
@@ -1320,13 +1239,9 @@ void RuntimeOption::Load(
     ));
 
     Config::Bind(Logger::UseLogFile, ini, config, "Log.UseLogFile", true);
-    Config::Bind(LogFile, ini, config, "Log.File");
-    Config::Bind(LogFileSymLink, ini, config, "Log.SymLink");
-    Config::Bind(LogFilePeriodMultiplier, ini,
-                 config, "Log.PeriodMultiplier", 0);
-    if (Logger::UseLogFile && RuntimeOption::ServerExecutionMode()) {
+    if (Logger::UseLogFile && Cfg::Server::Mode) {
       RuntimeOption::ErrorLogs[Logger::DEFAULT] =
-        ErrorLogFileData(Cfg::Log::BaseDirectory, LogFile, LogFileSymLink, LogFilePeriodMultiplier);
+        ErrorLogFileData(Cfg::Log::BaseDirectory, Cfg::Log::File, Cfg::Log::FileSymLink, Cfg::Log::FilePeriodMultiplier);
     }
     if (Config::GetBool(ini, config, "Log.AlwaysPrintStackTraces")) {
       Logger::SetTheLogger(Logger::DEFAULT, std::make_unique<ExtendedLogger>());
@@ -1346,19 +1261,9 @@ void RuntimeOption::Load(
                  config, "Log.MaxMessagesPerRequest", -1);
     Config::Bind(LogFileFlusher::DropCacheChunkSize, ini,
                  config, "Log.DropCacheChunkSize", 1 << 20);
-    Config::Bind(RuntimeOption::LogHeaderMangle, ini, config,
-                 "Log.HeaderMangle", 0);
-    Config::Bind(AlwaysLogUnhandledExceptions, ini,
-                 config, "Log.AlwaysLogUnhandledExceptions",
-                 true);
-    Config::Bind(NoSilencer, ini, config, "Log.NoSilencer");
     Config::Bind(RuntimeErrorReportingLevel, ini,
                  config, "Log.RuntimeErrorReportingLevel",
                  static_cast<int>(ErrorMode::HPHP_ALL));
-    Config::Bind(ForceErrorReportingLevel, ini,
-                 config, "Log.ForceErrorReportingLevel", 0);
-    Config::Bind(AccessLogDefaultFormat, ini, config,
-                 "Log.AccessLogDefaultFormat", "%h %l %u %t \"%r\" %>s %b");
 
     auto parseLogs = [] (const Hdf &config, const IniSetting::Map& ini,
                          const std::string &name,
@@ -1390,11 +1295,6 @@ void RuntimeOption::Load(
     parseLogs(config, ini, "Log.Access", AccessLogs);
     RPCLogs = AccessLogs;
     parseLogs(config, ini, "Log.RPC", RPCLogs);
-
-    Config::Bind(AdminLogFormat, ini, config, "Log.AdminLog.Format",
-                 "%h %t %s %U");
-    Config::Bind(AdminLogFile, ini, config, "Log.AdminLog.File");
-    Config::Bind(AdminLogSymLink, ini, config, "Log.AdminLog.SymLink");
   }
 
   // If we generated errors while loading RelativeConfigs report those now that
@@ -1428,12 +1328,6 @@ void RuntimeOption::Load(
                  0);
     Config::Bind(SerializationSizeLimit, ini, config,
                  "ResourceLimit.SerializationSizeLimit", StringData::MaxSize);
-  }
-  {
-    // watchman
-    Config::Bind(WatchmanRootSocket, ini, config, "watchman.socket.root", "");
-    Config::Bind(WatchmanDefaultSocket, ini, config,
-                 "watchman.socket.default", "");
   }
   {
     // Repo
@@ -1475,60 +1369,17 @@ void RuntimeOption::Load(
     Config::Bind(repoLocalMode, ini, config, "Repo.Local.Mode", repoModeToStr(RepoLocalMode));
     RepoLocalMode = parseRepoMode(repoLocalMode, "Local", RepoMode::ReadOnly);
 
-    // Repo.Path
-    Config::Bind(RepoPath, ini, config, "Repo.Path", RepoPath);
-
-    // Repo.Local.Path
-    Config::Bind(RepoLocalPath, ini, config, "Repo.Local.Path");
-    if (RepoLocalPath.empty()) {
-      const char* HHVM_REPO_LOCAL_PATH = getenv("HHVM_REPO_LOCAL_PATH");
-      if (HHVM_REPO_LOCAL_PATH != nullptr) {
-        RepoLocalPath = HHVM_REPO_LOCAL_PATH;
-      }
-    }
-
     // Central Repo
     static std::string repoCentralMode;
     Config::Bind(repoCentralMode, ini, config, "Repo.Central.Mode", repoModeToStr(RepoCentralMode));
     RepoCentralMode = parseRepoMode(repoCentralMode, "Central", RepoMode::ReadWrite);
 
-    // Repo.Central.Path
-    Config::Bind(RepoCentralPath, ini, config, "Repo.Central.Path");
-    Config::Bind(RepoCentralFileMode, ini, config, "Repo.Central.FileMode");
-    Config::Bind(RepoCentralFileUser, ini, config, "Repo.Central.FileUser");
-    Config::Bind(RepoCentralFileGroup, ini, config, "Repo.Central.FileGroup");
-
-    Config::Bind(RepoAllowFallbackPath, ini, config, "Repo.AllowFallbackPath",
-                 RepoAllowFallbackPath);
-
-    replacePlaceholders(RepoLocalPath);
-    replacePlaceholders(RepoCentralPath);
-    replacePlaceholders(RepoPath);
-
-    Config::Bind(RepoJournal, ini, config, "Repo.Journal", RepoJournal);
-    Config::Bind(RepoCommit, ini, config, "Repo.Commit",
-                 RepoCommit);
-    Config::Bind(RepoDebugInfo, ini, config, "Repo.DebugInfo", RepoDebugInfo);
-    Config::Bind(RepoLitstrLazyLoad, ini, config, "Repo.LitstrLazyLoad",
-                 RepoLitstrLazyLoad);
-    Config::Bind(RepoBusyTimeoutMS, ini, config,
-                 "Repo.BusyTimeoutMS", RepoBusyTimeoutMS);
-
-    if (RepoPath.empty()) {
-      if (!RepoLocalPath.empty()) {
-        RepoPath = RepoLocalPath;
-      } else if (!RepoCentralPath.empty()) {
-        RepoPath = RepoCentralPath;
-      } else if (auto const env = getenv("HHVM_REPO_CENTRAL_PATH")) {
-        RepoPath = env;
-        replacePlaceholders(RepoPath);
-      } else {
-        always_assert_flog(
-          !Cfg::Repo::Authoritative,
-          "Either Repo.Path, Repo.LocalPath, or Repo.CentralPath "
-          "must be set in RepoAuthoritative mode"
-        );
-      }
+    if (Cfg::Repo::Path.empty()) {
+      always_assert_flog(
+        !Cfg::Repo::Authoritative,
+        "Either Repo.Path, Repo.LocalPath, or Repo.CentralPath "
+        "must be set in RepoAuthoritative mode"
+      );
     }
   }
 
@@ -1544,9 +1395,6 @@ void RuntimeOption::Load(
 
   {
     // Eval
-    Config::Bind(EnableXHP, ini, config, "Eval.EnableXHP", EnableXHP);
-    Config::Bind(TimeoutsUseWallTime, ini, config, "Eval.TimeoutsUseWallTime",
-                 true);
     static std::string jitSerdesMode;
     Config::Bind(jitSerdesMode, ini, config, "Eval.JitSerdesMode", "Off");
 
@@ -1562,9 +1410,6 @@ void RuntimeOption::Load(
       #undef X
       return JitSerdesMode::Off;
     }();
-    Config::Bind(EvalJitSerdesFile, ini, config,
-                 "Eval.JitSerdesFile", EvalJitSerdesFile);
-    replacePlaceholders(EvalJitSerdesFile);
 
     // DumpPreciseProfileData defaults to true only when we can possibly write
     // profile data to disk.  It can be set to false to avoid the performance
@@ -1573,22 +1418,14 @@ void RuntimeOption::Load(
     // JitSerdesMode::SerializeAndExit), to avoid checking too many flags in a
     // few places.  The config file should never need to explicitly set
     // DumpPreciseProfileData to true.
-    auto const couldDump = !EvalJitSerdesFile.empty() &&
+    auto const couldDump = !Cfg::Jit::SerdesFile.empty() &&
       (isJitSerializing() ||
        (EvalJitSerdesMode == JitSerdesMode::DeserializeOrGenerate));
     Config::Bind(DumpPreciseProfData, ini, config,
                  "Eval.DumpPreciseProfData", couldDump);
-    Config::Bind(ProfDataTTLHours, ini, config,
-                 "Eval.ProfDataTTLHours", ProfDataTTLHours);
-    Config::Bind(ProfDataTag, ini, config, "Eval.ProfDataTag", ProfDataTag);
-    Config::Bind(KeepProfData, ini, config, "Eval.KeepProfData", KeepProfData);
 
     Config::Bind(EvalSBSerdesFile, ini, config,
                  "Eval.SBSerdesFile", EvalSBSerdesFile);
-
-    Config::Bind(CheckSymLink, ini, config, "Eval.CheckSymLink", true);
-    Config::Bind(TrustAutoloaderPath, ini, config,
-                 "Eval.TrustAutoloaderPath", false);
 
 #define F(type, name, defaultVal) \
     Config::Bind(Eval ## name, ini, config, "Eval."#name, defaultVal);
@@ -1600,15 +1437,8 @@ void RuntimeOption::Load(
     }
 
     if (Cfg::Jit::SerdesModeForceOff) EvalJitSerdesMode = JitSerdesMode::Off;
-    if (!Cfg::Eval::EnableReusableTC) Cfg::Eval::ReusableTCPadding = 0;
-    if (numa_num_nodes <= 1) {
-      Cfg::Eval::EnableNuma = false;
-    }
 
-    // Fast method intercept is currently unsupported on ARM.
-    if (arch() == Arch::ARM) Cfg::Eval::FastMethodIntercept = false;
-
-    if (!Cfg::Server::ForkingEnabled && ServerExecutionMode()) {
+    if (!Cfg::Server::ForkingEnabled && Cfg::Server::Mode) {
       // Only use hugetlb pages when we don't fork().
       low_2m_pages(Cfg::Eval::MaxLowMemHugePages);
       high_2m_pages(Cfg::Eval::MaxHighArenaHugePages);
@@ -1630,10 +1460,9 @@ void RuntimeOption::Load(
         }
         EvalJitSerdesMode = JitSerdesMode::Off;
       }
-      EvalJitSerdesFile.clear();
+      Cfg::Jit::SerdesFile.clear();
       DumpPreciseProfData = false;
     }
-    Cfg::Jit::PGOUseAddrCountedCheck &= addr_encodes_persistency;
     if (Cfg::GC::SanitizeReqHeap) {
       HeapObjectSanitizer::install_signal_handler();
     }
@@ -1646,56 +1475,11 @@ void RuntimeOption::Load(
                           Cfg::Eval::ProfileHWFastReads,
                           Cfg::Eval::ProfileHWExportInterval);
 
-    Config::Bind(RecordCodeCoverage, ini, config, "Eval.RecordCodeCoverage");
-    if (Cfg::Jit::Enabled && RecordCodeCoverage) {
+    if (Cfg::Jit::Enabled && Cfg::Eval::RecordCodeCoverage) {
       throw std::runtime_error("Code coverage is not supported with "
         "Eval.Jit=true");
     }
-    Config::Bind(DisableSmallAllocator, ini, config,
-                 "Eval.DisableSmallAllocator", DisableSmallAllocator);
-    SetArenaSlabAllocBypass(DisableSmallAllocator);
-    Cfg::GC::SlabAllocAlign = folly::nextPowTwo(Cfg::GC::SlabAllocAlign);
-    Cfg::GC::SlabAllocAlign = std::min(Cfg::GC::SlabAllocAlign,
-                                  decltype(Cfg::GC::SlabAllocAlign){4096});
-
-    if (RecordCodeCoverage) CheckSymLink = true;
-    Config::Bind(CodeCoverageOutputFile, ini, config,
-                 "Eval.CodeCoverageOutputFile");
-    // NB: after we know the value of RepoAuthoritative.
-    Config::Bind(EnableArgsInBacktraces, ini, config,
-                 "Eval.EnableArgsInBacktraces", !Cfg::Repo::Authoritative);
-    Config::Bind(EvalAuthoritativeMode, ini, config, "Eval.AuthoritativeMode",
-                 false);
-
-    Config::Bind(CheckCLIClientCommands, ini, config, "Eval.CheckCLIClientCommands", 1);
-    if (Cfg::Repo::Authoritative) {
-      EvalAuthoritativeMode = true;
-    }
-  }
-  {
-    // CodeCache
-    using jit::CodeCache;
-    Config::Bind(CodeCache::ASize, ini, config, "Eval.JitASize", 60 << 20);
-    Config::Bind(CodeCache::AColdSize, ini, config, "Eval.JitAColdSize",
-                 24 << 20);
-    Config::Bind(CodeCache::AFrozenSize, ini, config, "Eval.JitAFrozenSize",
-                 40 << 20);
-    Config::Bind(CodeCache::ABytecodeSize, ini, config,
-                 "Eval.JitABytecodeSize", 0);
-    Config::Bind(CodeCache::GlobalDataSize, ini, config,
-                 "Eval.JitGlobalDataSize", CodeCache::ASize / 64);
-
-    Config::Bind(CodeCache::MapTCHuge, ini, config, "Eval.MapTCHuge",
-                 hugePagesSoundNice());
-
-    Config::Bind(CodeCache::TCNumHugeHotMB, ini, config,
-                 "Eval.TCNumHugeHotMB", 64);
-    Config::Bind(CodeCache::TCNumHugeMainMB, ini, config,
-                 "Eval.TCNumHugeMainMB", 16);
-    Config::Bind(CodeCache::TCNumHugeColdMB, ini, config,
-                 "Eval.TCNumHugeColdMB", 4);
-
-    Config::Bind(CodeCache::AutoTCShift, ini, config, "Eval.JitAutoTCShift", 1);
+    SetArenaSlabAllocBypass(Cfg::Eval::DisableSmallAllocator);
   }
   {
     // Server
@@ -1785,57 +1569,19 @@ void RuntimeOption::Load(
     Cfg::AdminServer::HashedPasswords = Config::GetSet(ini, config, "AdminServer.HashedPasswords");
   }
   {
-    // Http
-    Config::Bind(HttpDefaultTimeout, ini, config, "Http.DefaultTimeout", 30);
-    Config::Bind(HttpSlowQueryThreshold, ini, config, "Http.SlowQueryThreshold",
-                 5000);
-  }
-  {
     // Debug
+    StackTrace::Enabled = Cfg::Debug::NativeStackTrace;
 
-    Config::Bind(NativeStackTrace, ini, config, "Debug.NativeStackTrace");
-    StackTrace::Enabled = NativeStackTrace;
-    Config::Bind(ServerErrorMessage, ini, config, "Debug.ServerErrorMessage");
-    Config::Bind(RecordInput, ini, config, "Debug.RecordInput");
-    Config::Bind(ClearInputOnSuccess, ini, config, "Debug.ClearInputOnSuccess",
-                 true);
-    Config::Bind(ProfilerOutputDir, ini, config, "Debug.ProfilerOutputDir",
-                 "/tmp");
-    Config::Bind(CoreDumpEmail, ini, config, "Debug.CoreDumpEmail");
-    Config::Bind(CoreDumpReport, ini, config, "Debug.CoreDumpReport", true);
-    if (CoreDumpReport) {
+    if (Cfg::Debug::CoreDumpReport) {
       install_crash_reporter();
     }
-    // Binding default dependent on whether we are using an OSS build or
-    // not, and that is set at initialization time of CoreDumpReportDirectory.
-    Config::Bind(CoreDumpReportDirectory, ini, config,
-                 "Debug.CoreDumpReportDirectory", CoreDumpReportDirectory);
-    std::ostringstream stack_trace_stream;
-    stack_trace_stream << CoreDumpReportDirectory << "/stacktrace."
-                       << (int64_t)getpid() << ".log";
-    StackTraceFilename = stack_trace_stream.str();
 
-    Config::Bind(StackTraceTimeout, ini, config, "Debug.StackTraceTimeout", 0);
-    Config::Bind(RemoteTraceOutputDir, ini, config,
-                 "Debug.RemoteTraceOutputDir", "/tmp");
     Config::Bind(TraceFunctions, ini, config,
                  "Debug.TraceFunctions", TraceFunctions);
   }
   {
     Config::Bind(ServerVariables, ini, config, "ServerVariables");
     Config::Bind(EnvVariables, ini, config, "EnvVariables");
-  }
-  {
-    // Mail
-    Config::Bind(SendmailPath, ini, config, "Mail.SendmailPath",
-                 "/usr/lib/sendmail -t -i");
-    Config::Bind(MailForceExtraParameters, ini, config,
-                 "Mail.ForceExtraParameters");
-  }
-  {
-    // SimpleXML
-    Config::Bind(SimpleXMLEmptyNamespaceMatchesAll, ini, config,
-                 "SimpleXML.EmptyNamespaceMatchesAll", false);
   }
 #ifdef HHVM_FACEBOOK
   {
@@ -1874,23 +1620,6 @@ void RuntimeOption::Load(
                  "Server.ThreadTune.ThreadUtilizationThreshold", ServerThreadTuneThreadUtilizationThreshold);
   }
 #endif
-
-  {
-    // Xenon
-    Config::Bind(XenonPeriodSeconds, ini, config, "Xenon.Period", 0.0);
-    Config::Bind(XenonRequestFreq, ini, config, "Xenon.RequestFreq", 1);
-    Config::Bind(XenonForceAlwaysOn, ini, config, "Xenon.ForceAlwaysOn", false);
-    Config::Bind(XenonTrackActiveWorkers, ini, config, "Xenon.TrackActiveWorkers", false);
-  }
-  {
-    // Strobelight
-    Config::Bind(StrobelightEnabled, ini, config, "Strobelight.Enabled", false);
-  }
-  {
-    // Profiling
-    Config::Bind(SetProfileNullThisObject, ini, config,
-                 "SetProfile.NullThisObject", true);
-  }
 
   Config::Bind(TzdataSearchPaths, ini, config, "TzdataSearchPaths");
 
@@ -1932,7 +1661,7 @@ void RuntimeOption::Load(
   IniSetting::Bind(IniSetting::CORE, IniSetting::Mode::Config,
                    "doc_root", &Cfg::Server::SourceRoot);
   IniSetting::Bind(IniSetting::CORE, IniSetting::Mode::Config,
-                   "sendmail_path", &RuntimeOption::SendmailPath);
+                   "sendmail_path", &Cfg::Mail::SendmailPath);
 
   // FastCGI
   IniSetting::Bind(IniSetting::CORE, IniSetting::Mode::Config,

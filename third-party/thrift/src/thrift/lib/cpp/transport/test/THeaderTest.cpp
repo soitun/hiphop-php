@@ -34,7 +34,7 @@ namespace transport {
 
 TEST(THeaderTest, largetransform) {
   THeader header;
-  header.setTransform(THeader::ZLIB_TRANSFORM); // ZLib flag
+  header.setTTransform(TTransform::ZLIB); // ZLib flag
 
   size_t buf_size = 10000000;
   std::unique_ptr<IOBuf> buf(IOBuf::create(buf_size));
@@ -79,12 +79,6 @@ TEST(THeaderTest, http_clear_header) {
   buf = header.addHeader(std::move(buf));
 
   EXPECT_TRUE(header.isWriteHeadersEmpty());
-}
-
-TEST(THeaderTest, transform) {
-  // Simple test for TRANSFORMS enum to string conversion
-  EXPECT_EQ(
-      THeader::getStringTransform(THeader::TRANSFORMS::ZLIB_TRANSFORM), "zlib");
 }
 
 TEST(THeaderTest, eraseReadHeader) {

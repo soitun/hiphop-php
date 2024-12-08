@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import typing as _typing
 
+import s.thrift_types as _fbthrift_current_module
 import folly.iobuf as _fbthrift_iobuf
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
@@ -16,6 +17,8 @@ import thrift.python.exceptions as _fbthrift_python_exceptions
 import b.thrift_types as _fbthrift__b__thrift_types
 
 import c.thrift_types as _fbthrift__c__thrift_types
+
+from s.thrift_enums import *
 
 
 class _fbthrift_TestService_test_args(_fbthrift_python_types.Struct):

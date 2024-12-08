@@ -8,6 +8,8 @@
 from __future__ import annotations
 
 import folly.iobuf as _fbthrift_iobuf
+
+import foo.thrift_types as _fbthrift_current_module
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
 
@@ -83,10 +85,11 @@ class Fields(metaclass=_fbthrift_python_types.StructMeta):
 
 # This unfortunately has to be down here to prevent circular imports
 import foo.thrift_metadata
-
+from foo.thrift_enums import *
 
 _fbthrift_all_enums = [
 ]
+
 
 def _fbthrift_metadata__struct_Fields():
     return foo.thrift_metadata.gen_metadata_struct_Fields()

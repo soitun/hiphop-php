@@ -47,7 +47,7 @@ from thrift.python.types import (
     StructOrUnion as ImmutableStructOrUnion,
 )
 
-from thrift.test.thrift_python.struct_test.thrift_mutable_types import (  # @manual=//thrift/test/thrift-python:struct_test_thrift-python-types
+from thrift.test.thrift_python.struct_test.thrift_mutable_types import (
     bool_constant,
     byte_constant,
     double_constant,
@@ -491,6 +491,14 @@ class ThriftPython_MutableStruct_Test(unittest.TestCase):
             TestStructMutable(),
             TestStructWithDefaultValuesMutable().unqualified_struct_intrinsic_default,
         )
+
+    def test_reset(self) -> None:
+        w = TestStructWithDefaultValuesMutable(optional_integer=123)
+        self.assertEqual(w.optional_integer, 123)
+        self.assertEqual(w.unqualified_integer, 42)
+        w.fbthrift_reset()
+        self.assertIsNone(w.optional_integer)
+        self.assertEqual(w.unqualified_integer, 42)
 
     def test_equality_and_hashability(self) -> None:
         # Equality

@@ -14,49 +14,36 @@ from __future__ import annotations
 import abc as _abc
 import typing as _typing
 
+import test.fixtures.enums.module.thrift_abstract_types as _fbthrift_current_module
 _fbthrift_property = property
 
 
 import folly.iobuf as _fbthrift_iobuf
 import thrift.python.abstract_types as _fbthrift_python_abstract_types
+from test.fixtures.enums.module.thrift_enums import _fbthrift_compatible_with_Metasyntactic
+from test.fixtures.enums.module.thrift_enums import _fbthrift_compatible_with_MyEnum1
+from test.fixtures.enums.module.thrift_enums import _fbthrift_compatible_with_MyEnum2
+from test.fixtures.enums.module.thrift_enums import _fbthrift_compatible_with_MyEnum3
+from test.fixtures.enums.module.thrift_enums import _fbthrift_compatible_with_MyEnum4
+from test.fixtures.enums.module.thrift_enums import _fbthrift_compatible_with_MyBitmaskEnum1
+from test.fixtures.enums.module.thrift_enums import _fbthrift_compatible_with_MyBitmaskEnum2
 
-class Metasyntactic:
-    pass
-
-class MyEnum1:
-    pass
-
-class MyEnum2:
-    pass
-
-class MyEnum3:
-    pass
-
-class MyEnum4:
-    pass
-
-class MyBitmaskEnum1:
-    pass
-
-class MyBitmaskEnum2:
-    pass
-
-
+from test.fixtures.enums.module.thrift_enums import *
 class SomeStruct(_abc.ABC):
     @_fbthrift_property
     @_abc.abstractmethod
-    def reasonable(self) -> Metasyntactic: ...
+    def reasonable(self) -> _fbthrift_current_module.Metasyntactic: ...
     @_fbthrift_property
     @_abc.abstractmethod
-    def fine(self) -> Metasyntactic: ...
+    def fine(self) -> _fbthrift_current_module.Metasyntactic: ...
     @_fbthrift_property
     @_abc.abstractmethod
-    def questionable(self) -> Metasyntactic: ...
+    def questionable(self) -> _fbthrift_current_module.Metasyntactic: ...
     @_fbthrift_property
     @_abc.abstractmethod
     def tags(self) -> _typing.AbstractSet[int]: ...
     @_abc.abstractmethod
-    def __iter__(self) -> _typing.Iterator[_typing.Tuple[str, _typing.Union[Metasyntactic, Metasyntactic, Metasyntactic, _typing.AbstractSet[int]]]]: ...
+    def __iter__(self) -> _typing.Iterator[_typing.Tuple[str, _typing.Union[_fbthrift_current_module.Metasyntactic, _fbthrift_current_module.Metasyntactic, _fbthrift_current_module.Metasyntactic, _typing.AbstractSet[int]]]]: ...
     @_abc.abstractmethod
     def _to_mutable_python(self) -> "test.fixtures.enums.module.thrift_mutable_types.SomeStruct": ...  # type: ignore
     @_abc.abstractmethod
@@ -69,18 +56,18 @@ class SomeStruct(_abc.ABC):
 class MyStruct(_abc.ABC):
     @_fbthrift_property
     @_abc.abstractmethod
-    def me2_3(self) -> MyEnum2: ...
+    def me2_3(self) -> _fbthrift_current_module.MyEnum2: ...
     @_fbthrift_property
     @_abc.abstractmethod
-    def me3_n3(self) -> MyEnum3: ...
+    def me3_n3(self) -> _fbthrift_current_module.MyEnum3: ...
     @_fbthrift_property
     @_abc.abstractmethod
-    def me1_t1(self) -> MyEnum1: ...
+    def me1_t1(self) -> _fbthrift_current_module.MyEnum1: ...
     @_fbthrift_property
     @_abc.abstractmethod
-    def me1_t2(self) -> MyEnum1: ...
+    def me1_t2(self) -> _fbthrift_current_module.MyEnum1: ...
     @_abc.abstractmethod
-    def __iter__(self) -> _typing.Iterator[_typing.Tuple[str, _typing.Union[MyEnum2, MyEnum3, MyEnum1, MyEnum1]]]: ...
+    def __iter__(self) -> _typing.Iterator[_typing.Tuple[str, _typing.Union[_fbthrift_current_module.MyEnum2, _fbthrift_current_module.MyEnum3, _fbthrift_current_module.MyEnum1, _fbthrift_current_module.MyEnum1]]]: ...
     @_abc.abstractmethod
     def _to_mutable_python(self) -> "test.fixtures.enums.module.thrift_mutable_types.MyStruct": ...  # type: ignore
     @_abc.abstractmethod

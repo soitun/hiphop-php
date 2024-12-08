@@ -20,6 +20,7 @@ Generated Python typestubs for Thrift types
 {{> common/auto_generated_py}}
 
 import typing as _typing
+{{> types/set_current_module}}
 
 {{#program:unions?}}
 import enum
@@ -47,43 +48,8 @@ import {{included_module_path}}.{{> types/types_import_path}} as {{included_modu
 {{#program:adapter_type_hint_modules}}
 import {{module_path}}
 {{/program:adapter_type_hint_modules}}
-{{#program:generate_immutable_types}}
-{{#program:enums}}
+{{> types/import_enums}}
 
-class _fbthrift_compatible_with_{{enum:name}}:
-    pass
-
-
-class {{enum:name}}(_fbthrift_python_types.{{!
-        }}{{#enum:flags?}}Flag{{/enum:flags?}}{{!
-        }}{{^enum:flags?}}Enum, int{{/enum:flags?}}{{!
-        }}{{#program:enable_abstract_types?}}{{!
-        }}, _fbthrift_python_abstract_types.{{enum:name}}{{!
-        }}{{/program:enable_abstract_types?}}{{!
-        }}, _fbthrift_compatible_with_{{enum:name}}):
-    {{#enum:values}}
-    {{enum_value:py_name}}: {{enum:name}} = ...
-    {{/enum:values}}
-    {{#enum:legacy_api?}}
-    def _to_python(self) -> {{enum:name}}: ...
-    def _to_py3(self) -> "{{program:module_path}}.types.{{enum:name}}": ...  # type: ignore
-    def _to_py_deprecated(self) -> int: ...
-    {{/enum:legacy_api?}}
-{{/program:enums}}
-{{/program:generate_immutable_types}}
-{{#program:generate_mutable_types}}
-{{!
-    from module_path.thrift_enums import *
-
-below does not import private symbols _fbthrift_compatible_with_*.
-These are referenced in the generated pyi files and, for simplicity,
-need to be imported through the types modules.
-}}{{#program:enums}}
-from {{program:module_path}}.thrift_enums import _fbthrift_compatible_with_{{enum:name}}
-{{/program:enums}}
-
-from {{program:module_path}}.thrift_enums import *
-{{/program:generate_mutable_types}}
 {{#program:structs}}
 
 
@@ -114,7 +80,7 @@ class {{> structs/unadapted_name}}({{!
     @property
     def {{field:py_name}}(self) -> {{> fields/field_type_pyi}}: ...
     @{{field:py_name}}.setter
-    def {{field:py_name}}(self, value: {{> fields/field_type_pyi}}{{#field:is_container_type}}{{> types/thrift_container_wrapper}}{{/field:is_container_type}}): ...
+    def {{field:py_name}}(self, value: {{> fields/field_type_pyi}}{{#field:is_container_type}}{{> types/thrift_container_wrapper}}{{/field:is_container_type}}) -> None: ...
 
     {{/struct:fields_ordered_by_id}}{{!
     }}{{/program:generate_mutable_types}}
@@ -131,7 +97,6 @@ class {{> structs/unadapted_name}}({{!
     {{/struct:plain?}}
     {{#struct:union?}}
 
-{{^program:enable_abstract_types?}}
 {{#program:generate_immutable_types}}
     class Type(enum.Enum):
         EMPTY: {{> structs/unadapted_name}}.Type = ...
@@ -139,49 +104,22 @@ class {{> structs/unadapted_name}}({{!
         {{field:py_name}}: {{> structs/unadapted_name}}.Type = ...
     {{/struct:fields_ordered_by_id}}
 {{/program:generate_immutable_types}}
-{{#program:generate_mutable_types}}
-    class FbThriftUnionFieldEnum(enum.Enum):
-        EMPTY: {{> structs/unadapted_name}}.FbThriftUnionFieldEnum = ...
-    {{#struct:fields_ordered_by_id}}
-        {{field:py_name}}: {{> structs/unadapted_name}}.FbThriftUnionFieldEnum = ...
-    {{/struct:fields_ordered_by_id}}
-{{/program:generate_mutable_types}}
 
-{{#program:generate_immutable_types}}
-    FbThriftUnionFieldEnum = Type
-{{/program:generate_immutable_types}}
-{{/program:enable_abstract_types?}}
-{{#program:enable_abstract_types?}}
-{{#program:generate_immutable_types}}
-    Type = _fbthrift_python_abstract_types.{{> structs/unadapted_name}}.FbThriftUnionFieldEnum
-{{/program:generate_immutable_types}}
-{{/program:enable_abstract_types?}}
+{{> structs/maybe_union_field_and_value}}
 
 {{#program:generate_immutable_types}}
     @classmethod
-    def fromValue(cls, value: {{ > types/field_value_pep484_union_type}}) -> {{> structs/unadapted_name}}: ...
-    value: _typing.Final[{{ > types/field_value_pep484_union_type}}]
-{{^program:enable_abstract_types?}}
+    def fromValue(cls, value: {{> types/field_value_pep484_union_type}}) -> {{> structs/unadapted_name}}: ...
+    value: _typing.Final[{{> types/field_value_pep484_union_type}}]
     type: _typing.Final[Type]
     def get_type(self) -> Type: ...
-{{/program:enable_abstract_types?}}
-{{#program:enable_abstract_types?}}
-    type: _typing.Final[_fbthrift_python_abstract_types.{{> structs/unadapted_name}}.FbThriftUnionFieldEnum]
-    def get_type(self) -> _fbthrift_python_abstract_types.{{> structs/unadapted_name}}.FbThriftUnionFieldEnum: ...
-{{/program:enable_abstract_types?}}
 {{/program:generate_immutable_types}}
 {{#program:generate_mutable_types}}
-{{^program:enable_abstract_types?}}
-    fbthrift_current_value: _typing.Final[{{ > types/field_value_pep484_union_type}}]
-    fbthrift_current_field: _typing.Final[FbThriftUnionFieldEnum]
-{{/program:enable_abstract_types?}}
-    def get_type(self) -> {{#program:enable_abstract_types?}}_fbthrift_python_abstract_types.{{> structs/unadapted_name}}.{{/program:enable_abstract_types?}}FbThriftUnionFieldEnum: ...
+    def get_type(self) -> FbThriftUnionFieldEnum: ...
 {{/program:generate_mutable_types}}
     {{/struct:union?}}
     {{^struct:union?}}
-    def __iter__(self) -> _typing.Iterator[_typing.Tuple[str, _typing.Union[{{^struct:fields_ordered_by_id}}None{{/struct:fields_ordered_by_id}}{{!
-        }}{{#struct:fields_ordered_by_id}}{{^first?}}, {{/first?}}{{> fields/adapted_type}}{{!
-        }}{{/struct:fields_ordered_by_id}}]]]: ...
+    def __iter__(self) -> {{> types/iter_return_type}}: ...
     {{/struct:union?}}
     {{#struct:legacy_api?}}
 {{#program:generate_immutable_types}}

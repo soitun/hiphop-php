@@ -18,9 +18,12 @@ import copy
 import math
 import unittest
 
+from testing.dependency.types import IncludedStruct
+from testing.sub_dependency.types import Basic, IncludedColour
 from testing.types import (
     Color,
     easy,
+    FANCY_CONST,
     File,
     hard,
     Integers,
@@ -38,7 +41,10 @@ from testing.types import (
     StringBucket,
     UnusedError,
 )
-from thrift.lib.py3.test.auto_migrate.auto_migrate_util import brokenInAutoMigrate
+from thrift.lib.py3.test.auto_migrate.auto_migrate_util import (
+    brokenInAutoMigrate,
+    is_auto_migrated,
+)
 from thrift.py3.common import Protocol
 from thrift.py3.serializer import deserialize
 from thrift.py3.types import Struct
@@ -247,6 +253,17 @@ class StructTests(unittest.TestCase):
 
         self.assertEqual(x, x2)
         self.assertNotEqual(x, y)
+
+    def test_struct_module_name(self) -> None:
+        variant_prefix = "thrift_" if is_auto_migrated() else ""
+        expected = f"testing.{variant_prefix}types"
+
+        self.assertEqual(easy.__module__, expected)
+        self.assertEqual(easy().__class__.__module__, expected)
+        self.assertEqual(File.__module__, expected)
+        self.assertEqual(File().__class__.__module__, expected)
+        self.assertEqual(hard.__module__, expected)
+        self.assertEqual(hard().__class__.__module__, expected)
 
     @brokenInAutoMigrate()
     def test_noncopyable(self) -> None:
@@ -457,3 +474,18 @@ class NumericalConversionsTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             # pyre-fixme[58]: Test to make sure that invalid comparison errors out
             z < y  # noqa: B015
+
+    def test_included_struct_const(self) -> None:
+        self.assertIsInstance(FANCY_CONST, IncludedStruct)
+        self.assertEqual(FANCY_CONST.val, Basic(nom="fancy", val=47, bin=b"01010101"))
+        self.assertEqual(FANCY_CONST.color, IncludedColour.red)
+        self.assertEqual(
+            FANCY_CONST.color_list, [IncludedColour.red, IncludedColour.blue]
+        )
+        self.assertEqual(
+            FANCY_CONST.color_set, {IncludedColour.red, IncludedColour.blue}
+        )
+        self.assertEqual(
+            FANCY_CONST.color_map,
+            {IncludedColour.red: Basic(), IncludedColour.blue: Basic(nom="b")},
+        )

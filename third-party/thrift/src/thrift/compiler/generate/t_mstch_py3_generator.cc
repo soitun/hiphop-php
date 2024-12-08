@@ -154,8 +154,8 @@ class py3_mstch_program : public mstch_program {
              &py3_mstch_program::includeNamespaces},
             {"program:cppIncludes", &py3_mstch_program::getCppIncludes},
             {"program:containerTypes", &py3_mstch_program::getContainerTypes},
-            {"program:hasPyContainerTypes",
-             &py3_mstch_program::hasPyContainerTypes},
+            {"program:hasContainerTypes",
+             &py3_mstch_program::hasContainerTypes},
             {"program:hasEnumTypes", &py3_mstch_program::hasEnumTypes},
             {"program:customTemplates", &py3_mstch_program::getCustomTemplates},
             {"program:customTypes", &py3_mstch_program::getCustomTypes},
@@ -199,14 +199,7 @@ class py3_mstch_program : public mstch_program {
 
   mstch::node getContainerTypes() { return make_mstch_types(containers_); }
 
-  mstch::node hasPyContainerTypes() {
-    for (const auto* ttype : containers_) {
-      if (ttype->is_list() || ttype->is_set()) {
-        return true;
-      }
-    }
-    return false;
-  }
+  mstch::node hasContainerTypes() { return !containers_.empty(); }
 
   mstch::node hasEnumTypes() {
     if (!program_->enums().empty()) {
@@ -712,7 +705,7 @@ class py3_mstch_type : public mstch_type {
   // as used, non-simple types live in shared_ptr in container conversions
   mstch::node isSimple() {
     return (type_->is_primitive_type() || type_->is_enum() ||
-            type_->is_list() || type_->is_set()) &&
+            type_->is_container()) &&
         !has_custom_type_behavior();
   }
 
@@ -1078,6 +1071,84 @@ class py3_mstch_enum_value : public mstch_enum_value {
   }
 };
 
+class py3_mstch_const_value : public mstch_const_value {
+ public:
+  py3_mstch_const_value(
+      const t_const_value* cv,
+      mstch_context& ctx,
+      mstch_element_position pos,
+      const t_const* current_const,
+      const t_type* expected_type)
+      : mstch_const_value(cv, ctx, pos, current_const, expected_type) {
+    register_cached_methods(
+        this,
+        {
+            {"value:value_for_bool?", &py3_mstch_const_value::is_bool_value},
+            {"value:value_for_floating_point?",
+             &py3_mstch_const_value::is_float_value},
+            {"value:py3_binary?", &py3_mstch_const_value::is_binary},
+            {"value:const_enum_type", &py3_mstch_const_value::const_enum_type},
+            {"value:py3_enum_value_name",
+             &py3_mstch_const_value::py3_enum_value_name},
+            {"value:const_enum_type", &py3_mstch_const_value::const_enum_type},
+            {"value:const_container_type",
+             &py3_mstch_const_value::const_container_type},
+        });
+  }
+
+  mstch::node is_bool_value() {
+    if (auto ttype = const_value_->ttype()) {
+      return ttype->get_true_type()->is_bool();
+    }
+    return false;
+  }
+
+  mstch::node is_float_value() {
+    if (auto ttype = const_value_->ttype()) {
+      return ttype->get_true_type()->is_floating_point();
+    }
+    return false;
+  }
+
+  mstch::node is_binary() {
+    auto& ttype = const_value_->ttype();
+    return type_ == cv::CV_STRING && ttype &&
+        ttype->get_true_type()->is_binary();
+  }
+
+  mstch::node py3_enum_value_name() {
+    if (!const_value_->is_enum() || const_value_->get_enum_value() == nullptr) {
+      return mstch::node();
+    }
+    const auto& enum_name = const_value_->get_enum()->get_name();
+    return python::get_py3_name_class_scope(
+        *const_value_->get_enum_value(), enum_name);
+  }
+
+  mstch::node const_enum_type() {
+    if (!const_value_->ttype() || type_ != cv::CV_INTEGER ||
+        !const_value_->is_enum()) {
+      return {};
+    }
+    const auto* type = const_value_->ttype()->get_true_type();
+    if (type->is_enum()) {
+      return context_.type_factory->make_mstch_object(type, context_);
+    }
+    return {};
+  }
+
+  mstch::node const_container_type() {
+    if (!const_value_->ttype()) {
+      return {};
+    }
+    const auto* type = const_value_->ttype()->get_true_type();
+    if (type->is_container()) {
+      return context_.type_factory->make_mstch_object(type, context_);
+    }
+    return {};
+  }
+};
+
 class py3_mstch_deprecated_annotation : public mstch_deprecated_annotation {
  public:
   py3_mstch_deprecated_annotation(
@@ -1355,6 +1426,7 @@ void t_mstch_py3_generator::set_mstch_factories() {
   mstch_context_.add<py3_mstch_field>();
   mstch_context_.add<py3_mstch_enum>();
   mstch_context_.add<py3_mstch_enum_value>();
+  mstch_context_.add<py3_mstch_const_value>();
   mstch_context_.add<py3_mstch_deprecated_annotation>();
 }
 

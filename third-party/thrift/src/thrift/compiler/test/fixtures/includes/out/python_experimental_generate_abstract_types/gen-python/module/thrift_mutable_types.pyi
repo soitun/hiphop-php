@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import typing as _typing
 
+import module.thrift_mutable_types as _fbthrift_current_module
 import folly.iobuf as _fbthrift_iobuf
 import module.thrift_abstract_types as _fbthrift_python_abstract_types
 import thrift.python.types as _fbthrift_python_types
@@ -43,19 +44,19 @@ class MyStruct(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatibl
     @property
     def MyIncludedField(self) -> _fbthrift__includes__thrift_mutable_types.Included: ...
     @MyIncludedField.setter
-    def MyIncludedField(self, value: _fbthrift__includes__thrift_mutable_types.Included): ...
+    def MyIncludedField(self, value: _fbthrift__includes__thrift_mutable_types.Included) -> None: ...
 
 
     @property
     def MyOtherIncludedField(self) -> _fbthrift__includes__thrift_mutable_types.Included: ...
     @MyOtherIncludedField.setter
-    def MyOtherIncludedField(self, value: _fbthrift__includes__thrift_mutable_types.Included): ...
+    def MyOtherIncludedField(self, value: _fbthrift__includes__thrift_mutable_types.Included) -> None: ...
 
 
     @property
     def MyIncludedInt(self) -> int: ...
     @MyIncludedInt.setter
-    def MyIncludedInt(self, value: int): ...
+    def MyIncludedInt(self, value: int) -> None: ...
 
     def __init__(
         self, *,

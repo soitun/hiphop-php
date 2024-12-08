@@ -8,6 +8,8 @@
 from __future__ import annotations
 
 import folly.iobuf as _fbthrift_iobuf
+
+import includes.thrift_types as _fbthrift_current_module
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
 
@@ -75,10 +77,11 @@ class Included(metaclass=_fbthrift_python_types.StructMeta):
 
 # This unfortunately has to be down here to prevent circular imports
 import includes.thrift_metadata
-
+from includes.thrift_enums import *
 
 _fbthrift_all_enums = [
 ]
+
 
 def _fbthrift_metadata__struct_Included():
     return includes.thrift_metadata.gen_metadata_struct_Included()

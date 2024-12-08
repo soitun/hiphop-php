@@ -698,19 +698,19 @@ mod tests {
                         ),
                         targs: vec![],
                         args: vec![
-                            (ParamKind::Pnormal, {
+                            Argument::Anormal({
                                 let tmp: Expr = cexpr.clone();
                                 tmp
                             }),
-                            (ParamKind::Pnormal, {
+                            Argument::Anormal({
                                 let tmp: Expr = fexpr.clone();
                                 tmp
                             }),
-                            (ParamKind::Pnormal, {
+                            Argument::Anormal({
                                 let tmp: Expr = efun;
                                 tmp
                             }),
-                            (ParamKind::Pnormal, {
+                            Argument::Anormal({
                                 let tmp: Expr = force_val_expr;
                                 tmp
                             }),
@@ -747,7 +747,7 @@ mod tests {
                             ))),
                         ),
                         targs: vec![],
-                        args: vec![(ParamKind::Pnormal, {
+                        args: vec![Argument::Anormal({
                             let tmp: String = mangle_name.to_owned();
                             Expr((), __hygienic_pos.clone(), Expr_::String(tmp.into()))
                         })],
@@ -788,36 +788,33 @@ mod tests {
                         ),
                         targs: vec![],
                         args: vec![
-                            (
-                                ParamKind::Pnormal,
-                                Expr(
-                                    (),
-                                    __hygienic_pos.clone(),
-                                    Expr_::Call(Box::new(CallExpr {
-                                        func: Expr(
-                                            (),
+                            Argument::Anormal(Expr(
+                                (),
+                                __hygienic_pos.clone(),
+                                Expr_::Call(Box::new(CallExpr {
+                                    func: Expr(
+                                        (),
+                                        __hygienic_pos.clone(),
+                                        Expr_::Id(Box::new(Id(
                                             __hygienic_pos.clone(),
-                                            Expr_::Id(Box::new(Id(
-                                                __hygienic_pos.clone(),
-                                                "\\is_a".to_owned(),
-                                            ))),
-                                        ),
-                                        targs: vec![],
-                                        args: vec![
-                                            (ParamKind::Pnormal, {
-                                                let tmp: Expr = obj_lvar.clone();
-                                                tmp
-                                            }),
-                                            (ParamKind::Pnormal, {
-                                                let tmp: String = cls.to_owned();
-                                                Expr((), pc.clone(), Expr_::String(tmp.into()))
-                                            }),
-                                        ],
-                                        unpacked_arg: None,
-                                    })),
-                                ),
-                            ),
-                            (ParamKind::Pnormal, {
+                                            "\\is_a".to_owned(),
+                                        ))),
+                                    ),
+                                    targs: vec![],
+                                    args: vec![
+                                        Argument::Anormal({
+                                            let tmp: Expr = obj_lvar.clone();
+                                            tmp
+                                        }),
+                                        Argument::Anormal({
+                                            let tmp: String = cls.to_owned();
+                                            Expr((), pc.clone(), Expr_::String(tmp.into()))
+                                        }),
+                                    ],
+                                    unpacked_arg: None,
+                                })),
+                            )),
+                            Argument::Anormal({
                                 let tmp: String = msg;
                                 Expr((), __hygienic_pos.clone(), Expr_::String(tmp.into()))
                             }),
@@ -896,7 +893,7 @@ mod tests {
                             Expr_::Id(Box::new(Id(__hygienic_pos.clone(), "echo".to_owned()))),
                         ),
                         targs: vec![],
-                        args: vec![(ParamKind::Pnormal, {
+                        args: vec![Argument::Anormal({
                             let tmp: String = tail;
                             Expr((), __hygienic_pos.clone(), Expr_::String(tmp.into()))
                         })],
@@ -1045,7 +1042,7 @@ mod tests {
                                         ))),
                                     ),
                                     targs: vec![],
-                                    args: vec![(ParamKind::Pnormal, {
+                                    args: vec![Argument::Anormal({
                                         let tmp: LocalId = name;
                                         Expr(
                                             (),
@@ -1095,7 +1092,7 @@ mod tests {
                                     ))),
                                 ),
                                 targs: vec![],
-                                args: vec![(ParamKind::Pnormal, {
+                                args: vec![Argument::Anormal({
                                     let tmp: LocalId = name.clone();
                                     Expr(
                                         (),
@@ -1111,9 +1108,8 @@ mod tests {
                             Stmt_::Expr(Box::new(Expr(
                                 (),
                                 __hygienic_pos.clone(),
-                                Expr_::Binop(Box::new(Binop {
-                                    bop: Bop::Eq(None),
-                                    lhs: {
+                                Expr_::Assign(Box::new((
+                                    {
                                         let tmp: LocalId = name;
                                         Expr(
                                             (),
@@ -1121,7 +1117,8 @@ mod tests {
                                             Expr_::Lvar(Box::new(Lid(__hygienic_pos.clone(), tmp))),
                                         )
                                     },
-                                    rhs: Expr(
+                                    None,
+                                    Expr(
                                         (),
                                         __hygienic_pos.clone(),
                                         Expr_::New(Box::new((
@@ -1143,7 +1140,7 @@ mod tests {
                                             (),
                                         ))),
                                     ),
-                                })),
+                                ))),
                             ))),
                         )]),
                         Block(vec![Stmt(__hygienic_pos.clone(), Stmt_::Noop)]),
@@ -1221,9 +1218,8 @@ mod tests {
                     Stmt_::Expr(Box::new(Expr(
                         (),
                         __hygienic_pos.clone(),
-                        Expr_::Binop(Box::new(Binop {
-                            bop: Bop::Eq(None),
-                            lhs: Expr(
+                        Expr_::Assign(Box::new((
+                            Expr(
                                 (),
                                 __hygienic_pos.clone(),
                                 Expr_::Lvar(Box::new(Lid(
@@ -1231,7 +1227,8 @@ mod tests {
                                     (0isize, "$r".to_owned())
                                 )))
                             ),
-                            rhs: Expr(
+                            None,
+                            Expr(
                                 (),
                                 __hygienic_pos.clone(),
                                 Expr_::ClassGet(Box::new((
@@ -1254,7 +1251,7 @@ mod tests {
                                     PropOrMethod::IsProp
                                 )))
                             )
-                        }))
+                        )))
                     )))
                 ));
                 let stmt2 = quote!(Stmt(
@@ -1282,9 +1279,8 @@ mod tests {
                                 Stmt_::Expr(Box::new(Expr(
                                     (),
                                     __hygienic_pos.clone(),
-                                    Expr_::Binop(Box::new(Binop {
-                                        bop: Bop::Eq(None),
-                                        lhs: Expr(
+                                    Expr_::Assign(Box::new((
+                                        Expr(
                                             (),
                                             __hygienic_pos.clone(),
                                             Expr_::ClassGet(Box::new((
@@ -1307,7 +1303,8 @@ mod tests {
                                                 PropOrMethod::IsProp
                                             )))
                                         ),
-                                        rhs: Expr(
+                                        None,
+                                        Expr(
                                             (),
                                             __hygienic_pos.clone(),
                                             Expr_::Call(Box::new(CallExpr {
@@ -1327,7 +1324,7 @@ mod tests {
                                                 unpacked_arg: None
                                             }))
                                         )
-                                    }))
+                                    )))
                                 )))
                             ),
                             Stmt(
@@ -1335,9 +1332,8 @@ mod tests {
                                 Stmt_::Expr(Box::new(Expr(
                                     (),
                                     __hygienic_pos.clone(),
-                                    Expr_::Binop(Box::new(Binop {
-                                        bop: Bop::Eq(None),
-                                        lhs: Expr(
+                                    Expr_::Assign(Box::new((
+                                        Expr(
                                             (),
                                             __hygienic_pos.clone(),
                                             Expr_::Lvar(Box::new(Lid(
@@ -1345,7 +1341,8 @@ mod tests {
                                                 (0isize, "$r".to_owned())
                                             )))
                                         ),
-                                        rhs: Expr(
+                                        None,
+                                        Expr(
                                             (),
                                             __hygienic_pos.clone(),
                                             Expr_::ClassGet(Box::new((
@@ -1368,7 +1365,7 @@ mod tests {
                                                 PropOrMethod::IsProp
                                             )))
                                         )
-                                    }))
+                                    )))
                                 )))
                             )
                         ]),
@@ -1567,9 +1564,8 @@ mod tests {
                                                 Stmt_::Expr(Box::new(Expr(
                                                     (),
                                                     __hygienic_pos.clone(),
-                                                    Expr_::Binop(Box::new(Binop {
-                                                        bop: Bop::Eq(None),
-                                                        lhs: Expr(
+                                                    Expr_::Assign(Box::new((
+                                                        Expr(
                                                             (),
                                                             __hygienic_pos.clone(),
                                                             Expr_::Lvar(Box::new(Lid(
@@ -1577,11 +1573,12 @@ mod tests {
                                                                 (0isize, "$result".to_owned()),
                                                             ))),
                                                         ),
-                                                        rhs: {
+                                                        None,
+                                                        {
                                                             let tmp: Expr = kind;
                                                             tmp
                                                         },
-                                                    })),
+                                                    ))),
                                                 ))),
                                             ),
                                             Stmt(
