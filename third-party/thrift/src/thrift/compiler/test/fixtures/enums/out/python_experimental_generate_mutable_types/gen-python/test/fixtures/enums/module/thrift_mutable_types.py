@@ -12,6 +12,9 @@
 from __future__ import annotations
 
 import folly.iobuf as _fbthrift_iobuf
+
+from abc import ABCMeta as _fbthrift_ABCMeta
+import test.fixtures.enums.module.thrift_abstract_types as _fbthrift_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.mutable_types as _fbthrift_python_mutable_types
 import thrift.python.mutable_exceptions as _fbthrift_python_mutable_exceptions
@@ -105,6 +108,8 @@ class SomeStruct(metaclass=_fbthrift_python_mutable_types.MutableStructMeta):
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.SomeStruct, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.SomeStruct, SomeStruct)
+_fbthrift_SomeStruct = SomeStruct
 
 class MyStruct(metaclass=_fbthrift_python_mutable_types.MutableStructMeta):
     _fbthrift_SPEC = (
@@ -192,8 +197,25 @@ class MyStruct(metaclass=_fbthrift_python_mutable_types.MutableStructMeta):
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.MyStruct, self)
 
-from test.fixtures.enums.module.thrift_enums import *
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.MyStruct, MyStruct)
+_fbthrift_MyStruct = MyStruct
 
+from test.fixtures.enums.module.thrift_enums import _fbthrift_compatible_with_Metasyntactic
+from test.fixtures.enums.module.thrift_enums import Metasyntactic as _fbthrift_Metasyntactic
+from test.fixtures.enums.module.thrift_enums import _fbthrift_compatible_with_MyEnum1
+from test.fixtures.enums.module.thrift_enums import MyEnum1 as _fbthrift_MyEnum1
+from test.fixtures.enums.module.thrift_enums import _fbthrift_compatible_with_MyEnum2
+from test.fixtures.enums.module.thrift_enums import MyEnum2 as _fbthrift_MyEnum2
+from test.fixtures.enums.module.thrift_enums import _fbthrift_compatible_with_MyEnum3
+from test.fixtures.enums.module.thrift_enums import MyEnum3 as _fbthrift_MyEnum3
+from test.fixtures.enums.module.thrift_enums import _fbthrift_compatible_with_MyEnum4
+from test.fixtures.enums.module.thrift_enums import MyEnum4 as _fbthrift_MyEnum4
+from test.fixtures.enums.module.thrift_enums import _fbthrift_compatible_with_MyBitmaskEnum1
+from test.fixtures.enums.module.thrift_enums import MyBitmaskEnum1 as _fbthrift_MyBitmaskEnum1
+from test.fixtures.enums.module.thrift_enums import _fbthrift_compatible_with_MyBitmaskEnum2
+from test.fixtures.enums.module.thrift_enums import MyBitmaskEnum2 as _fbthrift_MyBitmaskEnum2
+
+from test.fixtures.enums.module.thrift_enums import *
 _fbthrift_all_enums = [
     Metasyntactic,
     MyEnum1,

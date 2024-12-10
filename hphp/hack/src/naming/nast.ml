@@ -33,6 +33,8 @@ type expr = (unit, unit) Aast.expr [@@deriving eq, show]
 
 type expr_ = (unit, unit) Aast.expr_
 
+type argument = (unit, unit) Aast.argument
+
 type stmt = (unit, unit) Aast.stmt
 
 type block = (unit, unit) Aast.block
@@ -507,8 +509,9 @@ module Visitor_DEPRECATED = struct
 
       method on_class_const : 'a -> class_id -> pstring -> 'a
 
-      method on_call :
-        'a -> expr -> (Ast_defs.param_kind * expr) list -> expr option -> 'a
+      method on_call : 'a -> expr -> argument list -> expr option -> 'a
+
+      method on_argument : 'a -> argument -> 'a
 
       method on_function_pointer :
         'a -> (unit, unit) function_ptr_id -> targ list -> 'a
@@ -544,6 +547,8 @@ module Visitor_DEPRECATED = struct
       method on_unop : 'a -> Ast_defs.uop -> expr -> 'a
 
       method on_binop : 'a -> Ast_defs.bop -> expr -> expr -> 'a
+
+      method on_assign : 'a -> expr -> Ast_defs.bop option -> expr -> 'a
 
       method on_pipe : 'a -> id -> expr -> expr -> 'a
 
@@ -839,6 +844,7 @@ module Visitor_DEPRECATED = struct
         | ExpressionTree et -> this#on_expression_tree acc et
         | Unop (uop, e) -> this#on_unop acc uop e
         | Binop { bop; lhs; rhs } -> this#on_binop acc bop lhs rhs
+        | Assign (lhs, bop, rhs) -> this#on_assign acc lhs bop rhs
         | Pipe (id, e1, e2) -> this#on_pipe acc id e1 e2
         | Eif (e1, e2, e3) -> this#on_eif acc e1 e2 e3
         | Is (e, h) -> this#on_is acc e h
@@ -943,15 +949,17 @@ module Visitor_DEPRECATED = struct
 
       method on_call acc e el unpacked_element =
         let acc = this#on_expr acc e in
-        let f acc_ (pk, e_) =
-          let acc_ = this#on_param_kind acc_ pk in
-          this#on_expr acc_ e_
-        in
+        let f acc_ arg = this#on_argument acc_ arg in
         let acc = List.fold_left el ~f ~init:acc in
         let acc =
           Option.value_map unpacked_element ~f:(this#on_expr acc) ~default:acc
         in
         acc
+
+      method on_argument acc arg =
+        match arg with
+        | Aast_defs.Anormal e -> this#on_expr acc e
+        | Aast_defs.Ainout (_pos, e) -> this#on_expr acc e
 
       method on_function_pointer acc e targs =
         let acc = this#on_function_ptr_id acc e in
@@ -1005,6 +1013,11 @@ module Visitor_DEPRECATED = struct
       method on_unop acc _ e = this#on_expr acc e
 
       method on_binop acc _ e1 e2 =
+        let acc = this#on_expr acc e1 in
+        let acc = this#on_expr acc e2 in
+        acc
+
+      method on_assign acc e1 _ e2 =
         let acc = this#on_expr acc e1 in
         let acc = this#on_expr acc e2 in
         acc

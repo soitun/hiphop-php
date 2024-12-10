@@ -21,6 +21,7 @@ use namespaces_rust as namespaces;
 use naming_special_names_rust as naming_special_names;
 use oxidized::decl_parser_options::DeclParserOptions;
 use oxidized_by_ref::aast;
+use oxidized_by_ref::aast_defs::PackageMembership;
 use oxidized_by_ref::ast_defs::Abstraction;
 use oxidized_by_ref::ast_defs::Bop;
 use oxidized_by_ref::ast_defs::ClassishKind;
@@ -139,7 +140,7 @@ pub struct Impl<'a, 'o, 't, S: SourceTextAllocator<'t, 'a>> {
     inside_no_auto_dynamic_class: bool,
     source_text_allocator: S,
     pub module: Option<Id<'a>>,
-    package: Option<&'a str>,
+    package: Option<&'a PackageMembership>,
 }
 
 impl<'a, 'o, 't, S: SourceTextAllocator<'t, 'a>> DirectDeclSmartConstructors<'a, 'o, 't, S> {
@@ -161,7 +162,10 @@ impl<'a, 'o, 't, S: SourceTextAllocator<'t, 'a>> DirectDeclSmartConstructors<'a,
                 .get_package_for_file(opts.package_v2_support_multifile_tests, path)
             {
                 Some(s) => {
-                    let package = bump::String::from_str_in(s, arena).into_bump_str();
+                    let package_name = bump::String::from_str_in(s, arena).into_bump_str();
+                    let package: &PackageMembership = arena.alloc(
+                        PackageMembership::PackageConfigAssignment(String::from(package_name)),
+                    );
                     Some(package)
                 }
                 None => None,
@@ -1537,8 +1541,8 @@ impl<'a, 'o, 't, S: SourceTextAllocator<'t, 'a>> DirectDeclSmartConstructors<'a,
                         Unop(&(_op, expr)) => expr_to_ty(arena, expr),
                         Hole(&(expr, _, _, _)) => expr_to_ty(arena, expr),
 
-                        ArrayGet(_) | As(_) | Await(_) | Binop(_) | Call(_) | Cast(_)
-                        | ClassConst(_) | ClassGet(_) | Clone(_) | Collection(_)
+                        ArrayGet(_) | As(_) | Await(_) | Binop(_) | Assign(_) | Call(_)
+                        | Cast(_) | ClassConst(_) | ClassGet(_) | Clone(_) | Collection(_)
                         | Dollardollar(_) | Efun(_) | Eif(_) | EnumClassLabel(_) | ETSplice(_)
                         | ExpressionTree(_) | FunctionPointer(_) | Id(_) | Import(_) | Is(_)
                         | KeyValCollection(_) | Lfun(_) | List(_) | Lplaceholder(_) | Lvar(_)
@@ -2021,6 +2025,7 @@ impl<'a, 'o, 't, S: SourceTextAllocator<'t, 'a>> DirectDeclSmartConstructors<'a,
             ret: type_,
             flags,
             cross_package,
+            instantiated: true,
         });
 
         let ty = self.alloc(Ty(
@@ -3443,33 +3448,37 @@ impl<'a, 'o, 't, S: SourceTextAllocator<'t, 'a>> FlattenSmartConstructors
         op_node: Self::Output,
         rhs: Self::Output,
     ) -> Self::Output {
-        let op = match op_node.token_kind() {
-            Some(TokenKind::Plus) => Bop::Plus,
-            Some(TokenKind::Minus) => Bop::Minus,
-            Some(TokenKind::Star) => Bop::Star,
-            Some(TokenKind::Slash) => Bop::Slash,
-            Some(TokenKind::Equal) => Bop::Eq(None),
-            Some(TokenKind::EqualEqual) => Bop::Eqeq,
-            Some(TokenKind::EqualEqualEqual) => Bop::Eqeqeq,
-            Some(TokenKind::StarStar) => Bop::Starstar,
-            Some(TokenKind::AmpersandAmpersand) => Bop::Ampamp,
-            Some(TokenKind::BarBar) => Bop::Barbar,
-            Some(TokenKind::LessThan) => Bop::Lt,
-            Some(TokenKind::LessThanEqual) => Bop::Lte,
-            Some(TokenKind::LessThanLessThan) => Bop::Ltlt,
-            Some(TokenKind::GreaterThan) => Bop::Gt,
-            Some(TokenKind::GreaterThanEqual) => Bop::Gte,
-            Some(TokenKind::GreaterThanGreaterThan) => Bop::Gtgt,
-            Some(TokenKind::Dot) => Bop::Dot,
-            Some(TokenKind::Ampersand) => Bop::Amp,
-            Some(TokenKind::Bar) => Bop::Bar,
-            Some(TokenKind::Percent) => Bop::Percent,
-            Some(TokenKind::QuestionQuestion) => Bop::QuestionQuestion,
-            _ => return Node::Ignored(SK::BinaryExpression),
+        let t = op_node.token_kind();
+        let op = if matches!(t, Some(TokenKind::Equal)) {
+            None
+        } else {
+            Some(match op_node.token_kind() {
+                Some(TokenKind::Plus) => Bop::Plus,
+                Some(TokenKind::Minus) => Bop::Minus,
+                Some(TokenKind::Star) => Bop::Star,
+                Some(TokenKind::Slash) => Bop::Slash,
+                Some(TokenKind::EqualEqual) => Bop::Eqeq,
+                Some(TokenKind::EqualEqualEqual) => Bop::Eqeqeq,
+                Some(TokenKind::StarStar) => Bop::Starstar,
+                Some(TokenKind::AmpersandAmpersand) => Bop::Ampamp,
+                Some(TokenKind::BarBar) => Bop::Barbar,
+                Some(TokenKind::LessThan) => Bop::Lt,
+                Some(TokenKind::LessThanEqual) => Bop::Lte,
+                Some(TokenKind::LessThanLessThan) => Bop::Ltlt,
+                Some(TokenKind::GreaterThan) => Bop::Gt,
+                Some(TokenKind::GreaterThanEqual) => Bop::Gte,
+                Some(TokenKind::GreaterThanGreaterThan) => Bop::Gtgt,
+                Some(TokenKind::Dot) => Bop::Dot,
+                Some(TokenKind::Ampersand) => Bop::Amp,
+                Some(TokenKind::Bar) => Bop::Bar,
+                Some(TokenKind::Percent) => Bop::Percent,
+                Some(TokenKind::QuestionQuestion) => Bop::QuestionQuestion,
+                _ => return Node::Ignored(SK::BinaryExpression),
+            })
         };
 
         match (&op, rhs.is_token(TokenKind::Yield)) {
-            (Bop::Eq(_), true) => return rhs,
+            (None, true) => return rhs,
             _ => {}
         }
 
@@ -3483,12 +3492,18 @@ impl<'a, 'o, 't, S: SourceTextAllocator<'t, 'a>> FlattenSmartConstructors
             Some(rhs) => rhs,
             None => return Node::Ignored(SK::BinaryExpression),
         };
-
-        Node::Expr(self.alloc(aast::Expr(
-            (),
-            pos,
-            aast::Expr_::Binop(self.alloc(aast::Binop { bop: op, lhs, rhs })),
-        )))
+        match op {
+            None => Node::Expr(self.alloc(aast::Expr(
+                (),
+                pos,
+                aast::Expr_::Assign(self.alloc((lhs, op, rhs))),
+            ))),
+            Some(op) => Node::Expr(self.alloc(aast::Expr(
+                (),
+                pos,
+                aast::Expr_::Binop(self.alloc(aast::Binop { bop: op, lhs, rhs })),
+            ))),
+        }
     }
 
     fn make_parenthesized_expression(
@@ -3685,7 +3700,7 @@ impl<'a, 'o, 't, S: SourceTextAllocator<'t, 'a>> FlattenSmartConstructors
             attributes: user_attributes,
             internal,
             docs_url,
-            package: self.package,
+            package: self.package.clone(),
         });
 
         let this = Rc::make_mut(&mut self.state);
@@ -3759,7 +3774,7 @@ impl<'a, 'o, 't, S: SourceTextAllocator<'t, 'a>> FlattenSmartConstructors
             attributes: user_attributes,
             internal: false,
             docs_url: None,
-            package: self.package,
+            package: self.package.clone(),
         });
 
         let this = Rc::make_mut(&mut self.state);
@@ -3867,7 +3882,7 @@ impl<'a, 'o, 't, S: SourceTextAllocator<'t, 'a>> FlattenSmartConstructors
             attributes: user_attributes,
             internal,
             docs_url,
-            package: self.package,
+            package: self.package.clone(),
         });
 
         let this = Rc::make_mut(&mut self.state);
@@ -4135,7 +4150,7 @@ impl<'a, 'o, 't, S: SourceTextAllocator<'t, 'a>> FlattenSmartConstructors
                         || parsed_attributes.dynamically_callable,
                     no_auto_dynamic: self.under_no_auto_dynamic,
                     no_auto_likes: parsed_attributes.no_auto_likes,
-                    package: self.package,
+                    package: self.package.clone(),
                 });
                 let this = Rc::make_mut(&mut self.state);
                 this.add_fun(name, fun_elt);
@@ -4828,7 +4843,7 @@ impl<'a, 'o, 't, S: SourceTextAllocator<'t, 'a>> FlattenSmartConstructors
             user_attributes,
             enum_type: None,
             docs_url,
-            package: self.package,
+            package: self.package.clone(),
         });
         let this = Rc::make_mut(&mut self.state);
         this.add_class(name, cls);
@@ -5308,7 +5323,7 @@ impl<'a, 'o, 't, S: SourceTextAllocator<'t, 'a>> FlattenSmartConstructors
                 includes,
             })),
             docs_url,
-            package: self.package,
+            package: self.package.clone(),
         });
         let this = Rc::make_mut(&mut self.state);
         this.add_class(key, cls);
@@ -5527,7 +5542,7 @@ impl<'a, 'o, 't, S: SourceTextAllocator<'t, 'a>> FlattenSmartConstructors
                 includes,
             })),
             docs_url,
-            package: self.package,
+            package: self.package.clone(),
         });
         let this = Rc::make_mut(&mut self.state);
         this.add_class(name.1, cls);
@@ -6161,6 +6176,7 @@ impl<'a, 'o, 't, S: SourceTextAllocator<'t, 'a>> FlattenSmartConstructors
             ret: pess_return_type,
             flags,
             cross_package: None,
+            instantiated: true,
         }));
 
         if self.implicit_sdt() {
@@ -6629,16 +6645,22 @@ impl<'a, 'o, 't, S: SourceTextAllocator<'t, 'a>> FlattenSmartConstructors
         _right_double_angle: Self::Output,
     ) -> Self::Output {
         let keep_user_attributes = self.opts.keep_user_attributes;
+        let self_cloned = self.clone();
         let this = Rc::make_mut(&mut self.state);
         this.file_attributes = List::empty();
         for attr in attributes.iter() {
             match attr {
                 Node::Attribute(attr) => {
                     if attr.name.1 == naming_special_names::user_attributes::PACKAGE_OVERRIDE {
-                        if let [AttributeParam::String(_, s)] = &attr.params {
-                            this.package = Some(
-                                std::str::from_utf8(s).expect("Unable to parse package override"),
-                            );
+                        if let &[AttributeParam::String(pos, s)] = attr.params {
+                            let package_name =
+                                std::str::from_utf8(s).expect("Unable to parse package override");
+                            let package_override =
+                                self_cloned.alloc(PackageMembership::PackageOverride(
+                                    pos.clone().into(),
+                                    package_name.into(),
+                                ));
+                            this.package = Some(package_override);
                         }
                     }
                     if keep_user_attributes {

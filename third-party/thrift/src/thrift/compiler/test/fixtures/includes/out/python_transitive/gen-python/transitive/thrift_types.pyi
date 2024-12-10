@@ -10,15 +10,18 @@ from __future__ import annotations
 import typing as _typing
 
 import folly.iobuf as _fbthrift_iobuf
+import transitive.thrift_abstract_types as _fbthrift_python_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
+
+from transitive.thrift_enums import *
 
 
 class _fbthrift_compatible_with_Foo:
     pass
 
 
-class Foo(_fbthrift_python_types.Struct, _fbthrift_compatible_with_Foo):
+class Foo(_fbthrift_python_types.Struct, _fbthrift_compatible_with_Foo, _fbthrift_python_abstract_types.Foo):
     a: _typing.Final[int] = ...
     def __init__(
         self, *,
@@ -33,6 +36,7 @@ class Foo(_fbthrift_python_types.Struct, _fbthrift_compatible_with_Foo):
     def _to_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "transitive.types.Foo": ...  # type: ignore
     def _to_py_deprecated(self) -> "transitive.ttypes.Foo": ...  # type: ignore
+_fbthrift_Foo = Foo
 
 
-ExampleFoo: Foo = ...
+ExampleFoo: _fbthrift_Foo = ...

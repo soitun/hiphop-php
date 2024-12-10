@@ -29,8 +29,6 @@ from thrift.py3.types cimport (
     init_unicode_from_cpp as __init_unicode_from_cpp,
     set_iter as __set_iter,
     map_iter as __map_iter,
-    map_contains as __map_contains,
-    map_getitem as __map_getitem,
     reference_shared_ptr as __reference_shared_ptr,
     get_field_name_by_index as __get_field_name_by_index,
     reset_field as __reset_field,
@@ -61,6 +59,7 @@ from module1.containers_FBTHRIFT_ONLY_DO_NOT_USE import (
     List__Enum,
 )
 
+_fbthrift__module_name__ = "module1.types"
 
 cdef object get_types_reflection():
     return importlib.import_module(
@@ -69,6 +68,8 @@ cdef object get_types_reflection():
 
 @__cython.auto_pickle(False)
 cdef class Struct(thrift.py3.types.Struct):
+    __module__ = _fbthrift__module_name__
+
     def __init__(Struct self, **kwargs):
         self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = make_shared[_module1_cbindings.cStruct]()
         self._fields_setter = _fbthrift_types_fields.__Struct_FieldsSetter._fbthrift_create(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE.get())
@@ -188,14 +189,14 @@ cdef class Struct(thrift.py3.types.Struct):
         py_deprecated_types = importlib.import_module("module1.ttypes")
         return thrift.util.converter.to_py_struct(py_deprecated_types.Struct, self)
 
-
 cdef vector[_module1_cbindings.cEnum] List__Enum__make_instance(object items) except *:
     cdef vector[_module1_cbindings.cEnum] c_inst
-    if items is not None:
-        for item in items:
-            if not isinstance(item, Enum):
-                raise TypeError(f"{item!r} is not of type Enum")
-            c_inst.push_back(<_module1_cbindings.cEnum><int>item)
+    if items is None:
+        return cmove(c_inst)
+    for item in items:
+        if not isinstance(item, Enum):
+            raise TypeError(f"{item!r} is not of type Enum")
+        c_inst.push_back(<_module1_cbindings.cEnum><int>item)
     return cmove(c_inst)
 
 cdef object List__Enum__from_cpp(const vector[_module1_cbindings.cEnum]& c_vec) except *:

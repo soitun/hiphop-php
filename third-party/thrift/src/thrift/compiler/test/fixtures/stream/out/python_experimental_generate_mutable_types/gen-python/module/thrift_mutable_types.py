@@ -12,6 +12,9 @@
 from __future__ import annotations
 
 import folly.iobuf as _fbthrift_iobuf
+
+from abc import ABCMeta as _fbthrift_ABCMeta
+import module.thrift_abstract_types as _fbthrift_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.mutable_types as _fbthrift_python_mutable_types
 import thrift.python.mutable_exceptions as _fbthrift_python_mutable_exceptions
@@ -22,6 +25,9 @@ import thrift.python.mutable_typeinfos as _fbthrift_python_mutable_typeinfos
 class FooStreamEx(metaclass=_fbthrift_python_mutable_exceptions.MutableGeneratedErrorMeta):
     _fbthrift_SPEC = (
     )
+
+    _fbthrift_abstract_base_class = _fbthrift_abstract_types.FooStreamEx
+
 
     @staticmethod
     def __get_thrift_name__() -> str:
@@ -60,11 +66,14 @@ class FooStreamEx(metaclass=_fbthrift_python_mutable_exceptions.MutableGenerated
         except ModuleNotFoundError:
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.FooStreamEx, self)
-
+_fbthrift_FooStreamEx = FooStreamEx
 
 class FooEx(metaclass=_fbthrift_python_mutable_exceptions.MutableGeneratedErrorMeta):
     _fbthrift_SPEC = (
     )
+
+    _fbthrift_abstract_base_class = _fbthrift_abstract_types.FooEx
+
 
     @staticmethod
     def __get_thrift_name__() -> str:
@@ -103,11 +112,14 @@ class FooEx(metaclass=_fbthrift_python_mutable_exceptions.MutableGeneratedErrorM
         except ModuleNotFoundError:
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.FooEx, self)
-
+_fbthrift_FooEx = FooEx
 
 class FooEx2(metaclass=_fbthrift_python_mutable_exceptions.MutableGeneratedErrorMeta):
     _fbthrift_SPEC = (
     )
+
+    _fbthrift_abstract_base_class = _fbthrift_abstract_types.FooEx2
+
 
     @staticmethod
     def __get_thrift_name__() -> str:
@@ -146,9 +158,10 @@ class FooEx2(metaclass=_fbthrift_python_mutable_exceptions.MutableGeneratedError
         except ModuleNotFoundError:
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.FooEx2, self)
+_fbthrift_FooEx2 = FooEx2
+
 
 from module.thrift_enums import *
-
 _fbthrift_all_enums = [
 ]
 

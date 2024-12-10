@@ -21,12 +21,10 @@
 #include "hphp/runtime/base/builtin-functions.h"
 #include "hphp/runtime/base/recorder.h"
 #include "hphp/runtime/base/replayer.h"
-#include "hphp/runtime/base/runtime-option.h"
 #include "hphp/runtime/base/type-string.h"
 #include "hphp/runtime/base/type-variant.h"
 #include "hphp/runtime/base/tv-refcount.h"
 #include "hphp/runtime/base/container-functions.h"
-#include "hphp/runtime/base/runtime-option.h"
 #include "hphp/runtime/base/repo-autoload-map.h"
 #include "hphp/runtime/base/sandbox-events.h"
 #include "hphp/runtime/base/unit-cache.h"
@@ -244,7 +242,7 @@ AutoloadHandler::loadFromMapImpl(const String& name,
     auto const eagerSync = Cfg::Eval::AutoloadEagerSyncUnitCache && m_map;
     auto const unit = lookupUnit(fileRes->m_path.get(), fileRes->m_info, "",
                                  &initial, nullptr,
-                                 RuntimeOption::TrustAutoloaderPath,
+                                 Cfg::Eval::TrustAutoloaderPath,
                                  false /* forPrefetch */,
                                  eagerSync /* forAutoload */);
     if (unit) {

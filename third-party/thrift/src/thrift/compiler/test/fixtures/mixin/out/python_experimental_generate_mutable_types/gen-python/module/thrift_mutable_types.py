@@ -12,6 +12,9 @@
 from __future__ import annotations
 
 import folly.iobuf as _fbthrift_iobuf
+
+from abc import ABCMeta as _fbthrift_ABCMeta
+import module.thrift_abstract_types as _fbthrift_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.mutable_types as _fbthrift_python_mutable_types
 import thrift.python.mutable_exceptions as _fbthrift_python_mutable_exceptions
@@ -72,6 +75,8 @@ class Mixin1(metaclass=_fbthrift_python_mutable_types.MutableStructMeta):
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.Mixin1, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.Mixin1, Mixin1)
+_fbthrift_Mixin1 = Mixin1
 
 class Mixin2(metaclass=_fbthrift_python_mutable_types.MutableStructMeta):
     _fbthrift_SPEC = (
@@ -137,6 +142,8 @@ class Mixin2(metaclass=_fbthrift_python_mutable_types.MutableStructMeta):
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.Mixin2, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.Mixin2, Mixin2)
+_fbthrift_Mixin2 = Mixin2
 
 class Mixin3Base(metaclass=_fbthrift_python_mutable_types.MutableStructMeta):
     _fbthrift_SPEC = (
@@ -191,6 +198,8 @@ class Mixin3Base(metaclass=_fbthrift_python_mutable_types.MutableStructMeta):
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.Mixin3Base, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.Mixin3Base, Mixin3Base)
+_fbthrift_Mixin3Base = Mixin3Base
 
 class Foo(metaclass=_fbthrift_python_mutable_types.MutableStructMeta):
     _fbthrift_SPEC = (
@@ -267,8 +276,11 @@ class Foo(metaclass=_fbthrift_python_mutable_types.MutableStructMeta):
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.Foo, self)
 
-from module.thrift_enums import *
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.Foo, Foo)
+_fbthrift_Foo = Foo
 
+
+from module.thrift_enums import *
 _fbthrift_all_enums = [
 ]
 
@@ -281,4 +293,4 @@ _fbthrift_all_structs = [
 ]
 _fbthrift_python_mutable_types.fill_specs(*_fbthrift_all_structs)
 
-Mixin3 = Mixin3Base
+Mixin3 = _fbthrift_Mixin3Base

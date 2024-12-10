@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<e4a6b1bf8f050500af7e9b713df86327>>
+// @generated SignedSource<<86ecf904ee26c517bdcf2e57f12a995e>>
 //
 // To regenerate this file, run:
 //   hphp/hack/src/oxidized_regen.sh
@@ -58,6 +58,7 @@ impl<'a> TrivialDrop for ExprDepTypeReason<'a> {}
 arena_deserializer::impl_deserialize_in_arena!(ExprDepTypeReason<'arena>);
 
 pub use oxidized::typing_reason::BlameSource;
+pub use oxidized::typing_reason::PessimiseReason;
 
 #[derive(
     Clone,
@@ -518,10 +519,22 @@ pub enum WitnessDecl<'a> {
     PessimisedInout(&'a pos_or_decl::PosOrDecl<'a>),
     #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
     #[rust_to_ocaml(name = "Pessimised_return")]
-    PessimisedReturn(&'a pos_or_decl::PosOrDecl<'a>),
+    #[rust_to_ocaml(inline_tuple)]
+    PessimisedReturn(
+        &'a (
+            &'a pos_or_decl::PosOrDecl<'a>,
+            &'a oxidized::typing_reason::PessimiseReason,
+        ),
+    ),
     #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
     #[rust_to_ocaml(name = "Pessimised_prop")]
-    PessimisedProp(&'a pos_or_decl::PosOrDecl<'a>),
+    #[rust_to_ocaml(inline_tuple)]
+    PessimisedProp(
+        &'a (
+            &'a pos_or_decl::PosOrDecl<'a>,
+            &'a oxidized::typing_reason::PessimiseReason,
+        ),
+    ),
     #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
     #[rust_to_ocaml(name = "Pessimised_this")]
     PessimisedThis(&'a pos_or_decl::PosOrDecl<'a>),
@@ -529,6 +542,9 @@ pub enum WitnessDecl<'a> {
     #[rust_to_ocaml(name = "Illegal_recursive_type")]
     #[rust_to_ocaml(inline_tuple)]
     IllegalRecursiveType(&'a (&'a pos_or_decl::PosOrDecl<'a>, &'a str)),
+    #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
+    #[rust_to_ocaml(name = "Support_dynamic_type_assume")]
+    SupportDynamicTypeAssume(&'a pos_or_decl::PosOrDecl<'a>),
 }
 impl<'a> TrivialDrop for WitnessDecl<'a> {}
 arena_deserializer::impl_deserialize_in_arena!(WitnessDecl<'arena>);
@@ -726,6 +742,10 @@ pub enum T_<'a> {
     #[rust_to_ocaml(name = "Opaque_type_from_module")]
     #[rust_to_ocaml(inline_tuple)]
     OpaqueTypeFromModule(&'a (&'a pos_or_decl::PosOrDecl<'a>, &'a str, T_<'a>)),
+    #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
+    #[rust_to_ocaml(name = "SDT_call")]
+    #[rust_to_ocaml(inline_tuple)]
+    SDTCall(&'a (&'a pos_or_decl::PosOrDecl<'a>, T_<'a>)),
 }
 impl<'a> TrivialDrop for T_<'a> {}
 arena_deserializer::impl_deserialize_in_arena!(T_<'arena>);

@@ -23,6 +23,7 @@ from __future__ import annotations
 import typing as _typing
 
 import folly.iobuf as _fbthrift_iobuf
+import module.thrift_abstract_types as _fbthrift_python_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.mutable_types as _fbthrift_python_mutable_types
 import thrift.python.mutable_exceptions as _fbthrift_python_mutable_exceptions
@@ -37,12 +38,12 @@ class _fbthrift_compatible_with_Fields:
     pass
 
 
-class Fields(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_with_Fields):
+class Fields(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_with_Fields, _fbthrift_python_abstract_types.Fields):
 
     @property
     def injected_field(self) -> str: ...
     @injected_field.setter
-    def injected_field(self, value: str): ...
+    def injected_field(self, value: str) -> None: ...
 
     def __init__(
         self, *,
@@ -58,18 +59,18 @@ class Fields(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_
     def _to_mutable_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "module.types.Fields": ...  # type: ignore
     def _to_py_deprecated(self) -> "module.ttypes.Fields": ...  # type: ignore
-
+_fbthrift_Fields = Fields
 
 class _fbthrift_compatible_with_FieldsInjectedToEmptyStruct:
     pass
 
 
-class FieldsInjectedToEmptyStruct(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_with_FieldsInjectedToEmptyStruct):
+class FieldsInjectedToEmptyStruct(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_with_FieldsInjectedToEmptyStruct, _fbthrift_python_abstract_types.FieldsInjectedToEmptyStruct):
 
     @property
     def injected_field(self) -> str: ...
     @injected_field.setter
-    def injected_field(self, value: str): ...
+    def injected_field(self, value: str) -> None: ...
 
     def __init__(
         self, *,
@@ -85,24 +86,24 @@ class FieldsInjectedToEmptyStruct(_fbthrift_python_mutable_types.MutableStruct, 
     def _to_mutable_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "module.types.FieldsInjectedToEmptyStruct": ...  # type: ignore
     def _to_py_deprecated(self) -> "module.ttypes.FieldsInjectedToEmptyStruct": ...  # type: ignore
-
+_fbthrift_FieldsInjectedToEmptyStruct = FieldsInjectedToEmptyStruct
 
 class _fbthrift_compatible_with_FieldsInjectedToStruct:
     pass
 
 
-class FieldsInjectedToStruct(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_with_FieldsInjectedToStruct):
+class FieldsInjectedToStruct(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_with_FieldsInjectedToStruct, _fbthrift_python_abstract_types.FieldsInjectedToStruct):
 
     @property
     def injected_field(self) -> str: ...
     @injected_field.setter
-    def injected_field(self, value: str): ...
+    def injected_field(self, value: str) -> None: ...
 
 
     @property
     def string_field(self) -> str: ...
     @string_field.setter
-    def string_field(self, value: str): ...
+    def string_field(self, value: str) -> None: ...
 
     def __init__(
         self, *,
@@ -120,36 +121,36 @@ class FieldsInjectedToStruct(_fbthrift_python_mutable_types.MutableStruct, _fbth
     def _to_mutable_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "module.types.FieldsInjectedToStruct": ...  # type: ignore
     def _to_py_deprecated(self) -> "module.ttypes.FieldsInjectedToStruct": ...  # type: ignore
-
+_fbthrift_FieldsInjectedToStruct = FieldsInjectedToStruct
 
 class _fbthrift_compatible_with_FieldsInjectedWithIncludedStruct:
     pass
 
 
-class FieldsInjectedWithIncludedStruct(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_with_FieldsInjectedWithIncludedStruct):
+class FieldsInjectedWithIncludedStruct(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_with_FieldsInjectedWithIncludedStruct, _fbthrift_python_abstract_types.FieldsInjectedWithIncludedStruct):
 
     @property
     def injected_unstructured_annotation_field(self) -> _typing.Optional[str]: ...
     @injected_unstructured_annotation_field.setter
-    def injected_unstructured_annotation_field(self, value: _typing.Optional[str]): ...
+    def injected_unstructured_annotation_field(self, value: _typing.Optional[str]) -> None: ...
 
 
     @property
     def injected_structured_annotation_field(self) -> _typing.Optional[str]: ...
     @injected_structured_annotation_field.setter
-    def injected_structured_annotation_field(self, value: _typing.Optional[str]): ...
+    def injected_structured_annotation_field(self, value: _typing.Optional[str]) -> None: ...
 
 
     @property
     def injected_field(self) -> str: ...
     @injected_field.setter
-    def injected_field(self, value: str): ...
+    def injected_field(self, value: str) -> None: ...
 
 
     @property
     def string_field(self) -> str: ...
     @string_field.setter
-    def string_field(self, value: str): ...
+    def string_field(self, value: str) -> None: ...
 
     def __init__(
         self, *,
@@ -171,3 +172,4 @@ class FieldsInjectedWithIncludedStruct(_fbthrift_python_mutable_types.MutableStr
     def _to_mutable_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "module.types.FieldsInjectedWithIncludedStruct": ...  # type: ignore
     def _to_py_deprecated(self) -> "module.ttypes.FieldsInjectedWithIncludedStruct": ...  # type: ignore
+_fbthrift_FieldsInjectedWithIncludedStruct = FieldsInjectedWithIncludedStruct

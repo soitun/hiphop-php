@@ -29,8 +29,6 @@ from thrift.py3.types cimport (
     init_unicode_from_cpp as __init_unicode_from_cpp,
     set_iter as __set_iter,
     map_iter as __map_iter,
-    map_contains as __map_contains,
-    map_getitem as __map_getitem,
     reference_shared_ptr as __reference_shared_ptr,
     get_field_name_by_index as __get_field_name_by_index,
     reset_field as __reset_field,
@@ -63,6 +61,7 @@ from matching_struct_names.containers_FBTHRIFT_ONLY_DO_NOT_USE import (
     List__List__module_MyStruct,
 )
 
+_fbthrift__module_name__ = "matching_struct_names.types"
 
 cdef object get_types_reflection():
     return importlib.import_module(
@@ -71,6 +70,8 @@ cdef object get_types_reflection():
 
 @__cython.auto_pickle(False)
 cdef class MyStruct(thrift.py3.types.Struct):
+    __module__ = _fbthrift__module_name__
+
     def __init__(MyStruct self, **kwargs):
         self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = make_shared[_matching_struct_names_cbindings.cMyStruct]()
         self._fields_setter = _fbthrift_types_fields.__MyStruct_FieldsSetter._fbthrift_create(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE.get())
@@ -184,6 +185,8 @@ cdef class MyStruct(thrift.py3.types.Struct):
 
 @__cython.auto_pickle(False)
 cdef class Combo(thrift.py3.types.Struct):
+    __module__ = _fbthrift__module_name__
+
     def __init__(Combo self, **kwargs):
         self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = make_shared[_matching_struct_names_cbindings.cCombo]()
         self._fields_setter = _fbthrift_types_fields.__Combo_FieldsSetter._fbthrift_create(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE.get())
@@ -327,14 +330,14 @@ cdef class Combo(thrift.py3.types.Struct):
         py_deprecated_types = importlib.import_module("matching_struct_names.ttypes")
         return thrift.util.converter.to_py_struct(py_deprecated_types.Combo, self)
 
-
 cdef vector[_matching_struct_names_cbindings.cMyStruct] List__MyStruct__make_instance(object items) except *:
     cdef vector[_matching_struct_names_cbindings.cMyStruct] c_inst
-    if items is not None:
-        for item in items:
-            if not isinstance(item, MyStruct):
-                raise TypeError(f"{item!r} is not of type MyStruct")
-            c_inst.push_back(deref((<MyStruct>item)._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE))
+    if items is None:
+        return cmove(c_inst)
+    for item in items:
+        if not isinstance(item, MyStruct):
+            raise TypeError(f"{item!r} is not of type MyStruct")
+        c_inst.push_back(deref((<MyStruct>item)._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE))
     return cmove(c_inst)
 
 cdef object List__MyStruct__from_cpp(const vector[_matching_struct_names_cbindings.cMyStruct]& c_vec) except *:
@@ -344,16 +347,16 @@ cdef object List__MyStruct__from_cpp(const vector[_matching_struct_names_cbindin
         py_list.append(MyStruct._create_FBTHRIFT_ONLY_DO_NOT_USE(make_shared[_matching_struct_names_cbindings.cMyStruct](c_vec[idx])))
     return List__MyStruct(py_list, thrift.py3.types._fbthrift_list_private_ctor)
 
-
 cdef vector[vector[_matching_struct_names_cbindings.cMyStruct]] List__List__MyStruct__make_instance(object items) except *:
     cdef vector[vector[_matching_struct_names_cbindings.cMyStruct]] c_inst
-    if items is not None:
-        for item in items:
-            if item is None:
-                raise TypeError("None is not of the type _typing.Sequence[MyStruct]")
-            if not isinstance(item, List__MyStruct):
-                item = List__MyStruct(item)
-            c_inst.push_back(List__MyStruct__make_instance(item))
+    if items is None:
+        return cmove(c_inst)
+    for item in items:
+        if item is None:
+            raise TypeError("None is not of the type _typing.Sequence[MyStruct]")
+        if not isinstance(item, List__MyStruct):
+            item = List__MyStruct(item)
+        c_inst.push_back(List__MyStruct__make_instance(item))
     return cmove(c_inst)
 
 cdef object List__List__MyStruct__from_cpp(const vector[vector[_matching_struct_names_cbindings.cMyStruct]]& c_vec) except *:
@@ -363,14 +366,14 @@ cdef object List__List__MyStruct__from_cpp(const vector[vector[_matching_struct_
         py_list.append(List__MyStruct__from_cpp(c_vec[idx]))
     return List__List__MyStruct(py_list, thrift.py3.types._fbthrift_list_private_ctor)
 
-
 cdef vector[_module_cbindings.cMyStruct] List__module_MyStruct__make_instance(object items) except *:
     cdef vector[_module_cbindings.cMyStruct] c_inst
-    if items is not None:
-        for item in items:
-            if not isinstance(item, _module_types.MyStruct):
-                raise TypeError(f"{item!r} is not of type _module_types.MyStruct")
-            c_inst.push_back(deref((<_module_types.MyStruct>item)._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE))
+    if items is None:
+        return cmove(c_inst)
+    for item in items:
+        if not isinstance(item, _module_types.MyStruct):
+            raise TypeError(f"{item!r} is not of type _module_types.MyStruct")
+        c_inst.push_back(deref((<_module_types.MyStruct>item)._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE))
     return cmove(c_inst)
 
 cdef object List__module_MyStruct__from_cpp(const vector[_module_cbindings.cMyStruct]& c_vec) except *:
@@ -380,16 +383,16 @@ cdef object List__module_MyStruct__from_cpp(const vector[_module_cbindings.cMySt
         py_list.append(_module_types.MyStruct._create_FBTHRIFT_ONLY_DO_NOT_USE(make_shared[_module_cbindings.cMyStruct](c_vec[idx])))
     return List__module_MyStruct(py_list, thrift.py3.types._fbthrift_list_private_ctor)
 
-
 cdef vector[vector[_module_cbindings.cMyStruct]] List__List__module_MyStruct__make_instance(object items) except *:
     cdef vector[vector[_module_cbindings.cMyStruct]] c_inst
-    if items is not None:
-        for item in items:
-            if item is None:
-                raise TypeError("None is not of the type _typing.Sequence[_module_types.MyStruct]")
-            if not isinstance(item, List__module_MyStruct):
-                item = List__module_MyStruct(item)
-            c_inst.push_back(List__module_MyStruct__make_instance(item))
+    if items is None:
+        return cmove(c_inst)
+    for item in items:
+        if item is None:
+            raise TypeError("None is not of the type _typing.Sequence[_module_types.MyStruct]")
+        if not isinstance(item, List__module_MyStruct):
+            item = List__module_MyStruct(item)
+        c_inst.push_back(List__module_MyStruct__make_instance(item))
     return cmove(c_inst)
 
 cdef object List__List__module_MyStruct__from_cpp(const vector[vector[_module_cbindings.cMyStruct]]& c_vec) except *:

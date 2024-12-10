@@ -10,6 +10,7 @@ from __future__ import annotations
 import typing as _typing
 
 import folly.iobuf as _fbthrift_iobuf
+import a.thrift_abstract_types as _fbthrift_python_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
 
@@ -20,12 +21,14 @@ import typeshed_three
 import typeshed_two
 import typeshed_one
 
+from a.thrift_enums import *
+
 
 class _fbthrift_compatible_with_MyStruct:
     pass
 
 
-class MyStruct(_fbthrift_python_types.Struct, _fbthrift_compatible_with_MyStruct):
+class MyStruct(_fbthrift_python_types.Struct, _fbthrift_compatible_with_MyStruct, _fbthrift_python_abstract_types.MyStruct):
     a: _typing.Final[typeshed_one.AdapterOneType[_fbthrift__b__thrift_types.B]] = ...
     b: _typing.Final[typeshed_three.AdapterThreeType[_fbthrift__c__thrift_types.C1]] = ...
     c: _typing.Final[typeshed_two.AdapterTwoType[_fbthrift__c__thrift_types.C2]] = ...
@@ -46,6 +49,7 @@ class MyStruct(_fbthrift_python_types.Struct, _fbthrift_compatible_with_MyStruct
     def _to_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "a.types.MyStruct": ...  # type: ignore
     def _to_py_deprecated(self) -> "a.ttypes.MyStruct": ...  # type: ignore
+_fbthrift_MyStruct = MyStruct
 
 
 class _fbthrift_MyService_adapted_return_args(_fbthrift_python_types.Struct):

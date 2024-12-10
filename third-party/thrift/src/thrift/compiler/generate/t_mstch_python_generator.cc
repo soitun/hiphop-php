@@ -36,7 +36,6 @@
 #include <thrift/compiler/generate/python/util.h>
 #include <thrift/compiler/generate/t_mstch_generator.h>
 #include <thrift/compiler/sema/ast_validator.h>
-#include <thrift/compiler/sema/explicit_include_validator.h>
 
 namespace apache::thrift::compiler {
 
@@ -130,6 +129,7 @@ class python_mstch_program : public mstch_program {
         this,
         {
             {"program:module_path", &python_mstch_program::module_path},
+            {"program:safe_patch?", &python_mstch_program::safe_patch},
             {"program:safe_patch_module_path",
              &python_mstch_program::safe_patch_module_path},
             {"program:module_mangle", &python_mstch_program::module_mangle},
@@ -201,6 +201,11 @@ class python_mstch_program : public mstch_program {
   mstch::node module_path() {
     return get_py3_namespace_with_name_and_prefix(
         program_, get_option("root_module_prefix"));
+  }
+
+  mstch::node safe_patch() {
+    constexpr std::string_view prefix = "gen_safe_patch_";
+    return program_->name().substr(0, prefix.size()) == prefix;
   }
 
   mstch::node safe_patch_module_path() {
@@ -1091,13 +1096,6 @@ class t_mstch_python_generator : public t_mstch_generator {
         enum_member_union_field_names_validator::validate_enum);
     validator.add_struct_visitor(
         enum_member_union_field_names_validator::validate_structured);
-    if (!has_option("disable_explicit_include_validator")) {
-      add_explicit_include_validators(
-          validator,
-          diagnostic_level::error,
-          /* skip_annotations*/ true,
-          /* skip_service_includes*/ true);
-    }
     if (get_py3_namespace(program_).empty()) {
       validator.add_structured_definition_visitor(
           module_name_collision_validator::validate_named);
@@ -1383,13 +1381,16 @@ void t_mstch_python_generator::generate_types() {
       has_option("experimental_generate_mutable_types");
   const bool experimental_generate_abstract_types =
       has_option("experimental_generate_abstract_types");
+  const bool disable_abstract_types = has_option("disable_abstract_types");
+  const bool enable_abstract_types =
+      experimental_generate_abstract_types && !disable_abstract_types;
 
   mstch_context_.set_or_erase_option(
       experimental_generate_mutable_types,
       "generate_to_mutable_python_conversion_methods",
       "true");
   mstch_context_.set_or_erase_option(
-      experimental_generate_abstract_types, "enable_abstract_types", "true");
+      enable_abstract_types, "enable_abstract_types", "true");
   generate_file(
       "thrift_types.py",
       IsTypesFile::Yes,
@@ -1411,13 +1412,12 @@ void t_mstch_python_generator::generate_types() {
       TypeKind::Immutable,
       generate_root_path_);
 
-  if (experimental_generate_abstract_types) {
-    generate_file(
-        "thrift_abstract_types.py",
-        IsTypesFile::Yes,
-        TypeKind::Abstract,
-        generate_root_path_);
-  }
+  generate_file(
+      "thrift_abstract_types.py",
+      IsTypesFile::Yes,
+      TypeKind::Abstract,
+      generate_root_path_);
+
   mstch_context_.options.erase("generate_to_mutable_python_conversion_methods");
 
   if (experimental_generate_mutable_types) {

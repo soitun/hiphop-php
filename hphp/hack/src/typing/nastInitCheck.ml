@@ -346,7 +346,10 @@ and assign_expr env acc e1 =
   | _ -> acc
 
 and argument_list env acc el =
-  List.fold_left ~f:(fun acc_ (_, e) -> expr env acc_ e) ~init:acc el
+  List.fold_left
+    ~f:(fun acc_ arg -> expr env acc_ (Aast_utils.arg_to_expr arg))
+    ~init:acc
+    el
 
 and stmt env acc st =
   let expr = expr env in
@@ -556,8 +559,9 @@ and expr_ env acc p e =
     let args =
       match func with
       | (_, _, Id (_, fun_name)) when is_whitelisted fun_name ->
-        List.filter args ~f:(function
-            | (_, (_, _, This)) -> false
+        List.filter args ~f:(fun arg ->
+            match Aast_utils.arg_to_expr arg with
+            | (_, _, This) -> false
             | _ -> true)
       | _ -> args
     in
@@ -590,13 +594,14 @@ and expr_ env acc p e =
   | Cast (_, e)
   | Unop (_, e) ->
     expr acc e
-  | Binop Aast.{ bop = Ast_defs.Eq None; lhs = e1; rhs = e2 } ->
+  | Assign (e1, None, e2) ->
     let acc = expr acc e2 in
     assign_expr env acc e1
   | Binop Aast.{ bop = Ast_defs.Ampamp; lhs = e; _ }
   | Binop Aast.{ bop = Ast_defs.Barbar; lhs = e; _ } ->
     expr acc e
-  | Binop Aast.{ lhs = e1; rhs = e2; _ } ->
+  | Binop Aast.{ lhs = e1; rhs = e2; _ }
+  | Assign (e1, _, e2) ->
     let acc = expr acc e1 in
     expr acc e2
   | Pipe (_, e1, e2) ->

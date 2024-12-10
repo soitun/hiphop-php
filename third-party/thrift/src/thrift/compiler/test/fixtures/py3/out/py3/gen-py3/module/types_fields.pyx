@@ -181,7 +181,7 @@ cdef class __SimpleStruct_FieldsSetter(__StructFieldsSetter):
         if _fbthrift_value is None:
             __reset_field[_module_cbindings.cSimpleStruct](deref(self._struct_cpp_obj), 7)
             return
-        deref(self._struct_cpp_obj).something_ref().assign(deref(_module_types._std_unordered_map__Map__i32_i32(_fbthrift_value)._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE))
+        deref(self._struct_cpp_obj).something_ref().assign(_module_types._std_unordered_map__Map__i32_i32__make_instance(_fbthrift_value))
 
 
 @__cython.auto_pickle(False)
@@ -446,7 +446,7 @@ cdef class __CustomFields_FieldsSetter(__StructFieldsSetter):
         if _fbthrift_value is None:
             __reset_field[_module_cbindings.cCustomFields](deref(self._struct_cpp_obj), 7)
             return
-        deref(self._struct_cpp_obj).map_field_ref().assign(deref(_module_types._MyType__Map__i32_i32(_fbthrift_value)._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE))
+        deref(self._struct_cpp_obj).map_field_ref().assign(_module_types._MyType__Map__i32_i32__make_instance(_fbthrift_value))
 
     cdef void _set_field_8(self, _fbthrift_value) except *:
         # for field struct_field
@@ -553,7 +553,7 @@ cdef class __CustomTypedefFields_FieldsSetter(__StructFieldsSetter):
         if _fbthrift_value is None:
             __reset_field[_module_cbindings.cCustomTypedefFields](deref(self._struct_cpp_obj), 7)
             return
-        deref(self._struct_cpp_obj).map_field_ref().assign(deref(_module_types._MyType__Map__i32_i32(_fbthrift_value)._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE))
+        deref(self._struct_cpp_obj).map_field_ref().assign(_module_types._MyType__Map__i32_i32__make_instance(_fbthrift_value))
 
     cdef void _set_field_8(self, _fbthrift_value) except *:
         # for field struct_field
@@ -639,28 +639,28 @@ cdef class __AdaptedTypedefFields_FieldsSetter(__StructFieldsSetter):
             return
         if not isinstance(_fbthrift_value, bytes):
             raise TypeError(f'binary_field is not a { bytes !r}.')
-        deref(self._struct_cpp_obj).binary_field_ref().assign(cmove(bytes_to_string(_fbthrift_value)))
+        deref(self._struct_cpp_obj).binary_field_ref().assign(_module_cbindings._py3_simple_AdaptedBinary(cmove(<string>_fbthrift_value)))
 
     cdef void _set_field_5(self, _fbthrift_value) except *:
         # for field list_field
         if _fbthrift_value is None:
             __reset_field[_module_cbindings.cAdaptedTypedefFields](deref(self._struct_cpp_obj), 5)
             return
-        deref(self._struct_cpp_obj).list_field_ref().assign(_module_types.List__i32__make_instance(_fbthrift_value))
+        deref(self._struct_cpp_obj).list_field_ref().assign(_module_types._py3_simple_AdaptedList__List__i32__make_instance(_fbthrift_value))
 
     cdef void _set_field_6(self, _fbthrift_value) except *:
         # for field set_field
         if _fbthrift_value is None:
             __reset_field[_module_cbindings.cAdaptedTypedefFields](deref(self._struct_cpp_obj), 6)
             return
-        deref(self._struct_cpp_obj).set_field_ref().assign(_module_types.Set__i32__make_instance(_fbthrift_value))
+        deref(self._struct_cpp_obj).set_field_ref().assign(_module_types._py3_simple_AdaptedSet__Set__i32__make_instance(_fbthrift_value))
 
     cdef void _set_field_7(self, _fbthrift_value) except *:
         # for field map_field
         if _fbthrift_value is None:
             __reset_field[_module_cbindings.cAdaptedTypedefFields](deref(self._struct_cpp_obj), 7)
             return
-        deref(self._struct_cpp_obj).map_field_ref().assign(deref(_module_types.Map__i32_i32(_fbthrift_value)._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE))
+        deref(self._struct_cpp_obj).map_field_ref().assign(_module_types._py3_simple_AdaptedMap__Map__i32_i32__make_instance(_fbthrift_value))
 
     cdef void _set_field_8(self, _fbthrift_value) except *:
         # for field struct_field

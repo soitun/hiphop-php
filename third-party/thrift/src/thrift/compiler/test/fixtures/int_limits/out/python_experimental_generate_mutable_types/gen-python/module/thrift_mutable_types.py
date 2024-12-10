@@ -12,6 +12,9 @@
 from __future__ import annotations
 
 import folly.iobuf as _fbthrift_iobuf
+
+from abc import ABCMeta as _fbthrift_ABCMeta
+import module.thrift_abstract_types as _fbthrift_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.mutable_types as _fbthrift_python_mutable_types
 import thrift.python.mutable_exceptions as _fbthrift_python_mutable_exceptions
@@ -149,8 +152,11 @@ class Limits(metaclass=_fbthrift_python_mutable_types.MutableStructMeta):
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.Limits, self)
 
-from module.thrift_enums import *
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.Limits, Limits)
+_fbthrift_Limits = Limits
 
+
+from module.thrift_enums import *
 _fbthrift_all_enums = [
 ]
 

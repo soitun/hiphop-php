@@ -8,6 +8,9 @@
 from __future__ import annotations
 
 import folly.iobuf as _fbthrift_iobuf
+
+from abc import ABCMeta as _fbthrift_ABCMeta
+import module.thrift_abstract_types as _fbthrift_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
 
@@ -27,6 +30,9 @@ class Fiery(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
             8, # IDL type (see BaseTypeEnum)
         ),
     )
+
+    _fbthrift_abstract_base_class = _fbthrift_abstract_types.Fiery
+
 
     @staticmethod
     def __get_thrift_name__() -> str:
@@ -65,7 +71,7 @@ class Fiery(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
         except ModuleNotFoundError:
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.Fiery, self)
-
+_fbthrift_Fiery = Fiery
 
 class Serious(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
     _fbthrift_SPEC = (
@@ -81,6 +87,9 @@ class Serious(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
             8, # IDL type (see BaseTypeEnum)
         ),
     )
+
+    _fbthrift_abstract_base_class = _fbthrift_abstract_types.Serious
+
 
     @staticmethod
     def __get_thrift_name__() -> str:
@@ -119,7 +128,7 @@ class Serious(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
         except ModuleNotFoundError:
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.Serious, self)
-
+_fbthrift_Serious = Serious
 
 class ComplexFieldNames(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
     _fbthrift_SPEC = (
@@ -146,6 +155,9 @@ class ComplexFieldNames(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta
             8, # IDL type (see BaseTypeEnum)
         ),
     )
+
+    _fbthrift_abstract_base_class = _fbthrift_abstract_types.ComplexFieldNames
+
 
     @staticmethod
     def __get_thrift_name__() -> str:
@@ -184,7 +196,7 @@ class ComplexFieldNames(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta
         except ModuleNotFoundError:
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.ComplexFieldNames, self)
-
+_fbthrift_ComplexFieldNames = ComplexFieldNames
 
 class CustomFieldNames(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
     _fbthrift_SPEC = (
@@ -211,6 +223,9 @@ class CustomFieldNames(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta)
             8, # IDL type (see BaseTypeEnum)
         ),
     )
+
+    _fbthrift_abstract_base_class = _fbthrift_abstract_types.CustomFieldNames
+
 
     @staticmethod
     def __get_thrift_name__() -> str:
@@ -249,7 +264,7 @@ class CustomFieldNames(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta)
         except ModuleNotFoundError:
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.CustomFieldNames, self)
-
+_fbthrift_CustomFieldNames = CustomFieldNames
 
 class ExceptionWithPrimitiveField(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
     _fbthrift_SPEC = (
@@ -276,6 +291,9 @@ class ExceptionWithPrimitiveField(metaclass=_fbthrift_python_exceptions.Generate
             4, # IDL type (see BaseTypeEnum)
         ),
     )
+
+    _fbthrift_abstract_base_class = _fbthrift_abstract_types.ExceptionWithPrimitiveField
+
 
     @staticmethod
     def __get_thrift_name__() -> str:
@@ -314,7 +332,7 @@ class ExceptionWithPrimitiveField(metaclass=_fbthrift_python_exceptions.Generate
         except ModuleNotFoundError:
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.ExceptionWithPrimitiveField, self)
-
+_fbthrift_ExceptionWithPrimitiveField = ExceptionWithPrimitiveField
 
 class ExceptionWithStructuredAnnotation(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
     _fbthrift_SPEC = (
@@ -341,6 +359,9 @@ class ExceptionWithStructuredAnnotation(metaclass=_fbthrift_python_exceptions.Ge
             4, # IDL type (see BaseTypeEnum)
         ),
     )
+
+    _fbthrift_abstract_base_class = _fbthrift_abstract_types.ExceptionWithStructuredAnnotation
+
 
     @staticmethod
     def __get_thrift_name__() -> str:
@@ -379,11 +400,14 @@ class ExceptionWithStructuredAnnotation(metaclass=_fbthrift_python_exceptions.Ge
         except ModuleNotFoundError:
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.ExceptionWithStructuredAnnotation, self)
-
+_fbthrift_ExceptionWithStructuredAnnotation = ExceptionWithStructuredAnnotation
 
 class Banal(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
     _fbthrift_SPEC = (
     )
+
+    _fbthrift_abstract_base_class = _fbthrift_abstract_types.Banal
+
 
     @staticmethod
     def __get_thrift_name__() -> str:
@@ -415,13 +439,15 @@ class Banal(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
         except ModuleNotFoundError:
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.Banal, self)
+_fbthrift_Banal = Banal
 
 # This unfortunately has to be down here to prevent circular imports
 import module.thrift_metadata
 
-
+from module.thrift_enums import *
 _fbthrift_all_enums = [
 ]
+
 
 def _fbthrift_metadata__exception_Fiery():
     return module.thrift_metadata.gen_metadata_exception_Fiery()
