@@ -8,6 +8,9 @@
 from __future__ import annotations
 
 import folly.iobuf as _fbthrift_iobuf
+
+from abc import ABCMeta as _fbthrift_ABCMeta
+import test.fixtures.python_capi.containers.thrift_abstract_types as _fbthrift_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
 
@@ -103,6 +106,8 @@ class TemplateLists(metaclass=_fbthrift_python_types.StructMeta):
             py_asyncio_types = importlib.import_module("containers.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.TemplateLists, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.TemplateLists, TemplateLists)
+_fbthrift_TemplateLists = TemplateLists
 
 class TemplateSets(metaclass=_fbthrift_python_types.StructMeta):
     _fbthrift_SPEC = (
@@ -216,6 +221,8 @@ class TemplateSets(metaclass=_fbthrift_python_types.StructMeta):
             py_asyncio_types = importlib.import_module("containers.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.TemplateSets, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.TemplateSets, TemplateSets)
+_fbthrift_TemplateSets = TemplateSets
 
 class TemplateMaps(metaclass=_fbthrift_python_types.StructMeta):
     _fbthrift_SPEC = (
@@ -329,6 +336,8 @@ class TemplateMaps(metaclass=_fbthrift_python_types.StructMeta):
             py_asyncio_types = importlib.import_module("containers.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.TemplateMaps, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.TemplateMaps, TemplateMaps)
+_fbthrift_TemplateMaps = TemplateMaps
 
 class TWrapped(metaclass=_fbthrift_python_types.StructMeta):
     _fbthrift_SPEC = (
@@ -387,6 +396,8 @@ class TWrapped(metaclass=_fbthrift_python_types.StructMeta):
             py_asyncio_types = importlib.import_module("containers.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.TWrapped, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.TWrapped, TWrapped)
+_fbthrift_TWrapped = TWrapped
 
 class IndirectionA(metaclass=_fbthrift_python_types.StructMeta):
     _fbthrift_SPEC = (
@@ -434,6 +445,8 @@ class IndirectionA(metaclass=_fbthrift_python_types.StructMeta):
             py_asyncio_types = importlib.import_module("containers.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.IndirectionA, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.IndirectionA, IndirectionA)
+_fbthrift_IndirectionA = IndirectionA
 
 class IndirectionB(metaclass=_fbthrift_python_types.StructMeta):
     _fbthrift_SPEC = (
@@ -481,6 +494,8 @@ class IndirectionB(metaclass=_fbthrift_python_types.StructMeta):
             py_asyncio_types = importlib.import_module("containers.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.IndirectionB, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.IndirectionB, IndirectionB)
+_fbthrift_IndirectionB = IndirectionB
 
 class IndirectionC(metaclass=_fbthrift_python_types.StructMeta):
     _fbthrift_SPEC = (
@@ -528,12 +543,16 @@ class IndirectionC(metaclass=_fbthrift_python_types.StructMeta):
             py_asyncio_types = importlib.import_module("containers.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.IndirectionC, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.IndirectionC, IndirectionC)
+_fbthrift_IndirectionC = IndirectionC
+
 # This unfortunately has to be down here to prevent circular imports
 import test.fixtures.python_capi.containers.thrift_metadata
 
-
+from test.fixtures.python_capi.containers.thrift_enums import *
 _fbthrift_all_enums = [
 ]
+
 
 def _fbthrift_metadata__struct_TemplateLists():
     return test.fixtures.python_capi.containers.thrift_metadata.gen_metadata_struct_TemplateLists()
@@ -578,7 +597,7 @@ IOBuf = _fbthrift_iobuf.IOBuf
 small_vector_iobuf = _fbthrift_python_types.ListTypeFactory(_fbthrift_python_types.typeinfo_iobuf)
 fbvector_string = _fbthrift_python_types.ListTypeFactory(_fbthrift_python_types.typeinfo_string)
 fbvector_fbvector_string = _fbthrift_python_types.ListTypeFactory(_fbthrift_python_types.ListTypeInfo(_fbthrift_python_types.typeinfo_string))
-CppWrapper = TWrapped
+CppWrapper = _fbthrift_TWrapped
 ListOfWrapped = _fbthrift_python_types.ListTypeFactory(_fbthrift_python_types.StructTypeInfo(TWrapped))
 VecOfWrapped = _fbthrift_python_types.ListTypeFactory(_fbthrift_python_types.StructTypeInfo(TWrapped))
 ListOfWrappedAlias = _fbthrift_python_types.ListTypeFactory(_fbthrift_python_types.StructTypeInfo(TWrapped))

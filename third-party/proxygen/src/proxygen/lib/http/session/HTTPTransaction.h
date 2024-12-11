@@ -1239,7 +1239,7 @@ class HTTPTransaction
    * is currently implemented only for HTTP/2 and HTTP/3 and will do nothing on
    * HTTP/1 connections.
    *
-   * sendPadding() may be called only when sendBody() is also valid to call.
+   * sendPadding() may be called at any time, even before headers and after EOM.
    *
    * @param bytes The number of bytes of padding to send on this transaction.
    * The actual serialized size of the padding will be greater than this number
@@ -1582,7 +1582,7 @@ class HTTPTransaction
   /**
    * Schedule or refresh the idle timeout for this transaction
    */
-  void refreshTimeout() {
+  void refreshTimeout() override {
     // TODO(T121147568): Remove the zero-check after the experiment is complete.
     if (timer_ && hasIdleTimeout() &&
         idleTimeout_.value() != std::chrono::milliseconds::zero()) {

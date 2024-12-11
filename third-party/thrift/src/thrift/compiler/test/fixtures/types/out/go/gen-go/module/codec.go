@@ -7,9 +7,6 @@ package module
 
 
 import (
-    "reflect"
-    "sync"
-
     included "included"
     thrift "github.com/facebook/fbthrift/thrift/lib/go/thrift/types"
 )
@@ -17,729 +14,752 @@ import (
 var _ = included.GoUnusedProtection__
 // (needed to ensure safety because of naive import list construction)
 var _ = thrift.ZERO
-var _ = reflect.Ptr
 
 // Premade codec specs
 var (
-    premadeCodecTypeSpec_module_has_bitwise_ops *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_is_unscoped *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_MyForwardRefEnum *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_empty_struct *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_string *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_decorated_struct *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_i32 *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_list_i32 *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_set_i32 *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_set_i32_7194 *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_map_i32_string *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_map_i32_string_1261 *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_ContainerStruct *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_CppTypeStruct *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_i64 *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_VirtualStruct *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_MyStructWithForwardRefEnum *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_bool *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_TrivialNumeric *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_TrivialNestedWithDefault *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_map_string_i32 *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_ComplexString *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_ComplexNestedWithDefault *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_byte *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_i16 *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_MinPadding *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_MinPaddingWithCustomType *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_MyDataItem *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_MyStruct *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_Renaming *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_binary *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_TBinary *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_TBinary_8623 *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_SomeListOfTypeMap_2468 *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_AnnotatedTypes *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_ForwardUsageStruct *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_ForwardUsageByRef *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_ForwardUsageRoot *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_IncompleteMapDep *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_map_i32_module_IncompleteMapDep *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_IncompleteMap *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_CompleteMapDep *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_map_i32_module_CompleteMapDep *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_CompleteMap *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_IncompleteListDep *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_list_module_IncompleteListDep *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_IncompleteList *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_CompleteListDep *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_list_module_CompleteListDep *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_CompleteList *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_AdaptedListDep *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_list_module_AdaptedListDep *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_AdaptedList *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_DependentAdaptedListDep *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_list_module_DependentAdaptedListDep *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_DependentAdaptedList *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_list_i32_9187 *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_set_i32_7070 *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_map_i32_i32 *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_map_i32_i32_9565 *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_string_5252 *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_i32_9314 *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_AllocatorAware *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_AllocatorAware2 *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_IntTypedef *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_UintTypedef *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_TypedefStruct *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_StructWithDoubleUnderscores *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_map_module_TBinary_i64 *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_list_i64 *thrift.TypeSpec = nil
-)
-
-// Premade codec specs initializer
-var premadeCodecSpecsInitOnce = sync.OnceFunc(func() {
-    premadeCodecTypeSpec_module_has_bitwise_ops = &thrift.TypeSpec{
-        FullName: "module.has_bitwise_ops",
-        CodecEnumSpec: &thrift.CodecEnumSpec{
+    premadeCodecTypeSpec_module_has_bitwise_ops = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.has_bitwise_ops",
+            CodecEnumSpec: &thrift.CodecEnumSpec{
     ScopedName: "module.has_bitwise_ops",
 },
 
-    }
-    premadeCodecTypeSpec_module_is_unscoped = &thrift.TypeSpec{
-        FullName: "module.is_unscoped",
-        CodecEnumSpec: &thrift.CodecEnumSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_is_unscoped = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.is_unscoped",
+            CodecEnumSpec: &thrift.CodecEnumSpec{
     ScopedName: "module.is_unscoped",
 },
 
-    }
-    premadeCodecTypeSpec_module_MyForwardRefEnum = &thrift.TypeSpec{
-        FullName: "module.MyForwardRefEnum",
-        CodecEnumSpec: &thrift.CodecEnumSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_MyForwardRefEnum = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.MyForwardRefEnum",
+            CodecEnumSpec: &thrift.CodecEnumSpec{
     ScopedName: "module.MyForwardRefEnum",
 },
 
-    }
-    premadeCodecTypeSpec_module_empty_struct = &thrift.TypeSpec{
-        FullName: "module.empty_struct",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_empty_struct = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.empty_struct",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.empty_struct",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewEmptyStruct() },
 },
 
-    }
-    premadeCodecTypeSpec_string = &thrift.TypeSpec{
-        FullName: "string",
-        CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
+        }
+    }()
+    premadeCodecTypeSpec_string = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "string",
+            CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
     PrimitiveType: thrift.CODEC_PRIMITIVE_TYPE_STRING,
 },
 
-    }
-    premadeCodecTypeSpec_module_decorated_struct = &thrift.TypeSpec{
-        FullName: "module.decorated_struct",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_decorated_struct = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.decorated_struct",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.decorated_struct",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewDecoratedStruct() },
 },
 
-    }
-    premadeCodecTypeSpec_i32 = &thrift.TypeSpec{
-        FullName: "i32",
-        CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
+        }
+    }()
+    premadeCodecTypeSpec_i32 = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "i32",
+            CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
     PrimitiveType: thrift.CODEC_PRIMITIVE_TYPE_I32,
 },
 
-    }
-    premadeCodecTypeSpec_list_i32 = &thrift.TypeSpec{
-        FullName: "list<i32>",
-        CodecListSpec: &thrift.CodecListSpec{
+        }
+    }()
+    premadeCodecTypeSpec_list_i32 = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "list<i32>",
+            CodecListSpec: &thrift.CodecListSpec{
     ElementWireType: thrift.I32,
 	ElementTypeSpec: premadeCodecTypeSpec_i32,
 },
 
-    }
-    premadeCodecTypeSpec_set_i32 = &thrift.TypeSpec{
-        FullName: "set<i32>",
-        CodecSetSpec: &thrift.CodecSetSpec{
+        }
+    }()
+    premadeCodecTypeSpec_set_i32 = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "set<i32>",
+            CodecSetSpec: &thrift.CodecSetSpec{
     ElementWireType: thrift.I32,
 	ElementTypeSpec: premadeCodecTypeSpec_i32,
 },
 
-    }
-    premadeCodecTypeSpec_module_set_i32_7194 = &thrift.TypeSpec{
-        FullName: "module.set_i32_7194",
-        CodecTypedefSpec: &thrift.CodecTypedefSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_set_i32_7194 = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.set_i32_7194",
+            CodecTypedefSpec: &thrift.CodecTypedefSpec{
     ScopedName:         "module.set_i32_7194",
 	UnderlyingTypeSpec: premadeCodecTypeSpec_set_i32,
 },
 
-    }
-    premadeCodecTypeSpec_map_i32_string = &thrift.TypeSpec{
-        FullName: "map<i32, string>",
-        CodecMapSpec: &thrift.CodecMapSpec{
+        }
+    }()
+    premadeCodecTypeSpec_map_i32_string = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "map<i32, string>",
+            CodecMapSpec: &thrift.CodecMapSpec{
 	KeyTypeSpec:   premadeCodecTypeSpec_i32,
 	ValueTypeSpec: premadeCodecTypeSpec_string,
     KeyWireType:   thrift.I32,
 	ValueWireType: thrift.STRING,
 },
 
-    }
-    premadeCodecTypeSpec_module_map_i32_string_1261 = &thrift.TypeSpec{
-        FullName: "module.map_i32_string_1261",
-        CodecTypedefSpec: &thrift.CodecTypedefSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_map_i32_string_1261 = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.map_i32_string_1261",
+            CodecTypedefSpec: &thrift.CodecTypedefSpec{
     ScopedName:         "module.map_i32_string_1261",
 	UnderlyingTypeSpec: premadeCodecTypeSpec_map_i32_string,
 },
 
-    }
-    premadeCodecTypeSpec_module_ContainerStruct = &thrift.TypeSpec{
-        FullName: "module.ContainerStruct",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_ContainerStruct = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.ContainerStruct",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.ContainerStruct",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewContainerStruct() },
 },
 
-    }
-    premadeCodecTypeSpec_module_CppTypeStruct = &thrift.TypeSpec{
-        FullName: "module.CppTypeStruct",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_CppTypeStruct = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.CppTypeStruct",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.CppTypeStruct",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewCppTypeStruct() },
 },
 
-    }
-    premadeCodecTypeSpec_i64 = &thrift.TypeSpec{
-        FullName: "i64",
-        CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
+        }
+    }()
+    premadeCodecTypeSpec_i64 = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "i64",
+            CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
     PrimitiveType: thrift.CODEC_PRIMITIVE_TYPE_I64,
 },
 
-    }
-    premadeCodecTypeSpec_module_VirtualStruct = &thrift.TypeSpec{
-        FullName: "module.VirtualStruct",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_VirtualStruct = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.VirtualStruct",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.VirtualStruct",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewVirtualStruct() },
 },
 
-    }
-    premadeCodecTypeSpec_module_MyStructWithForwardRefEnum = &thrift.TypeSpec{
-        FullName: "module.MyStructWithForwardRefEnum",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_MyStructWithForwardRefEnum = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.MyStructWithForwardRefEnum",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.MyStructWithForwardRefEnum",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewMyStructWithForwardRefEnum() },
 },
 
-    }
-    premadeCodecTypeSpec_bool = &thrift.TypeSpec{
-        FullName: "bool",
-        CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
+        }
+    }()
+    premadeCodecTypeSpec_bool = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "bool",
+            CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
     PrimitiveType: thrift.CODEC_PRIMITIVE_TYPE_BOOL,
 },
 
-    }
-    premadeCodecTypeSpec_module_TrivialNumeric = &thrift.TypeSpec{
-        FullName: "module.TrivialNumeric",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_TrivialNumeric = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.TrivialNumeric",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.TrivialNumeric",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewTrivialNumeric() },
 },
 
-    }
-    premadeCodecTypeSpec_module_TrivialNestedWithDefault = &thrift.TypeSpec{
-        FullName: "module.TrivialNestedWithDefault",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_TrivialNestedWithDefault = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.TrivialNestedWithDefault",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.TrivialNestedWithDefault",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewTrivialNestedWithDefault() },
 },
 
-    }
-    premadeCodecTypeSpec_map_string_i32 = &thrift.TypeSpec{
-        FullName: "map<string, i32>",
-        CodecMapSpec: &thrift.CodecMapSpec{
+        }
+    }()
+    premadeCodecTypeSpec_map_string_i32 = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "map<string, i32>",
+            CodecMapSpec: &thrift.CodecMapSpec{
 	KeyTypeSpec:   premadeCodecTypeSpec_string,
 	ValueTypeSpec: premadeCodecTypeSpec_i32,
     KeyWireType:   thrift.STRING,
 	ValueWireType: thrift.I32,
 },
 
-    }
-    premadeCodecTypeSpec_module_ComplexString = &thrift.TypeSpec{
-        FullName: "module.ComplexString",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_ComplexString = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.ComplexString",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.ComplexString",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewComplexString() },
 },
 
-    }
-    premadeCodecTypeSpec_module_ComplexNestedWithDefault = &thrift.TypeSpec{
-        FullName: "module.ComplexNestedWithDefault",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_ComplexNestedWithDefault = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.ComplexNestedWithDefault",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.ComplexNestedWithDefault",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewComplexNestedWithDefault() },
 },
 
-    }
-    premadeCodecTypeSpec_byte = &thrift.TypeSpec{
-        FullName: "byte",
-        CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
+        }
+    }()
+    premadeCodecTypeSpec_byte = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "byte",
+            CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
     PrimitiveType: thrift.CODEC_PRIMITIVE_TYPE_BYTE,
 },
 
-    }
-    premadeCodecTypeSpec_i16 = &thrift.TypeSpec{
-        FullName: "i16",
-        CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
+        }
+    }()
+    premadeCodecTypeSpec_i16 = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "i16",
+            CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
     PrimitiveType: thrift.CODEC_PRIMITIVE_TYPE_I16,
 },
 
-    }
-    premadeCodecTypeSpec_module_MinPadding = &thrift.TypeSpec{
-        FullName: "module.MinPadding",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_MinPadding = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.MinPadding",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.MinPadding",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewMinPadding() },
 },
 
-    }
-    premadeCodecTypeSpec_module_MinPaddingWithCustomType = &thrift.TypeSpec{
-        FullName: "module.MinPaddingWithCustomType",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_MinPaddingWithCustomType = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.MinPaddingWithCustomType",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.MinPaddingWithCustomType",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewMinPaddingWithCustomType() },
 },
 
-    }
-    premadeCodecTypeSpec_module_MyDataItem = &thrift.TypeSpec{
-        FullName: "module.MyDataItem",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_MyDataItem = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.MyDataItem",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.MyDataItem",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewMyDataItem() },
 },
 
-    }
-    premadeCodecTypeSpec_module_MyStruct = &thrift.TypeSpec{
-        FullName: "module.MyStruct",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_MyStruct = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.MyStruct",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.MyStruct",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewMyStruct() },
 },
 
-    }
-    premadeCodecTypeSpec_module_Renaming = &thrift.TypeSpec{
-        FullName: "module.Renaming",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_Renaming = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.Renaming",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.Renaming",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewRenaming() },
 },
 
-    }
-    premadeCodecTypeSpec_binary = &thrift.TypeSpec{
-        FullName: "binary",
-        CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
+        }
+    }()
+    premadeCodecTypeSpec_binary = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "binary",
+            CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
     PrimitiveType: thrift.CODEC_PRIMITIVE_TYPE_BINARY,
 },
 
-    }
-    premadeCodecTypeSpec_module_TBinary = &thrift.TypeSpec{
-        FullName: "module.TBinary",
-        CodecTypedefSpec: &thrift.CodecTypedefSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_TBinary = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.TBinary",
+            CodecTypedefSpec: &thrift.CodecTypedefSpec{
     ScopedName:         "module.TBinary",
 	UnderlyingTypeSpec: premadeCodecTypeSpec_binary,
 },
 
-    }
-    premadeCodecTypeSpec_module_TBinary_8623 = &thrift.TypeSpec{
-        FullName: "module.TBinary_8623",
-        CodecTypedefSpec: &thrift.CodecTypedefSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_TBinary_8623 = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.TBinary_8623",
+            CodecTypedefSpec: &thrift.CodecTypedefSpec{
     ScopedName:         "module.TBinary_8623",
 	UnderlyingTypeSpec: premadeCodecTypeSpec_module_TBinary,
 },
 
-    }
-    premadeCodecTypeSpec_module_SomeListOfTypeMap_2468 = &thrift.TypeSpec{
-        FullName: "module.SomeListOfTypeMap_2468",
-        CodecTypedefSpec: &thrift.CodecTypedefSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_SomeListOfTypeMap_2468 = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.SomeListOfTypeMap_2468",
+            CodecTypedefSpec: &thrift.CodecTypedefSpec{
     ScopedName:         "module.SomeListOfTypeMap_2468",
 	UnderlyingTypeSpec: included.GetCodecTypeSpec("included.SomeListOfTypeMap"),
 },
 
-    }
-    premadeCodecTypeSpec_module_AnnotatedTypes = &thrift.TypeSpec{
-        FullName: "module.AnnotatedTypes",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_AnnotatedTypes = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.AnnotatedTypes",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.AnnotatedTypes",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewAnnotatedTypes() },
 },
 
-    }
-    premadeCodecTypeSpec_module_ForwardUsageStruct = &thrift.TypeSpec{
-        FullName: "module.ForwardUsageStruct",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_ForwardUsageStruct = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.ForwardUsageStruct",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.ForwardUsageStruct",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewForwardUsageStruct() },
 },
 
-    }
-    premadeCodecTypeSpec_module_ForwardUsageByRef = &thrift.TypeSpec{
-        FullName: "module.ForwardUsageByRef",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_ForwardUsageByRef = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.ForwardUsageByRef",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.ForwardUsageByRef",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewForwardUsageByRef() },
 },
 
-    }
-    premadeCodecTypeSpec_module_ForwardUsageRoot = &thrift.TypeSpec{
-        FullName: "module.ForwardUsageRoot",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_ForwardUsageRoot = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.ForwardUsageRoot",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.ForwardUsageRoot",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewForwardUsageRoot() },
 },
 
-    }
-    premadeCodecTypeSpec_module_IncompleteMapDep = &thrift.TypeSpec{
-        FullName: "module.IncompleteMapDep",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_IncompleteMapDep = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.IncompleteMapDep",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.IncompleteMapDep",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewIncompleteMapDep() },
 },
 
-    }
-    premadeCodecTypeSpec_map_i32_module_IncompleteMapDep = &thrift.TypeSpec{
-        FullName: "map<i32, module.IncompleteMapDep>",
-        CodecMapSpec: &thrift.CodecMapSpec{
+        }
+    }()
+    premadeCodecTypeSpec_map_i32_module_IncompleteMapDep = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "map<i32, module.IncompleteMapDep>",
+            CodecMapSpec: &thrift.CodecMapSpec{
 	KeyTypeSpec:   premadeCodecTypeSpec_i32,
 	ValueTypeSpec: premadeCodecTypeSpec_module_IncompleteMapDep,
     KeyWireType:   thrift.I32,
 	ValueWireType: thrift.STRUCT,
 },
 
-    }
-    premadeCodecTypeSpec_module_IncompleteMap = &thrift.TypeSpec{
-        FullName: "module.IncompleteMap",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_IncompleteMap = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.IncompleteMap",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.IncompleteMap",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewIncompleteMap() },
 },
 
-    }
-    premadeCodecTypeSpec_module_CompleteMapDep = &thrift.TypeSpec{
-        FullName: "module.CompleteMapDep",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_CompleteMapDep = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.CompleteMapDep",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.CompleteMapDep",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewCompleteMapDep() },
 },
 
-    }
-    premadeCodecTypeSpec_map_i32_module_CompleteMapDep = &thrift.TypeSpec{
-        FullName: "map<i32, module.CompleteMapDep>",
-        CodecMapSpec: &thrift.CodecMapSpec{
+        }
+    }()
+    premadeCodecTypeSpec_map_i32_module_CompleteMapDep = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "map<i32, module.CompleteMapDep>",
+            CodecMapSpec: &thrift.CodecMapSpec{
 	KeyTypeSpec:   premadeCodecTypeSpec_i32,
 	ValueTypeSpec: premadeCodecTypeSpec_module_CompleteMapDep,
     KeyWireType:   thrift.I32,
 	ValueWireType: thrift.STRUCT,
 },
 
-    }
-    premadeCodecTypeSpec_module_CompleteMap = &thrift.TypeSpec{
-        FullName: "module.CompleteMap",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_CompleteMap = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.CompleteMap",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.CompleteMap",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewCompleteMap() },
 },
 
-    }
-    premadeCodecTypeSpec_module_IncompleteListDep = &thrift.TypeSpec{
-        FullName: "module.IncompleteListDep",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_IncompleteListDep = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.IncompleteListDep",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.IncompleteListDep",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewIncompleteListDep() },
 },
 
-    }
-    premadeCodecTypeSpec_list_module_IncompleteListDep = &thrift.TypeSpec{
-        FullName: "list<module.IncompleteListDep>",
-        CodecListSpec: &thrift.CodecListSpec{
+        }
+    }()
+    premadeCodecTypeSpec_list_module_IncompleteListDep = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "list<module.IncompleteListDep>",
+            CodecListSpec: &thrift.CodecListSpec{
     ElementWireType: thrift.STRUCT,
 	ElementTypeSpec: premadeCodecTypeSpec_module_IncompleteListDep,
 },
 
-    }
-    premadeCodecTypeSpec_module_IncompleteList = &thrift.TypeSpec{
-        FullName: "module.IncompleteList",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_IncompleteList = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.IncompleteList",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.IncompleteList",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewIncompleteList() },
 },
 
-    }
-    premadeCodecTypeSpec_module_CompleteListDep = &thrift.TypeSpec{
-        FullName: "module.CompleteListDep",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_CompleteListDep = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.CompleteListDep",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.CompleteListDep",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewCompleteListDep() },
 },
 
-    }
-    premadeCodecTypeSpec_list_module_CompleteListDep = &thrift.TypeSpec{
-        FullName: "list<module.CompleteListDep>",
-        CodecListSpec: &thrift.CodecListSpec{
+        }
+    }()
+    premadeCodecTypeSpec_list_module_CompleteListDep = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "list<module.CompleteListDep>",
+            CodecListSpec: &thrift.CodecListSpec{
     ElementWireType: thrift.STRUCT,
 	ElementTypeSpec: premadeCodecTypeSpec_module_CompleteListDep,
 },
 
-    }
-    premadeCodecTypeSpec_module_CompleteList = &thrift.TypeSpec{
-        FullName: "module.CompleteList",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_CompleteList = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.CompleteList",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.CompleteList",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewCompleteList() },
 },
 
-    }
-    premadeCodecTypeSpec_module_AdaptedListDep = &thrift.TypeSpec{
-        FullName: "module.AdaptedListDep",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_AdaptedListDep = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.AdaptedListDep",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.AdaptedListDep",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewAdaptedListDep() },
 },
 
-    }
-    premadeCodecTypeSpec_list_module_AdaptedListDep = &thrift.TypeSpec{
-        FullName: "list<module.AdaptedListDep>",
-        CodecListSpec: &thrift.CodecListSpec{
+        }
+    }()
+    premadeCodecTypeSpec_list_module_AdaptedListDep = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "list<module.AdaptedListDep>",
+            CodecListSpec: &thrift.CodecListSpec{
     ElementWireType: thrift.STRUCT,
 	ElementTypeSpec: premadeCodecTypeSpec_module_AdaptedListDep,
 },
 
-    }
-    premadeCodecTypeSpec_module_AdaptedList = &thrift.TypeSpec{
-        FullName: "module.AdaptedList",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_AdaptedList = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.AdaptedList",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.AdaptedList",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewAdaptedList() },
 },
 
-    }
-    premadeCodecTypeSpec_module_DependentAdaptedListDep = &thrift.TypeSpec{
-        FullName: "module.DependentAdaptedListDep",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_DependentAdaptedListDep = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.DependentAdaptedListDep",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.DependentAdaptedListDep",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewDependentAdaptedListDep() },
 },
 
-    }
-    premadeCodecTypeSpec_list_module_DependentAdaptedListDep = &thrift.TypeSpec{
-        FullName: "list<module.DependentAdaptedListDep>",
-        CodecListSpec: &thrift.CodecListSpec{
+        }
+    }()
+    premadeCodecTypeSpec_list_module_DependentAdaptedListDep = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "list<module.DependentAdaptedListDep>",
+            CodecListSpec: &thrift.CodecListSpec{
     ElementWireType: thrift.STRUCT,
 	ElementTypeSpec: premadeCodecTypeSpec_module_DependentAdaptedListDep,
 },
 
-    }
-    premadeCodecTypeSpec_module_DependentAdaptedList = &thrift.TypeSpec{
-        FullName: "module.DependentAdaptedList",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_DependentAdaptedList = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.DependentAdaptedList",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.DependentAdaptedList",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewDependentAdaptedList() },
 },
 
-    }
-    premadeCodecTypeSpec_module_list_i32_9187 = &thrift.TypeSpec{
-        FullName: "module.list_i32_9187",
-        CodecTypedefSpec: &thrift.CodecTypedefSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_list_i32_9187 = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.list_i32_9187",
+            CodecTypedefSpec: &thrift.CodecTypedefSpec{
     ScopedName:         "module.list_i32_9187",
 	UnderlyingTypeSpec: premadeCodecTypeSpec_list_i32,
 },
 
-    }
-    premadeCodecTypeSpec_module_set_i32_7070 = &thrift.TypeSpec{
-        FullName: "module.set_i32_7070",
-        CodecTypedefSpec: &thrift.CodecTypedefSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_set_i32_7070 = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.set_i32_7070",
+            CodecTypedefSpec: &thrift.CodecTypedefSpec{
     ScopedName:         "module.set_i32_7070",
 	UnderlyingTypeSpec: premadeCodecTypeSpec_set_i32,
 },
 
-    }
-    premadeCodecTypeSpec_map_i32_i32 = &thrift.TypeSpec{
-        FullName: "map<i32, i32>",
-        CodecMapSpec: &thrift.CodecMapSpec{
+        }
+    }()
+    premadeCodecTypeSpec_map_i32_i32 = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "map<i32, i32>",
+            CodecMapSpec: &thrift.CodecMapSpec{
 	KeyTypeSpec:   premadeCodecTypeSpec_i32,
 	ValueTypeSpec: premadeCodecTypeSpec_i32,
     KeyWireType:   thrift.I32,
 	ValueWireType: thrift.I32,
 },
 
-    }
-    premadeCodecTypeSpec_module_map_i32_i32_9565 = &thrift.TypeSpec{
-        FullName: "module.map_i32_i32_9565",
-        CodecTypedefSpec: &thrift.CodecTypedefSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_map_i32_i32_9565 = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.map_i32_i32_9565",
+            CodecTypedefSpec: &thrift.CodecTypedefSpec{
     ScopedName:         "module.map_i32_i32_9565",
 	UnderlyingTypeSpec: premadeCodecTypeSpec_map_i32_i32,
 },
 
-    }
-    premadeCodecTypeSpec_module_string_5252 = &thrift.TypeSpec{
-        FullName: "module.string_5252",
-        CodecTypedefSpec: &thrift.CodecTypedefSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_string_5252 = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.string_5252",
+            CodecTypedefSpec: &thrift.CodecTypedefSpec{
     ScopedName:         "module.string_5252",
 	UnderlyingTypeSpec: premadeCodecTypeSpec_string,
 },
 
-    }
-    premadeCodecTypeSpec_module_i32_9314 = &thrift.TypeSpec{
-        FullName: "module.i32_9314",
-        CodecTypedefSpec: &thrift.CodecTypedefSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_i32_9314 = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.i32_9314",
+            CodecTypedefSpec: &thrift.CodecTypedefSpec{
     ScopedName:         "module.i32_9314",
 	UnderlyingTypeSpec: premadeCodecTypeSpec_i32,
 },
 
-    }
-    premadeCodecTypeSpec_module_AllocatorAware = &thrift.TypeSpec{
-        FullName: "module.AllocatorAware",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_AllocatorAware = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.AllocatorAware",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.AllocatorAware",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewAllocatorAware() },
 },
 
-    }
-    premadeCodecTypeSpec_module_AllocatorAware2 = &thrift.TypeSpec{
-        FullName: "module.AllocatorAware2",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_AllocatorAware2 = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.AllocatorAware2",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.AllocatorAware2",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewAllocatorAware2() },
 },
 
-    }
-    premadeCodecTypeSpec_module_IntTypedef = &thrift.TypeSpec{
-        FullName: "module.IntTypedef",
-        CodecTypedefSpec: &thrift.CodecTypedefSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_IntTypedef = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.IntTypedef",
+            CodecTypedefSpec: &thrift.CodecTypedefSpec{
     ScopedName:         "module.IntTypedef",
 	UnderlyingTypeSpec: premadeCodecTypeSpec_i32,
 },
 
-    }
-    premadeCodecTypeSpec_module_UintTypedef = &thrift.TypeSpec{
-        FullName: "module.UintTypedef",
-        CodecTypedefSpec: &thrift.CodecTypedefSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_UintTypedef = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.UintTypedef",
+            CodecTypedefSpec: &thrift.CodecTypedefSpec{
     ScopedName:         "module.UintTypedef",
 	UnderlyingTypeSpec: premadeCodecTypeSpec_module_IntTypedef,
 },
 
-    }
-    premadeCodecTypeSpec_module_TypedefStruct = &thrift.TypeSpec{
-        FullName: "module.TypedefStruct",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_TypedefStruct = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.TypedefStruct",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.TypedefStruct",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewTypedefStruct() },
 },
 
-    }
-    premadeCodecTypeSpec_module_StructWithDoubleUnderscores = &thrift.TypeSpec{
-        FullName: "module.StructWithDoubleUnderscores",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_StructWithDoubleUnderscores = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.StructWithDoubleUnderscores",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.StructWithDoubleUnderscores",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewStructWithDoubleUnderscores() },
 },
 
-    }
-    premadeCodecTypeSpec_map_module_TBinary_i64 = &thrift.TypeSpec{
-        FullName: "map<module.TBinary, i64>",
-        CodecMapSpec: &thrift.CodecMapSpec{
+        }
+    }()
+    premadeCodecTypeSpec_map_module_TBinary_i64 = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "map<module.TBinary, i64>",
+            CodecMapSpec: &thrift.CodecMapSpec{
 	KeyTypeSpec:   premadeCodecTypeSpec_module_TBinary,
 	ValueTypeSpec: premadeCodecTypeSpec_i64,
     KeyWireType:   thrift.STRING,
 	ValueWireType: thrift.I64,
 },
 
-    }
-    premadeCodecTypeSpec_list_i64 = &thrift.TypeSpec{
-        FullName: "list<i64>",
-        CodecListSpec: &thrift.CodecListSpec{
+        }
+    }()
+    premadeCodecTypeSpec_list_i64 = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "list<i64>",
+            CodecListSpec: &thrift.CodecListSpec{
     ElementWireType: thrift.I64,
 	ElementTypeSpec: premadeCodecTypeSpec_i64,
 },
 
-    }
-})
+        }
+    }()
+)
 
 // Premade struct specs
 var (
-    premadeStructSpec_empty_struct *thrift.StructSpec = nil
-    premadeStructSpec_decorated_struct *thrift.StructSpec = nil
-    premadeStructSpec_ContainerStruct *thrift.StructSpec = nil
-    premadeStructSpec_CppTypeStruct *thrift.StructSpec = nil
-    premadeStructSpec_VirtualStruct *thrift.StructSpec = nil
-    premadeStructSpec_MyStructWithForwardRefEnum *thrift.StructSpec = nil
-    premadeStructSpec_TrivialNumeric *thrift.StructSpec = nil
-    premadeStructSpec_TrivialNestedWithDefault *thrift.StructSpec = nil
-    premadeStructSpec_ComplexString *thrift.StructSpec = nil
-    premadeStructSpec_ComplexNestedWithDefault *thrift.StructSpec = nil
-    premadeStructSpec_MinPadding *thrift.StructSpec = nil
-    premadeStructSpec_MinPaddingWithCustomType *thrift.StructSpec = nil
-    premadeStructSpec_MyStruct *thrift.StructSpec = nil
-    premadeStructSpec_MyDataItem *thrift.StructSpec = nil
-    premadeStructSpec_Renaming *thrift.StructSpec = nil
-    premadeStructSpec_AnnotatedTypes *thrift.StructSpec = nil
-    premadeStructSpec_ForwardUsageRoot *thrift.StructSpec = nil
-    premadeStructSpec_ForwardUsageStruct *thrift.StructSpec = nil
-    premadeStructSpec_ForwardUsageByRef *thrift.StructSpec = nil
-    premadeStructSpec_IncompleteMap *thrift.StructSpec = nil
-    premadeStructSpec_IncompleteMapDep *thrift.StructSpec = nil
-    premadeStructSpec_CompleteMap *thrift.StructSpec = nil
-    premadeStructSpec_CompleteMapDep *thrift.StructSpec = nil
-    premadeStructSpec_IncompleteList *thrift.StructSpec = nil
-    premadeStructSpec_IncompleteListDep *thrift.StructSpec = nil
-    premadeStructSpec_CompleteList *thrift.StructSpec = nil
-    premadeStructSpec_CompleteListDep *thrift.StructSpec = nil
-    premadeStructSpec_AdaptedList *thrift.StructSpec = nil
-    premadeStructSpec_AdaptedListDep *thrift.StructSpec = nil
-    premadeStructSpec_DependentAdaptedList *thrift.StructSpec = nil
-    premadeStructSpec_DependentAdaptedListDep *thrift.StructSpec = nil
-    premadeStructSpec_AllocatorAware *thrift.StructSpec = nil
-    premadeStructSpec_AllocatorAware2 *thrift.StructSpec = nil
-    premadeStructSpec_TypedefStruct *thrift.StructSpec = nil
-    premadeStructSpec_StructWithDoubleUnderscores *thrift.StructSpec = nil
-    premadeStructSpec_reqSomeServiceBounceMap *thrift.StructSpec = nil
-    premadeStructSpec_respSomeServiceBounceMap *thrift.StructSpec = nil
-    premadeStructSpec_reqSomeServiceBinaryKeyedMap *thrift.StructSpec = nil
-    premadeStructSpec_respSomeServiceBinaryKeyedMap *thrift.StructSpec = nil
-)
-
-// Premade struct specs initializer
-var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
-    premadeStructSpec_empty_struct = &thrift.StructSpec{
+    premadeStructSpec_empty_struct = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "empty_struct",
     ScopedName:           "module.empty_struct",
     IsUnion:              false,
@@ -751,7 +771,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
     FieldSpecNameToIndex: map[string]int{
     },
 }
-    premadeStructSpec_decorated_struct = &thrift.StructSpec{
+    }()
+    premadeStructSpec_decorated_struct = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "decorated_struct",
     ScopedName:           "module.decorated_struct",
     IsUnion:              false,
@@ -773,7 +795,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "field": 0,
     },
 }
-    premadeStructSpec_ContainerStruct = &thrift.StructSpec{
+    }()
+    premadeStructSpec_ContainerStruct = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "ContainerStruct",
     ScopedName:           "module.ContainerStruct",
     IsUnion:              false,
@@ -865,7 +889,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "fieldA": 7,
     },
 }
-    premadeStructSpec_CppTypeStruct = &thrift.StructSpec{
+    }()
+    premadeStructSpec_CppTypeStruct = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "CppTypeStruct",
     ScopedName:           "module.CppTypeStruct",
     IsUnion:              false,
@@ -887,7 +913,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "fieldA": 0,
     },
 }
-    premadeStructSpec_VirtualStruct = &thrift.StructSpec{
+    }()
+    premadeStructSpec_VirtualStruct = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "VirtualStruct",
     ScopedName:           "module.VirtualStruct",
     IsUnion:              false,
@@ -909,7 +937,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "MyIntField": 0,
     },
 }
-    premadeStructSpec_MyStructWithForwardRefEnum = &thrift.StructSpec{
+    }()
+    premadeStructSpec_MyStructWithForwardRefEnum = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "MyStructWithForwardRefEnum",
     ScopedName:           "module.MyStructWithForwardRefEnum",
     IsUnion:              false,
@@ -941,7 +971,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "b": 1,
     },
 }
-    premadeStructSpec_TrivialNumeric = &thrift.StructSpec{
+    }()
+    premadeStructSpec_TrivialNumeric = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "TrivialNumeric",
     ScopedName:           "module.TrivialNumeric",
     IsUnion:              false,
@@ -973,7 +1005,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "b": 1,
     },
 }
-    premadeStructSpec_TrivialNestedWithDefault = &thrift.StructSpec{
+    }()
+    premadeStructSpec_TrivialNestedWithDefault = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "TrivialNestedWithDefault",
     ScopedName:           "module.TrivialNestedWithDefault",
     IsUnion:              false,
@@ -1005,7 +1039,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "n": 1,
     },
 }
-    premadeStructSpec_ComplexString = &thrift.StructSpec{
+    }()
+    premadeStructSpec_ComplexString = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "ComplexString",
     ScopedName:           "module.ComplexString",
     IsUnion:              false,
@@ -1037,7 +1073,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "b": 1,
     },
 }
-    premadeStructSpec_ComplexNestedWithDefault = &thrift.StructSpec{
+    }()
+    premadeStructSpec_ComplexNestedWithDefault = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "ComplexNestedWithDefault",
     ScopedName:           "module.ComplexNestedWithDefault",
     IsUnion:              false,
@@ -1069,7 +1107,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "n": 1,
     },
 }
-    premadeStructSpec_MinPadding = &thrift.StructSpec{
+    }()
+    premadeStructSpec_MinPadding = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "MinPadding",
     ScopedName:           "module.MinPadding",
     IsUnion:              false,
@@ -1131,7 +1171,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "tiny": 4,
     },
 }
-    premadeStructSpec_MinPaddingWithCustomType = &thrift.StructSpec{
+    }()
+    premadeStructSpec_MinPaddingWithCustomType = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "MinPaddingWithCustomType",
     ScopedName:           "module.MinPaddingWithCustomType",
     IsUnion:              false,
@@ -1193,7 +1235,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "tiny": 4,
     },
 }
-    premadeStructSpec_MyStruct = &thrift.StructSpec{
+    }()
+    premadeStructSpec_MyStruct = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "MyStruct",
     ScopedName:           "module.MyStruct",
     IsUnion:              false,
@@ -1245,7 +1289,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "data": 3,
     },
 }
-    premadeStructSpec_MyDataItem = &thrift.StructSpec{
+    }()
+    premadeStructSpec_MyDataItem = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "MyDataItem",
     ScopedName:           "module.MyDataItem",
     IsUnion:              false,
@@ -1257,7 +1303,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
     FieldSpecNameToIndex: map[string]int{
     },
 }
-    premadeStructSpec_Renaming = &thrift.StructSpec{
+    }()
+    premadeStructSpec_Renaming = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "Renaming",
     ScopedName:           "module.Renaming",
     IsUnion:              false,
@@ -1279,7 +1327,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "foo": 0,
     },
 }
-    premadeStructSpec_AnnotatedTypes = &thrift.StructSpec{
+    }()
+    premadeStructSpec_AnnotatedTypes = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "AnnotatedTypes",
     ScopedName:           "module.AnnotatedTypes",
     IsUnion:              false,
@@ -1311,7 +1361,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "list_field": 1,
     },
 }
-    premadeStructSpec_ForwardUsageRoot = &thrift.StructSpec{
+    }()
+    premadeStructSpec_ForwardUsageRoot = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "ForwardUsageRoot",
     ScopedName:           "module.ForwardUsageRoot",
     IsUnion:              false,
@@ -1343,7 +1395,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "ForwardUsageByRef": 1,
     },
 }
-    premadeStructSpec_ForwardUsageStruct = &thrift.StructSpec{
+    }()
+    premadeStructSpec_ForwardUsageStruct = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "ForwardUsageStruct",
     ScopedName:           "module.ForwardUsageStruct",
     IsUnion:              false,
@@ -1365,7 +1419,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "foo": 0,
     },
 }
-    premadeStructSpec_ForwardUsageByRef = &thrift.StructSpec{
+    }()
+    premadeStructSpec_ForwardUsageByRef = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "ForwardUsageByRef",
     ScopedName:           "module.ForwardUsageByRef",
     IsUnion:              false,
@@ -1387,7 +1443,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "foo": 0,
     },
 }
-    premadeStructSpec_IncompleteMap = &thrift.StructSpec{
+    }()
+    premadeStructSpec_IncompleteMap = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "IncompleteMap",
     ScopedName:           "module.IncompleteMap",
     IsUnion:              false,
@@ -1409,7 +1467,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "field": 0,
     },
 }
-    premadeStructSpec_IncompleteMapDep = &thrift.StructSpec{
+    }()
+    premadeStructSpec_IncompleteMapDep = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "IncompleteMapDep",
     ScopedName:           "module.IncompleteMapDep",
     IsUnion:              false,
@@ -1421,7 +1481,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
     FieldSpecNameToIndex: map[string]int{
     },
 }
-    premadeStructSpec_CompleteMap = &thrift.StructSpec{
+    }()
+    premadeStructSpec_CompleteMap = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "CompleteMap",
     ScopedName:           "module.CompleteMap",
     IsUnion:              false,
@@ -1443,7 +1505,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "field": 0,
     },
 }
-    premadeStructSpec_CompleteMapDep = &thrift.StructSpec{
+    }()
+    premadeStructSpec_CompleteMapDep = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "CompleteMapDep",
     ScopedName:           "module.CompleteMapDep",
     IsUnion:              false,
@@ -1455,7 +1519,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
     FieldSpecNameToIndex: map[string]int{
     },
 }
-    premadeStructSpec_IncompleteList = &thrift.StructSpec{
+    }()
+    premadeStructSpec_IncompleteList = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "IncompleteList",
     ScopedName:           "module.IncompleteList",
     IsUnion:              false,
@@ -1477,7 +1543,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "field": 0,
     },
 }
-    premadeStructSpec_IncompleteListDep = &thrift.StructSpec{
+    }()
+    premadeStructSpec_IncompleteListDep = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "IncompleteListDep",
     ScopedName:           "module.IncompleteListDep",
     IsUnion:              false,
@@ -1489,7 +1557,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
     FieldSpecNameToIndex: map[string]int{
     },
 }
-    premadeStructSpec_CompleteList = &thrift.StructSpec{
+    }()
+    premadeStructSpec_CompleteList = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "CompleteList",
     ScopedName:           "module.CompleteList",
     IsUnion:              false,
@@ -1511,7 +1581,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "field": 0,
     },
 }
-    premadeStructSpec_CompleteListDep = &thrift.StructSpec{
+    }()
+    premadeStructSpec_CompleteListDep = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "CompleteListDep",
     ScopedName:           "module.CompleteListDep",
     IsUnion:              false,
@@ -1523,7 +1595,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
     FieldSpecNameToIndex: map[string]int{
     },
 }
-    premadeStructSpec_AdaptedList = &thrift.StructSpec{
+    }()
+    premadeStructSpec_AdaptedList = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "AdaptedList",
     ScopedName:           "module.AdaptedList",
     IsUnion:              false,
@@ -1545,7 +1619,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "field": 0,
     },
 }
-    premadeStructSpec_AdaptedListDep = &thrift.StructSpec{
+    }()
+    premadeStructSpec_AdaptedListDep = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "AdaptedListDep",
     ScopedName:           "module.AdaptedListDep",
     IsUnion:              false,
@@ -1567,7 +1643,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "field": 0,
     },
 }
-    premadeStructSpec_DependentAdaptedList = &thrift.StructSpec{
+    }()
+    premadeStructSpec_DependentAdaptedList = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "DependentAdaptedList",
     ScopedName:           "module.DependentAdaptedList",
     IsUnion:              false,
@@ -1589,7 +1667,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "field": 0,
     },
 }
-    premadeStructSpec_DependentAdaptedListDep = &thrift.StructSpec{
+    }()
+    premadeStructSpec_DependentAdaptedListDep = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "DependentAdaptedListDep",
     ScopedName:           "module.DependentAdaptedListDep",
     IsUnion:              false,
@@ -1611,7 +1691,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "field": 0,
     },
 }
-    premadeStructSpec_AllocatorAware = &thrift.StructSpec{
+    }()
+    premadeStructSpec_AllocatorAware = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "AllocatorAware",
     ScopedName:           "module.AllocatorAware",
     IsUnion:              false,
@@ -1693,7 +1775,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "aa_shared": 6,
     },
 }
-    premadeStructSpec_AllocatorAware2 = &thrift.StructSpec{
+    }()
+    premadeStructSpec_AllocatorAware2 = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "AllocatorAware2",
     ScopedName:           "module.AllocatorAware2",
     IsUnion:              false,
@@ -1725,7 +1809,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "box_field": 1,
     },
 }
-    premadeStructSpec_TypedefStruct = &thrift.StructSpec{
+    }()
+    premadeStructSpec_TypedefStruct = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "TypedefStruct",
     ScopedName:           "module.TypedefStruct",
     IsUnion:              false,
@@ -1767,7 +1853,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "UintTypedef_field": 2,
     },
 }
-    premadeStructSpec_StructWithDoubleUnderscores = &thrift.StructSpec{
+    }()
+    premadeStructSpec_StructWithDoubleUnderscores = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "StructWithDoubleUnderscores",
     ScopedName:           "module.StructWithDoubleUnderscores",
     IsUnion:              false,
@@ -1789,7 +1877,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "__field": 0,
     },
 }
-    premadeStructSpec_reqSomeServiceBounceMap = &thrift.StructSpec{
+    }()
+    premadeStructSpec_reqSomeServiceBounceMap = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "reqSomeServiceBounceMap",
     ScopedName:           "module.reqSomeServiceBounceMap",
     IsUnion:              false,
@@ -1811,7 +1901,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "m": 0,
     },
 }
-    premadeStructSpec_respSomeServiceBounceMap = &thrift.StructSpec{
+    }()
+    premadeStructSpec_respSomeServiceBounceMap = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "respSomeServiceBounceMap",
     ScopedName:           "module.respSomeServiceBounceMap",
     IsUnion:              false,
@@ -1833,7 +1925,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "success": 0,
     },
 }
-    premadeStructSpec_reqSomeServiceBinaryKeyedMap = &thrift.StructSpec{
+    }()
+    premadeStructSpec_reqSomeServiceBinaryKeyedMap = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "reqSomeServiceBinaryKeyedMap",
     ScopedName:           "module.reqSomeServiceBinaryKeyedMap",
     IsUnion:              false,
@@ -1855,7 +1949,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "r": 0,
     },
 }
-    premadeStructSpec_respSomeServiceBinaryKeyedMap = &thrift.StructSpec{
+    }()
+    premadeStructSpec_respSomeServiceBinaryKeyedMap = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "respSomeServiceBinaryKeyedMap",
     ScopedName:           "module.respSomeServiceBinaryKeyedMap",
     IsUnion:              false,
@@ -1877,82 +1973,114 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "success": 0,
     },
 }
-})
-
-var premadeCodecSpecsMapOnce = sync.OnceValue(
-    func() map[string]*thrift.TypeSpec {
-        // Relies on premade codec specs initialization
-        premadeCodecSpecsInitOnce()
-
-        fbthriftTypeSpecsMap := make(map[string]*thrift.TypeSpec)
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_has_bitwise_ops.FullName] = premadeCodecTypeSpec_module_has_bitwise_ops
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_is_unscoped.FullName] = premadeCodecTypeSpec_module_is_unscoped
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_MyForwardRefEnum.FullName] = premadeCodecTypeSpec_module_MyForwardRefEnum
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_empty_struct.FullName] = premadeCodecTypeSpec_module_empty_struct
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_string.FullName] = premadeCodecTypeSpec_string
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_decorated_struct.FullName] = premadeCodecTypeSpec_module_decorated_struct
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_i32.FullName] = premadeCodecTypeSpec_i32
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_set_i32_7194.FullName] = premadeCodecTypeSpec_module_set_i32_7194
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_map_i32_string_1261.FullName] = premadeCodecTypeSpec_module_map_i32_string_1261
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_ContainerStruct.FullName] = premadeCodecTypeSpec_module_ContainerStruct
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_CppTypeStruct.FullName] = premadeCodecTypeSpec_module_CppTypeStruct
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_i64.FullName] = premadeCodecTypeSpec_i64
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_VirtualStruct.FullName] = premadeCodecTypeSpec_module_VirtualStruct
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_MyStructWithForwardRefEnum.FullName] = premadeCodecTypeSpec_module_MyStructWithForwardRefEnum
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_bool.FullName] = premadeCodecTypeSpec_bool
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_TrivialNumeric.FullName] = premadeCodecTypeSpec_module_TrivialNumeric
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_TrivialNestedWithDefault.FullName] = premadeCodecTypeSpec_module_TrivialNestedWithDefault
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_ComplexString.FullName] = premadeCodecTypeSpec_module_ComplexString
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_ComplexNestedWithDefault.FullName] = premadeCodecTypeSpec_module_ComplexNestedWithDefault
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_byte.FullName] = premadeCodecTypeSpec_byte
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_i16.FullName] = premadeCodecTypeSpec_i16
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_MinPadding.FullName] = premadeCodecTypeSpec_module_MinPadding
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_MinPaddingWithCustomType.FullName] = premadeCodecTypeSpec_module_MinPaddingWithCustomType
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_MyDataItem.FullName] = premadeCodecTypeSpec_module_MyDataItem
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_MyStruct.FullName] = premadeCodecTypeSpec_module_MyStruct
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_Renaming.FullName] = premadeCodecTypeSpec_module_Renaming
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_binary.FullName] = premadeCodecTypeSpec_binary
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_TBinary.FullName] = premadeCodecTypeSpec_module_TBinary
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_TBinary_8623.FullName] = premadeCodecTypeSpec_module_TBinary_8623
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_SomeListOfTypeMap_2468.FullName] = premadeCodecTypeSpec_module_SomeListOfTypeMap_2468
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_AnnotatedTypes.FullName] = premadeCodecTypeSpec_module_AnnotatedTypes
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_ForwardUsageStruct.FullName] = premadeCodecTypeSpec_module_ForwardUsageStruct
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_ForwardUsageByRef.FullName] = premadeCodecTypeSpec_module_ForwardUsageByRef
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_ForwardUsageRoot.FullName] = premadeCodecTypeSpec_module_ForwardUsageRoot
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_IncompleteMapDep.FullName] = premadeCodecTypeSpec_module_IncompleteMapDep
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_IncompleteMap.FullName] = premadeCodecTypeSpec_module_IncompleteMap
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_CompleteMapDep.FullName] = premadeCodecTypeSpec_module_CompleteMapDep
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_CompleteMap.FullName] = premadeCodecTypeSpec_module_CompleteMap
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_IncompleteListDep.FullName] = premadeCodecTypeSpec_module_IncompleteListDep
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_IncompleteList.FullName] = premadeCodecTypeSpec_module_IncompleteList
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_CompleteListDep.FullName] = premadeCodecTypeSpec_module_CompleteListDep
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_CompleteList.FullName] = premadeCodecTypeSpec_module_CompleteList
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_AdaptedListDep.FullName] = premadeCodecTypeSpec_module_AdaptedListDep
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_AdaptedList.FullName] = premadeCodecTypeSpec_module_AdaptedList
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_DependentAdaptedListDep.FullName] = premadeCodecTypeSpec_module_DependentAdaptedListDep
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_DependentAdaptedList.FullName] = premadeCodecTypeSpec_module_DependentAdaptedList
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_list_i32_9187.FullName] = premadeCodecTypeSpec_module_list_i32_9187
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_set_i32_7070.FullName] = premadeCodecTypeSpec_module_set_i32_7070
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_map_i32_i32_9565.FullName] = premadeCodecTypeSpec_module_map_i32_i32_9565
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_string_5252.FullName] = premadeCodecTypeSpec_module_string_5252
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_i32_9314.FullName] = premadeCodecTypeSpec_module_i32_9314
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_AllocatorAware.FullName] = premadeCodecTypeSpec_module_AllocatorAware
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_AllocatorAware2.FullName] = premadeCodecTypeSpec_module_AllocatorAware2
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_IntTypedef.FullName] = premadeCodecTypeSpec_module_IntTypedef
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_UintTypedef.FullName] = premadeCodecTypeSpec_module_UintTypedef
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_TypedefStruct.FullName] = premadeCodecTypeSpec_module_TypedefStruct
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_StructWithDoubleUnderscores.FullName] = premadeCodecTypeSpec_module_StructWithDoubleUnderscores
-        return fbthriftTypeSpecsMap
-    },
+    }()
 )
 
-func init() {
-    premadeCodecSpecsInitOnce()
-    premadeStructSpecsInitOnce()
-}
+// Premade slice of all struct specs
+var premadeStructSpecs = func() []*thrift.StructSpec {
+    fbthriftResults := make([]*thrift.StructSpec, 0)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_empty_struct)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_decorated_struct)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_ContainerStruct)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_CppTypeStruct)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_VirtualStruct)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_MyStructWithForwardRefEnum)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_TrivialNumeric)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_TrivialNestedWithDefault)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_ComplexString)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_ComplexNestedWithDefault)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_MinPadding)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_MinPaddingWithCustomType)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_MyStruct)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_MyDataItem)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_Renaming)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_AnnotatedTypes)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_ForwardUsageRoot)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_ForwardUsageStruct)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_ForwardUsageByRef)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_IncompleteMap)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_IncompleteMapDep)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_CompleteMap)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_CompleteMapDep)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_IncompleteList)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_IncompleteListDep)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_CompleteList)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_CompleteListDep)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_AdaptedList)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_AdaptedListDep)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_DependentAdaptedList)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_DependentAdaptedListDep)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_AllocatorAware)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_AllocatorAware2)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_TypedefStruct)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_StructWithDoubleUnderscores)
+    return fbthriftResults
+}()
+
+var premadeCodecSpecsMap = func() map[string]*thrift.TypeSpec {
+    fbthriftTypeSpecsMap := make(map[string]*thrift.TypeSpec)
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_has_bitwise_ops.FullName] = premadeCodecTypeSpec_module_has_bitwise_ops
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_is_unscoped.FullName] = premadeCodecTypeSpec_module_is_unscoped
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_MyForwardRefEnum.FullName] = premadeCodecTypeSpec_module_MyForwardRefEnum
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_empty_struct.FullName] = premadeCodecTypeSpec_module_empty_struct
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_string.FullName] = premadeCodecTypeSpec_string
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_decorated_struct.FullName] = premadeCodecTypeSpec_module_decorated_struct
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_i32.FullName] = premadeCodecTypeSpec_i32
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_set_i32_7194.FullName] = premadeCodecTypeSpec_module_set_i32_7194
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_map_i32_string_1261.FullName] = premadeCodecTypeSpec_module_map_i32_string_1261
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_ContainerStruct.FullName] = premadeCodecTypeSpec_module_ContainerStruct
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_CppTypeStruct.FullName] = premadeCodecTypeSpec_module_CppTypeStruct
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_i64.FullName] = premadeCodecTypeSpec_i64
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_VirtualStruct.FullName] = premadeCodecTypeSpec_module_VirtualStruct
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_MyStructWithForwardRefEnum.FullName] = premadeCodecTypeSpec_module_MyStructWithForwardRefEnum
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_bool.FullName] = premadeCodecTypeSpec_bool
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_TrivialNumeric.FullName] = premadeCodecTypeSpec_module_TrivialNumeric
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_TrivialNestedWithDefault.FullName] = premadeCodecTypeSpec_module_TrivialNestedWithDefault
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_ComplexString.FullName] = premadeCodecTypeSpec_module_ComplexString
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_ComplexNestedWithDefault.FullName] = premadeCodecTypeSpec_module_ComplexNestedWithDefault
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_byte.FullName] = premadeCodecTypeSpec_byte
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_i16.FullName] = premadeCodecTypeSpec_i16
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_MinPadding.FullName] = premadeCodecTypeSpec_module_MinPadding
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_MinPaddingWithCustomType.FullName] = premadeCodecTypeSpec_module_MinPaddingWithCustomType
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_MyDataItem.FullName] = premadeCodecTypeSpec_module_MyDataItem
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_MyStruct.FullName] = premadeCodecTypeSpec_module_MyStruct
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_Renaming.FullName] = premadeCodecTypeSpec_module_Renaming
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_binary.FullName] = premadeCodecTypeSpec_binary
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_TBinary.FullName] = premadeCodecTypeSpec_module_TBinary
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_TBinary_8623.FullName] = premadeCodecTypeSpec_module_TBinary_8623
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_SomeListOfTypeMap_2468.FullName] = premadeCodecTypeSpec_module_SomeListOfTypeMap_2468
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_AnnotatedTypes.FullName] = premadeCodecTypeSpec_module_AnnotatedTypes
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_ForwardUsageStruct.FullName] = premadeCodecTypeSpec_module_ForwardUsageStruct
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_ForwardUsageByRef.FullName] = premadeCodecTypeSpec_module_ForwardUsageByRef
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_ForwardUsageRoot.FullName] = premadeCodecTypeSpec_module_ForwardUsageRoot
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_IncompleteMapDep.FullName] = premadeCodecTypeSpec_module_IncompleteMapDep
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_IncompleteMap.FullName] = premadeCodecTypeSpec_module_IncompleteMap
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_CompleteMapDep.FullName] = premadeCodecTypeSpec_module_CompleteMapDep
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_CompleteMap.FullName] = premadeCodecTypeSpec_module_CompleteMap
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_IncompleteListDep.FullName] = premadeCodecTypeSpec_module_IncompleteListDep
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_IncompleteList.FullName] = premadeCodecTypeSpec_module_IncompleteList
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_CompleteListDep.FullName] = premadeCodecTypeSpec_module_CompleteListDep
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_CompleteList.FullName] = premadeCodecTypeSpec_module_CompleteList
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_AdaptedListDep.FullName] = premadeCodecTypeSpec_module_AdaptedListDep
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_AdaptedList.FullName] = premadeCodecTypeSpec_module_AdaptedList
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_DependentAdaptedListDep.FullName] = premadeCodecTypeSpec_module_DependentAdaptedListDep
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_DependentAdaptedList.FullName] = premadeCodecTypeSpec_module_DependentAdaptedList
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_list_i32_9187.FullName] = premadeCodecTypeSpec_module_list_i32_9187
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_set_i32_7070.FullName] = premadeCodecTypeSpec_module_set_i32_7070
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_map_i32_i32_9565.FullName] = premadeCodecTypeSpec_module_map_i32_i32_9565
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_string_5252.FullName] = premadeCodecTypeSpec_module_string_5252
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_i32_9314.FullName] = premadeCodecTypeSpec_module_i32_9314
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_AllocatorAware.FullName] = premadeCodecTypeSpec_module_AllocatorAware
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_AllocatorAware2.FullName] = premadeCodecTypeSpec_module_AllocatorAware2
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_IntTypedef.FullName] = premadeCodecTypeSpec_module_IntTypedef
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_UintTypedef.FullName] = premadeCodecTypeSpec_module_UintTypedef
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_TypedefStruct.FullName] = premadeCodecTypeSpec_module_TypedefStruct
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_StructWithDoubleUnderscores.FullName] = premadeCodecTypeSpec_module_StructWithDoubleUnderscores
+    return fbthriftTypeSpecsMap
+}()
 
 // GetMetadataThriftType (INTERNAL USE ONLY).
 // Returns metadata TypeSpec for a given full type name.
 func GetCodecTypeSpec(fullName string) *thrift.TypeSpec {
-    return premadeCodecSpecsMapOnce()[fullName]
+    return premadeCodecSpecsMap[fullName]
 }

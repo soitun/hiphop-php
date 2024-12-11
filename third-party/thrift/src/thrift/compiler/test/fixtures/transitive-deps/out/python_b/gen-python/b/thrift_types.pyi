@@ -10,10 +10,14 @@ from __future__ import annotations
 import typing as _typing
 
 import folly.iobuf as _fbthrift_iobuf
+import b.thrift_abstract_types as _fbthrift_python_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
 
 import c.thrift_types as _fbthrift__c__thrift_types
+
+from b.thrift_enums import *
+
 
 B = _typing.List[_fbthrift__c__thrift_types.C]
 E = _fbthrift__c__thrift_types.E

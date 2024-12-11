@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<6f5e023411c62a93f680149e18b781cf>>
+// @generated SignedSource<<37ff048d2395050fe48baee6b338d2f2>>
 //
 // To regenerate this file, run:
 //   hphp/hack/src/oxidized_regen.sh
@@ -698,6 +698,7 @@ impl Transform for Expr_ {
             Expr_::Cast(ref mut __binding_0) => __binding_0.transform(env, &mut pass.clone()),
             Expr_::Unop(ref mut __binding_0) => __binding_0.transform(env, &mut pass.clone()),
             Expr_::Binop(ref mut __binding_0) => __binding_0.transform(env, &mut pass.clone()),
+            Expr_::Assign(ref mut __binding_0) => __binding_0.transform(env, &mut pass.clone()),
             Expr_::Pipe(ref mut __binding_0) => __binding_0.transform(env, &mut pass.clone()),
             Expr_::Eif(ref mut __binding_0) => __binding_0.transform(env, &mut pass.clone()),
             Expr_::Is(ref mut __binding_0) => __binding_0.transform(env, &mut pass.clone()),
@@ -1209,6 +1210,27 @@ impl Transform for CallExpr {
         }
     }
 }
+impl Transform for Argument {
+    fn transform(&mut self, env: &Env, pass: &mut (impl Pass + Clone)) {
+        let mut in_pass = pass.clone();
+        if let Break(..) = pass.on_ty_argument_top_down(env, self) {
+            return;
+        }
+        stack_limit::maybe_grow(|| self.traverse(env, pass));
+        in_pass.on_ty_argument_bottom_up(env, self);
+    }
+    fn traverse(&mut self, env: &Env, pass: &mut (impl Pass + Clone)) {
+        match self {
+            Argument::Ainout(ref mut __binding_0, ref mut __binding_1) => {
+                {
+                    __binding_0.transform(env, &mut pass.clone())
+                }
+                { __binding_1.transform(env, &mut pass.clone()) }
+            }
+            Argument::Anormal(ref mut __binding_0) => __binding_0.transform(env, &mut pass.clone()),
+        }
+    }
+}
 impl Transform for UserAttribute {
     fn transform(&mut self, env: &Env, pass: &mut (impl Pass + Clone)) {
         let mut in_pass = pass.clone();
@@ -1292,6 +1314,9 @@ const _: () = {
 };
 const _: () = {
     impl Transform for EmitId {}
+};
+const _: () = {
+    impl Transform for PackageMembership {}
 };
 impl Transform for Class_ {
     fn transform(&mut self, env: &Env, pass: &mut (impl Pass + Clone)) {

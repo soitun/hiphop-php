@@ -12,6 +12,9 @@
 from __future__ import annotations
 
 import folly.iobuf as _fbthrift_iobuf
+
+from abc import ABCMeta as _fbthrift_ABCMeta
+import test.fixtures.basic.module.thrift_abstract_types as _fbthrift_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.mutable_types as _fbthrift_python_mutable_types
 import thrift.python.mutable_exceptions as _fbthrift_python_mutable_exceptions
@@ -160,6 +163,8 @@ class MyStruct(metaclass=_fbthrift_python_mutable_types.MutableStructMeta):
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.MyStruct, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.MyStruct, MyStruct)
+_fbthrift_MyStruct = MyStruct
 
 class Containers(metaclass=_fbthrift_python_mutable_types.MutableStructMeta):
     _fbthrift_SPEC = (
@@ -236,6 +241,8 @@ class Containers(metaclass=_fbthrift_python_mutable_types.MutableStructMeta):
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.Containers, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.Containers, Containers)
+_fbthrift_Containers = Containers
 
 class MyDataItem(metaclass=_fbthrift_python_mutable_types.MutableStructMeta):
     _fbthrift_SPEC = (
@@ -279,6 +286,8 @@ class MyDataItem(metaclass=_fbthrift_python_mutable_types.MutableStructMeta):
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.MyDataItem, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.MyDataItem, MyDataItem)
+_fbthrift_MyDataItem = MyDataItem
 
 class MyUnion(metaclass=_fbthrift_python_mutable_types.MutableUnionMeta):
     _fbthrift_SPEC = (
@@ -328,6 +337,9 @@ class MyUnion(metaclass=_fbthrift_python_mutable_types.MutableUnionMeta):
         ),
     )
 
+    _fbthrift_abstract_base_class = _fbthrift_abstract_types.MyUnion
+
+
     @staticmethod
     def __get_thrift_name__() -> str:
         return "module.MyUnion"
@@ -366,6 +378,8 @@ class MyUnion(metaclass=_fbthrift_python_mutable_types.MutableUnionMeta):
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.MyUnion, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.MyUnion, MyUnion)
+_fbthrift_MyUnion = MyUnion
 
 class MyException(metaclass=_fbthrift_python_mutable_exceptions.MutableGeneratedErrorMeta):
     _fbthrift_SPEC = (
@@ -415,6 +429,9 @@ class MyException(metaclass=_fbthrift_python_mutable_exceptions.MutableGenerated
         ),
     )
 
+    _fbthrift_abstract_base_class = _fbthrift_abstract_types.MyException
+
+
     @staticmethod
     def __get_thrift_name__() -> str:
         return "module.MyException"
@@ -452,7 +469,7 @@ class MyException(metaclass=_fbthrift_python_mutable_exceptions.MutableGenerated
         except ModuleNotFoundError:
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.MyException, self)
-
+_fbthrift_MyException = MyException
 
 class MyExceptionWithMessage(metaclass=_fbthrift_python_mutable_exceptions.MutableGeneratedErrorMeta):
     _fbthrift_SPEC = (
@@ -502,6 +519,9 @@ class MyExceptionWithMessage(metaclass=_fbthrift_python_mutable_exceptions.Mutab
         ),
     )
 
+    _fbthrift_abstract_base_class = _fbthrift_abstract_types.MyExceptionWithMessage
+
+
     @staticmethod
     def __get_thrift_name__() -> str:
         return "module.MyExceptionWithMessage"
@@ -546,7 +566,7 @@ class MyExceptionWithMessage(metaclass=_fbthrift_python_mutable_exceptions.Mutab
         except ModuleNotFoundError:
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.MyExceptionWithMessage, self)
-
+_fbthrift_MyExceptionWithMessage = MyExceptionWithMessage
 
 class ReservedKeyword(metaclass=_fbthrift_python_mutable_types.MutableStructMeta):
     _fbthrift_SPEC = (
@@ -601,6 +621,8 @@ class ReservedKeyword(metaclass=_fbthrift_python_mutable_types.MutableStructMeta
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.ReservedKeyword, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.ReservedKeyword, ReservedKeyword)
+_fbthrift_ReservedKeyword = ReservedKeyword
 
 class UnionToBeRenamed(metaclass=_fbthrift_python_mutable_types.MutableUnionMeta):
     _fbthrift_SPEC = (
@@ -616,6 +638,9 @@ class UnionToBeRenamed(metaclass=_fbthrift_python_mutable_types.MutableUnionMeta
             4, # IDL type (see BaseTypeEnum)
         ),
     )
+
+    _fbthrift_abstract_base_class = _fbthrift_abstract_types.UnionToBeRenamed
+
 
     @staticmethod
     def __get_thrift_name__() -> str:
@@ -655,8 +680,15 @@ class UnionToBeRenamed(metaclass=_fbthrift_python_mutable_types.MutableUnionMeta
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.UnionToBeRenamed, self)
 
-from test.fixtures.basic.module.thrift_enums import *
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.UnionToBeRenamed, UnionToBeRenamed)
+_fbthrift_UnionToBeRenamed = UnionToBeRenamed
 
+from test.fixtures.basic.module.thrift_enums import _fbthrift_compatible_with_MyEnum
+from test.fixtures.basic.module.thrift_enums import MyEnum as _fbthrift_MyEnum
+from test.fixtures.basic.module.thrift_enums import _fbthrift_compatible_with_HackEnum
+from test.fixtures.basic.module.thrift_enums import HackEnum as _fbthrift_HackEnum
+
+from test.fixtures.basic.module.thrift_enums import *
 _fbthrift_all_enums = [
     MyEnum,
     HackEnum,
@@ -694,8 +726,8 @@ ASet = _fbthrift_python_types.Set(_fbthrift_python_types.typeinfo_string, ("foo"
 
 AMap = _fbthrift_python_types.Map(_fbthrift_python_types.typeinfo_string, _fbthrift_python_mutable_typeinfos.MutableListTypeInfo(_fbthrift_python_types.typeinfo_i32), { "foo": _fbthrift_python_types.List(_fbthrift_python_types.typeinfo_i32, (1, 2, 3, 4, )), "bar": _fbthrift_python_types.List(_fbthrift_python_types.typeinfo_i32, (10, 32, 54, ))})
 
-MyEnumAlias = MyEnum
-MyDataItemAlias = MyDataItem
+MyEnumAlias = _fbthrift_MyEnum
+MyDataItemAlias = _fbthrift_MyDataItem
 
 
 

@@ -25,6 +25,7 @@ import typing as _typing
 import enum
 
 import folly.iobuf as _fbthrift_iobuf
+import module.thrift_abstract_types as _fbthrift_python_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.mutable_types as _fbthrift_python_mutable_types
 import thrift.python.mutable_exceptions as _fbthrift_python_mutable_exceptions
@@ -37,42 +38,42 @@ class _fbthrift_compatible_with_ComplexUnion:
     pass
 
 
-class ComplexUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_compatible_with_ComplexUnion):
+class ComplexUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_compatible_with_ComplexUnion, _fbthrift_python_abstract_types.ComplexUnion):
 
     @property
     def intValue(self) -> int: ...
     @intValue.setter
-    def intValue(self, value: int): ...
+    def intValue(self, value: int) -> None: ...
 
 
     @property
     def intListValue(self) -> _fbthrift_python_mutable_containers.MutableList[int]: ...
     @intListValue.setter
-    def intListValue(self, value: _fbthrift_python_mutable_containers.MutableList[int] | _fbthrift_python_mutable_types._ThriftListWrapper): ...
+    def intListValue(self, value: _fbthrift_python_mutable_containers.MutableList[int] | _fbthrift_python_mutable_types._ThriftListWrapper) -> None: ...
 
 
     @property
     def stringListValue(self) -> _fbthrift_python_mutable_containers.MutableList[str]: ...
     @stringListValue.setter
-    def stringListValue(self, value: _fbthrift_python_mutable_containers.MutableList[str] | _fbthrift_python_mutable_types._ThriftListWrapper): ...
+    def stringListValue(self, value: _fbthrift_python_mutable_containers.MutableList[str] | _fbthrift_python_mutable_types._ThriftListWrapper) -> None: ...
 
 
     @property
     def stringValue(self) -> str: ...
     @stringValue.setter
-    def stringValue(self, value: str): ...
+    def stringValue(self, value: str) -> None: ...
 
 
     @property
     def typedefValue(self) -> _fbthrift_python_mutable_containers.MutableMap[int, str]: ...
     @typedefValue.setter
-    def typedefValue(self, value: _fbthrift_python_mutable_containers.MutableMap[int, str] | _fbthrift_python_mutable_types._ThriftMapWrapper): ...
+    def typedefValue(self, value: _fbthrift_python_mutable_containers.MutableMap[int, str] | _fbthrift_python_mutable_types._ThriftMapWrapper) -> None: ...
 
 
     @property
     def stringRef(self) -> str: ...
     @stringRef.setter
-    def stringRef(self, value: str): ...
+    def stringRef(self, value: str) -> None: ...
 
     def __init__(
         self, *,
@@ -85,6 +86,7 @@ class ComplexUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_compat
     ) -> None: ...
 
 
+
     class FbThriftUnionFieldEnum(enum.Enum):
         EMPTY: ComplexUnion.FbThriftUnionFieldEnum = ...
         intValue: ComplexUnion.FbThriftUnionFieldEnum = ...
@@ -94,7 +96,6 @@ class ComplexUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_compat
         typedefValue: ComplexUnion.FbThriftUnionFieldEnum = ...
         stringRef: ComplexUnion.FbThriftUnionFieldEnum = ...
 
-
     fbthrift_current_value: _typing.Final[_typing.Union[None, int, _fbthrift_python_mutable_containers.MutableList[int], _fbthrift_python_mutable_containers.MutableList[str], str, _fbthrift_python_mutable_containers.MutableMap[int, str], str]]
     fbthrift_current_field: _typing.Final[FbThriftUnionFieldEnum]
     def get_type(self) -> FbThriftUnionFieldEnum: ...
@@ -102,24 +103,24 @@ class ComplexUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_compat
     def _to_mutable_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "module.types.ComplexUnion": ...  # type: ignore
     def _to_py_deprecated(self) -> "module.ttypes.ComplexUnion": ...  # type: ignore
-
+_fbthrift_ComplexUnion = ComplexUnion
 
 class _fbthrift_compatible_with_ListUnion:
     pass
 
 
-class ListUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_compatible_with_ListUnion):
+class ListUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_compatible_with_ListUnion, _fbthrift_python_abstract_types.ListUnion):
 
     @property
     def intListValue(self) -> _fbthrift_python_mutable_containers.MutableList[int]: ...
     @intListValue.setter
-    def intListValue(self, value: _fbthrift_python_mutable_containers.MutableList[int] | _fbthrift_python_mutable_types._ThriftListWrapper): ...
+    def intListValue(self, value: _fbthrift_python_mutable_containers.MutableList[int] | _fbthrift_python_mutable_types._ThriftListWrapper) -> None: ...
 
 
     @property
     def stringListValue(self) -> _fbthrift_python_mutable_containers.MutableList[str]: ...
     @stringListValue.setter
-    def stringListValue(self, value: _fbthrift_python_mutable_containers.MutableList[str] | _fbthrift_python_mutable_types._ThriftListWrapper): ...
+    def stringListValue(self, value: _fbthrift_python_mutable_containers.MutableList[str] | _fbthrift_python_mutable_types._ThriftListWrapper) -> None: ...
 
     def __init__(
         self, *,
@@ -128,11 +129,11 @@ class ListUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_compatibl
     ) -> None: ...
 
 
+
     class FbThriftUnionFieldEnum(enum.Enum):
         EMPTY: ListUnion.FbThriftUnionFieldEnum = ...
         intListValue: ListUnion.FbThriftUnionFieldEnum = ...
         stringListValue: ListUnion.FbThriftUnionFieldEnum = ...
-
 
     fbthrift_current_value: _typing.Final[_typing.Union[None, _fbthrift_python_mutable_containers.MutableList[int], _fbthrift_python_mutable_containers.MutableList[str]]]
     fbthrift_current_field: _typing.Final[FbThriftUnionFieldEnum]
@@ -141,24 +142,24 @@ class ListUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_compatibl
     def _to_mutable_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "module.types.ListUnion": ...  # type: ignore
     def _to_py_deprecated(self) -> "module.ttypes.ListUnion": ...  # type: ignore
-
+_fbthrift_ListUnion = ListUnion
 
 class _fbthrift_compatible_with_DataUnion:
     pass
 
 
-class DataUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_compatible_with_DataUnion):
+class DataUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_compatible_with_DataUnion, _fbthrift_python_abstract_types.DataUnion):
 
     @property
     def binaryData(self) -> bytes: ...
     @binaryData.setter
-    def binaryData(self, value: bytes): ...
+    def binaryData(self, value: bytes) -> None: ...
 
 
     @property
     def stringData(self) -> str: ...
     @stringData.setter
-    def stringData(self, value: str): ...
+    def stringData(self, value: str) -> None: ...
 
     def __init__(
         self, *,
@@ -167,11 +168,11 @@ class DataUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_compatibl
     ) -> None: ...
 
 
+
     class FbThriftUnionFieldEnum(enum.Enum):
         EMPTY: DataUnion.FbThriftUnionFieldEnum = ...
         binaryData: DataUnion.FbThriftUnionFieldEnum = ...
         stringData: DataUnion.FbThriftUnionFieldEnum = ...
-
 
     fbthrift_current_value: _typing.Final[_typing.Union[None, bytes, str]]
     fbthrift_current_field: _typing.Final[FbThriftUnionFieldEnum]
@@ -180,30 +181,30 @@ class DataUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_compatibl
     def _to_mutable_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "module.types.DataUnion": ...  # type: ignore
     def _to_py_deprecated(self) -> "module.ttypes.DataUnion": ...  # type: ignore
-
+_fbthrift_DataUnion = DataUnion
 
 class _fbthrift_compatible_with_Val:
     pass
 
 
-class Val(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_with_Val):
+class Val(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_with_Val, _fbthrift_python_abstract_types.Val):
 
     @property
     def strVal(self) -> str: ...
     @strVal.setter
-    def strVal(self, value: str): ...
+    def strVal(self, value: str) -> None: ...
 
 
     @property
     def intVal(self) -> int: ...
     @intVal.setter
-    def intVal(self, value: int): ...
+    def intVal(self, value: int) -> None: ...
 
 
     @property
     def typedefValue(self) -> _fbthrift_python_mutable_containers.MutableMap[int, str]: ...
     @typedefValue.setter
-    def typedefValue(self, value: _fbthrift_python_mutable_containers.MutableMap[int, str] | _fbthrift_python_mutable_types._ThriftMapWrapper): ...
+    def typedefValue(self, value: _fbthrift_python_mutable_containers.MutableMap[int, str] | _fbthrift_python_mutable_types._ThriftMapWrapper) -> None: ...
 
     def __init__(
         self, *,
@@ -223,24 +224,24 @@ class Val(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_wit
     def _to_mutable_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "module.types.Val": ...  # type: ignore
     def _to_py_deprecated(self) -> "module.ttypes.Val": ...  # type: ignore
-
+_fbthrift_Val = Val
 
 class _fbthrift_compatible_with_ValUnion:
     pass
 
 
-class ValUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_compatible_with_ValUnion):
+class ValUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_compatible_with_ValUnion, _fbthrift_python_abstract_types.ValUnion):
 
     @property
-    def v1(self) -> Val: ...
+    def v1(self) -> _fbthrift_Val: ...
     @v1.setter
-    def v1(self, value: Val): ...
+    def v1(self, value: _fbthrift_Val) -> None: ...
 
 
     @property
-    def v2(self) -> Val: ...
+    def v2(self) -> _fbthrift_Val: ...
     @v2.setter
-    def v2(self, value: Val): ...
+    def v2(self, value: _fbthrift_Val) -> None: ...
 
     def __init__(
         self, *,
@@ -249,37 +250,37 @@ class ValUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_compatible
     ) -> None: ...
 
 
+
     class FbThriftUnionFieldEnum(enum.Enum):
         EMPTY: ValUnion.FbThriftUnionFieldEnum = ...
         v1: ValUnion.FbThriftUnionFieldEnum = ...
         v2: ValUnion.FbThriftUnionFieldEnum = ...
 
-
-    fbthrift_current_value: _typing.Final[_typing.Union[None, Val, Val]]
+    fbthrift_current_value: _typing.Final[_typing.Union[None, _fbthrift_Val, _fbthrift_Val]]
     fbthrift_current_field: _typing.Final[FbThriftUnionFieldEnum]
     def get_type(self) -> FbThriftUnionFieldEnum: ...
     def _to_python(self) -> "module.thrift_types.ValUnion": ...  # type: ignore
     def _to_mutable_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "module.types.ValUnion": ...  # type: ignore
     def _to_py_deprecated(self) -> "module.ttypes.ValUnion": ...  # type: ignore
-
+_fbthrift_ValUnion = ValUnion
 
 class _fbthrift_compatible_with_VirtualComplexUnion:
     pass
 
 
-class VirtualComplexUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_compatible_with_VirtualComplexUnion):
+class VirtualComplexUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_compatible_with_VirtualComplexUnion, _fbthrift_python_abstract_types.VirtualComplexUnion):
 
     @property
     def thingOne(self) -> str: ...
     @thingOne.setter
-    def thingOne(self, value: str): ...
+    def thingOne(self, value: str) -> None: ...
 
 
     @property
     def thingTwo(self) -> str: ...
     @thingTwo.setter
-    def thingTwo(self, value: str): ...
+    def thingTwo(self, value: str) -> None: ...
 
     def __init__(
         self, *,
@@ -288,11 +289,11 @@ class VirtualComplexUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift
     ) -> None: ...
 
 
+
     class FbThriftUnionFieldEnum(enum.Enum):
         EMPTY: VirtualComplexUnion.FbThriftUnionFieldEnum = ...
         thingOne: VirtualComplexUnion.FbThriftUnionFieldEnum = ...
         thingTwo: VirtualComplexUnion.FbThriftUnionFieldEnum = ...
-
 
     fbthrift_current_value: _typing.Final[_typing.Union[None, str, str]]
     fbthrift_current_field: _typing.Final[FbThriftUnionFieldEnum]
@@ -301,18 +302,18 @@ class VirtualComplexUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift
     def _to_mutable_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "module.types.VirtualComplexUnion": ...  # type: ignore
     def _to_py_deprecated(self) -> "module.ttypes.VirtualComplexUnion": ...  # type: ignore
-
+_fbthrift_VirtualComplexUnion = VirtualComplexUnion
 
 class _fbthrift_compatible_with_NonCopyableStruct:
     pass
 
 
-class NonCopyableStruct(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_with_NonCopyableStruct):
+class NonCopyableStruct(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_with_NonCopyableStruct, _fbthrift_python_abstract_types.NonCopyableStruct):
 
     @property
     def num(self) -> int: ...
     @num.setter
-    def num(self, value: int): ...
+    def num(self, value: int) -> None: ...
 
     def __init__(
         self, *,
@@ -328,18 +329,18 @@ class NonCopyableStruct(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_
     def _to_mutable_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "module.types.NonCopyableStruct": ...  # type: ignore
     def _to_py_deprecated(self) -> "module.ttypes.NonCopyableStruct": ...  # type: ignore
-
+_fbthrift_NonCopyableStruct = NonCopyableStruct
 
 class _fbthrift_compatible_with_NonCopyableUnion:
     pass
 
 
-class NonCopyableUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_compatible_with_NonCopyableUnion):
+class NonCopyableUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_compatible_with_NonCopyableUnion, _fbthrift_python_abstract_types.NonCopyableUnion):
 
     @property
-    def s(self) -> NonCopyableStruct: ...
+    def s(self) -> _fbthrift_NonCopyableStruct: ...
     @s.setter
-    def s(self, value: NonCopyableStruct): ...
+    def s(self, value: _fbthrift_NonCopyableStruct) -> None: ...
 
     def __init__(
         self, *,
@@ -347,17 +348,18 @@ class NonCopyableUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_co
     ) -> None: ...
 
 
+
     class FbThriftUnionFieldEnum(enum.Enum):
         EMPTY: NonCopyableUnion.FbThriftUnionFieldEnum = ...
         s: NonCopyableUnion.FbThriftUnionFieldEnum = ...
 
-
-    fbthrift_current_value: _typing.Final[_typing.Union[None, NonCopyableStruct]]
+    fbthrift_current_value: _typing.Final[_typing.Union[None, _fbthrift_NonCopyableStruct]]
     fbthrift_current_field: _typing.Final[FbThriftUnionFieldEnum]
     def get_type(self) -> FbThriftUnionFieldEnum: ...
     def _to_python(self) -> "module.thrift_types.NonCopyableUnion": ...  # type: ignore
     def _to_mutable_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "module.types.NonCopyableUnion": ...  # type: ignore
     def _to_py_deprecated(self) -> "module.ttypes.NonCopyableUnion": ...  # type: ignore
+_fbthrift_NonCopyableUnion = NonCopyableUnion
 
 containerTypedef = _typing.Dict[int, str]

@@ -7,8 +7,7 @@
 
 import enum
 import thrift.py3.types
-import includes.thrift_metadata as _fbthrift_python_metadata
-import includes.thrift_types as _fbthrift_python_types
+import includes.thrift_enums as _fbthrift_python_enums
 
 _fbthrift__module_name__ = "includes.types"
 
@@ -23,14 +22,14 @@ class AnEnum(thrift.py3.types.CompiledEnum):
 
     @staticmethod
     def __get_metadata__():
-        return _fbthrift_python_metadata.gen_metadata_enum_AnEnum()
+        return _fbthrift_python_enums.gen_metadata_enum_AnEnum()
 
     @staticmethod
     def __get_thrift_name__():
         return "includes.AnEnum"
 
     def _to_python(self):
-        return _fbthrift_python_types.AnEnum(self._fbthrift_value_)
+        return _fbthrift_python_enums.AnEnum(self._fbthrift_value_)
 
     def _to_py3(self):
         return self

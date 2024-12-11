@@ -29,8 +29,6 @@ from thrift.py3.types cimport (
     init_unicode_from_cpp as __init_unicode_from_cpp,
     set_iter as __set_iter,
     map_iter as __map_iter,
-    map_contains as __map_contains,
-    map_getitem as __map_getitem,
     reference_shared_ptr as __reference_shared_ptr,
     get_field_name_by_index as __get_field_name_by_index,
     reset_field as __reset_field,
@@ -63,6 +61,7 @@ from a.containers_FBTHRIFT_ONLY_DO_NOT_USE import (
     List__List__c_C,
 )
 
+_fbthrift__module_name__ = "a.types"
 
 cdef object get_types_reflection():
     return importlib.import_module(
@@ -71,6 +70,8 @@ cdef object get_types_reflection():
 
 @__cython.auto_pickle(False)
 cdef class A(thrift.py3.types.Struct):
+    __module__ = _fbthrift__module_name__
+
     def __init__(A self, **kwargs):
         self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = make_shared[_a_cbindings.cA]()
         self._fields_setter = _fbthrift_types_fields.__A_FieldsSetter._fbthrift_create(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE.get())
@@ -194,14 +195,14 @@ cdef class A(thrift.py3.types.Struct):
         py_deprecated_types = importlib.import_module("a.ttypes")
         return thrift.util.converter.to_py_struct(py_deprecated_types.A, self)
 
-
 cdef vector[_c_cbindings.cC] List__c_C__make_instance(object items) except *:
     cdef vector[_c_cbindings.cC] c_inst
-    if items is not None:
-        for item in items:
-            if not isinstance(item, _c_types.C):
-                raise TypeError(f"{item!r} is not of type _c_types.C")
-            c_inst.push_back(deref((<_c_types.C>item)._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE))
+    if items is None:
+        return cmove(c_inst)
+    for item in items:
+        if not isinstance(item, _c_types.C):
+            raise TypeError(f"{item!r} is not of type _c_types.C")
+        c_inst.push_back(deref((<_c_types.C>item)._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE))
     return cmove(c_inst)
 
 cdef object List__c_C__from_cpp(const vector[_c_cbindings.cC]& c_vec) except *:
@@ -211,16 +212,16 @@ cdef object List__c_C__from_cpp(const vector[_c_cbindings.cC]& c_vec) except *:
         py_list.append(_c_types.C._create_FBTHRIFT_ONLY_DO_NOT_USE(make_shared[_c_cbindings.cC](c_vec[idx])))
     return List__c_C(py_list, thrift.py3.types._fbthrift_list_private_ctor)
 
-
 cdef vector[vector[_c_cbindings.cC]] List__List__c_C__make_instance(object items) except *:
     cdef vector[vector[_c_cbindings.cC]] c_inst
-    if items is not None:
-        for item in items:
-            if item is None:
-                raise TypeError("None is not of the type _typing.Sequence[_c_types.C]")
-            if not isinstance(item, List__c_C):
-                item = List__c_C(item)
-            c_inst.push_back(List__c_C__make_instance(item))
+    if items is None:
+        return cmove(c_inst)
+    for item in items:
+        if item is None:
+            raise TypeError("None is not of the type _typing.Sequence[_c_types.C]")
+        if not isinstance(item, List__c_C):
+            item = List__c_C(item)
+        c_inst.push_back(List__c_C__make_instance(item))
     return cmove(c_inst)
 
 cdef object List__List__c_C__from_cpp(const vector[vector[_c_cbindings.cC]]& c_vec) except *:

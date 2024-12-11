@@ -23,6 +23,7 @@ from __future__ import annotations
 import typing as _typing
 
 import folly.iobuf as _fbthrift_iobuf
+import module.thrift_abstract_types as _fbthrift_python_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.mutable_types as _fbthrift_python_mutable_types
 import thrift.python.mutable_exceptions as _fbthrift_python_mutable_exceptions
@@ -37,24 +38,24 @@ class _fbthrift_compatible_with_MyStruct:
     pass
 
 
-class MyStruct(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_with_MyStruct):
+class MyStruct(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_with_MyStruct, _fbthrift_python_abstract_types.MyStruct):
 
     @property
     def MyIncludedField(self) -> _fbthrift__includes__thrift_mutable_types.Included: ...
     @MyIncludedField.setter
-    def MyIncludedField(self, value: _fbthrift__includes__thrift_mutable_types.Included): ...
+    def MyIncludedField(self, value: _fbthrift__includes__thrift_mutable_types.Included) -> None: ...
 
 
     @property
     def MyOtherIncludedField(self) -> _fbthrift__includes__thrift_mutable_types.Included: ...
     @MyOtherIncludedField.setter
-    def MyOtherIncludedField(self, value: _fbthrift__includes__thrift_mutable_types.Included): ...
+    def MyOtherIncludedField(self, value: _fbthrift__includes__thrift_mutable_types.Included) -> None: ...
 
 
     @property
     def MyIncludedInt(self) -> int: ...
     @MyIncludedInt.setter
-    def MyIncludedInt(self, value: int): ...
+    def MyIncludedInt(self, value: int) -> None: ...
 
     def __init__(
         self, *,
@@ -74,3 +75,4 @@ class MyStruct(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatibl
     def _to_mutable_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "module.types.MyStruct": ...  # type: ignore
     def _to_py_deprecated(self) -> "module.ttypes.MyStruct": ...  # type: ignore
+_fbthrift_MyStruct = MyStruct

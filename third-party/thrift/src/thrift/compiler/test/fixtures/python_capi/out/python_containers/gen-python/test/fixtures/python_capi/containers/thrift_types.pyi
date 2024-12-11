@@ -10,15 +10,18 @@ from __future__ import annotations
 import typing as _typing
 
 import folly.iobuf as _fbthrift_iobuf
+import test.fixtures.python_capi.containers.thrift_abstract_types as _fbthrift_python_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
+
+from test.fixtures.python_capi.containers.thrift_enums import *
 
 
 class _fbthrift_compatible_with_TemplateLists:
     pass
 
 
-class TemplateLists(_fbthrift_python_types.Struct, _fbthrift_compatible_with_TemplateLists):
+class TemplateLists(_fbthrift_python_types.Struct, _fbthrift_compatible_with_TemplateLists, _fbthrift_python_abstract_types.TemplateLists):
     std_string: _typing.Final[_typing.Optional[_typing.Sequence[str]]] = ...
     deque_string: _typing.Final[_typing.Sequence[bytes]] = ...
     small_vector_iobuf: _typing.Final[_typing.Sequence[_fbthrift_iobuf.IOBuf]] = ...
@@ -45,13 +48,13 @@ class TemplateLists(_fbthrift_python_types.Struct, _fbthrift_compatible_with_Tem
     def _to_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "test.fixtures.python_capi.containers.types.TemplateLists": ...  # type: ignore
     def _to_py_deprecated(self) -> "containers.ttypes.TemplateLists": ...  # type: ignore
-
+_fbthrift_TemplateLists = TemplateLists
 
 class _fbthrift_compatible_with_TemplateSets:
     pass
 
 
-class TemplateSets(_fbthrift_python_types.Struct, _fbthrift_compatible_with_TemplateSets):
+class TemplateSets(_fbthrift_python_types.Struct, _fbthrift_compatible_with_TemplateSets, _fbthrift_python_abstract_types.TemplateSets):
     std_set: _typing.Final[_typing.AbstractSet[str]] = ...
     std_unordered: _typing.Final[_typing.AbstractSet[str]] = ...
     folly_fast: _typing.Final[_typing.AbstractSet[str]] = ...
@@ -84,13 +87,13 @@ class TemplateSets(_fbthrift_python_types.Struct, _fbthrift_compatible_with_Temp
     def _to_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "test.fixtures.python_capi.containers.types.TemplateSets": ...  # type: ignore
     def _to_py_deprecated(self) -> "containers.ttypes.TemplateSets": ...  # type: ignore
-
+_fbthrift_TemplateSets = TemplateSets
 
 class _fbthrift_compatible_with_TemplateMaps:
     pass
 
 
-class TemplateMaps(_fbthrift_python_types.Struct, _fbthrift_compatible_with_TemplateMaps):
+class TemplateMaps(_fbthrift_python_types.Struct, _fbthrift_compatible_with_TemplateMaps, _fbthrift_python_abstract_types.TemplateMaps):
     std_map: _typing.Final[_typing.Mapping[str, str]] = ...
     std_unordered: _typing.Final[_typing.Mapping[str, str]] = ...
     folly_fast: _typing.Final[_typing.Mapping[str, str]] = ...
@@ -123,13 +126,13 @@ class TemplateMaps(_fbthrift_python_types.Struct, _fbthrift_compatible_with_Temp
     def _to_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "test.fixtures.python_capi.containers.types.TemplateMaps": ...  # type: ignore
     def _to_py_deprecated(self) -> "containers.ttypes.TemplateMaps": ...  # type: ignore
-
+_fbthrift_TemplateMaps = TemplateMaps
 
 class _fbthrift_compatible_with_TWrapped:
     pass
 
 
-class TWrapped(_fbthrift_python_types.Struct, _fbthrift_compatible_with_TWrapped):
+class TWrapped(_fbthrift_python_types.Struct, _fbthrift_compatible_with_TWrapped, _fbthrift_python_abstract_types.TWrapped):
     fieldA: _typing.Final[str] = ...
     fieldB: _typing.Final[bytes] = ...
     def __init__(
@@ -147,14 +150,14 @@ class TWrapped(_fbthrift_python_types.Struct, _fbthrift_compatible_with_TWrapped
     def _to_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "test.fixtures.python_capi.containers.types.TWrapped": ...  # type: ignore
     def _to_py_deprecated(self) -> "containers.ttypes.TWrapped": ...  # type: ignore
-
+_fbthrift_TWrapped = TWrapped
 
 class _fbthrift_compatible_with_IndirectionA:
     pass
 
 
-class IndirectionA(_fbthrift_python_types.Struct, _fbthrift_compatible_with_IndirectionA):
-    lst: _typing.Final[_typing.Sequence[TWrapped]] = ...
+class IndirectionA(_fbthrift_python_types.Struct, _fbthrift_compatible_with_IndirectionA, _fbthrift_python_abstract_types.IndirectionA):
+    lst: _typing.Final[_typing.Sequence[_fbthrift_TWrapped]] = ...
     def __init__(
         self, *,
         lst: _typing.Optional[_typing.Sequence[_fbthrift_compatible_with_TWrapped]]=...
@@ -164,18 +167,18 @@ class IndirectionA(_fbthrift_python_types.Struct, _fbthrift_compatible_with_Indi
         self, *,
         lst: _typing.Optional[_typing.Sequence[_fbthrift_compatible_with_TWrapped]]=...
     ) -> _typing.Self: ...
-    def __iter__(self) -> _typing.Iterator[_typing.Tuple[str, _typing.Union[_typing.Sequence[TWrapped]]]]: ...
+    def __iter__(self) -> _typing.Iterator[_typing.Tuple[str, _typing.Union[_typing.Sequence[_fbthrift_TWrapped]]]]: ...
     def _to_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "test.fixtures.python_capi.containers.types.IndirectionA": ...  # type: ignore
     def _to_py_deprecated(self) -> "containers.ttypes.IndirectionA": ...  # type: ignore
-
+_fbthrift_IndirectionA = IndirectionA
 
 class _fbthrift_compatible_with_IndirectionB:
     pass
 
 
-class IndirectionB(_fbthrift_python_types.Struct, _fbthrift_compatible_with_IndirectionB):
-    lst: _typing.Final[_typing.Sequence[TWrapped]] = ...
+class IndirectionB(_fbthrift_python_types.Struct, _fbthrift_compatible_with_IndirectionB, _fbthrift_python_abstract_types.IndirectionB):
+    lst: _typing.Final[_typing.Sequence[_fbthrift_TWrapped]] = ...
     def __init__(
         self, *,
         lst: _typing.Optional[_typing.Sequence[_fbthrift_compatible_with_TWrapped]]=...
@@ -185,18 +188,18 @@ class IndirectionB(_fbthrift_python_types.Struct, _fbthrift_compatible_with_Indi
         self, *,
         lst: _typing.Optional[_typing.Sequence[_fbthrift_compatible_with_TWrapped]]=...
     ) -> _typing.Self: ...
-    def __iter__(self) -> _typing.Iterator[_typing.Tuple[str, _typing.Union[_typing.Sequence[TWrapped]]]]: ...
+    def __iter__(self) -> _typing.Iterator[_typing.Tuple[str, _typing.Union[_typing.Sequence[_fbthrift_TWrapped]]]]: ...
     def _to_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "test.fixtures.python_capi.containers.types.IndirectionB": ...  # type: ignore
     def _to_py_deprecated(self) -> "containers.ttypes.IndirectionB": ...  # type: ignore
-
+_fbthrift_IndirectionB = IndirectionB
 
 class _fbthrift_compatible_with_IndirectionC:
     pass
 
 
-class IndirectionC(_fbthrift_python_types.Struct, _fbthrift_compatible_with_IndirectionC):
-    lst: _typing.Final[_typing.Sequence[TWrapped]] = ...
+class IndirectionC(_fbthrift_python_types.Struct, _fbthrift_compatible_with_IndirectionC, _fbthrift_python_abstract_types.IndirectionC):
+    lst: _typing.Final[_typing.Sequence[_fbthrift_TWrapped]] = ...
     def __init__(
         self, *,
         lst: _typing.Optional[_typing.Sequence[_fbthrift_compatible_with_TWrapped]]=...
@@ -206,16 +209,17 @@ class IndirectionC(_fbthrift_python_types.Struct, _fbthrift_compatible_with_Indi
         self, *,
         lst: _typing.Optional[_typing.Sequence[_fbthrift_compatible_with_TWrapped]]=...
     ) -> _typing.Self: ...
-    def __iter__(self) -> _typing.Iterator[_typing.Tuple[str, _typing.Union[_typing.Sequence[TWrapped]]]]: ...
+    def __iter__(self) -> _typing.Iterator[_typing.Tuple[str, _typing.Union[_typing.Sequence[_fbthrift_TWrapped]]]]: ...
     def _to_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "test.fixtures.python_capi.containers.types.IndirectionC": ...  # type: ignore
     def _to_py_deprecated(self) -> "containers.ttypes.IndirectionC": ...  # type: ignore
+_fbthrift_IndirectionC = IndirectionC
 
 IOBuf = _fbthrift_iobuf.IOBuf
 small_vector_iobuf = _typing.List[_fbthrift_iobuf.IOBuf]
 fbvector_string = _typing.List[str]
 fbvector_fbvector_string = _typing.List[_typing.Sequence[str]]
-CppWrapper = TWrapped
-ListOfWrapped = _typing.List[TWrapped]
-VecOfWrapped = _typing.List[TWrapped]
-ListOfWrappedAlias = _typing.List[TWrapped]
+CppWrapper = _fbthrift_TWrapped
+ListOfWrapped = _typing.List[_fbthrift_TWrapped]
+VecOfWrapped = _typing.List[_fbthrift_TWrapped]
+ListOfWrappedAlias = _typing.List[_fbthrift_TWrapped]

@@ -7,10 +7,14 @@
 
 from __future__ import annotations
 
+import apache.thrift.metadata.thrift_types as _fbthrift_metadata
 import thrift.python.types as _fbthrift_python_types
-import module.thrift_metadata
 
-class Result(_fbthrift_python_types.Enum, int):
+class _fbthrift_compatible_with_Result:
+    pass
+
+
+class Result(_fbthrift_python_types.Enum, int, _fbthrift_compatible_with_Result):
     OK = 0
     SO_SO = 1
     GOOD = 2
@@ -24,7 +28,7 @@ class Result(_fbthrift_python_types.Enum, int):
 
     @staticmethod
     def __get_metadata__():
-        return module.thrift_metadata.gen_metadata_enum_Result()
+        return gen_metadata_enum_Result()
 
     def _to_python(self):
         return self
@@ -36,3 +40,27 @@ class Result(_fbthrift_python_types.Enum, int):
 
     def _to_py_deprecated(self):
         return self.value
+
+def _fbthrift_gen_metadata_enum_Result(metadata_struct: _fbthrift_metadata.ThriftMetadata) -> _fbthrift_metadata.ThriftMetadata:
+    qualified_name = "module.Result"
+
+    if qualified_name in metadata_struct.enums:
+        return metadata_struct
+    elements = {
+        0: "OK",
+        1: "SO_SO",
+        2: "GOOD",
+    }
+    structured_annotations = [
+    ]
+    enum_dict = dict(metadata_struct.enums)
+    enum_dict[qualified_name] = _fbthrift_metadata.ThriftEnum(name=qualified_name, elements=elements, structured_annotations=structured_annotations)
+    new_struct = metadata_struct(enums=enum_dict)
+
+    return new_struct
+
+def gen_metadata_enum_Result() -> _fbthrift_metadata.ThriftMetadata:
+    return _fbthrift_gen_metadata_enum_Result(
+        _fbthrift_metadata.ThriftMetadata(structs={}, enums={}, exceptions={}, services={})
+    )
+

@@ -56,8 +56,6 @@ let experimental_abstract_type_const_with_default =
 
 let experimental_supportdynamic_type_hint = "supportdynamic_type_hint"
 
-let experimental_always_pessimise_return = "always_pessimise_return"
-
 let experimental_consider_type_const_enforceable =
   "experimental_consider_type_const_enforceable"
 
@@ -74,7 +72,6 @@ let experimental_all =
       experimental_disallow_static_memoized;
       experimental_abstract_type_const_with_default;
       experimental_supportdynamic_type_hint;
-      experimental_always_pessimise_return;
       experimental_consider_type_const_enforceable;
       experimental_sound_enum_class_type_const;
     ]
@@ -327,6 +324,9 @@ let package_v2_support_multifile_tests t =
 
 let package_v2_bypass_package_check_for_class_const t =
   t.GlobalOptions.tco_package_v2_bypass_package_check_for_class_const
+
+let package_v2_exclude_patterns t =
+  t.GlobalOptions.tco_package_v2_exclude_patterns
 
 let class_sub_classname t = t.GlobalOptions.class_sub_classname
 

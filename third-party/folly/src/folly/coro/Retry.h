@@ -38,7 +38,7 @@
 #if FOLLY_HAS_COROUTINES
 
 /**
- * \file experimental/coro/Retry.h
+ * \file coro/Retry.h
  *
  * Coroutine implementation of futures/Retrying.h
  *
@@ -53,7 +53,7 @@
  * - retryWithExponentialBackoff: the retries will be restarted with
  * exponiential backoff.
  *
- * \refcode folly/docs/examples/folly/experimental/coro/Retry.cpp
+ * \refcode folly/docs/examples/folly/coro/Retry.cpp
  */
 
 namespace folly::coro {

@@ -7,7 +7,6 @@ package terse_write
 
 import (
     "maps"
-    "sync"
 
     thrift "github.com/facebook/fbthrift/thrift/lib/go/thrift/types"
     metadata "github.com/facebook/fbthrift/thrift/lib/thrift/metadata"
@@ -20,119 +19,138 @@ var _ = metadata.GoUnusedProtection__
 
 // Premade Thrift types
 var (
-    premadeThriftType_terse_write_MyEnum *metadata.ThriftType = nil
-    premadeThriftType_terse_write_MyStruct *metadata.ThriftType = nil
-    premadeThriftType_bool *metadata.ThriftType = nil
-    premadeThriftType_byte *metadata.ThriftType = nil
-    premadeThriftType_i16 *metadata.ThriftType = nil
-    premadeThriftType_i32 *metadata.ThriftType = nil
-    premadeThriftType_i64 *metadata.ThriftType = nil
-    premadeThriftType_float *metadata.ThriftType = nil
-    premadeThriftType_double *metadata.ThriftType = nil
-    premadeThriftType_string *metadata.ThriftType = nil
-    premadeThriftType_binary *metadata.ThriftType = nil
-    premadeThriftType_list_i16 *metadata.ThriftType = nil
-    premadeThriftType_set_i16 *metadata.ThriftType = nil
-    premadeThriftType_map_i16_i16 *metadata.ThriftType = nil
-    premadeThriftType_terse_write_MyUnion *metadata.ThriftType = nil
-    premadeThriftType_terse_write_MyStructWithCustomDefault *metadata.ThriftType = nil
-    premadeThriftType_terse_write_StructLevelTerseStruct *metadata.ThriftType = nil
-    premadeThriftType_terse_write_FieldLevelTerseStruct *metadata.ThriftType = nil
-    premadeThriftType_terse_write_TerseStructWithCustomDefault *metadata.ThriftType = nil
-    premadeThriftType_terse_write_MyInteger *metadata.ThriftType = nil
-    premadeThriftType_terse_write_AdaptedFields *metadata.ThriftType = nil
-    premadeThriftType_terse_write_WrappedFields *metadata.ThriftType = nil
-    premadeThriftType_terse_write_TerseException *metadata.ThriftType = nil
+    premadeThriftType_terse_write_MyEnum = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTEnum(
+            metadata.NewThriftEnumType().
+                SetName("terse_write.MyEnum"),
+        )
+    }()
+    premadeThriftType_terse_write_MyStruct = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTStruct(
+            metadata.NewThriftStructType().
+                SetName("terse_write.MyStruct"),
+        )
+    }()
+    premadeThriftType_bool = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTPrimitive(
+            metadata.ThriftPrimitiveType_THRIFT_BOOL_TYPE.Ptr(),
+        )
+    }()
+    premadeThriftType_byte = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTPrimitive(
+            metadata.ThriftPrimitiveType_THRIFT_BYTE_TYPE.Ptr(),
+        )
+    }()
+    premadeThriftType_i16 = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTPrimitive(
+            metadata.ThriftPrimitiveType_THRIFT_I16_TYPE.Ptr(),
+        )
+    }()
+    premadeThriftType_i32 = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTPrimitive(
+            metadata.ThriftPrimitiveType_THRIFT_I32_TYPE.Ptr(),
+        )
+    }()
+    premadeThriftType_i64 = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTPrimitive(
+            metadata.ThriftPrimitiveType_THRIFT_I64_TYPE.Ptr(),
+        )
+    }()
+    premadeThriftType_float = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTPrimitive(
+            metadata.ThriftPrimitiveType_THRIFT_FLOAT_TYPE.Ptr(),
+        )
+    }()
+    premadeThriftType_double = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTPrimitive(
+            metadata.ThriftPrimitiveType_THRIFT_DOUBLE_TYPE.Ptr(),
+        )
+    }()
+    premadeThriftType_string = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTPrimitive(
+            metadata.ThriftPrimitiveType_THRIFT_STRING_TYPE.Ptr(),
+        )
+    }()
+    premadeThriftType_binary = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTPrimitive(
+            metadata.ThriftPrimitiveType_THRIFT_BINARY_TYPE.Ptr(),
+        )
+    }()
+    premadeThriftType_list_i16 = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTList(
+            metadata.NewThriftListType().
+                SetValueType(premadeThriftType_i16),
+        )
+    }()
+    premadeThriftType_set_i16 = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTSet(
+            metadata.NewThriftSetType().
+                SetValueType(premadeThriftType_i16),
+        )
+    }()
+    premadeThriftType_map_i16_i16 = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTMap(
+            metadata.NewThriftMapType().
+                SetKeyType(premadeThriftType_i16).
+                SetValueType(premadeThriftType_i16),
+        )
+    }()
+    premadeThriftType_terse_write_MyUnion = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTUnion(
+            metadata.NewThriftUnionType().
+                SetName("terse_write.MyUnion"),
+        )
+    }()
+    premadeThriftType_terse_write_MyStructWithCustomDefault = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTStruct(
+            metadata.NewThriftStructType().
+                SetName("terse_write.MyStructWithCustomDefault"),
+        )
+    }()
+    premadeThriftType_terse_write_StructLevelTerseStruct = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTStruct(
+            metadata.NewThriftStructType().
+                SetName("terse_write.StructLevelTerseStruct"),
+        )
+    }()
+    premadeThriftType_terse_write_FieldLevelTerseStruct = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTStruct(
+            metadata.NewThriftStructType().
+                SetName("terse_write.FieldLevelTerseStruct"),
+        )
+    }()
+    premadeThriftType_terse_write_TerseStructWithCustomDefault = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTStruct(
+            metadata.NewThriftStructType().
+                SetName("terse_write.TerseStructWithCustomDefault"),
+        )
+    }()
+    premadeThriftType_terse_write_MyInteger = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTTypedef(
+            metadata.NewThriftTypedefType().
+                SetName("terse_write.MyInteger").
+                SetUnderlyingType(premadeThriftType_i32),
+        )
+    }()
+    premadeThriftType_terse_write_AdaptedFields = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTStruct(
+            metadata.NewThriftStructType().
+                SetName("terse_write.AdaptedFields"),
+        )
+    }()
+    premadeThriftType_terse_write_WrappedFields = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTStruct(
+            metadata.NewThriftStructType().
+                SetName("terse_write.WrappedFields"),
+        )
+    }()
+    premadeThriftType_terse_write_TerseException = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTStruct(
+            metadata.NewThriftStructType().
+                SetName("terse_write.TerseException"),
+        )
+    }()
 )
-
-// Premade Thrift type initializer
-var premadeThriftTypesInitOnce = sync.OnceFunc(func() {
-    premadeThriftType_terse_write_MyEnum = metadata.NewThriftType().SetTEnum(
-        metadata.NewThriftEnumType().
-            SetName("terse_write.MyEnum"),
-    )
-    premadeThriftType_terse_write_MyStruct = metadata.NewThriftType().SetTStruct(
-        metadata.NewThriftStructType().
-            SetName("terse_write.MyStruct"),
-    )
-    premadeThriftType_bool = metadata.NewThriftType().SetTPrimitive(
-        metadata.ThriftPrimitiveType_THRIFT_BOOL_TYPE.Ptr(),
-    )
-    premadeThriftType_byte = metadata.NewThriftType().SetTPrimitive(
-        metadata.ThriftPrimitiveType_THRIFT_BYTE_TYPE.Ptr(),
-    )
-    premadeThriftType_i16 = metadata.NewThriftType().SetTPrimitive(
-        metadata.ThriftPrimitiveType_THRIFT_I16_TYPE.Ptr(),
-    )
-    premadeThriftType_i32 = metadata.NewThriftType().SetTPrimitive(
-        metadata.ThriftPrimitiveType_THRIFT_I32_TYPE.Ptr(),
-    )
-    premadeThriftType_i64 = metadata.NewThriftType().SetTPrimitive(
-        metadata.ThriftPrimitiveType_THRIFT_I64_TYPE.Ptr(),
-    )
-    premadeThriftType_float = metadata.NewThriftType().SetTPrimitive(
-        metadata.ThriftPrimitiveType_THRIFT_FLOAT_TYPE.Ptr(),
-    )
-    premadeThriftType_double = metadata.NewThriftType().SetTPrimitive(
-        metadata.ThriftPrimitiveType_THRIFT_DOUBLE_TYPE.Ptr(),
-    )
-    premadeThriftType_string = metadata.NewThriftType().SetTPrimitive(
-        metadata.ThriftPrimitiveType_THRIFT_STRING_TYPE.Ptr(),
-    )
-    premadeThriftType_binary = metadata.NewThriftType().SetTPrimitive(
-        metadata.ThriftPrimitiveType_THRIFT_BINARY_TYPE.Ptr(),
-    )
-    premadeThriftType_list_i16 = metadata.NewThriftType().SetTList(
-        metadata.NewThriftListType().
-            SetValueType(premadeThriftType_i16),
-    )
-    premadeThriftType_set_i16 = metadata.NewThriftType().SetTSet(
-        metadata.NewThriftSetType().
-            SetValueType(premadeThriftType_i16),
-    )
-    premadeThriftType_map_i16_i16 = metadata.NewThriftType().SetTMap(
-        metadata.NewThriftMapType().
-            SetKeyType(premadeThriftType_i16).
-            SetValueType(premadeThriftType_i16),
-    )
-    premadeThriftType_terse_write_MyUnion = metadata.NewThriftType().SetTUnion(
-        metadata.NewThriftUnionType().
-            SetName("terse_write.MyUnion"),
-    )
-    premadeThriftType_terse_write_MyStructWithCustomDefault = metadata.NewThriftType().SetTStruct(
-        metadata.NewThriftStructType().
-            SetName("terse_write.MyStructWithCustomDefault"),
-    )
-    premadeThriftType_terse_write_StructLevelTerseStruct = metadata.NewThriftType().SetTStruct(
-        metadata.NewThriftStructType().
-            SetName("terse_write.StructLevelTerseStruct"),
-    )
-    premadeThriftType_terse_write_FieldLevelTerseStruct = metadata.NewThriftType().SetTStruct(
-        metadata.NewThriftStructType().
-            SetName("terse_write.FieldLevelTerseStruct"),
-    )
-    premadeThriftType_terse_write_TerseStructWithCustomDefault = metadata.NewThriftType().SetTStruct(
-        metadata.NewThriftStructType().
-            SetName("terse_write.TerseStructWithCustomDefault"),
-    )
-    premadeThriftType_terse_write_MyInteger = metadata.NewThriftType().SetTTypedef(
-        metadata.NewThriftTypedefType().
-            SetName("terse_write.MyInteger").
-            SetUnderlyingType(premadeThriftType_i32),
-    )
-    premadeThriftType_terse_write_AdaptedFields = metadata.NewThriftType().SetTStruct(
-        metadata.NewThriftStructType().
-            SetName("terse_write.AdaptedFields"),
-    )
-    premadeThriftType_terse_write_WrappedFields = metadata.NewThriftType().SetTStruct(
-        metadata.NewThriftStructType().
-            SetName("terse_write.WrappedFields"),
-    )
-    premadeThriftType_terse_write_TerseException = metadata.NewThriftType().SetTStruct(
-        metadata.NewThriftStructType().
-            SetName("terse_write.TerseException"),
-    )
-})
 
 // Helper type to allow us to store Thrift types in a slice at compile time,
 // and put them in a map at runtime. See comment at the top of template
@@ -142,521 +160,59 @@ type thriftTypeWithFullName struct {
     thriftType *metadata.ThriftType
 }
 
-var premadeThriftTypesMapOnce = sync.OnceValue(
-    func() map[string]*metadata.ThriftType {
-        // Relies on premade Thrift types initialization
-        premadeThriftTypesInitOnce()
+var premadeThriftTypesMap = func() map[string]*metadata.ThriftType {
+    thriftTypesWithFullName := make([]thriftTypeWithFullName, 0)
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "terse_write.MyEnum", premadeThriftType_terse_write_MyEnum })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "terse_write.MyStruct", premadeThriftType_terse_write_MyStruct })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "bool", premadeThriftType_bool })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "byte", premadeThriftType_byte })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "i16", premadeThriftType_i16 })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "i32", premadeThriftType_i32 })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "i64", premadeThriftType_i64 })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "float", premadeThriftType_float })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "double", premadeThriftType_double })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "string", premadeThriftType_string })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "binary", premadeThriftType_binary })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "terse_write.MyUnion", premadeThriftType_terse_write_MyUnion })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "terse_write.MyStructWithCustomDefault", premadeThriftType_terse_write_MyStructWithCustomDefault })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "terse_write.StructLevelTerseStruct", premadeThriftType_terse_write_StructLevelTerseStruct })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "terse_write.FieldLevelTerseStruct", premadeThriftType_terse_write_FieldLevelTerseStruct })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "terse_write.TerseStructWithCustomDefault", premadeThriftType_terse_write_TerseStructWithCustomDefault })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "terse_write.MyInteger", premadeThriftType_terse_write_MyInteger })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "terse_write.AdaptedFields", premadeThriftType_terse_write_AdaptedFields })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "terse_write.WrappedFields", premadeThriftType_terse_write_WrappedFields })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "terse_write.TerseException", premadeThriftType_terse_write_TerseException })
 
-        thriftTypesWithFullName := make([]thriftTypeWithFullName, 0)
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "terse_write.MyEnum", premadeThriftType_terse_write_MyEnum })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "terse_write.MyStruct", premadeThriftType_terse_write_MyStruct })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "bool", premadeThriftType_bool })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "byte", premadeThriftType_byte })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "i16", premadeThriftType_i16 })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "i32", premadeThriftType_i32 })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "i64", premadeThriftType_i64 })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "float", premadeThriftType_float })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "double", premadeThriftType_double })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "string", premadeThriftType_string })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "binary", premadeThriftType_binary })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "terse_write.MyUnion", premadeThriftType_terse_write_MyUnion })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "terse_write.MyStructWithCustomDefault", premadeThriftType_terse_write_MyStructWithCustomDefault })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "terse_write.StructLevelTerseStruct", premadeThriftType_terse_write_StructLevelTerseStruct })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "terse_write.FieldLevelTerseStruct", premadeThriftType_terse_write_FieldLevelTerseStruct })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "terse_write.TerseStructWithCustomDefault", premadeThriftType_terse_write_TerseStructWithCustomDefault })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "terse_write.MyInteger", premadeThriftType_terse_write_MyInteger })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "terse_write.AdaptedFields", premadeThriftType_terse_write_AdaptedFields })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "terse_write.WrappedFields", premadeThriftType_terse_write_WrappedFields })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "terse_write.TerseException", premadeThriftType_terse_write_TerseException })
+    fbthriftThriftTypesMap := make(map[string]*metadata.ThriftType, len(thriftTypesWithFullName))
+    for _, value := range thriftTypesWithFullName {
+        fbthriftThriftTypesMap[value.fullName] = value.thriftType
+    }
+    return fbthriftThriftTypesMap
+}()
 
-        fbthriftThriftTypesMap := make(map[string]*metadata.ThriftType, len(thriftTypesWithFullName))
-        for _, value := range thriftTypesWithFullName {
-            fbthriftThriftTypesMap[value.fullName] = value.thriftType
+var structMetadatas = func() []*metadata.ThriftStruct {
+    fbthriftResults := make([]*metadata.ThriftStruct, 0)
+    for _, fbthriftStructSpec := range premadeStructSpecs {
+        if !fbthriftStructSpec.IsException {
+            fbthriftResults = append(fbthriftResults, getMetadataThriftStruct(fbthriftStructSpec))
         }
-        return fbthriftThriftTypesMap
-    },
-)
+    }
+    return fbthriftResults
+}()
 
-var structMetadatasOnce = sync.OnceValue(
-    func() []*metadata.ThriftStruct {
-        // Relies on premade Thrift types initialization
-        premadeThriftTypesInitOnce()
+var exceptionMetadatas = func() []*metadata.ThriftException {
+    fbthriftResults := make([]*metadata.ThriftException, 0)
+    for _, fbthriftStructSpec := range premadeStructSpecs {
+        if fbthriftStructSpec.IsException {
+            fbthriftResults = append(fbthriftResults, getMetadataThriftException(fbthriftStructSpec))
+        }
+    }
+    return fbthriftResults
+}()
 
-        fbthriftResults := make([]*metadata.ThriftStruct, 0)
-        fbthriftResults = append(fbthriftResults, metadata.NewThriftStruct().
-    SetName("terse_write.MyStruct").
-    SetIsUnion(false))
-        fbthriftResults = append(fbthriftResults, metadata.NewThriftStruct().
-    SetName("terse_write.MyUnion").
-    SetIsUnion(true).
-    SetFields(
-        []*metadata.ThriftField{
-            metadata.NewThriftField().
-    SetId(1).
-    SetName("bool_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_bool),
-            metadata.NewThriftField().
-    SetId(2).
-    SetName("byte_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_byte),
-            metadata.NewThriftField().
-    SetId(3).
-    SetName("short_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_i16),
-            metadata.NewThriftField().
-    SetId(4).
-    SetName("int_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_i32),
-            metadata.NewThriftField().
-    SetId(5).
-    SetName("long_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_i64),
-            metadata.NewThriftField().
-    SetId(6).
-    SetName("float_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_float),
-            metadata.NewThriftField().
-    SetId(7).
-    SetName("double_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_double),
-            metadata.NewThriftField().
-    SetId(8).
-    SetName("string_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_string),
-            metadata.NewThriftField().
-    SetId(9).
-    SetName("binary_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_binary),
-            metadata.NewThriftField().
-    SetId(10).
-    SetName("enum_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_terse_write_MyEnum),
-            metadata.NewThriftField().
-    SetId(11).
-    SetName("list_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_list_i16),
-            metadata.NewThriftField().
-    SetId(12).
-    SetName("set_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_set_i16),
-            metadata.NewThriftField().
-    SetId(13).
-    SetName("map_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_map_i16_i16),
-            metadata.NewThriftField().
-    SetId(14).
-    SetName("struct_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_terse_write_MyStruct),
-        },
-    ))
-        fbthriftResults = append(fbthriftResults, metadata.NewThriftStruct().
-    SetName("terse_write.MyStructWithCustomDefault").
-    SetIsUnion(false).
-    SetFields(
-        []*metadata.ThriftField{
-            metadata.NewThriftField().
-    SetId(1).
-    SetName("field1").
-    SetIsOptional(false).
-    SetType(premadeThriftType_i64),
-        },
-    ))
-        fbthriftResults = append(fbthriftResults, metadata.NewThriftStruct().
-    SetName("terse_write.StructLevelTerseStruct").
-    SetIsUnion(false).
-    SetFields(
-        []*metadata.ThriftField{
-            metadata.NewThriftField().
-    SetId(1).
-    SetName("bool_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_bool),
-            metadata.NewThriftField().
-    SetId(2).
-    SetName("byte_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_byte),
-            metadata.NewThriftField().
-    SetId(3).
-    SetName("short_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_i16),
-            metadata.NewThriftField().
-    SetId(4).
-    SetName("int_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_i32),
-            metadata.NewThriftField().
-    SetId(5).
-    SetName("long_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_i64),
-            metadata.NewThriftField().
-    SetId(6).
-    SetName("float_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_float),
-            metadata.NewThriftField().
-    SetId(7).
-    SetName("double_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_double),
-            metadata.NewThriftField().
-    SetId(8).
-    SetName("string_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_string),
-            metadata.NewThriftField().
-    SetId(9).
-    SetName("binary_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_binary),
-            metadata.NewThriftField().
-    SetId(10).
-    SetName("enum_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_terse_write_MyEnum),
-            metadata.NewThriftField().
-    SetId(11).
-    SetName("list_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_list_i16),
-            metadata.NewThriftField().
-    SetId(12).
-    SetName("set_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_set_i16),
-            metadata.NewThriftField().
-    SetId(13).
-    SetName("map_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_map_i16_i16),
-            metadata.NewThriftField().
-    SetId(14).
-    SetName("struct_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_terse_write_MyStruct),
-            metadata.NewThriftField().
-    SetId(15).
-    SetName("union_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_terse_write_MyUnion),
-        },
-    ))
-        fbthriftResults = append(fbthriftResults, metadata.NewThriftStruct().
-    SetName("terse_write.FieldLevelTerseStruct").
-    SetIsUnion(false).
-    SetFields(
-        []*metadata.ThriftField{
-            metadata.NewThriftField().
-    SetId(1).
-    SetName("terse_bool_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_bool),
-            metadata.NewThriftField().
-    SetId(2).
-    SetName("terse_byte_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_byte),
-            metadata.NewThriftField().
-    SetId(3).
-    SetName("terse_short_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_i16),
-            metadata.NewThriftField().
-    SetId(4).
-    SetName("terse_int_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_i32),
-            metadata.NewThriftField().
-    SetId(5).
-    SetName("terse_long_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_i64),
-            metadata.NewThriftField().
-    SetId(6).
-    SetName("terse_float_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_float),
-            metadata.NewThriftField().
-    SetId(7).
-    SetName("terse_double_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_double),
-            metadata.NewThriftField().
-    SetId(8).
-    SetName("terse_string_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_string),
-            metadata.NewThriftField().
-    SetId(9).
-    SetName("terse_binary_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_binary),
-            metadata.NewThriftField().
-    SetId(10).
-    SetName("terse_enum_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_terse_write_MyEnum),
-            metadata.NewThriftField().
-    SetId(11).
-    SetName("terse_list_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_list_i16),
-            metadata.NewThriftField().
-    SetId(12).
-    SetName("terse_set_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_set_i16),
-            metadata.NewThriftField().
-    SetId(13).
-    SetName("terse_map_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_map_i16_i16),
-            metadata.NewThriftField().
-    SetId(14).
-    SetName("terse_struct_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_terse_write_MyStruct),
-            metadata.NewThriftField().
-    SetId(15).
-    SetName("bool_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_bool),
-            metadata.NewThriftField().
-    SetId(16).
-    SetName("byte_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_byte),
-            metadata.NewThriftField().
-    SetId(17).
-    SetName("short_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_i16),
-            metadata.NewThriftField().
-    SetId(18).
-    SetName("int_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_i32),
-            metadata.NewThriftField().
-    SetId(19).
-    SetName("long_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_i64),
-            metadata.NewThriftField().
-    SetId(20).
-    SetName("float_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_float),
-            metadata.NewThriftField().
-    SetId(21).
-    SetName("double_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_double),
-            metadata.NewThriftField().
-    SetId(22).
-    SetName("string_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_string),
-            metadata.NewThriftField().
-    SetId(23).
-    SetName("binary_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_binary),
-            metadata.NewThriftField().
-    SetId(24).
-    SetName("enum_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_terse_write_MyEnum),
-            metadata.NewThriftField().
-    SetId(25).
-    SetName("list_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_list_i16),
-            metadata.NewThriftField().
-    SetId(26).
-    SetName("set_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_set_i16),
-            metadata.NewThriftField().
-    SetId(27).
-    SetName("map_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_map_i16_i16),
-            metadata.NewThriftField().
-    SetId(28).
-    SetName("struct_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_terse_write_MyStruct),
-            metadata.NewThriftField().
-    SetId(29).
-    SetName("terse_union_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_terse_write_MyUnion),
-            metadata.NewThriftField().
-    SetId(30).
-    SetName("union_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_terse_write_MyUnion),
-        },
-    ))
-        fbthriftResults = append(fbthriftResults, metadata.NewThriftStruct().
-    SetName("terse_write.TerseStructWithCustomDefault").
-    SetIsUnion(false).
-    SetFields(
-        []*metadata.ThriftField{
-            metadata.NewThriftField().
-    SetId(1).
-    SetName("bool_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_bool),
-            metadata.NewThriftField().
-    SetId(2).
-    SetName("byte_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_byte),
-            metadata.NewThriftField().
-    SetId(3).
-    SetName("short_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_i16),
-            metadata.NewThriftField().
-    SetId(4).
-    SetName("int_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_i32),
-            metadata.NewThriftField().
-    SetId(5).
-    SetName("long_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_i64),
-            metadata.NewThriftField().
-    SetId(6).
-    SetName("float_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_float),
-            metadata.NewThriftField().
-    SetId(7).
-    SetName("double_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_double),
-            metadata.NewThriftField().
-    SetId(8).
-    SetName("string_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_string),
-            metadata.NewThriftField().
-    SetId(9).
-    SetName("binary_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_binary),
-            metadata.NewThriftField().
-    SetId(10).
-    SetName("enum_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_terse_write_MyEnum),
-            metadata.NewThriftField().
-    SetId(11).
-    SetName("list_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_list_i16),
-            metadata.NewThriftField().
-    SetId(12).
-    SetName("set_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_set_i16),
-            metadata.NewThriftField().
-    SetId(13).
-    SetName("map_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_map_i16_i16),
-            metadata.NewThriftField().
-    SetId(14).
-    SetName("struct_field").
-    SetIsOptional(false).
-    SetType(premadeThriftType_terse_write_MyStructWithCustomDefault),
-        },
-    ))
-        fbthriftResults = append(fbthriftResults, metadata.NewThriftStruct().
-    SetName("terse_write.AdaptedFields").
-    SetIsUnion(false).
-    SetFields(
-        []*metadata.ThriftField{
-            metadata.NewThriftField().
-    SetId(1).
-    SetName("field1").
-    SetIsOptional(false).
-    SetType(premadeThriftType_terse_write_MyInteger),
-            metadata.NewThriftField().
-    SetId(2).
-    SetName("field2").
-    SetIsOptional(false).
-    SetType(premadeThriftType_i32),
-            metadata.NewThriftField().
-    SetId(3).
-    SetName("field3").
-    SetIsOptional(false).
-    SetType(premadeThriftType_terse_write_MyInteger),
-        },
-    ))
-        fbthriftResults = append(fbthriftResults, metadata.NewThriftStruct().
-    SetName("terse_write.WrappedFields").
-    SetIsUnion(false).
-    SetFields(
-        []*metadata.ThriftField{
-            metadata.NewThriftField().
-    SetId(1).
-    SetName("field1").
-    SetIsOptional(false).
-    SetType(premadeThriftType_i32),
-        },
-    ))
-        return fbthriftResults
-    },
-)
-
-var exceptionMetadatasOnce = sync.OnceValue(
-    func() []*metadata.ThriftException {
-        // Relies on premade Thrift types initialization
-        premadeThriftTypesInitOnce()
-
-        fbthriftResults := make([]*metadata.ThriftException, 0)
-        fbthriftResults = append(fbthriftResults, metadata.NewThriftException().
-    SetName("terse_write.TerseException").
-    SetFields(
-        []*metadata.ThriftField{
-            metadata.NewThriftField().
-    SetId(1).
-    SetName("msg").
-    SetIsOptional(false).
-    SetType(premadeThriftType_string),
-        },
-    ))
-        return fbthriftResults
-    },
-)
-
-var enumMetadatasOnce = sync.OnceValue(
-    func() []*metadata.ThriftEnum {
-        // Relies on premade Thrift types initialization
-        premadeThriftTypesInitOnce()
-
-        fbthriftResults := make([]*metadata.ThriftEnum, 0)
-        fbthriftResults = append(fbthriftResults, metadata.NewThriftEnum().
+var enumMetadatas = func() []*metadata.ThriftEnum {
+    fbthriftResults := make([]*metadata.ThriftEnum, 0)
+    fbthriftResults = append(fbthriftResults, metadata.NewThriftEnum().
     SetName("terse_write.MyEnum").
     SetElements(
         map[int32]string{
@@ -664,24 +220,18 @@ var enumMetadatasOnce = sync.OnceValue(
             1: "ME1",
         },
     ))
-        return fbthriftResults
-    },
-)
+    return fbthriftResults
+}()
 
-var serviceMetadatasOnce = sync.OnceValue(
-    func() []*metadata.ThriftService {
-        // Relies on premade Thrift types initialization
-        premadeThriftTypesInitOnce()
-
-        fbthriftResults := make([]*metadata.ThriftService, 0)
-        return fbthriftResults
-    },
-)
+var serviceMetadatas = func() []*metadata.ThriftService {
+    fbthriftResults := make([]*metadata.ThriftService, 0)
+    return fbthriftResults
+}()
 
 // GetMetadataThriftType (INTERNAL USE ONLY).
 // Returns metadata ThriftType for a given full type name.
 func GetMetadataThriftType(fullName string) *metadata.ThriftType {
-    return premadeThriftTypesMapOnce()[fullName]
+    return premadeThriftTypesMap[fullName]
 }
 
 // GetThriftMetadata returns complete Thrift metadata for current and imported packages.
@@ -692,19 +242,19 @@ func GetThriftMetadata() *metadata.ThriftMetadata {
     allServicesMap := make(map[string]*metadata.ThriftService)
 
     // Add enum metadatas from the current program...
-    for _, enumMetadata := range enumMetadatasOnce() {
+    for _, enumMetadata := range enumMetadatas {
         allEnumsMap[enumMetadata.GetName()] = enumMetadata
     }
     // Add struct metadatas from the current program...
-    for _, structMetadata := range structMetadatasOnce() {
+    for _, structMetadata := range structMetadatas {
         allStructsMap[structMetadata.GetName()] = structMetadata
     }
     // Add exception metadatas from the current program...
-    for _, exceptionMetadata := range exceptionMetadatasOnce() {
+    for _, exceptionMetadata := range exceptionMetadatas {
         allExceptionsMap[exceptionMetadata.GetName()] = exceptionMetadata
     }
     // Add service metadatas from the current program...
-    for _, serviceMetadata := range serviceMetadatasOnce() {
+    for _, serviceMetadata := range serviceMetadatas {
         allServicesMap[serviceMetadata.GetName()] = serviceMetadata
     }
 
@@ -747,4 +297,124 @@ func GetThriftMetadataForService(scopedServiceName string) *metadata.ThriftMetad
     thriftMetadata.SetServices(relevantServicesMap)
 
     return thriftMetadata
+}
+
+func getMetadataThriftPrimitiveType(s *thrift.CodecPrimitiveSpec) *metadata.ThriftPrimitiveType {
+	var value metadata.ThriftPrimitiveType
+
+	switch s.PrimitiveType {
+	case thrift.CODEC_PRIMITIVE_TYPE_BYTE:
+		value = metadata.ThriftPrimitiveType_THRIFT_BYTE_TYPE
+	case thrift.CODEC_PRIMITIVE_TYPE_BOOL:
+		value = metadata.ThriftPrimitiveType_THRIFT_BOOL_TYPE
+	case thrift.CODEC_PRIMITIVE_TYPE_I16:
+		value = metadata.ThriftPrimitiveType_THRIFT_I16_TYPE
+	case thrift.CODEC_PRIMITIVE_TYPE_I32:
+		value = metadata.ThriftPrimitiveType_THRIFT_I32_TYPE
+	case thrift.CODEC_PRIMITIVE_TYPE_I64:
+		value = metadata.ThriftPrimitiveType_THRIFT_I64_TYPE
+	case thrift.CODEC_PRIMITIVE_TYPE_FLOAT:
+		value = metadata.ThriftPrimitiveType_THRIFT_FLOAT_TYPE
+	case thrift.CODEC_PRIMITIVE_TYPE_DOUBLE:
+		value = metadata.ThriftPrimitiveType_THRIFT_DOUBLE_TYPE
+	case thrift.CODEC_PRIMITIVE_TYPE_BINARY:
+		value = metadata.ThriftPrimitiveType_THRIFT_BINARY_TYPE
+	case thrift.CODEC_PRIMITIVE_TYPE_STRING:
+		value = metadata.ThriftPrimitiveType_THRIFT_STRING_TYPE
+	}
+
+	return value.Ptr()
+}
+
+func getMetadataThriftEnumType(s *thrift.CodecEnumSpec) *metadata.ThriftEnumType {
+	return metadata.NewThriftEnumType().
+		SetName(s.ScopedName)
+}
+
+func getMetadataThriftSetType(s *thrift.CodecSetSpec) *metadata.ThriftSetType {
+	return metadata.NewThriftSetType().
+		SetValueType(getMetadataThriftType(s.ElementTypeSpec))
+}
+
+func getMetadataThriftListType(s *thrift.CodecListSpec) *metadata.ThriftListType {
+	return metadata.NewThriftListType().
+		SetValueType(getMetadataThriftType(s.ElementTypeSpec))
+}
+
+func getMetadataThriftMapType(s *thrift.CodecMapSpec) *metadata.ThriftMapType {
+	return metadata.NewThriftMapType().
+		SetKeyType(getMetadataThriftType(s.KeyTypeSpec)).
+		SetValueType(getMetadataThriftType(s.ValueTypeSpec))
+}
+
+func getMetadataThriftTypedefType(s *thrift.CodecTypedefSpec) *metadata.ThriftTypedefType {
+	return metadata.NewThriftTypedefType().
+		SetName(s.ScopedName).
+		SetUnderlyingType(getMetadataThriftType(s.UnderlyingTypeSpec))
+}
+
+func getMetadataThriftStructType(s *thrift.CodecStructSpec) *metadata.ThriftStructType {
+	return metadata.NewThriftStructType().
+		SetName(s.ScopedName)
+}
+
+func getMetadataThriftUnionType(s *thrift.CodecStructSpec) *metadata.ThriftUnionType {
+	return metadata.NewThriftUnionType().
+		SetName(s.ScopedName)
+}
+
+func getMetadataThriftType(s *thrift.TypeSpec) *metadata.ThriftType {
+	thriftType := metadata.NewThriftType()
+	switch {
+	case s.CodecPrimitiveSpec != nil:
+		thriftType.SetTPrimitive(getMetadataThriftPrimitiveType(s.CodecPrimitiveSpec))
+	case s.CodecEnumSpec != nil:
+		thriftType.SetTEnum(getMetadataThriftEnumType(s.CodecEnumSpec))
+	case s.CodecSetSpec != nil:
+		thriftType.SetTSet(getMetadataThriftSetType(s.CodecSetSpec))
+	case s.CodecListSpec != nil:
+		thriftType.SetTList(getMetadataThriftListType(s.CodecListSpec))
+	case s.CodecMapSpec != nil:
+		thriftType.SetTMap(getMetadataThriftMapType(s.CodecMapSpec))
+	case s.CodecTypedefSpec != nil:
+		thriftType.SetTTypedef(getMetadataThriftTypedefType(s.CodecTypedefSpec))
+	case s.CodecStructSpec != nil:
+		if s.CodecStructSpec.IsUnion {
+			thriftType.SetTUnion(getMetadataThriftUnionType(s.CodecStructSpec))
+		} else {
+			thriftType.SetTStruct(getMetadataThriftStructType(s.CodecStructSpec))
+		}
+	}
+	return thriftType
+}
+
+func getMetadataThriftField(s *thrift.FieldSpec) *metadata.ThriftField {
+	return metadata.NewThriftField().
+		SetId(int32(s.ID)).
+		SetName(s.Name).
+		SetIsOptional(s.IsOptional).
+		SetType(getMetadataThriftType(s.ValueTypeSpec))
+}
+
+func getMetadataThriftStruct(s *thrift.StructSpec) *metadata.ThriftStruct {
+	metadataThriftFields := make([]*metadata.ThriftField, len(s.FieldSpecs), len(s.FieldSpecs))
+	for i, fieldSpec := range s.FieldSpecs {
+		metadataThriftFields[i] = getMetadataThriftField(&fieldSpec)
+	}
+
+	return metadata.NewThriftStruct().
+		SetName(s.ScopedName).
+		SetIsUnion(s.IsUnion).
+		SetFields(metadataThriftFields)
+}
+
+func getMetadataThriftException(s *thrift.StructSpec) *metadata.ThriftException {
+	metadataThriftFields := make([]*metadata.ThriftField, len(s.FieldSpecs), len(s.FieldSpecs))
+	for i, fieldSpec := range s.FieldSpecs {
+		metadataThriftFields[i] = getMetadataThriftField(&fieldSpec)
+	}
+
+	return metadata.NewThriftException().
+		SetName(s.ScopedName).
+		SetFields(metadataThriftFields)
 }

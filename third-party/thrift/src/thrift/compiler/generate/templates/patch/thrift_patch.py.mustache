@@ -43,13 +43,16 @@ from common.thrift.patch.detail.py_bindings.DynamicPatch import (
     BinaryPatch,
     StructPatch as DynamicStructPatch,
     UnionPatch as DynamicUnionPatch,
+    DynamicPatch
 )
 
 import thrift.python.types as _fbthrift_python_types
 import folly.iobuf as _fbthrift_iobuf
 
 import {{program:module_path}}.thrift_types as {{program:module_mangle}}__thrift_types
+{{#unless program:safe_patch?}}
 import {{program:safe_patch_module_path}}.thrift_types as _fbthrift_safe_patch_types
+{{/unless program:safe_patch?}}
 
 {{#program:include_namespaces}}
 {{#has_types?}}
@@ -62,21 +65,27 @@ import {{included_module_path}}.thrift_patch
 {{#program:structs}}
 
 class {{struct:py_name}}Patch(
-    Base{{#if struct:union?}}Union{{else}}Struct{{/if}}Patch[{{program:module_mangle}}__thrift_types.{{struct:py_name}}]
+    Base{{#if struct:union?}}Union{{#else}}Struct{{/if struct:union?}}Patch[{{program:module_mangle}}__thrift_types.{{struct:py_name}}]
 ):
     pass
-
 {{#struct:fields_ordered_by_id}}
     @property
     def {{field:py_name}}(self) -> {{> types/field_patch_type}}[
             {{#field:type}}{{> ../python/types/unadapted_pep484_type}}{{/field:type}},
             {{#field:type}}{{> ../python/types/unadapted_pep484_patch_type}}{{/field:type}}]:
 
+        {{#field:type}}
+        {{! e.g., if field is an i32, this function convert DynamicPatch --> I32Patch }}
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> {{#field:type}}{{> ../python/types/unadapted_pep484_patch_type}}{{/field:type}}:
+            {{> ../python/common/thrift_patch_callback}}
+        {{/field:type}}
+
         return {{> types/field_patch_type}}(
-            {{#field:type}}{{> ../python/common/thrift_patch_callback}}{{/field:type}},
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             {{field:key}},
             {{#field:type}}{{> ../python/types/typeinfo }}{{/field:type}})
+    {{#unless program:safe_patch?}}{{! If the program is already a safe patch, we should not generate to_safe_patch/from_safe_patch, otherwise it becomes a safe patch of safe patch}}
 
     def to_safe_patch(self) -> _fbthrift_safe_patch_types.{{struct:name}}SafePatch:
         return _fbthrift_safe_patch_types.{{struct:name}}SafePatch(
@@ -86,9 +95,10 @@ class {{struct:py_name}}Patch(
     @staticmethod
     def from_safe_patch(safe_patch: _fbthrift_safe_patch_types.{{struct:name}}SafePatch) -> {{struct:py_name}}Patch:
         patch = {{struct:py_name}}Patch()
-        DynamicPatch = Dynamic{{#if struct:union?}}Union{{else}}Struct{{/if}}Patch
+        DynamicPatch = Dynamic{{#if struct:union?}}Union{{#else}}Struct{{/if struct:union?}}Patch
         patch._patch = DynamicPatch.deserialize_from_compact_protocol(safe_patch.data)
         return patch
+    {{/unless program:safe_patch?}}
 
 
 {{/struct:fields_ordered_by_id}}

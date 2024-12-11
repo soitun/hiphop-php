@@ -25,9 +25,6 @@
 }}{{> common/header}}
 
 import (
-    "reflect"
-    "sync"
-
     {{#program:thrift_imports}}
     {{program:go_package_alias}} "{{program:go_import_path}}"
     {{/program:thrift_imports}}
@@ -37,71 +34,56 @@ import (
 {{> common/unused_imports_protection}}
 // (needed to ensure safety because of naive import list construction)
 var _ = thrift.ZERO
-var _ = reflect.Ptr
 
 // Premade codec specs
 var (
     {{#program:thrift_metadata_types}}
-    {{type:codec_type_spec_name}} *thrift.TypeSpec = nil
+    {{type:codec_type_spec_name}} = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "{{type:full_name}}",
+            {{> spec/codec_type_spec_setter}}: {{> spec/codec_type_spec_instance}}
+        }
+    }()
     {{/program:thrift_metadata_types}}
 )
-
-// Premade codec specs initializer
-var premadeCodecSpecsInitOnce = sync.OnceFunc(func() {
-    {{#program:thrift_metadata_types}}
-    {{type:codec_type_spec_name}} = &thrift.TypeSpec{
-        FullName: "{{type:full_name}}",
-        {{> spec/codec_type_spec_setter}}: {{> spec/codec_type_spec_instance}}
-    }
-    {{/program:thrift_metadata_types}}
-})
 
 // Premade struct specs
 var (
     {{#program:structs}}
-    {{struct:struct_spec_name}} *thrift.StructSpec = nil
+    {{struct:struct_spec_name}} = func() *thrift.StructSpec {
+        return {{> spec/codec_struct_spec}}
+    }()
     {{/program:structs}}
     {{#program:services}}
     {{#service:req_resp_structs}}
-    {{struct:struct_spec_name}} *thrift.StructSpec = nil
+    {{struct:struct_spec_name}} = func() *thrift.StructSpec {
+        return {{> spec/codec_struct_spec}}
+    }()
     {{/service:req_resp_structs}}
     {{/program:services}}
 )
 
-// Premade struct specs initializer
-var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
+// Premade slice of all struct specs
+var premadeStructSpecs = func() []*thrift.StructSpec {
+    fbthriftResults := make([]*thrift.StructSpec, 0)
     {{#program:structs}}
-    {{struct:struct_spec_name}} = {{> spec/codec_struct_spec}}
+    fbthriftResults = append(fbthriftResults, {{struct:struct_spec_name}})
     {{/program:structs}}
-    {{#program:services}}
-    {{#service:req_resp_structs}}
-    {{struct:struct_spec_name}} = {{> spec/codec_struct_spec}}
-    {{/service:req_resp_structs}}
-    {{/program:services}}
-})
+    return fbthriftResults
+}()
 
-var premadeCodecSpecsMapOnce = sync.OnceValue(
-    func() map[string]*thrift.TypeSpec {
-        // Relies on premade codec specs initialization
-        premadeCodecSpecsInitOnce()
-
-        fbthriftTypeSpecsMap := make(map[string]*thrift.TypeSpec)
-        {{#program:thrift_metadata_types}}
-        {{#type:named?}}
-        fbthriftTypeSpecsMap[{{type:codec_type_spec_name}}.FullName] = {{type:codec_type_spec_name}}
-        {{/type:named?}}
-        {{/program:thrift_metadata_types}}
-        return fbthriftTypeSpecsMap
-    },
-)
-
-func init() {
-    premadeCodecSpecsInitOnce()
-    premadeStructSpecsInitOnce()
-}
+var premadeCodecSpecsMap = func() map[string]*thrift.TypeSpec {
+    fbthriftTypeSpecsMap := make(map[string]*thrift.TypeSpec)
+    {{#program:thrift_metadata_types}}
+    {{#type:named?}}
+    fbthriftTypeSpecsMap[{{type:codec_type_spec_name}}.FullName] = {{type:codec_type_spec_name}}
+    {{/type:named?}}
+    {{/program:thrift_metadata_types}}
+    return fbthriftTypeSpecsMap
+}()
 
 // GetMetadataThriftType (INTERNAL USE ONLY).
 // Returns metadata TypeSpec for a given full type name.
 func GetCodecTypeSpec(fullName string) *thrift.TypeSpec {
-    return premadeCodecSpecsMapOnce()[fullName]
+    return premadeCodecSpecsMap[fullName]
 }

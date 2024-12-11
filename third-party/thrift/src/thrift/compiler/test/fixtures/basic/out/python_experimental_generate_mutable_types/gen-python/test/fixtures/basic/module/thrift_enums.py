@@ -7,10 +7,14 @@
 
 from __future__ import annotations
 
+import apache.thrift.metadata.thrift_types as _fbthrift_metadata
 import thrift.python.types as _fbthrift_python_types
-import test.fixtures.basic.module.thrift_metadata
 
-class MyEnum(_fbthrift_python_types.Enum, int):
+class _fbthrift_compatible_with_MyEnum:
+    pass
+
+
+class MyEnum(_fbthrift_python_types.Enum, int, _fbthrift_compatible_with_MyEnum):
     MyValue1 = 0
     MyValue2 = 1
     @staticmethod
@@ -23,7 +27,7 @@ class MyEnum(_fbthrift_python_types.Enum, int):
 
     @staticmethod
     def __get_metadata__():
-        return test.fixtures.basic.module.thrift_metadata.gen_metadata_enum_MyEnum()
+        return gen_metadata_enum_MyEnum()
 
     def _to_python(self):
         return self
@@ -36,7 +40,11 @@ class MyEnum(_fbthrift_python_types.Enum, int):
     def _to_py_deprecated(self):
         return self.value
 
-class HackEnum(_fbthrift_python_types.Enum, int):
+class _fbthrift_compatible_with_HackEnum:
+    pass
+
+
+class HackEnum(_fbthrift_python_types.Enum, int, _fbthrift_compatible_with_HackEnum):
     Value1 = 0
     Value2 = 1
     @staticmethod
@@ -49,7 +57,7 @@ class HackEnum(_fbthrift_python_types.Enum, int):
 
     @staticmethod
     def __get_metadata__():
-        return test.fixtures.basic.module.thrift_metadata.gen_metadata_enum_HackEnum()
+        return gen_metadata_enum_HackEnum()
 
     def _to_python(self):
         return self
@@ -61,3 +69,49 @@ class HackEnum(_fbthrift_python_types.Enum, int):
 
     def _to_py_deprecated(self):
         return self.value
+
+def _fbthrift_gen_metadata_enum_MyEnum(metadata_struct: _fbthrift_metadata.ThriftMetadata) -> _fbthrift_metadata.ThriftMetadata:
+    qualified_name = "module.MyEnum"
+
+    if qualified_name in metadata_struct.enums:
+        return metadata_struct
+    elements = {
+        0: "MyValue1",
+        1: "MyValue2",
+    }
+    structured_annotations = [
+    ]
+    enum_dict = dict(metadata_struct.enums)
+    enum_dict[qualified_name] = _fbthrift_metadata.ThriftEnum(name=qualified_name, elements=elements, structured_annotations=structured_annotations)
+    new_struct = metadata_struct(enums=enum_dict)
+
+    return new_struct
+
+def gen_metadata_enum_MyEnum() -> _fbthrift_metadata.ThriftMetadata:
+    return _fbthrift_gen_metadata_enum_MyEnum(
+        _fbthrift_metadata.ThriftMetadata(structs={}, enums={}, exceptions={}, services={})
+    )
+
+def _fbthrift_gen_metadata_enum_HackEnum(metadata_struct: _fbthrift_metadata.ThriftMetadata) -> _fbthrift_metadata.ThriftMetadata:
+    qualified_name = "module.HackEnum"
+
+    if qualified_name in metadata_struct.enums:
+        return metadata_struct
+    elements = {
+        0: "Value1",
+        1: "Value2",
+    }
+    structured_annotations = [
+        _fbthrift_metadata.ThriftConstStruct(type=_fbthrift_metadata.ThriftStructType(name="hack.Name"), fields= { "name": _fbthrift_metadata.ThriftConstValue(cv_string="RenamedEnum"),  }),
+    ]
+    enum_dict = dict(metadata_struct.enums)
+    enum_dict[qualified_name] = _fbthrift_metadata.ThriftEnum(name=qualified_name, elements=elements, structured_annotations=structured_annotations)
+    new_struct = metadata_struct(enums=enum_dict)
+
+    return new_struct
+
+def gen_metadata_enum_HackEnum() -> _fbthrift_metadata.ThriftMetadata:
+    return _fbthrift_gen_metadata_enum_HackEnum(
+        _fbthrift_metadata.ThriftMetadata(structs={}, enums={}, exceptions={}, services={})
+    )
+

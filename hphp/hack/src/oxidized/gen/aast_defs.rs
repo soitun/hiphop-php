@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<5276513781460c921ef927e568c45b06>>
+// @generated SignedSource<<bdd096b72661e6de32c88436a3a27283>>
 //
 // To regenerate this file, run:
 //   hphp/hack/src/oxidized_regen.sh
@@ -945,6 +945,8 @@ pub enum Expr_<Ex, En> {
     ///
     ///     $foo + $bar
     Binop(Box<Binop<Ex, En>>),
+    #[rust_to_ocaml(inline_tuple)]
+    Assign(Box<(Expr<Ex, En>, Option<ast_defs::Bop>, Expr<Ex, En>)>),
     /// Pipe expression. The lid is the ID of the $$ that is implicitly
     /// declared by this pipe.
     ///
@@ -1584,9 +1586,30 @@ pub struct CallExpr<Ex, En> {
     /// explicit type annotations
     pub targs: Vec<Targ<Ex>>,
     /// positional args, plus their calling convention
-    pub args: Vec<(ast_defs::ParamKind, Expr<Ex, En>)>,
+    pub args: Vec<Argument<Ex, En>>,
     /// unpacked arg
     pub unpacked_arg: Option<Expr<Ex, En>>,
+}
+
+#[derive(
+    Clone,
+    Debug,
+    Deserialize,
+    Eq,
+    FromOcamlRep,
+    Hash,
+    NoPosHash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+    ToOcamlRep
+)]
+#[rust_to_ocaml(and)]
+#[repr(C, u8)]
+pub enum Argument<Ex, En> {
+    Ainout(Pos, Expr<Ex, En>),
+    Anormal(Expr<Ex, En>),
 }
 
 #[derive(
@@ -1732,6 +1755,30 @@ arena_deserializer::impl_deserialize_in_arena!(EmitId);
     ToOcamlRep
 )]
 #[rust_to_ocaml(and)]
+#[rust_to_ocaml(attr = "transform.opaque")]
+#[repr(C, u8)]
+pub enum PackageMembership {
+    /// Package membership derived from the file attribute __PackageOverride
+    PackageOverride(Pos, String),
+    /// Package membership derived from the package specification in PACKAGES.toml
+    PackageConfigAssignment(String),
+}
+
+#[derive(
+    Clone,
+    Debug,
+    Deserialize,
+    Eq,
+    FromOcamlRep,
+    Hash,
+    NoPosHash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+    ToOcamlRep
+)]
+#[rust_to_ocaml(and)]
 #[rust_to_ocaml(prefix = "c_")]
 #[repr(C)]
 pub struct Class_<Ex, En> {
@@ -1788,7 +1835,7 @@ pub struct Class_<Ex, En> {
     pub emit_id: Option<EmitId>,
     pub internal: bool,
     pub module: Option<Sid>,
-    pub package: Option<String>,
+    pub package: Option<PackageMembership>,
 }
 
 #[derive(
@@ -2238,7 +2285,7 @@ pub struct Typedef<Ex, En> {
     pub module: Option<Sid>,
     pub docs_url: Option<String>,
     pub doc_comment: Option<DocComment>,
-    pub package: Option<String>,
+    pub package: Option<PackageMembership>,
 }
 
 #[derive(
@@ -2303,7 +2350,7 @@ pub struct FunDef<Ex, En> {
     pub module: Option<Sid>,
     pub tparams: Vec<Tparam<Ex, En>>,
     pub where_constraints: Vec<WhereConstraintHint>,
-    pub package: Option<String>,
+    pub package: Option<PackageMembership>,
 }
 
 #[derive(

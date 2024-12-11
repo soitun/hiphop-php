@@ -8,6 +8,9 @@
 from __future__ import annotations
 
 import folly.iobuf as _fbthrift_iobuf
+
+from abc import ABCMeta as _fbthrift_ABCMeta
+import c.thrift_abstract_types as _fbthrift_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
 
@@ -59,10 +62,15 @@ class C(metaclass=_fbthrift_python_types.StructMeta):
             py_asyncio_types = importlib.import_module("c.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.C, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.C, C)
+_fbthrift_C = C
 
 class E(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
     _fbthrift_SPEC = (
     )
+
+    _fbthrift_abstract_base_class = _fbthrift_abstract_types.E
+
 
     @staticmethod
     def __get_thrift_name__() -> str:
@@ -94,13 +102,15 @@ class E(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
         except ModuleNotFoundError:
             py_asyncio_types = importlib.import_module("c.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.E, self)
+_fbthrift_E = E
 
 # This unfortunately has to be down here to prevent circular imports
 import c.thrift_metadata
 
-
+from c.thrift_enums import *
 _fbthrift_all_enums = [
 ]
+
 
 def _fbthrift_metadata__struct_C():
     return c.thrift_metadata.gen_metadata_struct_C()

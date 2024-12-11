@@ -17,11 +17,14 @@
 include "thrift/annotation/thrift.thrift"
 include "thrift/annotation/cpp.thrift"
 include "thrift/annotation/python.thrift"
+include "thrift/lib/py3/test/dependency.thrift"
+include "thrift/lib/py3/test/sub_dependency.thrift"
 
 cpp_include "<deque>"
 cpp_include "folly/container/F14Map.h"
 cpp_include "folly/FBString.h"
 cpp_include "folly/io/IOBuf.h"
+cpp_include "thrift/test/AdapterTest.h"
 
 package "facebook.com/testing"
 
@@ -31,6 +34,20 @@ namespace cpp2 cpp2
 const list<i16> int_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 const map<i16, map<i16, i16>> LocationMap = {1: {1: 1}};
+
+const sub_dependency.IncludedColour RedColour = sub_dependency.IncludedColour.red;
+const sub_dependency.IncludedColour BlueColour = sub_dependency.IncludedColour.blue;
+
+const dependency.IncludedStruct FANCY_CONST = dependency.IncludedStruct{
+  val = sub_dependency.Basic{nom = "fancy", val = 47, bin = "01010101"},
+  color = RedColour,
+  color_list = [RedColour, BlueColour],
+  color_set = [RedColour, BlueColour],
+  color_map = {
+    RedColour: sub_dependency.Basic{},
+    BlueColour: sub_dependency.Basic{nom = "b"},
+  },
+};
 
 typedef list<i32> I32List
 typedef list<list<string>> StrList2D
@@ -57,6 +74,27 @@ typedef i32 ui32
 typedef map<string, string> F14MapFollyString
 @cpp.Type{name = "std::vector<uint32_t>"}
 typedef list<i32> Uint32List
+
+@cpp.Adapter{name = "::apache::thrift::test::FBStringAdapter"}
+@python.Py3EnableCppAdapter
+typedef binary AdaptedBinary
+@cpp.Adapter{name = "::apache::thrift::test::FBStringAdapter"}
+@python.Py3EnableCppAdapter
+typedef string AdaptedString
+typedef list<AdaptedString> AdaptedStringList
+typedef set<AdaptedString> AdaptedStringSet
+typedef map<AdaptedString, string> AdaptedStringKeyMap
+typedef map<string, AdaptedString> AdaptedStringValueMap
+typedef map<AdaptedString, AdaptedString> AdaptedStringMap
+@cpp.Adapter{name = "::apache::thrift::test::FBVectorAdapter"}
+@python.Py3EnableCppAdapter
+typedef list<i32> AdaptedList
+@cpp.Adapter{name = "::apache::thrift::test::F14FastSetAdapter"}
+@python.Py3EnableCppAdapter
+typedef set<i32> AdaptedSet
+@cpp.Adapter{name = "::apache::thrift::test::F14FastMapAdapter"}
+@python.Py3EnableCppAdapter
+typedef map<i32, i32> AdaptedMap
 
 exception UnusedError {
   @thrift.ExceptionMessage
@@ -290,6 +328,17 @@ struct customized {
   @cpp.Name{value = "bar"}
   8: i32 foo;
   9: list<ui32> list_of_uint32;
+
+  10: AdaptedBinary adapted_binary;
+  11: AdaptedString adapted_string;
+  12: AdaptedStringList adapted_string_list;
+  13: AdaptedStringSet adapted_string_set;
+  14: AdaptedStringKeyMap adapted_string_key_map;
+  15: AdaptedStringValueMap adapted_string_value_map;
+  16: AdaptedStringMap adapted_string_map;
+  17: AdaptedList adapted_list;
+  18: AdaptedSet adapted_set;
+  19: AdaptedMap adapted_map;
 }
 
 struct Reserved {

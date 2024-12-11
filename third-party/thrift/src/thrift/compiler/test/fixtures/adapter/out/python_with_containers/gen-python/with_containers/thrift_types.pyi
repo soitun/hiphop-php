@@ -10,16 +10,19 @@ from __future__ import annotations
 import typing as _typing
 
 import folly.iobuf as _fbthrift_iobuf
+import with_containers.thrift_abstract_types as _fbthrift_python_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
 import my
+
+from with_containers.thrift_enums import *
 
 
 class _fbthrift_compatible_with__fbthrift_unadapted_AnnotationWithContainers:
     pass
 
 
-class _fbthrift_unadapted_AnnotationWithContainers(_fbthrift_python_types.Struct, _fbthrift_compatible_with__fbthrift_unadapted_AnnotationWithContainers):
+class _fbthrift_unadapted_AnnotationWithContainers(_fbthrift_python_types.Struct, _fbthrift_compatible_with__fbthrift_unadapted_AnnotationWithContainers, _fbthrift_python_abstract_types._fbthrift_unadapted_AnnotationWithContainers):
     names: _typing.Final[_typing.Sequence[str]] = ...
     counts: _typing.Final[_typing.Mapping[str, int]] = ...
     def __init__(
@@ -38,13 +41,13 @@ class _fbthrift_unadapted_AnnotationWithContainers(_fbthrift_python_types.Struct
     def _to_py3(self) -> "with_containers.types._fbthrift_unadapted_AnnotationWithContainers": ...  # type: ignore
     def _to_py_deprecated(self) -> "with_containers.ttypes._fbthrift_unadapted_AnnotationWithContainers": ...  # type: ignore
 AnnotationWithContainers = my.AdaptedType[_fbthrift_unadapted_AnnotationWithContainers]
-
+_fbthrift_AnnotationWithContainers = AnnotationWithContainers
 
 class _fbthrift_compatible_with__fbthrift_unadapted_MyStruct:
     pass
 
 
-class _fbthrift_unadapted_MyStruct(_fbthrift_python_types.Struct, _fbthrift_compatible_with__fbthrift_unadapted_MyStruct):
+class _fbthrift_unadapted_MyStruct(_fbthrift_python_types.Struct, _fbthrift_compatible_with__fbthrift_unadapted_MyStruct, _fbthrift_python_abstract_types._fbthrift_unadapted_MyStruct):
     abc: _typing.Final[my.AdaptedType[int]] = ...
     def __init__(
         self, *,
@@ -60,3 +63,4 @@ class _fbthrift_unadapted_MyStruct(_fbthrift_python_types.Struct, _fbthrift_comp
     def _to_py3(self) -> "with_containers.types._fbthrift_unadapted_MyStruct": ...  # type: ignore
     def _to_py_deprecated(self) -> "with_containers.ttypes._fbthrift_unadapted_MyStruct": ...  # type: ignore
 MyStruct = my.AdaptedType[_fbthrift_unadapted_MyStruct]
+_fbthrift_MyStruct = MyStruct

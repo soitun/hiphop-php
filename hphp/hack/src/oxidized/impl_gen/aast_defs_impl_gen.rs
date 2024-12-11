@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<47c99ac218c37f51b8f1f0f8b3a1004b>>
+// @generated SignedSource<<c74dcdb1c7d558e9f15bfd68d653549f>>
 //
 // To regenerate this file, run:
 //   hphp/hack/src/oxidized_regen.sh
@@ -1048,6 +1048,9 @@ impl<Ex, En> Expr_<Ex, En> {
     pub fn mk_binop(p0: Binop<Ex, En>) -> Self {
         Expr_::Binop(Box::new(p0))
     }
+    pub fn mk_assign(p0: Expr<Ex, En>, p1: Option<ast_defs::Bop>, p2: Expr<Ex, En>) -> Self {
+        Expr_::Assign(Box::new((p0, p1, p2)))
+    }
     pub fn mk_pipe(p0: Lid, p1: Expr<Ex, En>, p2: Expr<Ex, En>) -> Self {
         Expr_::Pipe(Box::new((p0, p1, p2)))
     }
@@ -1307,6 +1310,12 @@ impl<Ex, En> Expr_<Ex, En> {
     pub fn is_binop(&self) -> bool {
         match self {
             Expr_::Binop(..) => true,
+            _ => false,
+        }
+    }
+    pub fn is_assign(&self) -> bool {
+        match self {
+            Expr_::Assign(..) => true,
             _ => false,
         }
     }
@@ -1599,6 +1608,12 @@ impl<Ex, En> Expr_<Ex, En> {
     pub fn as_binop(&self) -> Option<&Binop<Ex, En>> {
         match self {
             Expr_::Binop(p0) => Some(&p0),
+            _ => None,
+        }
+    }
+    pub fn as_assign(&self) -> Option<(&Expr<Ex, En>, &Option<ast_defs::Bop>, &Expr<Ex, En>)> {
+        match self {
+            Expr_::Assign(p0) => Some((&p0.0, &p0.1, &p0.2)),
             _ => None,
         }
     }
@@ -1922,6 +1937,18 @@ impl<Ex, En> Expr_<Ex, En> {
     pub fn as_binop_mut(&mut self) -> Option<&mut Binop<Ex, En>> {
         match self {
             Expr_::Binop(p0) => Some(p0.as_mut()),
+            _ => None,
+        }
+    }
+    pub fn as_assign_mut(
+        &mut self,
+    ) -> Option<(
+        &mut Expr<Ex, En>,
+        &mut Option<ast_defs::Bop>,
+        &mut Expr<Ex, En>,
+    )> {
+        match self {
+            Expr_::Assign(p0) => Some((&mut p0.0, &mut p0.1, &mut p0.2)),
             _ => None,
         }
     }
@@ -2250,6 +2277,12 @@ impl<Ex, En> Expr_<Ex, En> {
     pub fn as_binop_into(self) -> Option<Binop<Ex, En>> {
         match self {
             Expr_::Binop(p0) => Some(*p0),
+            _ => None,
+        }
+    }
+    pub fn as_assign_into(self) -> Option<(Expr<Ex, En>, Option<ast_defs::Bop>, Expr<Ex, En>)> {
+        match self {
+            Expr_::Assign(p0) => Some(((*p0).0, (*p0).1, (*p0).2)),
             _ => None,
         }
     }
@@ -2731,6 +2764,62 @@ impl<Ex, En> FunParamInfo<Ex, En> {
         }
     }
 }
+impl<Ex, En> Argument<Ex, En> {
+    pub fn mk_ainout(p0: Pos, p1: Expr<Ex, En>) -> Self {
+        Argument::Ainout(p0, p1)
+    }
+    pub fn mk_anormal(p0: Expr<Ex, En>) -> Self {
+        Argument::Anormal(p0)
+    }
+    pub fn is_ainout(&self) -> bool {
+        match self {
+            Argument::Ainout(..) => true,
+            _ => false,
+        }
+    }
+    pub fn is_anormal(&self) -> bool {
+        match self {
+            Argument::Anormal(..) => true,
+            _ => false,
+        }
+    }
+    pub fn as_ainout(&self) -> Option<(&Pos, &Expr<Ex, En>)> {
+        match self {
+            Argument::Ainout(p0, p1) => Some((p0, p1)),
+            _ => None,
+        }
+    }
+    pub fn as_anormal(&self) -> Option<&Expr<Ex, En>> {
+        match self {
+            Argument::Anormal(p0) => Some(p0),
+            _ => None,
+        }
+    }
+    pub fn as_ainout_mut(&mut self) -> Option<(&mut Pos, &mut Expr<Ex, En>)> {
+        match self {
+            Argument::Ainout(p0, p1) => Some((p0, p1)),
+            _ => None,
+        }
+    }
+    pub fn as_anormal_mut(&mut self) -> Option<&mut Expr<Ex, En>> {
+        match self {
+            Argument::Anormal(p0) => Some(p0),
+            _ => None,
+        }
+    }
+    pub fn as_ainout_into(self) -> Option<(Pos, Expr<Ex, En>)> {
+        match self {
+            Argument::Ainout(p0, p1) => Some((p0, p1)),
+            _ => None,
+        }
+    }
+    pub fn as_anormal_into(self) -> Option<Expr<Ex, En>> {
+        match self {
+            Argument::Anormal(p0) => Some(p0),
+            _ => None,
+        }
+    }
+}
 impl RequireKind {
     pub fn mk_require_extends() -> Self {
         RequireKind::RequireExtends
@@ -2794,6 +2883,62 @@ impl EmitId {
     pub fn as_emit_id_into(self) -> Option<isize> {
         match self {
             EmitId::EmitId(p0) => Some(p0),
+            _ => None,
+        }
+    }
+}
+impl PackageMembership {
+    pub fn mk_package_override(p0: Pos, p1: String) -> Self {
+        PackageMembership::PackageOverride(p0, p1)
+    }
+    pub fn mk_package_config_assignment(p0: String) -> Self {
+        PackageMembership::PackageConfigAssignment(p0)
+    }
+    pub fn is_package_override(&self) -> bool {
+        match self {
+            PackageMembership::PackageOverride(..) => true,
+            _ => false,
+        }
+    }
+    pub fn is_package_config_assignment(&self) -> bool {
+        match self {
+            PackageMembership::PackageConfigAssignment(..) => true,
+            _ => false,
+        }
+    }
+    pub fn as_package_override(&self) -> Option<(&Pos, &String)> {
+        match self {
+            PackageMembership::PackageOverride(p0, p1) => Some((p0, p1)),
+            _ => None,
+        }
+    }
+    pub fn as_package_config_assignment(&self) -> Option<&String> {
+        match self {
+            PackageMembership::PackageConfigAssignment(p0) => Some(p0),
+            _ => None,
+        }
+    }
+    pub fn as_package_override_mut(&mut self) -> Option<(&mut Pos, &mut String)> {
+        match self {
+            PackageMembership::PackageOverride(p0, p1) => Some((p0, p1)),
+            _ => None,
+        }
+    }
+    pub fn as_package_config_assignment_mut(&mut self) -> Option<&mut String> {
+        match self {
+            PackageMembership::PackageConfigAssignment(p0) => Some(p0),
+            _ => None,
+        }
+    }
+    pub fn as_package_override_into(self) -> Option<(Pos, String)> {
+        match self {
+            PackageMembership::PackageOverride(p0, p1) => Some((p0, p1)),
+            _ => None,
+        }
+    }
+    pub fn as_package_config_assignment_into(self) -> Option<String> {
+        match self {
+            PackageMembership::PackageConfigAssignment(p0) => Some(p0),
             _ => None,
         }
     }

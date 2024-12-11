@@ -10,15 +10,18 @@ from __future__ import annotations
 import typing as _typing
 
 import folly.iobuf as _fbthrift_iobuf
+import c.thrift_abstract_types as _fbthrift_python_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
+
+from c.thrift_enums import *
 
 
 class _fbthrift_compatible_with_C:
     pass
 
 
-class C(_fbthrift_python_types.Struct, _fbthrift_compatible_with_C):
+class C(_fbthrift_python_types.Struct, _fbthrift_compatible_with_C, _fbthrift_python_abstract_types.C):
     i: _typing.Final[int] = ...
     def __init__(
         self, *,
@@ -33,13 +36,13 @@ class C(_fbthrift_python_types.Struct, _fbthrift_compatible_with_C):
     def _to_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "c.types.C": ...  # type: ignore
     def _to_py_deprecated(self) -> "c.ttypes.C": ...  # type: ignore
-
+_fbthrift_C = C
 
 class _fbthrift_compatible_with_E:
     pass
 
 
-class E(_fbthrift_python_exceptions.GeneratedError, _fbthrift_compatible_with_E):
+class E(_fbthrift_python_exceptions.GeneratedError, _fbthrift_compatible_with_E, _fbthrift_python_abstract_types.E):
     def __init__(
         self,
     ) -> None: ...
@@ -48,3 +51,4 @@ class E(_fbthrift_python_exceptions.GeneratedError, _fbthrift_compatible_with_E)
     def _to_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "c.types.E": ...  # type: ignore
     def _to_py_deprecated(self) -> "c.ttypes.E": ...  # type: ignore
+_fbthrift_E = E

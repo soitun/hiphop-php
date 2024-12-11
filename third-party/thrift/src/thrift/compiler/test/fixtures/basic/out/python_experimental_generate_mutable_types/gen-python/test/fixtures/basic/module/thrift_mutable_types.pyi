@@ -25,12 +25,15 @@ import typing as _typing
 import enum
 
 import folly.iobuf as _fbthrift_iobuf
+import test.fixtures.basic.module.thrift_abstract_types as _fbthrift_python_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.mutable_types as _fbthrift_python_mutable_types
 import thrift.python.mutable_exceptions as _fbthrift_python_mutable_exceptions
 import thrift.python.mutable_containers as _fbthrift_python_mutable_containers
 from test.fixtures.basic.module.thrift_enums import _fbthrift_compatible_with_MyEnum
+from test.fixtures.basic.module.thrift_enums import MyEnum as _fbthrift_MyEnum
 from test.fixtures.basic.module.thrift_enums import _fbthrift_compatible_with_HackEnum
+from test.fixtures.basic.module.thrift_enums import HackEnum as _fbthrift_HackEnum
 
 from test.fixtures.basic.module.thrift_enums import *
 
@@ -39,60 +42,60 @@ class _fbthrift_compatible_with_MyStruct:
     pass
 
 
-class MyStruct(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_with_MyStruct):
+class MyStruct(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_with_MyStruct, _fbthrift_python_abstract_types.MyStruct):
 
     @property
     def MyIntField(self) -> int: ...
     @MyIntField.setter
-    def MyIntField(self, value: int): ...
+    def MyIntField(self, value: int) -> None: ...
 
 
     @property
     def MyStringField(self) -> str: ...
     @MyStringField.setter
-    def MyStringField(self, value: str): ...
+    def MyStringField(self, value: str) -> None: ...
 
 
     @property
-    def MyDataField(self) -> MyDataItem: ...
+    def MyDataField(self) -> _fbthrift_MyDataItem: ...
     @MyDataField.setter
-    def MyDataField(self, value: MyDataItem): ...
+    def MyDataField(self, value: _fbthrift_MyDataItem) -> None: ...
 
 
     @property
-    def myEnum(self) -> MyEnum: ...
+    def myEnum(self) -> _fbthrift_MyEnum: ...
     @myEnum.setter
-    def myEnum(self, value: MyEnum): ...
+    def myEnum(self, value: _fbthrift_MyEnum) -> None: ...
 
 
     @property
     def oneway(self) -> bool: ...
     @oneway.setter
-    def oneway(self, value: bool): ...
+    def oneway(self, value: bool) -> None: ...
 
 
     @property
     def readonly(self) -> bool: ...
     @readonly.setter
-    def readonly(self, value: bool): ...
+    def readonly(self, value: bool) -> None: ...
 
 
     @property
     def idempotent(self) -> bool: ...
     @idempotent.setter
-    def idempotent(self, value: bool): ...
+    def idempotent(self, value: bool) -> None: ...
 
 
     @property
     def floatSet(self) -> _fbthrift_python_mutable_containers.MutableSet[float]: ...
     @floatSet.setter
-    def floatSet(self, value: _fbthrift_python_mutable_containers.MutableSet[float] | _fbthrift_python_mutable_types._ThriftSetWrapper): ...
+    def floatSet(self, value: _fbthrift_python_mutable_containers.MutableSet[float] | _fbthrift_python_mutable_types._ThriftSetWrapper) -> None: ...
 
 
     @property
     def no_hack_codegen_field(self) -> str: ...
     @no_hack_codegen_field.setter
-    def no_hack_codegen_field(self, value: str): ...
+    def no_hack_codegen_field(self, value: str) -> None: ...
 
     def __init__(
         self, *,
@@ -119,35 +122,35 @@ class MyStruct(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatibl
         floatSet: _typing.Optional[_fbthrift_python_mutable_containers.MutableSet[float] | _fbthrift_python_mutable_types._ThriftSetWrapper]=...,
         no_hack_codegen_field: _typing.Optional[str]=...
     ) -> _typing.Self: ...
-    def __iter__(self) -> _typing.Iterator[_typing.Tuple[str, _typing.Union[int, str, MyDataItem, MyEnum, bool, bool, bool, _fbthrift_python_mutable_containers.MutableSet[float], str]]]: ...
+    def __iter__(self) -> _typing.Iterator[_typing.Tuple[str, _typing.Union[int, str, _fbthrift_MyDataItem, _fbthrift_MyEnum, bool, bool, bool, _fbthrift_python_mutable_containers.MutableSet[float], str]]]: ...
     def _to_python(self) -> "test.fixtures.basic.module.thrift_types.MyStruct": ...  # type: ignore
     def _to_mutable_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "test.fixtures.basic.module.types.MyStruct": ...  # type: ignore
     def _to_py_deprecated(self) -> "module.ttypes.MyStruct": ...  # type: ignore
-
+_fbthrift_MyStruct = MyStruct
 
 class _fbthrift_compatible_with_Containers:
     pass
 
 
-class Containers(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_with_Containers):
+class Containers(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_with_Containers, _fbthrift_python_abstract_types.Containers):
 
     @property
     def I32List(self) -> _fbthrift_python_mutable_containers.MutableList[int]: ...
     @I32List.setter
-    def I32List(self, value: _fbthrift_python_mutable_containers.MutableList[int] | _fbthrift_python_mutable_types._ThriftListWrapper): ...
+    def I32List(self, value: _fbthrift_python_mutable_containers.MutableList[int] | _fbthrift_python_mutable_types._ThriftListWrapper) -> None: ...
 
 
     @property
     def StringSet(self) -> _fbthrift_python_mutable_containers.MutableSet[str]: ...
     @StringSet.setter
-    def StringSet(self, value: _fbthrift_python_mutable_containers.MutableSet[str] | _fbthrift_python_mutable_types._ThriftSetWrapper): ...
+    def StringSet(self, value: _fbthrift_python_mutable_containers.MutableSet[str] | _fbthrift_python_mutable_types._ThriftSetWrapper) -> None: ...
 
 
     @property
     def StringToI64Map(self) -> _fbthrift_python_mutable_containers.MutableMap[str, int]: ...
     @StringToI64Map.setter
-    def StringToI64Map(self, value: _fbthrift_python_mutable_containers.MutableMap[str, int] | _fbthrift_python_mutable_types._ThriftMapWrapper): ...
+    def StringToI64Map(self, value: _fbthrift_python_mutable_containers.MutableMap[str, int] | _fbthrift_python_mutable_types._ThriftMapWrapper) -> None: ...
 
     def __init__(
         self, *,
@@ -167,13 +170,13 @@ class Containers(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compati
     def _to_mutable_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "test.fixtures.basic.module.types.Containers": ...  # type: ignore
     def _to_py_deprecated(self) -> "module.ttypes.Containers": ...  # type: ignore
-
+_fbthrift_Containers = Containers
 
 class _fbthrift_compatible_with_MyDataItem:
     pass
 
 
-class MyDataItem(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_with_MyDataItem):
+class MyDataItem(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_with_MyDataItem, _fbthrift_python_abstract_types.MyDataItem):
     def __init__(
         self,
     ) -> None: ...
@@ -186,36 +189,36 @@ class MyDataItem(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compati
     def _to_mutable_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "test.fixtures.basic.module.types.MyDataItem": ...  # type: ignore
     def _to_py_deprecated(self) -> "module.ttypes.MyDataItem": ...  # type: ignore
-
+_fbthrift_MyDataItem = MyDataItem
 
 class _fbthrift_compatible_with_MyUnion:
     pass
 
 
-class MyUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_compatible_with_MyUnion):
+class MyUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_compatible_with_MyUnion, _fbthrift_python_abstract_types.MyUnion):
 
     @property
-    def myEnum(self) -> MyEnum: ...
+    def myEnum(self) -> _fbthrift_MyEnum: ...
     @myEnum.setter
-    def myEnum(self, value: MyEnum): ...
+    def myEnum(self, value: _fbthrift_MyEnum) -> None: ...
 
 
     @property
-    def myStruct(self) -> MyStruct: ...
+    def myStruct(self) -> _fbthrift_MyStruct: ...
     @myStruct.setter
-    def myStruct(self, value: MyStruct): ...
+    def myStruct(self, value: _fbthrift_MyStruct) -> None: ...
 
 
     @property
-    def myDataItem(self) -> MyDataItem: ...
+    def myDataItem(self) -> _fbthrift_MyDataItem: ...
     @myDataItem.setter
-    def myDataItem(self, value: MyDataItem): ...
+    def myDataItem(self, value: _fbthrift_MyDataItem) -> None: ...
 
 
     @property
     def floatSet(self) -> _fbthrift_python_mutable_containers.MutableSet[float]: ...
     @floatSet.setter
-    def floatSet(self, value: _fbthrift_python_mutable_containers.MutableSet[float] | _fbthrift_python_mutable_types._ThriftSetWrapper): ...
+    def floatSet(self, value: _fbthrift_python_mutable_containers.MutableSet[float] | _fbthrift_python_mutable_types._ThriftSetWrapper) -> None: ...
 
     def __init__(
         self, *,
@@ -226,6 +229,7 @@ class MyUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_compatible_
     ) -> None: ...
 
 
+
     class FbThriftUnionFieldEnum(enum.Enum):
         EMPTY: MyUnion.FbThriftUnionFieldEnum = ...
         myEnum: MyUnion.FbThriftUnionFieldEnum = ...
@@ -233,44 +237,43 @@ class MyUnion(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_compatible_
         myDataItem: MyUnion.FbThriftUnionFieldEnum = ...
         floatSet: MyUnion.FbThriftUnionFieldEnum = ...
 
-
-    fbthrift_current_value: _typing.Final[_typing.Union[None, MyEnum, MyStruct, MyDataItem, _fbthrift_python_mutable_containers.MutableSet[float]]]
+    fbthrift_current_value: _typing.Final[_typing.Union[None, _fbthrift_MyEnum, _fbthrift_MyStruct, _fbthrift_MyDataItem, _fbthrift_python_mutable_containers.MutableSet[float]]]
     fbthrift_current_field: _typing.Final[FbThriftUnionFieldEnum]
     def get_type(self) -> FbThriftUnionFieldEnum: ...
     def _to_python(self) -> "test.fixtures.basic.module.thrift_types.MyUnion": ...  # type: ignore
     def _to_mutable_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "test.fixtures.basic.module.types.MyUnion": ...  # type: ignore
     def _to_py_deprecated(self) -> "module.ttypes.MyUnion": ...  # type: ignore
-
+_fbthrift_MyUnion = MyUnion
 
 class _fbthrift_compatible_with_MyException:
     pass
 
 
-class MyException(_fbthrift_python_mutable_exceptions.MutableGeneratedError, _fbthrift_compatible_with_MyException):
+class MyException(_fbthrift_python_mutable_exceptions.MutableGeneratedError, _fbthrift_compatible_with_MyException, _fbthrift_python_abstract_types.MyException):
 
     @property
     def MyIntField(self) -> int: ...
     @MyIntField.setter
-    def MyIntField(self, value: int): ...
+    def MyIntField(self, value: int) -> None: ...
 
 
     @property
     def MyStringField(self) -> str: ...
     @MyStringField.setter
-    def MyStringField(self, value: str): ...
+    def MyStringField(self, value: str) -> None: ...
 
 
     @property
-    def myStruct(self) -> MyStruct: ...
+    def myStruct(self) -> _fbthrift_MyStruct: ...
     @myStruct.setter
-    def myStruct(self, value: MyStruct): ...
+    def myStruct(self, value: _fbthrift_MyStruct) -> None: ...
 
 
     @property
-    def myUnion(self) -> MyUnion: ...
+    def myUnion(self) -> _fbthrift_MyUnion: ...
     @myUnion.setter
-    def myUnion(self, value: MyUnion): ...
+    def myUnion(self, value: _fbthrift_MyUnion) -> None: ...
 
     def __init__(
         self, *,
@@ -280,41 +283,41 @@ class MyException(_fbthrift_python_mutable_exceptions.MutableGeneratedError, _fb
         myUnion: _typing.Optional[_fbthrift_compatible_with_MyUnion]=...
     ) -> None: ...
 
-    def __iter__(self) -> _typing.Iterator[_typing.Tuple[str, _typing.Union[int, str, MyStruct, MyUnion]]]: ...
+    def __iter__(self) -> _typing.Iterator[_typing.Tuple[str, _typing.Union[int, str, _fbthrift_MyStruct, _fbthrift_MyUnion]]]: ...
     def _to_python(self) -> "test.fixtures.basic.module.thrift_types.MyException": ...  # type: ignore
     def _to_mutable_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "test.fixtures.basic.module.types.MyException": ...  # type: ignore
     def _to_py_deprecated(self) -> "module.ttypes.MyException": ...  # type: ignore
-
+_fbthrift_MyException = MyException
 
 class _fbthrift_compatible_with_MyExceptionWithMessage:
     pass
 
 
-class MyExceptionWithMessage(_fbthrift_python_mutable_exceptions.MutableGeneratedError, _fbthrift_compatible_with_MyExceptionWithMessage):
+class MyExceptionWithMessage(_fbthrift_python_mutable_exceptions.MutableGeneratedError, _fbthrift_compatible_with_MyExceptionWithMessage, _fbthrift_python_abstract_types.MyExceptionWithMessage):
 
     @property
     def MyIntField(self) -> int: ...
     @MyIntField.setter
-    def MyIntField(self, value: int): ...
+    def MyIntField(self, value: int) -> None: ...
 
 
     @property
     def MyStringField(self) -> str: ...
     @MyStringField.setter
-    def MyStringField(self, value: str): ...
+    def MyStringField(self, value: str) -> None: ...
 
 
     @property
-    def myStruct(self) -> MyStruct: ...
+    def myStruct(self) -> _fbthrift_MyStruct: ...
     @myStruct.setter
-    def myStruct(self, value: MyStruct): ...
+    def myStruct(self, value: _fbthrift_MyStruct) -> None: ...
 
 
     @property
-    def myUnion(self) -> MyUnion: ...
+    def myUnion(self) -> _fbthrift_MyUnion: ...
     @myUnion.setter
-    def myUnion(self, value: MyUnion): ...
+    def myUnion(self, value: _fbthrift_MyUnion) -> None: ...
 
     def __init__(
         self, *,
@@ -324,23 +327,23 @@ class MyExceptionWithMessage(_fbthrift_python_mutable_exceptions.MutableGenerate
         myUnion: _typing.Optional[_fbthrift_compatible_with_MyUnion]=...
     ) -> None: ...
 
-    def __iter__(self) -> _typing.Iterator[_typing.Tuple[str, _typing.Union[int, str, MyStruct, MyUnion]]]: ...
+    def __iter__(self) -> _typing.Iterator[_typing.Tuple[str, _typing.Union[int, str, _fbthrift_MyStruct, _fbthrift_MyUnion]]]: ...
     def _to_python(self) -> "test.fixtures.basic.module.thrift_types.MyExceptionWithMessage": ...  # type: ignore
     def _to_mutable_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "test.fixtures.basic.module.types.MyExceptionWithMessage": ...  # type: ignore
     def _to_py_deprecated(self) -> "module.ttypes.MyExceptionWithMessage": ...  # type: ignore
-
+_fbthrift_MyExceptionWithMessage = MyExceptionWithMessage
 
 class _fbthrift_compatible_with_ReservedKeyword:
     pass
 
 
-class ReservedKeyword(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_with_ReservedKeyword):
+class ReservedKeyword(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_with_ReservedKeyword, _fbthrift_python_abstract_types.ReservedKeyword):
 
     @property
     def reserved_field(self) -> int: ...
     @reserved_field.setter
-    def reserved_field(self, value: int): ...
+    def reserved_field(self, value: int) -> None: ...
 
     def __init__(
         self, *,
@@ -356,18 +359,18 @@ class ReservedKeyword(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_co
     def _to_mutable_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "test.fixtures.basic.module.types.ReservedKeyword": ...  # type: ignore
     def _to_py_deprecated(self) -> "module.ttypes.ReservedKeyword": ...  # type: ignore
-
+_fbthrift_ReservedKeyword = ReservedKeyword
 
 class _fbthrift_compatible_with_UnionToBeRenamed:
     pass
 
 
-class UnionToBeRenamed(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_compatible_with_UnionToBeRenamed):
+class UnionToBeRenamed(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_compatible_with_UnionToBeRenamed, _fbthrift_python_abstract_types.UnionToBeRenamed):
 
     @property
     def reserved_field(self) -> int: ...
     @reserved_field.setter
-    def reserved_field(self, value: int): ...
+    def reserved_field(self, value: int) -> None: ...
 
     def __init__(
         self, *,
@@ -375,10 +378,10 @@ class UnionToBeRenamed(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_co
     ) -> None: ...
 
 
+
     class FbThriftUnionFieldEnum(enum.Enum):
         EMPTY: UnionToBeRenamed.FbThriftUnionFieldEnum = ...
         reserved_field: UnionToBeRenamed.FbThriftUnionFieldEnum = ...
-
 
     fbthrift_current_value: _typing.Final[_typing.Union[None, int]]
     fbthrift_current_field: _typing.Final[FbThriftUnionFieldEnum]
@@ -387,6 +390,7 @@ class UnionToBeRenamed(_fbthrift_python_mutable_types.MutableUnion, _fbthrift_co
     def _to_mutable_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "test.fixtures.basic.module.types.UnionToBeRenamed": ...  # type: ignore
     def _to_py_deprecated(self) -> "module.ttypes.UnionToBeRenamed": ...  # type: ignore
+_fbthrift_UnionToBeRenamed = UnionToBeRenamed
 
 
 FLAG: bool = ...
@@ -407,11 +411,11 @@ ASet: _typing.Set[str] = ...
 
 AMap: _typing.Dict[str, _fbthrift_python_mutable_containers.MutableList[int]] = ...
 
-MyEnumAlias = MyEnum
-MyDataItemAlias = MyDataItem
+MyEnumAlias = _fbthrift_MyEnum
+MyDataItemAlias = _fbthrift_MyDataItem
 
 
-class _fbthrift_FooService_simple_rpc_args(_fbthrift_python_types.Struct):
+class _fbthrift_FooService_simple_rpc_args(_fbthrift_python_mutable_types.MutableStruct):
 
     def __init__(
         self,
@@ -422,7 +426,7 @@ class _fbthrift_FooService_simple_rpc_args(_fbthrift_python_types.Struct):
         _typing.Union[None]]]: ...
 
 
-class _fbthrift_FooService_simple_rpc_result(_fbthrift_python_types.Struct):
+class _fbthrift_FooService_simple_rpc_result(_fbthrift_python_mutable_types.MutableStruct):
     success: _typing.Final[None]
 
     def __init__(
@@ -436,7 +440,7 @@ class _fbthrift_FooService_simple_rpc_result(_fbthrift_python_types.Struct):
         ]]]: ...
 
 
-class _fbthrift_FB303Service_simple_rpc_args(_fbthrift_python_types.Struct):
+class _fbthrift_FB303Service_simple_rpc_args(_fbthrift_python_mutable_types.MutableStruct):
     int_parameter: _typing.Final[int] = ...
 
     def __init__(
@@ -449,21 +453,21 @@ class _fbthrift_FB303Service_simple_rpc_args(_fbthrift_python_types.Struct):
         _typing.Union[None, int]]]: ...
 
 
-class _fbthrift_FB303Service_simple_rpc_result(_fbthrift_python_types.Struct):
-    success: _typing.Final[ReservedKeyword]
+class _fbthrift_FB303Service_simple_rpc_result(_fbthrift_python_mutable_types.MutableStruct):
+    success: _typing.Final[_fbthrift_ReservedKeyword]
 
     def __init__(
-        self, *, success: _typing.Optional[ReservedKeyword] = ...
+        self, *, success: _typing.Optional[_fbthrift_ReservedKeyword] = ...
     ) -> None: ...
 
     def __iter__(self) -> _typing.Iterator[_typing.Tuple[
         str,
         _typing.Union[
-            ReservedKeyword,
+            _fbthrift_ReservedKeyword,
         ]]]: ...
 
 
-class _fbthrift_MyService_ping_args(_fbthrift_python_types.Struct):
+class _fbthrift_MyService_ping_args(_fbthrift_python_mutable_types.MutableStruct):
 
     def __init__(
         self,
@@ -474,7 +478,7 @@ class _fbthrift_MyService_ping_args(_fbthrift_python_types.Struct):
         _typing.Union[None]]]: ...
 
 
-class _fbthrift_MyService_ping_result(_fbthrift_python_types.Struct):
+class _fbthrift_MyService_ping_result(_fbthrift_python_mutable_types.MutableStruct):
     success: _typing.Final[None]
 
     def __init__(
@@ -488,7 +492,7 @@ class _fbthrift_MyService_ping_result(_fbthrift_python_types.Struct):
         ]]]: ...
 
 
-class _fbthrift_MyService_getRandomData_args(_fbthrift_python_types.Struct):
+class _fbthrift_MyService_getRandomData_args(_fbthrift_python_mutable_types.MutableStruct):
 
     def __init__(
         self,
@@ -499,7 +503,7 @@ class _fbthrift_MyService_getRandomData_args(_fbthrift_python_types.Struct):
         _typing.Union[None]]]: ...
 
 
-class _fbthrift_MyService_getRandomData_result(_fbthrift_python_types.Struct):
+class _fbthrift_MyService_getRandomData_result(_fbthrift_python_mutable_types.MutableStruct):
     success: _typing.Final[str]
 
     def __init__(
@@ -513,7 +517,7 @@ class _fbthrift_MyService_getRandomData_result(_fbthrift_python_types.Struct):
         ]]]: ...
 
 
-class _fbthrift_MyService_sink_args(_fbthrift_python_types.Struct):
+class _fbthrift_MyService_sink_args(_fbthrift_python_mutable_types.MutableStruct):
     sink: _typing.Final[int] = ...
 
     def __init__(
@@ -526,7 +530,7 @@ class _fbthrift_MyService_sink_args(_fbthrift_python_types.Struct):
         _typing.Union[None, int]]]: ...
 
 
-class _fbthrift_MyService_sink_result(_fbthrift_python_types.Struct):
+class _fbthrift_MyService_sink_result(_fbthrift_python_mutable_types.MutableStruct):
     success: _typing.Final[None]
 
     def __init__(
@@ -540,7 +544,7 @@ class _fbthrift_MyService_sink_result(_fbthrift_python_types.Struct):
         ]]]: ...
 
 
-class _fbthrift_MyService_putDataById_args(_fbthrift_python_types.Struct):
+class _fbthrift_MyService_putDataById_args(_fbthrift_python_mutable_types.MutableStruct):
     id: _typing.Final[int] = ...
     data: _typing.Final[str] = ...
 
@@ -555,7 +559,7 @@ class _fbthrift_MyService_putDataById_args(_fbthrift_python_types.Struct):
         _typing.Union[None, int, str]]]: ...
 
 
-class _fbthrift_MyService_putDataById_result(_fbthrift_python_types.Struct):
+class _fbthrift_MyService_putDataById_result(_fbthrift_python_mutable_types.MutableStruct):
     success: _typing.Final[None]
 
     def __init__(
@@ -569,7 +573,7 @@ class _fbthrift_MyService_putDataById_result(_fbthrift_python_types.Struct):
         ]]]: ...
 
 
-class _fbthrift_MyService_hasDataById_args(_fbthrift_python_types.Struct):
+class _fbthrift_MyService_hasDataById_args(_fbthrift_python_mutable_types.MutableStruct):
     id: _typing.Final[int] = ...
 
     def __init__(
@@ -582,7 +586,7 @@ class _fbthrift_MyService_hasDataById_args(_fbthrift_python_types.Struct):
         _typing.Union[None, int]]]: ...
 
 
-class _fbthrift_MyService_hasDataById_result(_fbthrift_python_types.Struct):
+class _fbthrift_MyService_hasDataById_result(_fbthrift_python_mutable_types.MutableStruct):
     success: _typing.Final[bool]
 
     def __init__(
@@ -596,7 +600,7 @@ class _fbthrift_MyService_hasDataById_result(_fbthrift_python_types.Struct):
         ]]]: ...
 
 
-class _fbthrift_MyService_getDataById_args(_fbthrift_python_types.Struct):
+class _fbthrift_MyService_getDataById_args(_fbthrift_python_mutable_types.MutableStruct):
     id: _typing.Final[int] = ...
 
     def __init__(
@@ -609,7 +613,7 @@ class _fbthrift_MyService_getDataById_args(_fbthrift_python_types.Struct):
         _typing.Union[None, int]]]: ...
 
 
-class _fbthrift_MyService_getDataById_result(_fbthrift_python_types.Struct):
+class _fbthrift_MyService_getDataById_result(_fbthrift_python_mutable_types.MutableStruct):
     success: _typing.Final[str]
 
     def __init__(
@@ -623,7 +627,7 @@ class _fbthrift_MyService_getDataById_result(_fbthrift_python_types.Struct):
         ]]]: ...
 
 
-class _fbthrift_MyService_deleteDataById_args(_fbthrift_python_types.Struct):
+class _fbthrift_MyService_deleteDataById_args(_fbthrift_python_mutable_types.MutableStruct):
     id: _typing.Final[int] = ...
 
     def __init__(
@@ -636,7 +640,7 @@ class _fbthrift_MyService_deleteDataById_args(_fbthrift_python_types.Struct):
         _typing.Union[None, int]]]: ...
 
 
-class _fbthrift_MyService_deleteDataById_result(_fbthrift_python_types.Struct):
+class _fbthrift_MyService_deleteDataById_result(_fbthrift_python_mutable_types.MutableStruct):
     success: _typing.Final[None]
 
     def __init__(
@@ -650,7 +654,7 @@ class _fbthrift_MyService_deleteDataById_result(_fbthrift_python_types.Struct):
         ]]]: ...
 
 
-class _fbthrift_MyService_lobDataById_args(_fbthrift_python_types.Struct):
+class _fbthrift_MyService_lobDataById_args(_fbthrift_python_mutable_types.MutableStruct):
     id: _typing.Final[int] = ...
     data: _typing.Final[str] = ...
 
@@ -665,7 +669,7 @@ class _fbthrift_MyService_lobDataById_args(_fbthrift_python_types.Struct):
         _typing.Union[None, int, str]]]: ...
 
 
-class _fbthrift_MyService_invalid_return_for_hack_args(_fbthrift_python_types.Struct):
+class _fbthrift_MyService_invalid_return_for_hack_args(_fbthrift_python_mutable_types.MutableStruct):
 
     def __init__(
         self,
@@ -676,7 +680,7 @@ class _fbthrift_MyService_invalid_return_for_hack_args(_fbthrift_python_types.St
         _typing.Union[None]]]: ...
 
 
-class _fbthrift_MyService_invalid_return_for_hack_result(_fbthrift_python_types.Struct):
+class _fbthrift_MyService_invalid_return_for_hack_result(_fbthrift_python_mutable_types.MutableStruct):
     success: _typing.Final[_fbthrift_python_mutable_containers.MutableSet[float]]
 
     def __init__(
@@ -690,7 +694,7 @@ class _fbthrift_MyService_invalid_return_for_hack_result(_fbthrift_python_types.
         ]]]: ...
 
 
-class _fbthrift_MyService_rpc_skipped_codegen_args(_fbthrift_python_types.Struct):
+class _fbthrift_MyService_rpc_skipped_codegen_args(_fbthrift_python_mutable_types.MutableStruct):
 
     def __init__(
         self,
@@ -701,7 +705,7 @@ class _fbthrift_MyService_rpc_skipped_codegen_args(_fbthrift_python_types.Struct
         _typing.Union[None]]]: ...
 
 
-class _fbthrift_MyService_rpc_skipped_codegen_result(_fbthrift_python_types.Struct):
+class _fbthrift_MyService_rpc_skipped_codegen_result(_fbthrift_python_mutable_types.MutableStruct):
     success: _typing.Final[None]
 
     def __init__(
@@ -715,7 +719,7 @@ class _fbthrift_MyService_rpc_skipped_codegen_result(_fbthrift_python_types.Stru
         ]]]: ...
 
 
-class _fbthrift_DbMixedStackArguments_getDataByKey0_args(_fbthrift_python_types.Struct):
+class _fbthrift_DbMixedStackArguments_getDataByKey0_args(_fbthrift_python_mutable_types.MutableStruct):
     key: _typing.Final[str] = ...
 
     def __init__(
@@ -728,7 +732,7 @@ class _fbthrift_DbMixedStackArguments_getDataByKey0_args(_fbthrift_python_types.
         _typing.Union[None, str]]]: ...
 
 
-class _fbthrift_DbMixedStackArguments_getDataByKey0_result(_fbthrift_python_types.Struct):
+class _fbthrift_DbMixedStackArguments_getDataByKey0_result(_fbthrift_python_mutable_types.MutableStruct):
     success: _typing.Final[bytes]
 
     def __init__(
@@ -742,7 +746,7 @@ class _fbthrift_DbMixedStackArguments_getDataByKey0_result(_fbthrift_python_type
         ]]]: ...
 
 
-class _fbthrift_DbMixedStackArguments_getDataByKey1_args(_fbthrift_python_types.Struct):
+class _fbthrift_DbMixedStackArguments_getDataByKey1_args(_fbthrift_python_mutable_types.MutableStruct):
     key: _typing.Final[str] = ...
 
     def __init__(
@@ -755,7 +759,7 @@ class _fbthrift_DbMixedStackArguments_getDataByKey1_args(_fbthrift_python_types.
         _typing.Union[None, str]]]: ...
 
 
-class _fbthrift_DbMixedStackArguments_getDataByKey1_result(_fbthrift_python_types.Struct):
+class _fbthrift_DbMixedStackArguments_getDataByKey1_result(_fbthrift_python_mutable_types.MutableStruct):
     success: _typing.Final[bytes]
 
     def __init__(

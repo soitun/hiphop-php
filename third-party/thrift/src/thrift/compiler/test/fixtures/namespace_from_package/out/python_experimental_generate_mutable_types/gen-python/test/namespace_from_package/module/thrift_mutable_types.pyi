@@ -23,6 +23,7 @@ from __future__ import annotations
 import typing as _typing
 
 import folly.iobuf as _fbthrift_iobuf
+import test.namespace_from_package.module.thrift_abstract_types as _fbthrift_python_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.mutable_types as _fbthrift_python_mutable_types
 import thrift.python.mutable_exceptions as _fbthrift_python_mutable_exceptions
@@ -35,12 +36,12 @@ class _fbthrift_compatible_with_Foo:
     pass
 
 
-class Foo(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_with_Foo):
+class Foo(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_with_Foo, _fbthrift_python_abstract_types.Foo):
 
     @property
     def MyInt(self) -> int: ...
     @MyInt.setter
-    def MyInt(self, value: int): ...
+    def MyInt(self, value: int) -> None: ...
 
     def __init__(
         self, *,
@@ -56,9 +57,10 @@ class Foo(_fbthrift_python_mutable_types.MutableStruct, _fbthrift_compatible_wit
     def _to_mutable_python(self) -> _typing.Self: ...
     def _to_py3(self) -> "test.namespace_from_package.module.types.Foo": ...  # type: ignore
     def _to_py_deprecated(self) -> "namespace_from_package.module.ttypes.Foo": ...  # type: ignore
+_fbthrift_Foo = Foo
 
 
-class _fbthrift_TestService_init_args(_fbthrift_python_types.Struct):
+class _fbthrift_TestService_init_args(_fbthrift_python_mutable_types.MutableStruct):
     int1: _typing.Final[int] = ...
 
     def __init__(
@@ -71,7 +73,7 @@ class _fbthrift_TestService_init_args(_fbthrift_python_types.Struct):
         _typing.Union[None, int]]]: ...
 
 
-class _fbthrift_TestService_init_result(_fbthrift_python_types.Struct):
+class _fbthrift_TestService_init_result(_fbthrift_python_mutable_types.MutableStruct):
     success: _typing.Final[int]
 
     def __init__(

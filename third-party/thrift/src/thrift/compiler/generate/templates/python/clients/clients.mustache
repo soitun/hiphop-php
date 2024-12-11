@@ -31,12 +31,13 @@ from {{program:base_library_package}}.client import (
 from {{program:base_library_package}}.client.omni_client import InteractionMethodPosition as _fbthrift_InteractionMethodPosition, FunctionQualifier as _fbthrift_FunctionQualifier
 from {{program:base_library_package}}.common import RpcOptions{{!
 }}{{#program:generate_mutable_types}}
+import {{program:base_library_package}}.mutable_containers as _fbthrift_python_mutable_containers
 import {{program:base_library_package}}.mutable_exceptions as _fbthrift_python_mutable_exceptions
 import {{program:base_library_package}}.mutable_types as _fbthrift_python_mutable_types{{!
 }}{{/program:generate_mutable_types}}
 import {{program:base_library_package}}.exceptions as _fbthrift_python_exceptions
 import {{program:base_library_package}}.types as _fbthrift_python_types
-import {{program:module_path}}.{{>types/types_import_path}} as {{program:module_mangle}}__{{> types/types_import_path}}
+import {{program:module_path}}.{{> types/types_import_path}} as {{program:module_mangle}}__{{> types/types_import_path}}
 import {{program:module_path}}.thrift_metadata
 {{#program:include_namespaces}}
 {{#has_types?}}

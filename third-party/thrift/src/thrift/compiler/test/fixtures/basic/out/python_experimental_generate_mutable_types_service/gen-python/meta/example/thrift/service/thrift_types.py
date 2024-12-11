@@ -8,6 +8,9 @@
 from __future__ import annotations
 
 import folly.iobuf as _fbthrift_iobuf
+
+from abc import ABCMeta as _fbthrift_ABCMeta
+import meta.example.thrift.service.thrift_abstract_types as _fbthrift_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
 
@@ -65,6 +68,8 @@ class EchoRequest(metaclass=_fbthrift_python_types.StructMeta):
             py_asyncio_types = importlib.import_module("service.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.EchoRequest, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.EchoRequest, EchoRequest)
+_fbthrift_EchoRequest = EchoRequest
 
 class EchoResponse(metaclass=_fbthrift_python_types.StructMeta):
     _fbthrift_SPEC = (
@@ -118,6 +123,8 @@ class EchoResponse(metaclass=_fbthrift_python_types.StructMeta):
             py_asyncio_types = importlib.import_module("service.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.EchoResponse, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.EchoResponse, EchoResponse)
+_fbthrift_EchoResponse = EchoResponse
 
 class WhisperException(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
     _fbthrift_SPEC = (
@@ -133,6 +140,9 @@ class WhisperException(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta)
             8, # IDL type (see BaseTypeEnum)
         ),
     )
+
+    _fbthrift_abstract_base_class = _fbthrift_abstract_types.WhisperException
+
 
     @staticmethod
     def __get_thrift_name__() -> str:
@@ -170,13 +180,15 @@ class WhisperException(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta)
         except ModuleNotFoundError:
             py_asyncio_types = importlib.import_module("service.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.WhisperException, self)
+_fbthrift_WhisperException = WhisperException
 
 # This unfortunately has to be down here to prevent circular imports
 import meta.example.thrift.service.thrift_metadata
 
-
+from meta.example.thrift.service.thrift_enums import *
 _fbthrift_all_enums = [
 ]
+
 
 def _fbthrift_metadata__struct_EchoRequest():
     return meta.example.thrift.service.thrift_metadata.gen_metadata_struct_EchoRequest()
