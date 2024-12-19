@@ -7,9 +7,6 @@ package test
 
 
 import (
-    "reflect"
-    "sync"
-
     test0 "my/namespacing/test"
     thrift "github.com/facebook/fbthrift/thrift/lib/go/thrift/types"
 )
@@ -17,33 +14,24 @@ import (
 var _ = test0.GoUnusedProtection__
 // (needed to ensure safety because of naive import list construction)
 var _ = thrift.ZERO
-var _ = reflect.Ptr
 
 // Premade codec specs
 var (
-    premadeCodecTypeSpec_bool *thrift.TypeSpec = nil
-)
-
-// Premade codec specs initializer
-var premadeCodecSpecsInitOnce = sync.OnceFunc(func() {
-    premadeCodecTypeSpec_bool = &thrift.TypeSpec{
-        FullName: "bool",
-        CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
+    premadeCodecTypeSpec_bool = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "bool",
+            CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
     PrimitiveType: thrift.CODEC_PRIMITIVE_TYPE_BOOL,
 },
 
-    }
-})
+        }
+    }()
+)
 
 // Premade struct specs
 var (
-    premadeStructSpec_reqExtendTestServiceCheck *thrift.StructSpec = nil
-    premadeStructSpec_respExtendTestServiceCheck *thrift.StructSpec = nil
-)
-
-// Premade struct specs initializer
-var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
-    premadeStructSpec_reqExtendTestServiceCheck = &thrift.StructSpec{
+    premadeStructSpec_reqExtendTestServiceCheck = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "reqExtendTestServiceCheck",
     ScopedName:           "extend.reqExtendTestServiceCheck",
     IsUnion:              false,
@@ -65,7 +53,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "struct1": 0,
     },
 }
-    premadeStructSpec_respExtendTestServiceCheck = &thrift.StructSpec{
+    }()
+    premadeStructSpec_respExtendTestServiceCheck = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "respExtendTestServiceCheck",
     ScopedName:           "extend.respExtendTestServiceCheck",
     IsUnion:              false,
@@ -87,26 +77,23 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "success": 0,
     },
 }
-})
-
-var premadeCodecSpecsMapOnce = sync.OnceValue(
-    func() map[string]*thrift.TypeSpec {
-        // Relies on premade codec specs initialization
-        premadeCodecSpecsInitOnce()
-
-        fbthriftTypeSpecsMap := make(map[string]*thrift.TypeSpec)
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_bool.FullName] = premadeCodecTypeSpec_bool
-        return fbthriftTypeSpecsMap
-    },
+    }()
 )
 
-func init() {
-    premadeCodecSpecsInitOnce()
-    premadeStructSpecsInitOnce()
-}
+// Premade slice of all struct specs
+var premadeStructSpecs = func() []*thrift.StructSpec {
+    fbthriftResults := make([]*thrift.StructSpec, 0)
+    return fbthriftResults
+}()
+
+var premadeCodecSpecsMap = func() map[string]*thrift.TypeSpec {
+    fbthriftTypeSpecsMap := make(map[string]*thrift.TypeSpec)
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_bool.FullName] = premadeCodecTypeSpec_bool
+    return fbthriftTypeSpecsMap
+}()
 
 // GetMetadataThriftType (INTERNAL USE ONLY).
 // Returns metadata TypeSpec for a given full type name.
 func GetCodecTypeSpec(fullName string) *thrift.TypeSpec {
-    return premadeCodecSpecsMapOnce()[fullName]
+    return premadeCodecSpecsMap[fullName]
 }

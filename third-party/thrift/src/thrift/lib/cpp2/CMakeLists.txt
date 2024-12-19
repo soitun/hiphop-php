@@ -15,6 +15,10 @@
 # Set the cpp2 directory
 set(LIB_CPP2_HOME ${CMAKE_CURRENT_SOURCE_DIR})
 
+if (enable_tests)
+  add_subdirectory(protocol/test)
+endif ()
+add_subdirectory(test)
 
 #######
 # CMAKE variables only have local/subdirectory scope
@@ -229,6 +233,7 @@ add_library(
   async/HeaderServerChannel.cpp
   async/HibernatingRequestChannel.cpp
   async/Interaction.cpp
+  async/InteractionOverloadPolicy.cpp
   async/MultiplexAsyncProcessor.cpp
   async/PooledRequestChannel.cpp
   async/ReconnectingRequestChannel.cpp
@@ -319,6 +324,7 @@ add_library(
   transport/rocket/framing/Util.cpp
   transport/rocket/payload/DefaultPayloadSerializerStrategy.cpp
   transport/rocket/payload/PayloadSerializer.cpp
+  transport/rocket/server/InteractionOverload.cpp
   transport/rocket/server/RocketRoutingHandler.cpp
   transport/rocket/server/RocketServerConnection.cpp
   transport/rocket/server/RocketServerConnectionPlugins.cpp

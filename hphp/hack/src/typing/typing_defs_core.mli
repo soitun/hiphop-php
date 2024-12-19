@@ -239,6 +239,7 @@ type 'ty fun_type = {
   ft_ret: 'ty;
   ft_flags: Typing_defs_flags.Fun.t;
   ft_cross_package: cross_package_decl;
+  ft_instantiated: bool;
 }
 [@@deriving hash, show]
 
@@ -754,3 +755,21 @@ val equal_locl_ty : locl_ty -> locl_ty -> bool
 val equal_locl_ty_ : locl_ty_ -> locl_ty_ -> bool
 
 val equal_decl_tyl : decl_ty list -> decl_ty list -> bool
+
+module Locl_subst : sig
+  type t = locl_ty SMap.t
+
+  val apply :
+    locl_ty ->
+    subst:locl_ty SMap.t ->
+    combine_reasons:
+      (src:Typing_reason.t -> dest:Typing_reason.t -> Typing_reason.t) ->
+    locl_ty
+
+  val apply_fun :
+    locl_phase ty fun_type ->
+    subst:locl_ty SMap.t ->
+    combine_reasons:
+      (src:Typing_reason.t -> dest:Typing_reason.t -> Typing_reason.t) ->
+    locl_phase ty fun_type
+end

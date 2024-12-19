@@ -36,7 +36,6 @@
 #include <thrift/compiler/generate/python/util.h>
 #include <thrift/compiler/generate/t_mstch_generator.h>
 #include <thrift/compiler/sema/ast_validator.h>
-#include <thrift/compiler/sema/explicit_include_validator.h>
 
 namespace apache::thrift::compiler {
 
@@ -130,6 +129,7 @@ class python_mstch_program : public mstch_program {
         this,
         {
             {"program:module_path", &python_mstch_program::module_path},
+            {"program:safe_patch?", &python_mstch_program::safe_patch},
             {"program:safe_patch_module_path",
              &python_mstch_program::safe_patch_module_path},
             {"program:module_mangle", &python_mstch_program::module_mangle},
@@ -153,15 +153,14 @@ class python_mstch_program : public mstch_program {
         this,
         {
             {"program:is_types_file?", &python_mstch_program::is_types_file},
+            {"program:is_source_file?", &python_mstch_program::is_source_file},
+            {"program:is_type_stub?", &python_mstch_program::is_type_stub},
             {"program:generate_abstract_types",
              &python_mstch_program::generate_abstract_types},
             {"program:generate_mutable_types",
              &python_mstch_program::generate_mutable_types},
             {"program:generate_immutable_types",
              &python_mstch_program::generate_immutable_types},
-            {"program:generate_to_mutable_python_conversion_methods?",
-             &python_mstch_program::
-                 generate_to_mutable_python_conversion_methods},
             {"program:enable_abstract_types?",
              &python_mstch_program::enable_abstract_types},
         });
@@ -177,6 +176,8 @@ class python_mstch_program : public mstch_program {
   mstch::node py3_auto_migrate() { return has_option("auto_migrate"); }
 
   mstch::node is_types_file() { return has_option("is_types_file"); }
+  mstch::node is_source_file() { return has_option("is_source_file"); }
+  mstch::node is_type_stub() { return has_option("is_type_stub"); }
 
   mstch::node include_namespaces() {
     std::vector<const Namespace*> namespaces;
@@ -201,6 +202,11 @@ class python_mstch_program : public mstch_program {
   mstch::node module_path() {
     return get_py3_namespace_with_name_and_prefix(
         program_, get_option("root_module_prefix"));
+  }
+
+  mstch::node safe_patch() {
+    constexpr std::string_view prefix = "gen_safe_patch_";
+    return program_->name().substr(0, prefix.size()) == prefix;
   }
 
   mstch::node safe_patch_module_path() {
@@ -257,10 +263,6 @@ class python_mstch_program : public mstch_program {
 
   mstch::node generate_immutable_types() {
     return !get_option("generate_immutable_types").empty();
-  }
-
-  mstch::node generate_to_mutable_python_conversion_methods() {
-    return !get_option("generate_to_mutable_python_conversion_methods").empty();
   }
 
   mstch::node enable_abstract_types() {
@@ -706,6 +708,11 @@ class python_mstch_type : public mstch_type {
   mstch::node program_name() { return get_type_program()->name(); }
 
   mstch::node metadata_path() {
+    if (type_->is_enum()) {
+      return get_py3_namespace_with_name_and_prefix(
+                 get_type_program(), get_option("root_module_prefix")) +
+          ".thrift_enums";
+    }
     return get_py3_namespace_with_name_and_prefix(
                get_type_program(), get_option("root_module_prefix")) +
         ".thrift_metadata";
@@ -973,7 +980,12 @@ class python_mstch_enum_value : public mstch_enum_value {
 // Generator-specific validator that enforces "name" and "value" are not used
 // as enum member or union field names (thrift-py3).
 namespace enum_member_union_field_names_validator {
-void validate(const t_named* node, const std::string& name, sema_context& ctx) {
+template <typename Pred>
+void validate(
+    const t_named* node,
+    const std::string& name,
+    sema_context& ctx,
+    Pred&& field_name_predicate) {
   auto pyname = node->get_annotation("py3.name", &name);
   if (const t_const* annot =
           node->find_structured_annotation_or_null(kPythonNameUri)) {
@@ -982,31 +994,33 @@ void validate(const t_named* node, const std::string& name, sema_context& ctx) {
       pyname = annotation_name->get_string();
     }
   }
-  if (pyname == "name" || pyname == "value") {
+  if (field_name_predicate(pyname)) {
     ctx.report(
         *node,
         "enum-member-union-field-names-rule",
         diagnostic_level::error,
         "'{}' should not be used as an enum/union field name in thrift-py3. "
         "Use a different name or annotate the field with "
-        "`(py3.name=\"<new_py_name>\")`",
+        "`@python.Name{{name=\"<new_py_name>\"}}`",
         pyname);
   }
 }
 bool validate_enum(sema_context& ctx, const t_enum& enm) {
+  auto predicate = [](const auto& pyname) {
+    return pyname == "name" || pyname == "value";
+  };
   for (const t_enum_value* ev : enm.get_enum_values()) {
-    validate(ev, ev->get_name(), ctx);
+    validate(ev, ev->get_name(), ctx, predicate);
   }
   return true;
 }
 
-// TODO(T176314881): this never does anything?
-bool validate_structured(sema_context& ctx, const t_struct& s) {
-  if (!s.is_union()) {
-    return false;
-  }
+bool validate_union(sema_context& ctx, const t_struct& s) {
+  auto predicate = [](const auto& pyname) {
+    return pyname == "type" || pyname == "value" || pyname == "Type";
+  };
   for (const t_field& f : s.fields()) {
-    validate(&f, f.name(), ctx);
+    validate(&f, f.name(), ctx, predicate);
   }
   return true;
 }
@@ -1089,15 +1103,8 @@ class t_mstch_python_generator : public t_mstch_generator {
     validator.add_program_visitor(validate_no_reserved_key_in_namespace);
     validator.add_enum_visitor(
         enum_member_union_field_names_validator::validate_enum);
-    validator.add_struct_visitor(
-        enum_member_union_field_names_validator::validate_structured);
-    if (!has_option("disable_explicit_include_validator")) {
-      add_explicit_include_validators(
-          validator,
-          diagnostic_level::error,
-          /* skip_annotations*/ true,
-          /* skip_service_includes*/ true);
-    }
+    validator.add_union_visitor(
+        enum_member_union_field_names_validator::validate_union);
     if (get_py3_namespace(program_).empty()) {
       validator.add_structured_definition_visitor(
           module_name_collision_validator::validate_named);
@@ -1112,7 +1119,7 @@ class t_mstch_python_generator : public t_mstch_generator {
     }
   }
 
-  enum class IsTypesFile { Yes, No };
+  enum class TypesFileKind { NotATypesFile, SourceFile, TypeStub };
   enum class TypeKind { Abstract, Immutable, Mutable };
 
  protected:
@@ -1120,7 +1127,7 @@ class t_mstch_python_generator : public t_mstch_generator {
   void set_mstch_factories();
   void generate_file(
       const std::string& template_name,
-      IsTypesFile is_types_file,
+      TypesFileKind types_file_kind,
       TypeKind type_kind,
       const std::filesystem::path& base);
   void set_types_file(bool val);
@@ -1354,14 +1361,18 @@ void t_mstch_python_generator::set_mstch_factories() {
 
 void t_mstch_python_generator::generate_file(
     const std::string& template_name,
-    IsTypesFile is_types_file,
+    TypesFileKind types_file_kind,
     TypeKind type_kind,
     const std::filesystem::path& base = {}) {
   t_program* program = get_program();
   const std::string& program_name = program->name();
   mstch_context_
       .set_or_erase_option(
-          is_types_file == IsTypesFile::Yes, "is_types_file", "")
+          types_file_kind != TypesFileKind::NotATypesFile, "is_types_file", "")
+      .set_or_erase_option(
+          types_file_kind == TypesFileKind::SourceFile, "is_source_file", "")
+      .set_or_erase_option(
+          types_file_kind == TypesFileKind::TypeStub, "is_type_stub", "")
       .set_or_erase_option(
           type_kind == TypeKind::Abstract, "generate_abstract_types", "yes")
       .set_or_erase_option(
@@ -1379,66 +1390,53 @@ void t_mstch_python_generator::generate_file(
 }
 
 void t_mstch_python_generator::generate_types() {
-  const bool experimental_generate_mutable_types =
-      has_option("experimental_generate_mutable_types");
-  const bool experimental_generate_abstract_types =
-      has_option("experimental_generate_abstract_types");
+  // DO_BEFORE(satishvk, 20250130): Remove flags related to abstract types after
+  // launch.
+  const bool enable_abstract_types = !has_option("disable_abstract_types");
 
   mstch_context_.set_or_erase_option(
-      experimental_generate_mutable_types,
-      "generate_to_mutable_python_conversion_methods",
-      "true");
-  mstch_context_.set_or_erase_option(
-      experimental_generate_abstract_types, "enable_abstract_types", "true");
+      enable_abstract_types, "enable_abstract_types", "true");
   generate_file(
       "thrift_types.py",
-      IsTypesFile::Yes,
+      TypesFileKind::SourceFile,
       TypeKind::Immutable,
       generate_root_path_);
   generate_file(
       "thrift_types.pyi",
-      IsTypesFile::Yes,
+      TypesFileKind::TypeStub,
       TypeKind::Immutable,
       generate_root_path_);
   generate_file(
       "thrift_enums.py",
-      IsTypesFile::Yes,
+      TypesFileKind::SourceFile,
       TypeKind::Immutable,
       generate_root_path_);
+
   generate_file(
-      "thrift_enums.pyi",
-      IsTypesFile::Yes,
-      TypeKind::Immutable,
+      "thrift_abstract_types.py",
+      TypesFileKind::SourceFile,
+      TypeKind::Abstract,
       generate_root_path_);
 
-  if (experimental_generate_abstract_types) {
-    generate_file(
-        "thrift_abstract_types.py",
-        IsTypesFile::Yes,
-        TypeKind::Abstract,
-        generate_root_path_);
-  }
-  mstch_context_.options.erase("generate_to_mutable_python_conversion_methods");
+  generate_file(
+      "thrift_mutable_types.py",
+      TypesFileKind::SourceFile,
+      TypeKind::Mutable,
+      generate_root_path_);
 
-  if (experimental_generate_mutable_types) {
-    generate_file(
-        "thrift_mutable_types.py",
-        IsTypesFile::Yes,
-        TypeKind::Mutable,
-        generate_root_path_);
-    generate_file(
-        "thrift_mutable_types.pyi",
-        IsTypesFile::Yes,
-        TypeKind::Mutable,
-        generate_root_path_);
-  }
-  mstch_context_.options.erase("enable_abstract_types");
+  generate_file(
+      "thrift_mutable_types.pyi",
+      TypesFileKind::TypeStub,
+      TypeKind::Mutable,
+      generate_root_path_);
+
+  mstch_context_.options["enable_abstract_types"] = "true";
 }
 
 void t_mstch_python_generator::generate_metadata() {
   generate_file(
       "thrift_metadata.py",
-      IsTypesFile::Yes,
+      TypesFileKind::SourceFile,
       TypeKind::Immutable,
       generate_root_path_);
 }
@@ -1452,16 +1450,15 @@ void t_mstch_python_generator::generate_clients() {
 
   generate_file(
       "thrift_clients.py",
-      IsTypesFile::No,
+      TypesFileKind::NotATypesFile,
       TypeKind::Immutable,
       generate_root_path_);
-  if (has_option("experimental_generate_mutable_types")) {
-    generate_file(
-        "thrift_mutable_clients.py",
-        IsTypesFile::No,
-        TypeKind::Mutable,
-        generate_root_path_);
-  }
+
+  generate_file(
+      "thrift_mutable_clients.py",
+      TypesFileKind::NotATypesFile,
+      TypeKind::Mutable,
+      generate_root_path_);
 }
 
 void t_mstch_python_generator::generate_services() {
@@ -1472,16 +1469,15 @@ void t_mstch_python_generator::generate_services() {
   }
   generate_file(
       "thrift_services.py",
-      IsTypesFile::No,
+      TypesFileKind::NotATypesFile,
       TypeKind::Immutable,
       generate_root_path_);
-  if (has_option("experimental_generate_mutable_types")) {
-    generate_file(
-        "thrift_mutable_services.py",
-        IsTypesFile::No,
-        TypeKind::Mutable,
-        generate_root_path_);
-  }
+
+  generate_file(
+      "thrift_mutable_services.py",
+      TypesFileKind::NotATypesFile,
+      TypeKind::Mutable,
+      generate_root_path_);
 }
 
 class t_python_patch_generator : public t_mstch_generator {
@@ -1530,26 +1526,9 @@ THRIFT_REGISTER_GENERATOR(
     mstch_python,
     "Python",
     "    include_prefix:  Use full include paths in generated files.\n"
-    "    experimental_generate_mutable_types:\n"
-    "      DO NOT USE. Enables the experimental generation of mutable\n"
-    "      thrift-python types (i.e., structs and unions). This is for local\n"
-    "      experimentation, development and testing ONLY. When this option is\n"
-    "      enabled, NO GUARANTEE is provided on any output (including any\n"
-    "      seemingly unrelated logic, such as previously existing generated\n"
-    "      code). Any \"new\" behavior (including the existence of this\n"
-    "      option) should be considered UNSTABLE and is subject to arbitrary\n"
-    "      (backwards incompatible) changes and undefined behavior.\n"
-    "      NEVER ENABLE THIS OPTION in production environments.\n"
-    "    experimental_generate_abstract_types:\n"
-    "      DO NOT USE. Enables the experimental generation of symbols\n"
-    "      that provide type-hints for thrift-python types. This is for local\n"
-    "      experimentation, development and testing ONLY. When this option is\n"
-    "      enabled, NO GUARANTEE is provided on any output (including any\n"
-    "      seemingly unrelated logic, such as previously existing generated\n"
-    "      code). Any \"new\" behavior (including the existence of this\n"
-    "      option) should be considered UNSTABLE and is subject to arbitrary\n"
-    "      (backwards incompatible) changes and undefined behavior.\n"
-    "      NEVER ENABLE THIS OPTION in production environments.\n");
+    "    disable_abstract_types:\n"
+    "      Disable the use of abstract types with thrift-python"
+    "      immutable and mutable types.\n");
 
 namespace patch {
 THRIFT_REGISTER_GENERATOR(

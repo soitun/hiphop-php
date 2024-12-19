@@ -17,9 +17,11 @@
 #include <thrift/compiler/whisker/ast.h>
 #include <thrift/compiler/whisker/detail/overload.h>
 
+#include <fmt/core.h>
+#include <fmt/ranges.h>
+
 #include <cassert>
 #include <iterator>
-#include <utility>
 
 namespace whisker::ast {
 
@@ -60,6 +62,28 @@ std::string partial_lookup::as_string() const {
 
 std::string partial_apply::path_string() const {
   return path.as_string();
+}
+
+std::string expression::to_string() const {
+  return detail::variant_match(
+      content,
+      [](const variable_lookup& v) { return v.chain_string(); },
+      [](const function_call& f) {
+        std::string out = fmt::format("({}", f.name());
+        for (const auto& arg : f.args) {
+          fmt::format_to(std::back_inserter(out), " {}", arg.to_string());
+        }
+        out += ")";
+        return out;
+      });
+}
+
+std::string_view expression::function_call::name() const {
+  return detail::variant_match(
+      which,
+      [&](function_call::not_tag) { return "not"; },
+      [&](function_call::and_tag) { return "and"; },
+      [&](function_call::or_tag) { return "or"; });
 }
 
 } // namespace whisker::ast

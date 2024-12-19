@@ -7,8 +7,7 @@
 
 import enum
 import thrift.py3.types
-import module.thrift_metadata as _fbthrift_python_metadata
-import module.thrift_types as _fbthrift_python_types
+import module.thrift_enums as _fbthrift_python_enums
 
 _fbthrift__module_name__ = "module.types"
 
@@ -24,14 +23,14 @@ class MyEnumA(thrift.py3.types.CompiledEnum):
 
     @staticmethod
     def __get_metadata__():
-        return _fbthrift_python_metadata.gen_metadata_enum_MyEnumA()
+        return _fbthrift_python_enums.gen_metadata_enum_MyEnumA()
 
     @staticmethod
     def __get_thrift_name__():
         return "module.MyEnumA"
 
     def _to_python(self):
-        return _fbthrift_python_types.MyEnumA(self._fbthrift_value_)
+        return _fbthrift_python_enums.MyEnumA(self._fbthrift_value_)
 
     def _to_py3(self):
         return self
@@ -66,14 +65,14 @@ class AnnotatedEnum(thrift.py3.types.CompiledEnum):
 
     @staticmethod
     def __get_metadata__():
-        return _fbthrift_python_metadata.gen_metadata_enum_AnnotatedEnum()
+        return _fbthrift_python_enums.gen_metadata_enum_AnnotatedEnum()
 
     @staticmethod
     def __get_thrift_name__():
         return "module.AnnotatedEnum"
 
     def _to_python(self):
-        return _fbthrift_python_types.AnnotatedEnum(self._fbthrift_value_)
+        return _fbthrift_python_enums.AnnotatedEnum(self._fbthrift_value_)
 
     def _to_py3(self):
         return self
@@ -108,14 +107,14 @@ class AnnotatedEnum2(thrift.py3.types.CompiledEnum):
 
     @staticmethod
     def __get_metadata__():
-        return _fbthrift_python_metadata.gen_metadata_enum_AnnotatedEnum2()
+        return _fbthrift_python_enums.gen_metadata_enum_AnnotatedEnum2()
 
     @staticmethod
     def __get_thrift_name__():
         return "module.AnnotatedEnum2"
 
     def _to_python(self):
-        return _fbthrift_python_types.AnnotatedEnum2(self._fbthrift_value_)
+        return _fbthrift_python_enums.AnnotatedEnum2(self._fbthrift_value_)
 
     def _to_py3(self):
         return self
@@ -148,14 +147,14 @@ class MyEnumB(thrift.py3.types.CompiledEnum):
 
     @staticmethod
     def __get_metadata__():
-        return _fbthrift_python_metadata.gen_metadata_enum_MyEnumB()
+        return _fbthrift_python_enums.gen_metadata_enum_MyEnumB()
 
     @staticmethod
     def __get_thrift_name__():
         return "module.MyEnumB"
 
     def _to_python(self):
-        return _fbthrift_python_types.MyEnumB(self._fbthrift_value_)
+        return _fbthrift_python_enums.MyEnumB(self._fbthrift_value_)
 
     def _to_py3(self):
         return self

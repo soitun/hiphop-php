@@ -26,6 +26,7 @@ from common.thrift.patch.detail.py_bindings.DynamicPatch import (
     BinaryPatch,
     StructPatch as DynamicStructPatch,
     UnionPatch as DynamicUnionPatch,
+    DynamicPatch
 )
 
 import thrift.python.types as _fbthrift_python_types
@@ -40,14 +41,16 @@ class MyStructPatch(
     BaseStructPatch[_fbthrift__test__fixtures__basic__module__thrift_types.MyStruct]
 ):
     pass
-
     @property
     def MyIntField(self) -> UnqualifiedFieldPatch[
             int,
             I64Patch]:
 
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> I64Patch:
+            return patch.as_i64_patch()
+
         return UnqualifiedFieldPatch(
-            lambda patch, type_info: patch.as_i64_patch(),
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             1,
             _fbthrift_python_types.typeinfo_i64)
@@ -70,8 +73,11 @@ class MyStructPatch(
             str,
             StringPatch]:
 
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> StringPatch:
+            return patch.as_string_patch()
+
         return UnqualifiedFieldPatch(
-            lambda patch, type_info: patch.as_string_patch(),
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             2,
             _fbthrift_python_types.typeinfo_string)
@@ -94,8 +100,11 @@ class MyStructPatch(
             _fbthrift__test__fixtures__basic__module__thrift_types.MyDataItem,
             MyDataItemPatch]:
 
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> MyDataItemPatch:
+            return MyDataItemPatch(patch)
+
         return UnqualifiedFieldPatch(
-            lambda patch, type_info: MyDataItemPatch(patch),
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             3,
             _fbthrift_python_types.StructTypeInfo(_fbthrift__test__fixtures__basic__module__thrift_types.MyDataItem))
@@ -118,8 +127,11 @@ class MyStructPatch(
             _fbthrift__test__fixtures__basic__module__thrift_types.MyEnum,
             _fbthrift__test__fixtures__basic__module__thrift_types.MyEnum]:
 
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> _fbthrift__test__fixtures__basic__module__thrift_types.MyEnum:
+            return patch.as_enum_patch()
+
         return UnqualifiedFieldPatch(
-            lambda patch, type_info: patch.as_enum_patch(),
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             4,
             _fbthrift_python_types.EnumTypeInfo(_fbthrift__test__fixtures__basic__module__thrift_types.MyEnum))
@@ -142,8 +154,11 @@ class MyStructPatch(
             bool,
             BoolPatch]:
 
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> BoolPatch:
+            return patch.as_bool_patch()
+
         return UnqualifiedFieldPatch(
-            lambda patch, type_info: patch.as_bool_patch(),
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             5,
             _fbthrift_python_types.typeinfo_bool)
@@ -166,8 +181,11 @@ class MyStructPatch(
             bool,
             BoolPatch]:
 
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> BoolPatch:
+            return patch.as_bool_patch()
+
         return UnqualifiedFieldPatch(
-            lambda patch, type_info: patch.as_bool_patch(),
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             6,
             _fbthrift_python_types.typeinfo_bool)
@@ -190,8 +208,11 @@ class MyStructPatch(
             bool,
             BoolPatch]:
 
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> BoolPatch:
+            return patch.as_bool_patch()
+
         return UnqualifiedFieldPatch(
-            lambda patch, type_info: patch.as_bool_patch(),
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             7,
             _fbthrift_python_types.typeinfo_bool)
@@ -214,8 +235,11 @@ class MyStructPatch(
             _typing.AbstractSet[float],
             SetPatch[float]]:
 
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> SetPatch[float]:
+            return SetPatch(patch.as_set_patch(), type_info)
+
         return UnqualifiedFieldPatch(
-            lambda patch, type_info: SetPatch(patch.as_set_patch(), type_info),
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             8,
             _fbthrift_python_types.SetTypeInfo(_fbthrift_python_types.typeinfo_float))
@@ -238,8 +262,11 @@ class MyStructPatch(
             str,
             StringPatch]:
 
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> StringPatch:
+            return patch.as_string_patch()
+
         return UnqualifiedFieldPatch(
-            lambda patch, type_info: patch.as_string_patch(),
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             9,
             _fbthrift_python_types.typeinfo_string)
@@ -262,14 +289,16 @@ class ContainersPatch(
     BaseStructPatch[_fbthrift__test__fixtures__basic__module__thrift_types.Containers]
 ):
     pass
-
     @property
     def I32List(self) -> UnqualifiedFieldPatch[
             _typing.Sequence[int],
             ListPatch[int]]:
 
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> ListPatch[int]:
+            return ListPatch(patch.as_list_patch(), type_info)
+
         return UnqualifiedFieldPatch(
-            lambda patch, type_info: ListPatch(patch.as_list_patch(), type_info),
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             1,
             _fbthrift_python_types.ListTypeInfo(_fbthrift_python_types.typeinfo_i32))
@@ -292,8 +321,11 @@ class ContainersPatch(
             _typing.AbstractSet[str],
             SetPatch[str]]:
 
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> SetPatch[str]:
+            return SetPatch(patch.as_set_patch(), type_info)
+
         return UnqualifiedFieldPatch(
-            lambda patch, type_info: SetPatch(patch.as_set_patch(), type_info),
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             2,
             _fbthrift_python_types.SetTypeInfo(_fbthrift_python_types.typeinfo_string))
@@ -316,8 +348,13 @@ class ContainersPatch(
             _typing.Mapping[str, int],
             MapPatch[str, int, I64Patch]]:
 
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> MapPatch[str, int, I64Patch]:
+            def cast_dynamic_patch_to_typed_map_value_patch(patch: DynamicPatch, type_info) -> I64Patch:
+                return patch.as_i64_patch()
+            return MapPatch(cast_dynamic_patch_to_typed_map_value_patch, patch.as_map_patch(), type_info)
+
         return UnqualifiedFieldPatch(
-            lambda patch, type_info: MapPatch(lambda patch, type_info: patch.as_i64_patch(), patch.as_map_patch(), type_info),
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             3,
             _fbthrift_python_types.MapTypeInfo(_fbthrift_python_types.typeinfo_string, _fbthrift_python_types.typeinfo_i64))
@@ -341,19 +378,20 @@ class MyDataItemPatch(
 ):
     pass
 
-
 class MyUnionPatch(
     BaseUnionPatch[_fbthrift__test__fixtures__basic__module__thrift_types.MyUnion]
 ):
     pass
-
     @property
     def myEnum(self) -> OptionalFieldPatch[
             _fbthrift__test__fixtures__basic__module__thrift_types.MyEnum,
             _fbthrift__test__fixtures__basic__module__thrift_types.MyEnum]:
 
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> _fbthrift__test__fixtures__basic__module__thrift_types.MyEnum:
+            return patch.as_enum_patch()
+
         return OptionalFieldPatch(
-            lambda patch, type_info: patch.as_enum_patch(),
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             1,
             _fbthrift_python_types.EnumTypeInfo(_fbthrift__test__fixtures__basic__module__thrift_types.MyEnum))
@@ -376,8 +414,11 @@ class MyUnionPatch(
             _fbthrift__test__fixtures__basic__module__thrift_types.MyStruct,
             MyStructPatch]:
 
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> MyStructPatch:
+            return MyStructPatch(patch)
+
         return OptionalFieldPatch(
-            lambda patch, type_info: MyStructPatch(patch),
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             2,
             _fbthrift_python_types.StructTypeInfo(_fbthrift__test__fixtures__basic__module__thrift_types.MyStruct))
@@ -400,8 +441,11 @@ class MyUnionPatch(
             _fbthrift__test__fixtures__basic__module__thrift_types.MyDataItem,
             MyDataItemPatch]:
 
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> MyDataItemPatch:
+            return MyDataItemPatch(patch)
+
         return OptionalFieldPatch(
-            lambda patch, type_info: MyDataItemPatch(patch),
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             3,
             _fbthrift_python_types.StructTypeInfo(_fbthrift__test__fixtures__basic__module__thrift_types.MyDataItem))
@@ -424,8 +468,11 @@ class MyUnionPatch(
             _typing.AbstractSet[float],
             SetPatch[float]]:
 
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> SetPatch[float]:
+            return SetPatch(patch.as_set_patch(), type_info)
+
         return OptionalFieldPatch(
-            lambda patch, type_info: SetPatch(patch.as_set_patch(), type_info),
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             4,
             _fbthrift_python_types.SetTypeInfo(_fbthrift_python_types.typeinfo_float))
@@ -448,14 +495,16 @@ class MyExceptionPatch(
     BaseStructPatch[_fbthrift__test__fixtures__basic__module__thrift_types.MyException]
 ):
     pass
-
     @property
     def MyIntField(self) -> UnqualifiedFieldPatch[
             int,
             I64Patch]:
 
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> I64Patch:
+            return patch.as_i64_patch()
+
         return UnqualifiedFieldPatch(
-            lambda patch, type_info: patch.as_i64_patch(),
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             1,
             _fbthrift_python_types.typeinfo_i64)
@@ -478,8 +527,11 @@ class MyExceptionPatch(
             str,
             StringPatch]:
 
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> StringPatch:
+            return patch.as_string_patch()
+
         return UnqualifiedFieldPatch(
-            lambda patch, type_info: patch.as_string_patch(),
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             2,
             _fbthrift_python_types.typeinfo_string)
@@ -502,8 +554,11 @@ class MyExceptionPatch(
             _fbthrift__test__fixtures__basic__module__thrift_types.MyStruct,
             MyStructPatch]:
 
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> MyStructPatch:
+            return MyStructPatch(patch)
+
         return UnqualifiedFieldPatch(
-            lambda patch, type_info: MyStructPatch(patch),
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             3,
             _fbthrift_python_types.StructTypeInfo(_fbthrift__test__fixtures__basic__module__thrift_types.MyStruct))
@@ -526,8 +581,11 @@ class MyExceptionPatch(
             _fbthrift__test__fixtures__basic__module__thrift_types.MyUnion,
             MyUnionPatch]:
 
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> MyUnionPatch:
+            return MyUnionPatch(patch)
+
         return UnqualifiedFieldPatch(
-            lambda patch, type_info: MyUnionPatch(patch),
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             4,
             _fbthrift_python_types.StructTypeInfo(_fbthrift__test__fixtures__basic__module__thrift_types.MyUnion))
@@ -550,14 +608,16 @@ class MyExceptionWithMessagePatch(
     BaseStructPatch[_fbthrift__test__fixtures__basic__module__thrift_types.MyExceptionWithMessage]
 ):
     pass
-
     @property
     def MyIntField(self) -> UnqualifiedFieldPatch[
             int,
             I64Patch]:
 
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> I64Patch:
+            return patch.as_i64_patch()
+
         return UnqualifiedFieldPatch(
-            lambda patch, type_info: patch.as_i64_patch(),
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             1,
             _fbthrift_python_types.typeinfo_i64)
@@ -580,8 +640,11 @@ class MyExceptionWithMessagePatch(
             str,
             StringPatch]:
 
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> StringPatch:
+            return patch.as_string_patch()
+
         return UnqualifiedFieldPatch(
-            lambda patch, type_info: patch.as_string_patch(),
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             2,
             _fbthrift_python_types.typeinfo_string)
@@ -604,8 +667,11 @@ class MyExceptionWithMessagePatch(
             _fbthrift__test__fixtures__basic__module__thrift_types.MyStruct,
             MyStructPatch]:
 
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> MyStructPatch:
+            return MyStructPatch(patch)
+
         return UnqualifiedFieldPatch(
-            lambda patch, type_info: MyStructPatch(patch),
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             3,
             _fbthrift_python_types.StructTypeInfo(_fbthrift__test__fixtures__basic__module__thrift_types.MyStruct))
@@ -628,8 +694,11 @@ class MyExceptionWithMessagePatch(
             _fbthrift__test__fixtures__basic__module__thrift_types.MyUnion,
             MyUnionPatch]:
 
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> MyUnionPatch:
+            return MyUnionPatch(patch)
+
         return UnqualifiedFieldPatch(
-            lambda patch, type_info: MyUnionPatch(patch),
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             4,
             _fbthrift_python_types.StructTypeInfo(_fbthrift__test__fixtures__basic__module__thrift_types.MyUnion))
@@ -652,14 +721,16 @@ class ReservedKeywordPatch(
     BaseStructPatch[_fbthrift__test__fixtures__basic__module__thrift_types.ReservedKeyword]
 ):
     pass
-
     @property
     def reserved_field(self) -> UnqualifiedFieldPatch[
             int,
             I32Patch]:
 
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> I32Patch:
+            return patch.as_i32_patch()
+
         return UnqualifiedFieldPatch(
-            lambda patch, type_info: patch.as_i32_patch(),
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             1,
             _fbthrift_python_types.typeinfo_i32)
@@ -682,14 +753,16 @@ class UnionToBeRenamedPatch(
     BaseUnionPatch[_fbthrift__test__fixtures__basic__module__thrift_types.UnionToBeRenamed]
 ):
     pass
-
     @property
     def reserved_field(self) -> OptionalFieldPatch[
             int,
             I32Patch]:
 
+        def cast_dynamic_patch_to_typed_field_patch(patch: DynamicPatch, type_info) -> I32Patch:
+            return patch.as_i32_patch()
+
         return OptionalFieldPatch(
-            lambda patch, type_info: patch.as_i32_patch(),
+            cast_dynamic_patch_to_typed_field_patch,
             self._patch,
             1,
             _fbthrift_python_types.typeinfo_i32)

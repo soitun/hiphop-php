@@ -154,13 +154,11 @@ class py3_mstch_program : public mstch_program {
              &py3_mstch_program::includeNamespaces},
             {"program:cppIncludes", &py3_mstch_program::getCppIncludes},
             {"program:containerTypes", &py3_mstch_program::getContainerTypes},
-            {"program:hasPyContainerTypes",
-             &py3_mstch_program::hasPyContainerTypes},
+            {"program:hasContainerTypes",
+             &py3_mstch_program::hasContainerTypes},
             {"program:hasEnumTypes", &py3_mstch_program::hasEnumTypes},
             {"program:customTemplates", &py3_mstch_program::getCustomTemplates},
             {"program:customTypes", &py3_mstch_program::getCustomTypes},
-            {"program:moveContainerTypes",
-             &py3_mstch_program::getMoveContainerTypes},
             {"program:has_stream?", &py3_mstch_program::hasStream},
             {"program:python_capi_converter?",
              &py3_mstch_program::capi_converter},
@@ -199,14 +197,7 @@ class py3_mstch_program : public mstch_program {
 
   mstch::node getContainerTypes() { return make_mstch_types(containers_); }
 
-  mstch::node hasPyContainerTypes() {
-    for (const auto* ttype : containers_) {
-      if (ttype->is_list() || ttype->is_set()) {
-        return true;
-      }
-    }
-    return false;
-  }
+  mstch::node hasContainerTypes() { return !containers_.empty(); }
 
   mstch::node hasEnumTypes() {
     if (!program_->enums().empty()) {
@@ -247,14 +238,6 @@ class py3_mstch_program : public mstch_program {
   }
 
   mstch::node getCustomTypes() { return make_mstch_types(customTypes_); }
-
-  mstch::node getMoveContainerTypes() {
-    std::vector<const t_type*> types;
-    for (const auto& kvp : moveContainers_) {
-      types.push_back(kvp.second);
-    }
-    return make_mstch_types(types);
-  }
 
   mstch::node response_and_stream_functions() {
     return make_mstch_functions(response_and_stream_functions_, nullptr);
@@ -418,7 +401,6 @@ class py3_mstch_program : public mstch_program {
   mstch::node filtered_typedefs() { return make_mstch_typedefs(typedefs_); }
 
   std::vector<const t_type*> containers_;
-  std::map<std::string, const t_type*> moveContainers_;
   std::vector<const t_type*> customTemplates_;
   std::vector<const t_type*> customTypes_;
   std::unordered_set<std::string> seenTypeNames_;
@@ -602,6 +584,7 @@ class py3_mstch_type : public mstch_type {
   struct context {
     const t_program* program;
     std::unordered_map<const t_type*, cached_properties>* cache;
+    cpp_name_resolver* name_resolver;
   };
 
   cached_properties& get_cached_props(const t_type* type, const context& c);
@@ -618,15 +601,19 @@ class py3_mstch_type : public mstch_type {
         this,
         {
             {"type:modulePath", &py3_mstch_type::modulePath},
+            {"type:module_path_period_separated",
+             &py3_mstch_type::module_path_period_separated},
+            {"type:module_auto_migrate_path",
+             &py3_mstch_type::moduleAutoMigratePath},
             {"type:cbinding_path", &py3_mstch_type::cbinding_path},
             {"type:flat_name", &py3_mstch_type::flatName},
             {"type:cppNamespaces", &py3_mstch_type::cppNamespaces},
             {"type:cppTemplate", &py3_mstch_type::cppTemplate},
             {"type:cythonTemplate", &py3_mstch_type::cythonTemplate},
             {"type:defaultTemplate?", &py3_mstch_type::isDefaultTemplate},
-            {"type:cppCustomType", &py3_mstch_type::cppType},
+            {"type:customCppType", &py3_mstch_type::customCppType},
+            {"type:customCppType?", &py3_mstch_type::isCustomCppType},
             {"type:cythonCustomType", &py3_mstch_type::cythonType},
-            {"type:hasCustomType?", &py3_mstch_type::hasCustomType},
             {"type:number?", &py3_mstch_type::isNumber},
             {"type:integer?", &py3_mstch_type::isInteger},
             {"type:containerOfString?", &py3_mstch_type::isContainerOfString},
@@ -636,8 +623,7 @@ class py3_mstch_type : public mstch_type {
             {"type:iobufRef?", &py3_mstch_type::isIOBufRef},
             {"type:iobufWrapper?", &py3_mstch_type::isIOBufWrapper},
             {"type:flexibleBinary?", &py3_mstch_type::isFlexibleBinary},
-            {"type:hasCustomTypeBehavior?",
-             &py3_mstch_type::hasCustomTypeBehavior},
+            {"type:customBinaryType?", &py3_mstch_type::isCustomBinaryType},
             {"type:simple?", &py3_mstch_type::isSimple},
             {"type:resolves_to_complex_return?",
              &py3_mstch_type::resolves_to_complex_return},
@@ -662,11 +648,24 @@ class py3_mstch_type : public mstch_type {
         fmt::join(get_type_py3_namespace(get_type_program(), "types"), "_"));
   }
 
+  mstch::node module_path_period_separated() {
+    return fmt::format(
+        "{}",
+        fmt::join(get_type_py3_namespace(get_type_program(), "types"), "."));
+  }
+
   mstch::node cbinding_path() {
     return fmt::format(
         "_{}",
         fmt::join(
             get_type_py3_namespace(get_type_program(), "cbindings"), "_"));
+  }
+
+  mstch::node moduleAutoMigratePath() {
+    return fmt::format(
+        "_{}",
+        fmt::join(
+            get_type_py3_namespace(get_type_program(), "thrift_types"), "_"));
   }
 
   mstch::node flatName() { return cached_props_.flat_name(); }
@@ -681,11 +680,11 @@ class py3_mstch_type : public mstch_type {
 
   mstch::node isDefaultTemplate() { return is_default_template(); }
 
-  mstch::node cppType() { return cached_props_.cpp_type(); }
+  mstch::node customCppType() { return cached_props_.cpp_type(); }
 
   mstch::node cythonType() { return to_cython_type(); }
 
-  mstch::node hasCustomType() { return has_custom_cpp_type(); }
+  mstch::node isCustomCppType() { return is_custom_cpp_type(); }
 
   mstch::node isNumber() { return is_number(); }
 
@@ -707,13 +706,12 @@ class py3_mstch_type : public mstch_type {
 
   mstch::node isFlexibleBinary() { return is_flexible_binary(); }
 
-  mstch::node hasCustomTypeBehavior() { return has_custom_type_behavior(); }
+  mstch::node isCustomBinaryType() { return is_custom_binary_type(); }
 
-  // as used, non-simple types live in shared_ptr in container conversions
   mstch::node isSimple() {
     return (type_->is_primitive_type() || type_->is_enum() ||
-            type_->is_list() || type_->is_set()) &&
-        !has_custom_type_behavior();
+            type_->is_container()) &&
+        !is_custom_binary_type();
   }
 
   mstch::node resolves_to_complex_return() {
@@ -732,7 +730,7 @@ class py3_mstch_type : public mstch_type {
     return cached_props_.is_default_template(type_);
   }
 
-  bool has_custom_cpp_type() const { return cached_props_.cpp_type() != ""; }
+  bool is_custom_cpp_type() const { return cached_props_.cpp_type() != ""; }
 
  protected:
   const t_program* get_type_program() const {
@@ -791,7 +789,7 @@ class py3_mstch_type : public mstch_type {
   }
 
   bool is_flexible_binary() const {
-    return type_->is_binary() && has_custom_cpp_type() && !is_iobuf() &&
+    return type_->is_binary() && is_custom_cpp_type() && !is_iobuf() &&
         !is_iobuf_ref() &&
         // We know that folly::fbstring is completely substitutable for
         // std::string and it's a common-enough type to special-case:
@@ -799,12 +797,29 @@ class py3_mstch_type : public mstch_type {
         cached_props_.cpp_type() != "::folly::fbstring";
   }
 
-  bool has_custom_type_behavior() const {
+  bool is_custom_binary_type() const {
     return is_iobuf() || is_iobuf_ref() || is_flexible_binary();
   }
 
   const t_program* prog_;
   cached_properties& cached_props_;
+};
+
+class py3_mstch_typedef : public mstch_typedef {
+ public:
+  py3_mstch_typedef(
+      const t_typedef* type, mstch_context& ctx, mstch_element_position pos)
+      : mstch_typedef(type, ctx, pos) {
+    register_cached_methods(
+        this,
+        {
+            {"typedef:asType", &py3_mstch_typedef::asType},
+        });
+  }
+
+  mstch::node asType() {
+    return context_.type_factory->make_mstch_object(typedef_, context_);
+  }
 };
 
 class py3_mstch_struct : public mstch_struct {
@@ -1078,6 +1093,84 @@ class py3_mstch_enum_value : public mstch_enum_value {
   }
 };
 
+class py3_mstch_const_value : public mstch_const_value {
+ public:
+  py3_mstch_const_value(
+      const t_const_value* cv,
+      mstch_context& ctx,
+      mstch_element_position pos,
+      const t_const* current_const,
+      const t_type* expected_type)
+      : mstch_const_value(cv, ctx, pos, current_const, expected_type) {
+    register_cached_methods(
+        this,
+        {
+            {"value:value_for_bool?", &py3_mstch_const_value::is_bool_value},
+            {"value:value_for_floating_point?",
+             &py3_mstch_const_value::is_float_value},
+            {"value:py3_binary?", &py3_mstch_const_value::is_binary},
+            {"value:const_enum_type", &py3_mstch_const_value::const_enum_type},
+            {"value:py3_enum_value_name",
+             &py3_mstch_const_value::py3_enum_value_name},
+            {"value:const_enum_type", &py3_mstch_const_value::const_enum_type},
+            {"value:const_container_type",
+             &py3_mstch_const_value::const_container_type},
+        });
+  }
+
+  mstch::node is_bool_value() {
+    if (auto ttype = const_value_->ttype()) {
+      return ttype->get_true_type()->is_bool();
+    }
+    return false;
+  }
+
+  mstch::node is_float_value() {
+    if (auto ttype = const_value_->ttype()) {
+      return ttype->get_true_type()->is_floating_point();
+    }
+    return false;
+  }
+
+  mstch::node is_binary() {
+    auto& ttype = const_value_->ttype();
+    return type_ == cv::CV_STRING && ttype &&
+        ttype->get_true_type()->is_binary();
+  }
+
+  mstch::node py3_enum_value_name() {
+    if (!const_value_->is_enum() || const_value_->get_enum_value() == nullptr) {
+      return mstch::node();
+    }
+    const auto& enum_name = const_value_->get_enum()->get_name();
+    return python::get_py3_name_class_scope(
+        *const_value_->get_enum_value(), enum_name);
+  }
+
+  mstch::node const_enum_type() {
+    if (!const_value_->ttype() || type_ != cv::CV_INTEGER ||
+        !const_value_->is_enum()) {
+      return {};
+    }
+    const auto* type = const_value_->ttype()->get_true_type();
+    if (type->is_enum()) {
+      return context_.type_factory->make_mstch_object(type, context_);
+    }
+    return {};
+  }
+
+  mstch::node const_container_type() {
+    if (!const_value_->ttype()) {
+      return {};
+    }
+    const auto* type = const_value_->ttype()->get_true_type();
+    if (type->is_container()) {
+      return context_.type_factory->make_mstch_object(type, context_);
+    }
+    return {};
+  }
+};
+
 class py3_mstch_deprecated_annotation : public mstch_deprecated_annotation {
  public:
   py3_mstch_deprecated_annotation(
@@ -1109,6 +1202,9 @@ class py3_mstch_deprecated_annotation : public mstch_deprecated_annotation {
 
 std::string py3_mstch_program::visit_type_impl(
     const t_type* orig_type, bool fromTypeDef) {
+  bool hasPy3EnableCppAdapterAnnot =
+      orig_type->find_structured_annotation_or_null(
+          kPythonPy3EnableCppAdapterUri);
   auto trueType = orig_type->get_true_type();
   auto baseType = context_.type_factory->make_mstch_object(orig_type, context_);
   py3_mstch_type* type = dynamic_cast<py3_mstch_type*>(baseType.get());
@@ -1145,16 +1241,14 @@ std::string py3_mstch_program::visit_type_impl(
   bool inserted = seenTypeNames_.insert(flatName).second;
   if (inserted) {
     if (trueType->is_container()) {
-      containers_.push_back(trueType);
-      moveContainers_.emplace(
-          boost::algorithm::replace_all_copy(flatName, "binary", "string"),
-          trueType);
+      containers_.push_back(hasPy3EnableCppAdapterAnnot ? orig_type : trueType);
     }
     if (!type->is_default_template()) {
       customTemplates_.push_back(trueType);
     }
-    if (type->has_custom_cpp_type()) {
-      customTypes_.push_back(trueType);
+    if (type->is_custom_cpp_type()) {
+      customTypes_.push_back(
+          hasPy3EnableCppAdapterAnnot ? orig_type : trueType);
     }
   }
   return flatName;
@@ -1325,11 +1419,24 @@ class t_mstch_py3_generator : public t_mstch_generator {
   std::filesystem::path generateRootPath_;
   std::unordered_map<const t_type*, py3_mstch_type::cached_properties>
       type_props_cache_;
+  cpp_name_resolver cpp_name_resolver_;
 };
 
 py3_mstch_type::cached_properties& py3_mstch_type::get_cached_props(
     const t_type* type, const py3_mstch_type::context& c) {
+  // @python.Py3EnableCppAdapter treats C++ Adapter on typedef as a custom
+  // cpp.type.
   auto true_type = type->get_true_type();
+  if (type->find_structured_annotation_or_null(kPythonPy3EnableCppAdapterUri)) {
+    return c.cache
+        ->emplace(
+            type,
+            py3_mstch_type::cached_properties{
+                get_cpp_template(*true_type),
+                c.name_resolver->get_native_type(*type),
+                {}})
+        .first->second;
+  }
   auto it = c.cache->find(true_type);
   if (it == c.cache->end()) {
     it = c.cache
@@ -1349,12 +1456,14 @@ void t_mstch_py3_generator::set_mstch_factories() {
   mstch_context_.add<py3_mstch_service>(program_);
   mstch_context_.add<py3_mstch_interaction>(program_);
   mstch_context_.add<py3_mstch_function>();
-  mstch_context_.add<py3_mstch_type>(
-      py3_mstch_type::context{program_, &type_props_cache_});
+  mstch_context_.add<py3_mstch_type>(py3_mstch_type::context{
+      program_, &type_props_cache_, &cpp_name_resolver_});
+  mstch_context_.add<py3_mstch_typedef>();
   mstch_context_.add<py3_mstch_struct>();
   mstch_context_.add<py3_mstch_field>();
   mstch_context_.add<py3_mstch_enum>();
   mstch_context_.add<py3_mstch_enum_value>();
+  mstch_context_.add<py3_mstch_const_value>();
   mstch_context_.add<py3_mstch_deprecated_annotation>();
 }
 

@@ -59,16 +59,27 @@ struct replacement {
 class file_manager {
  public:
   file_manager(source_manager& sm, const t_program& program)
-      : source_mgr_(sm), program_(&program) {
-    if (!folly::readFile(program_->path().c_str(), old_content_)) {
-      throw std::runtime_error("Could not read file: " + program_->path());
-    }
+      : source_mgr_(sm),
+        program_(&program),
+        old_content_(sm.get_file(program_->path())->text.data()) {
     for (const auto* include : program_->includes()) {
       includes_.insert(fmt::to_string(include->raw_path()));
     }
   }
 
-  // Write all existing replacements back to file.
+  /**
+   * Returns the content with all existing replacements applied.
+   *
+   * This is similar to `apply_replacements()`, but the change does not get
+   * written back to file.
+   */
+  std::string get_new_content() const;
+
+  /**
+   * Write all existing replacements back to file.
+   *
+   * The written content is the same as `get_new_content()`.
+   */
   void apply_replacements();
 
   // Adds a given replacement to the set of replacements.
@@ -85,11 +96,27 @@ class file_manager {
   // Removes all annotations from a given t_node.
   void remove_all_annotations(const t_node& node);
 
-  // Converts the source location to offset.
+  /**
+   * Converts the source location to offset.
+   *
+   * Returns the offset of `loc`, i.e. the number of bytes from the beginning of
+   * the corresponding source (file) to `loc`.
+   */
   size_t to_offset(source_location loc) const {
-    auto start = source_mgr_.get_source_start(loc);
+    source_location start = source_mgr_.get_source_start(loc);
     return source_mgr_.get_text(loc) - source_mgr_.get_text(start);
   }
+
+  /**
+   * Returns the range in the source text spanning from the start of the line
+   * of `loc` and containing all its leading whitespace (i.e., the
+   * "indentation" of that line).
+   *
+   * Note that the end of the returned range may extend beyond the input `loc`
+   * (if the latter is within the leading whitespace), but will never cross
+   * lines.
+   */
+  source_range get_line_leading_whitespace(source_location loc) const;
 
   void set_namespace(const std::string& language, const std::string& ns);
 

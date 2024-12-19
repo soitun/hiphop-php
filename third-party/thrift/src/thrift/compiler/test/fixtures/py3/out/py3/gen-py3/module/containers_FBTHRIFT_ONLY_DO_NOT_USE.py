@@ -325,7 +325,7 @@ Set.register(Set__string)
 __all__.append('Set__string')
 
 
-class Map__string_string(thrift.py3.types.MapNew):
+class Map__string_string(thrift.py3.types.Map):
     __module__ = _fbthrift__module_name__
     __slots__ = ()
 
@@ -377,7 +377,7 @@ Mapping.register(Map__string_string)
 __all__.append('Map__string_string')
 
 
-class Map__string_SimpleStruct(thrift.py3.types.MapNew):
+class Map__string_SimpleStruct(thrift.py3.types.Map):
     __module__ = _fbthrift__module_name__
     __slots__ = ()
 
@@ -429,7 +429,7 @@ Mapping.register(Map__string_SimpleStruct)
 __all__.append('Map__string_SimpleStruct')
 
 
-class Map__string_i16(thrift.py3.types.MapNew):
+class Map__string_i16(thrift.py3.types.Map):
     __module__ = _fbthrift__module_name__
     __slots__ = ()
 
@@ -527,7 +527,7 @@ Sequence.register(List__List__i32)
 __all__.append('List__List__i32')
 
 
-class Map__string_i32(thrift.py3.types.MapNew):
+class Map__string_i32(thrift.py3.types.Map):
     __module__ = _fbthrift__module_name__
     __slots__ = ()
 
@@ -579,7 +579,7 @@ Mapping.register(Map__string_i32)
 __all__.append('Map__string_i32')
 
 
-class Map__string_Map__string_i32(thrift.py3.types.MapNew):
+class Map__string_Map__string_i32(thrift.py3.types.Map):
     __module__ = _fbthrift__module_name__
     __slots__ = ()
 
@@ -677,7 +677,7 @@ Sequence.register(List__Set__string)
 __all__.append('List__Set__string')
 
 
-class Map__string_List__SimpleStruct(thrift.py3.types.MapNew):
+class Map__string_List__SimpleStruct(thrift.py3.types.Map):
     __module__ = _fbthrift__module_name__
     __slots__ = ()
 
@@ -998,7 +998,7 @@ Sequence.register(List__AnEnum)
 __all__.append('List__AnEnum')
 
 
-class _std_unordered_map__Map__i32_i32(thrift.py3.types.MapNew):
+class _std_unordered_map__Map__i32_i32(thrift.py3.types.Map):
     __module__ = _fbthrift__module_name__
     __slots__ = ()
 
@@ -1134,7 +1134,7 @@ Set.register(_MyType__Set__i32)
 __all__.append('_MyType__Set__i32')
 
 
-class _MyType__Map__i32_i32(thrift.py3.types.MapNew):
+class _MyType__Map__i32_i32(thrift.py3.types.Map):
     __module__ = _fbthrift__module_name__
     __slots__ = ()
 
@@ -1186,7 +1186,91 @@ Mapping.register(_MyType__Map__i32_i32)
 __all__.append('_MyType__Map__i32_i32')
 
 
-class Map__i32_i32(thrift.py3.types.MapNew):
+class _py3_simple_AdaptedList__List__i32(thrift.py3.types.List):
+    __module__ = _fbthrift__module_name__
+    __slots__ = ()
+
+    def __init__(self, items=None, private_ctor_token=None) -> None:
+        if private_ctor_token is thrift.py3.types._fbthrift_list_private_ctor:
+            _py_obj = items
+        elif isinstance(items, _py3_simple_AdaptedList__List__i32):
+            _py_obj = list(items)
+        elif items is None:
+            _py_obj = []
+        else:
+            check_method = _py3_simple_AdaptedList__List__i32._check_item_type_or_raise
+            _py_obj = [check_method(item) for item in items]
+
+        super().__init__(_py_obj, _py3_simple_AdaptedList__List__i32)
+
+    @staticmethod
+    def _check_item_type_or_raise(item):
+        if not (
+            isinstance(item, int)
+        ):
+            raise TypeError(f"{item!r} is not of type int")
+        return item
+
+    @staticmethod
+    def _check_item_type_or_none(item):
+        if item is None:
+            return None
+        if isinstance(item, int):
+            return item
+
+    @staticmethod
+    def __get_reflection__():
+        return get_types_reflection().get_reflection___py3_simple_AdaptedList__List__i32()
+
+
+Sequence.register(_py3_simple_AdaptedList__List__i32)
+
+__all__.append('_py3_simple_AdaptedList__List__i32')
+
+
+class _py3_simple_AdaptedSet__Set__i32(thrift.py3.types.Set):
+    __module__ = _fbthrift__module_name__
+    __slots__ = ()
+
+    def __init__(self, items=None, private_ctor_token=None) -> None:
+        if private_ctor_token is thrift.py3.types._fbthrift_set_private_ctor:
+            _py_obj = items
+        elif isinstance(items, _py3_simple_AdaptedSet__Set__i32):
+            _py_obj = frozenset(items)
+        elif items is None:
+            _py_obj = frozenset()
+        else:
+            check_method = _py3_simple_AdaptedSet__Set__i32._check_item_type_or_raise
+            _py_obj = frozenset(check_method(item) for item in items)
+
+        super().__init__(_py_obj, _py3_simple_AdaptedSet__Set__i32)
+
+    @staticmethod
+    def _check_item_type_or_raise(item):
+        if not (
+            isinstance(item, int)
+        ):
+            raise TypeError(f"{item!r} is not of type int")
+        return item
+
+    @staticmethod
+    def _check_item_type_or_none(item):
+        if item is None:
+            return None
+        if isinstance(item, int):
+            return item
+
+    @staticmethod
+    def __get_reflection__():
+        return get_types_reflection().get_reflection___py3_simple_AdaptedSet__Set__i32()
+
+
+Set.register(_py3_simple_AdaptedSet__Set__i32)
+
+__all__.append('_py3_simple_AdaptedSet__Set__i32')
+
+
+class _py3_simple_AdaptedMap__Map__i32_i32(thrift.py3.types.Map):
     __module__ = _fbthrift__module_name__
     __slots__ = ()
 
@@ -1195,16 +1279,16 @@ class Map__i32_i32(thrift.py3.types.MapNew):
     def __init__(self, items=None, private_ctor_token=None) -> None:
         if private_ctor_token is thrift.py3.types._fbthrift_map_private_ctor:
             _py_obj = items
-        elif isinstance(items, Map__i32_i32):
+        elif isinstance(items, _py3_simple_AdaptedMap__Map__i32_i32):
             _py_obj = dict(items)
         elif items is None:
             _py_obj = dict()
         else:
-            check_key = Map__i32_i32._check_key_type_or_raise
-            check_val = Map__i32_i32._check_val_type_or_raise
+            check_key = _py3_simple_AdaptedMap__Map__i32_i32._check_key_type_or_raise
+            check_val = _py3_simple_AdaptedMap__Map__i32_i32._check_val_type_or_raise
             _py_obj = {check_key(k) : check_val(v) for k, v in items.items()}
 
-        super().__init__(_py_obj, Map__i32_i32)
+        super().__init__(_py_obj, _py3_simple_AdaptedMap__Map__i32_i32)
 
     @staticmethod
     def _check_key_type_or_raise(key):
@@ -1231,14 +1315,14 @@ class Map__i32_i32(thrift.py3.types.MapNew):
 
     @staticmethod
     def __get_reflection__():
-        return get_types_reflection().get_reflection__Map__i32_i32()
+        return get_types_reflection().get_reflection___py3_simple_AdaptedMap__Map__i32_i32()
 
 
-Mapping.register(Map__i32_i32)
-__all__.append('Map__i32_i32')
+Mapping.register(_py3_simple_AdaptedMap__Map__i32_i32)
+__all__.append('_py3_simple_AdaptedMap__Map__i32_i32')
 
 
-class Map__i32_double(thrift.py3.types.MapNew):
+class Map__i32_double(thrift.py3.types.Map):
     __module__ = _fbthrift__module_name__
     __slots__ = ()
 
@@ -1336,7 +1420,7 @@ Sequence.register(List__Map__i32_double)
 __all__.append('List__Map__i32_double')
 
 
-class Map__AnEnumRenamed_i32(thrift.py3.types.MapNew):
+class Map__AnEnumRenamed_i32(thrift.py3.types.Map):
     __module__ = _fbthrift__module_name__
     __slots__ = ()
 

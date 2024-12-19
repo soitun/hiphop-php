@@ -185,14 +185,15 @@ class B final  {
   /** Glean { "field": "field" } */
   [[deprecated("Use `FOO.field().value();` instead of `FOO.get_field();`")]]
   const ::std::int32_t* get_field() const& {
-    return field_ref() ? std::addressof(__fbthrift_field_field) : nullptr;
+    return field_ref().has_value() ? std::addressof(__fbthrift_field_field) : nullptr;
   }
 
   /** Glean { "field": "field" } */
   [[deprecated("Use `FOO.field().value();` instead of `FOO.get_field();`")]]
   ::std::int32_t* get_field() & {
-    return field_ref() ? std::addressof(__fbthrift_field_field) : nullptr;
+    return field_ref().has_value() ? std::addressof(__fbthrift_field_field) : nullptr;
   }
+
   /** Glean { "field": "field" } */
   [[deprecated("Use `FOO.field().value();` instead of `FOO.get_field();`")]]
   ::std::int32_t* get_field() && = delete;
@@ -358,12 +359,15 @@ class A final  {
   FOLLY_ERASE ::apache::thrift::optional_field_ref<T&&> some_map() && {
     return {static_cast<T&&>(this->__fbthrift_field_some_map), __isset.at(0), __isset.bit(0)};
   }
+
   /** Glean { "field": "some_map" } */
   [[deprecated("Use `FOO.some_map().value();` instead of `FOO.get_some_map();`")]]
   const std::unordered_map<::std::int32_t, ::apache::thrift::test::B>* get_some_map() const&;
+
   /** Glean { "field": "some_map" } */
   [[deprecated("Use `FOO.some_map().value();` instead of `FOO.get_some_map();`")]]
   std::unordered_map<::std::int32_t, ::apache::thrift::test::B>* get_some_map() &;
+
   /** Glean { "field": "some_map" } */
   [[deprecated("Use `FOO.some_map().value();` instead of `FOO.get_some_map();`")]]
   std::unordered_map<::std::int32_t, ::apache::thrift::test::B>* get_some_map() && = delete;

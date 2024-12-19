@@ -211,7 +211,7 @@ and pp_shape_field_name ppf = function
 and pp_contexts ppf (_, ctxts) =
   Fmt.(brackets @@ list ~sep:comma @@ pp_hint ~is_ctx:true) ppf ctxts
 
-let rec pp_binop ppf = function
+let pp_binop ppf = function
   | Ast_defs.Plus -> Fmt.string ppf "+"
   | Ast_defs.Minus -> Fmt.string ppf "-"
   | Ast_defs.Star -> Fmt.string ppf "*"
@@ -236,8 +236,10 @@ let rec pp_binop ppf = function
   | Ast_defs.Xor -> Fmt.string ppf "^"
   | Ast_defs.Cmp -> Fmt.string ppf "<=>"
   | Ast_defs.QuestionQuestion -> Fmt.string ppf "??"
-  | Ast_defs.Eq (Some op) -> Fmt.(suffix (const string "=") pp_binop) ppf op
-  | Ast_defs.Eq _ -> Fmt.string ppf "="
+
+let pp_assign ppf = function
+  | Some op -> Fmt.(suffix (const string "=") pp_binop) ppf op
+  | None -> Fmt.string ppf "="
 
 let pp_unop ppf op =
   match op with
@@ -398,6 +400,10 @@ and pp_expr_ ppf = function
     Fmt.(pair ~sep:sp pp_expr @@ pair ~sep:sp pp_binop pp_expr)
       ppf
       (lhs, (bop, rhs))
+  | Aast.Assign (lhs, bop, rhs) ->
+    Fmt.(pair ~sep:sp pp_expr @@ pair ~sep:sp pp_assign pp_expr)
+      ppf
+      (lhs, (bop, rhs))
   | Aast.Pipe (_lid, e1, e2) ->
     Fmt.(pair ~sep:(const string " |> ") pp_expr pp_expr) ppf (e1, e2)
   | Aast.Eif (cond, Some texpr, fexpr) ->
@@ -430,8 +436,7 @@ and pp_expr_ ppf = function
       @@ pair ~sep:nop pp_targs pp_arg_exprs)
       ppf
       ( class_id,
-        (targs, (List.map ~f:(fun e -> (Ast_defs.Pnormal, e)) exprs, expr_opt))
-      )
+        (targs, (List.map ~f:(fun e -> Aast_defs.Anormal e) exprs, expr_opt)) )
   | Aast.Lplaceholder _ -> Fmt.string ppf "$_"
   | Aast.Pair (targs_opt, fst, snd) ->
     Fmt.(
@@ -478,10 +483,11 @@ and pp_arg_exprs ppf (exprs, expr_opt) =
       ppf
       (exprs, expr_opt)
 
-and pp_arg ppf (pk, e) =
-  match pk with
-  | Ast_defs.Pnormal -> pp_expr ppf e
-  | Ast_defs.Pinout _ -> Fmt.(pair ~sep:sp pp_paramkind pp_expr) ppf (pk, e)
+and pp_arg ppf arg =
+  match arg with
+  | Aast_defs.Anormal e -> pp_expr ppf e
+  | Aast_defs.Ainout (pos, e) ->
+    Fmt.(pair ~sep:sp pp_paramkind pp_expr) ppf (Ast_defs.Pinout pos, e)
 
 and pp_afield ppf = function
   | Aast.AFvalue expr -> pp_expr ppf expr

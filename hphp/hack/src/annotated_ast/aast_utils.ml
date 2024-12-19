@@ -50,6 +50,7 @@ let rec can_be_captured = function
   | Cast _
   | Unop _
   | Binop _
+  | Assign _
   | Pipe _
   | Eif _
   | Is _
@@ -89,7 +90,7 @@ let get_return_from_fun e =
 let get_virtual_expr_from_et et =
   let get_body_helper e =
     match e with
-    | (_, _, Call { args = _ :: (Pnormal, (_, _, Shape fields)) :: _; _ }) ->
+    | (_, _, Call { args = _ :: Anormal (_, _, Shape fields) :: _; _ }) ->
       (match find_shape_field "type" fields with
       | Some (_, e) -> get_return_from_fun e
       | None -> None)
@@ -105,7 +106,7 @@ let get_virtual_expr_from_et et =
 
 let is_assign (s : ('a, 'b) stmt) =
   match s with
-  | (_, Expr (_, _, Binop { bop = Eq None; _ })) -> true
+  | (_, Expr (_, _, Assign (_, None, _))) -> true
   | _ -> false
 
 let get_splices_from_fun e =
@@ -165,7 +166,7 @@ let rec is_const_expr (_, _, expr_) =
   | Call _
   | New _
   | Await _
-  | Binop { bop = Eq _; lhs = _; rhs = _ }
+  | Assign _
   | ExpressionTree _
   | ET_Splice _
   | Xml _ ->
@@ -233,3 +234,23 @@ let get_param_default param =
   | Param_optional e -> e
 
 let get_expr_pos (_, p, _) = p
+
+let get_argument_pos a =
+  match a with
+  | Anormal e -> get_expr_pos e
+  | Ainout (_, e) -> get_expr_pos e
+
+let arg_to_expr arg =
+  match arg with
+  | Anormal e -> e
+  | Ainout (_, e) -> e
+
+let expr_to_arg pk e =
+  match pk with
+  | Ast_defs.Pnormal -> Anormal e
+  | Ast_defs.Pinout p -> Ainout (p, e)
+
+let get_package_name = function
+  | PackageConfigAssignment pkg
+  | PackageOverride (_, pkg) ->
+    pkg

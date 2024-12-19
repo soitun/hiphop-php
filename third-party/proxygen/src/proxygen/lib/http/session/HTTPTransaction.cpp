@@ -27,6 +27,7 @@ namespace {
 const int64_t kApproximateMTU = 1400;
 const std::chrono::seconds kRateLimitMaxDelay(10);
 const uint64_t kMaxBufferPerTxn = 65536;
+constexpr uint32_t kMinThreshold = 128 * 1024;
 
 using namespace proxygen;
 HTTPException stateMachineError(HTTPException::Direction dir, std::string msg) {
@@ -298,6 +299,7 @@ bool HTTPTransaction::updateContentLengthRemaining(size_t len) {
 void HTTPTransaction::onIngressBody(unique_ptr<IOBuf> chain, uint16_t padding) {
   FOLLY_SCOPED_TRACE_SECTION("HTTPTransaction - onIngressBody");
   DestructorGuard g(this);
+  VLOG(6) << __func__ << " chain_length=" << chain->computeChainDataLength();
   if (isIngressEOMSeen()) {
     std::stringstream ss;
     // Use stringstream to invoke operator << for this
@@ -369,7 +371,8 @@ void HTTPTransaction::processIngressBody(unique_ptr<IOBuf> chain, size_t len) {
           // closed
           divisor = 1;
         }
-        if (uint32_t(recvToAck_) >= (recvWindow_.getCapacity() / divisor)) {
+        if (uint32_t(recvToAck_) >= kMinThreshold ||
+            uint32_t(recvToAck_) >= (recvWindow_.getCapacity() / divisor)) {
           flushWindowUpdate();
         }
       }
@@ -1447,11 +1450,7 @@ size_t HTTPTransaction::maybeSendDeferredNoError() {
 
 void HTTPTransaction::sendPadding(uint16_t bytes) {
   VLOG(4) << "egress padding=" << bytes << " on " << *this;
-  if (!validateEgressStateTransition(
-          // Sending padding is valid only when you can send body
-          HTTPTransactionEgressSM::Event::sendBody)) {
-    return;
-  }
+  // Padding is allowed at any time, even before headers and after EOM
   transport_.sendPadding(this, bytes);
 }
 

@@ -14,63 +14,63 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-}}{{#unless function:sync_returns_by_outparam?}}
-{{ > types/return_type_client}} {{ > service_common/client_class_name}}::sync_{{function:cpp_name}}({{ > service_common/function_param_list_client}}) {
+}}{{#if (not function:sync_returns_by_outparam?)}}
+{{> types/return_type_client}} {{> service_common/client_class_name}}::sync_{{function:cpp_name}}({{> service_common/function_param_list_client}}) {
   ::apache::thrift::RpcOptions rpcOptions;
   {{#if function:void?}}
-  sync_{{function:cpp_name}}(rpcOptions{{function:comma}}{{ > service_common/param_list}});
-  {{else}}
-  return sync_{{function:cpp_name}}(rpcOptions{{function:comma}}{{ > service_common/param_list}});
-  {{/if}}
+  sync_{{function:cpp_name}}(rpcOptions{{function:comma}}{{> service_common/param_list}});
+  {{#else}}
+  return sync_{{function:cpp_name}}(rpcOptions{{function:comma}}{{> service_common/param_list}});
+  {{/if function:void?}}
 }
-{{else}}
-void {{ > service_common/client_class_name}}::sync_{{function:cpp_name}}({{function:cpp_return_type}}& _return{{function:comma}}{{ > service_common/function_param_list_client}}) {
+{{#else}}
+void {{> service_common/client_class_name}}::sync_{{function:cpp_name}}({{function:cpp_return_type}}& _return{{function:comma}}{{> service_common/function_param_list_client}}) {
   ::apache::thrift::RpcOptions rpcOptions;
-  sync_{{function:cpp_name}}(rpcOptions, _return{{function:comma}}{{ > service_common/param_list}});
+  sync_{{function:cpp_name}}(rpcOptions, _return{{function:comma}}{{> service_common/param_list}});
 }
-{{/unless}}
+{{/if (not function:sync_returns_by_outparam?)}}
 
-{{#unless function:sync_returns_by_outparam?}}
-{{ > types/return_type_client}} {{ > service_common/client_class_name}}::sync_{{function:cpp_name}}(apache::thrift::RpcOptions& rpcOptions{{function:comma}}{{ > service_common/function_param_list_client}}) {
-{{else}}
-void {{ > service_common/client_class_name}}::sync_{{function:cpp_name}}(apache::thrift::RpcOptions& rpcOptions, {{function:cpp_return_type}}& _return{{function:comma}}{{ > service_common/function_param_list_client}}) {
-{{/unless}}
+{{#if (not function:sync_returns_by_outparam?)}}
+{{> types/return_type_client}} {{> service_common/client_class_name}}::sync_{{function:cpp_name}}(apache::thrift::RpcOptions& rpcOptions{{function:comma}}{{> service_common/function_param_list_client}}) {
+{{#else}}
+void {{> service_common/client_class_name}}::sync_{{function:cpp_name}}(apache::thrift::RpcOptions& rpcOptions, {{function:cpp_return_type}}& _return{{function:comma}}{{> service_common/function_param_list_client}}) {
+{{/if (not function:sync_returns_by_outparam?)}}
   apache::thrift::ClientReceiveState returnState;
-  apache::thrift::ClientSyncCallback<{{#if function:oneway?}}true{{else}}false{{/if}}> callback(&returnState);
-{{#unless function:oneway?}}
+  apache::thrift::ClientSyncCallback<{{#if function:oneway?}}true{{#else}}false{{/if function:oneway?}}> callback(&returnState);
+{{#if (not function:oneway?)}}
   auto protocolId = apache::thrift::GeneratedAsyncClient::getChannel()->getProtocolId();
-{{/unless}}
+{{/if (not function:oneway?)}}
   auto evb = apache::thrift::GeneratedAsyncClient::getChannel()->getEventBase();
   auto ctxAndHeader = {{function:cpp_name}}Ctx(&rpcOptions);
-{{#unless function:stream?}}
+{{#if (not function:stream?)}}
   auto wrappedCallback = apache::thrift::RequestClientCallback::Ptr(&callback);
-{{else}}
+{{#else}}
   auto wrappedCallback = apache::thrift::createStreamClientCallback(
     apache::thrift::RequestClientCallback::Ptr(&callback),
     rpcOptions.getBufferOptions());
-{{/unless}}
+{{/if (not function:stream?)}}
 {{#if function:creates_interaction?}}
   {{function:created_interaction}} interactionHandle(channel_, "{{function:created_interaction}}", interceptors_);
-{{/if}}
+{{/if function:creates_interaction?}}
   auto* contextStack  = ctxAndHeader.first.get();
   if (contextStack != nullptr) {
-    auto argsAsRefs = std::tie({{ > service_common/param_list}});
+    auto argsAsRefs = std::tie({{> service_common/param_list}});
     contextStack->processClientInterceptorsOnRequest(apache::thrift::ClientInterceptorOnRequestArguments(argsAsRefs), ctxAndHeader.second.get()).throwUnlessValue();
   }
   callback.waitUntilDone(
     evb,
     [&] {
-      fbthrift_serialize_and_send_{{function:cpp_name}}(rpcOptions, ctxAndHeader.second, ctxAndHeader.first.get(), std::move(wrappedCallback){{#function:creates_interaction?}}, interactionHandle{{/function:creates_interaction?}}{{function:comma}}{{ > service_common/param_list}});
+      fbthrift_serialize_and_send_{{function:cpp_name}}(rpcOptions, ctxAndHeader.second, ctxAndHeader.first.get(), std::move(wrappedCallback){{#function:creates_interaction?}}, interactionHandle{{/function:creates_interaction?}}{{function:comma}}{{> service_common/param_list}});
     });
-{{#unless function:oneway?}}
+{{#if (not function:oneway?)}}
   if (contextStack != nullptr) {
     contextStack->processClientInterceptorsOnResponse(returnState.header()).throwUnlessValue();
   }
-{{/unless}}
+{{/if (not function:oneway?)}}
   if (returnState.isException()) {
     returnState.exception().throw_exception();
   }
-{{#unless function:oneway?}}
+{{#if (not function:oneway?)}}
   returnState.resetProtocolId(protocolId);
   returnState.resetCtx(std::move(ctxAndHeader.first));
   SCOPE_EXIT {
@@ -79,65 +79,65 @@ void {{ > service_common/client_class_name}}::sync_{{function:cpp_name}}(apache:
     }
   };
   return folly::fibers::runInMainContext([&] {
-  {{#unless function:sync_returns_by_outparam?}}
+  {{#if (not function:sync_returns_by_outparam?)}}
     {{#if function:void?}}
       recv_{{function:cpp_name}}(returnState);
-    {{else}}
-      {{#unless function:creates_interaction?}}
+    {{#else}}
+      {{#if (not function:creates_interaction?)}}
       return recv_{{function:cpp_name}}(returnState);
-      {{else}}
+      {{#else}}
         {{#if function:stream?}}
       return std::make_pair(
         std::move(interactionHandle),
         recv_{{function:cpp_name}}(returnState)
       );
-        {{else}}
-          {{#unless type:void?}}
+        {{#else}}
+          {{#if (not type:void?)}}
       return std::make_pair(
         std::move(interactionHandle),
         recv_{{function:cpp_name}}(returnState)
       );
-          {{else}}
+          {{#else}}
       recv_{{function:cpp_name}}(returnState);
       return std::move(interactionHandle);
-          {{/unless}}
-        {{/if}}
-      {{/unless}}
-    {{/if}}
-  {{else}}
+          {{/if (not type:void?)}}
+        {{/if function:stream?}}
+      {{/if (not function:creates_interaction?)}}
+    {{/if function:void?}}
+  {{#else}}
       recv_{{function:cpp_name}}(_return, returnState);
-  {{/unless}}
+  {{/if (not function:sync_returns_by_outparam?)}}
   });
-{{/unless}}
+{{/if (not function:oneway?)}}
 }
 
 {{#if type:sync_methods_return_try?}}
-{{#unless function:oneway?}}
-{{#unless function:sink?}}
-folly::Try<apache::thrift::RpcResponseComplete<{{ > types/return_type_client}}>>
-{{ > service_common/client_class_name}}::sync_complete_{{function:cpp_name}}(
-    apache::thrift::RpcOptions&& rpcOptions{{function:comma}} {{ > service_common/function_param_list_client}}) {
+{{#if (not function:oneway?)}}
+{{#if (not function:sink?)}}
+folly::Try<apache::thrift::RpcResponseComplete<{{> types/return_type_client}}>>
+{{> service_common/client_class_name}}::sync_complete_{{function:cpp_name}}(
+    apache::thrift::RpcOptions&& rpcOptions{{function:comma}} {{> service_common/function_param_list_client}}) {
   apache::thrift::ClientReceiveState returnState;
   auto ctxAndHeader = {{function:cpp_name}}Ctx(&rpcOptions);
   apache::thrift::ClientSyncCallback<false> callback(&returnState);
   const auto protocolId = apache::thrift::GeneratedAsyncClient::getChannel()->getProtocolId();
   auto* const evb = apache::thrift::GeneratedAsyncClient::getChannel()->getEventBase();
-{{#unless function:stream?}}
+{{#if (not function:stream?)}}
   auto wrappedCallback = apache::thrift::RequestClientCallback::Ptr(&callback);
-{{else}}
+{{#else}}
   auto wrappedCallback = apache::thrift::createStreamClientCallback(
     apache::thrift::RequestClientCallback::Ptr(&callback),
     rpcOptions.getBufferOptions());
-{{/unless}}
+{{/if (not function:stream?)}}
   callback.waitUntilDone(
     evb,
     [&] {
-      fbthrift_serialize_and_send_{{function:cpp_name}}(rpcOptions, std::move(ctxAndHeader.second), ctxAndHeader.first.get(), std::move(wrappedCallback){{function:comma}}{{ > service_common/param_list}}, true);
+      fbthrift_serialize_and_send_{{function:cpp_name}}(rpcOptions, std::move(ctxAndHeader.second), ctxAndHeader.first.get(), std::move(wrappedCallback){{function:comma}}{{> service_common/param_list}}, true);
     });
   returnState.resetProtocolId(protocolId);
   returnState.resetCtx(std::move(ctxAndHeader.first));
 
-  folly::Try<apache::thrift::RpcResponseComplete<{{ > types/return_type_client}}>> tryResponse;
+  folly::Try<apache::thrift::RpcResponseComplete<{{> types/return_type_client}}>> tryResponse;
   if (auto* header = returnState.header()) {
     rpcOptions.setRoutingData(header->releaseRoutingData());
   }
@@ -159,13 +159,13 @@ folly::Try<apache::thrift::RpcResponseComplete<{{ > types/return_type_client}}>>
     auto ew = folly::fibers::runInMainContext([&] {
       {{#if function:stream?}}
       return recv_wrapped_{{function:cpp_name}}(tryResponse->response.value(), returnState);
-      {{else}}
+      {{#else}}
         {{#if type:void?}}
       return recv_wrapped_{{function:cpp_name}}(returnState);
-        {{else}}
+        {{#else}}
       return recv_wrapped_{{function:cpp_name}}(tryResponse->response.value(), returnState);
-        {{/if}}
-      {{/if}}
+        {{/if type:void?}}
+      {{/if function:stream?}}
     });
     if (ew) {
       tryResponse->response.emplaceException(std::move(ew));
@@ -173,6 +173,6 @@ folly::Try<apache::thrift::RpcResponseComplete<{{ > types/return_type_client}}>>
   }
   return tryResponse;
 }
-{{/unless}}
-{{/unless}}
-{{/if}}
+{{/if (not function:sink?)}}
+{{/if (not function:oneway?)}}
+{{/if type:sync_methods_return_try?}}

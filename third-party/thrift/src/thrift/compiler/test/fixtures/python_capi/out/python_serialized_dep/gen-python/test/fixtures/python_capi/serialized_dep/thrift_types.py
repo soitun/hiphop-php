@@ -8,6 +8,9 @@
 from __future__ import annotations
 
 import folly.iobuf as _fbthrift_iobuf
+
+from abc import ABCMeta as _fbthrift_ABCMeta
+import test.fixtures.python_capi.serialized_dep.thrift_abstract_types as _fbthrift_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
 
@@ -76,6 +79,12 @@ class SerializedStruct(metaclass=_fbthrift_python_types.StructMeta):
     def _to_python(self):
         return self
 
+    def _to_mutable_python(self):
+        import thrift.python.mutable_converter
+        import importlib
+        mutable_types = importlib.import_module("test.fixtures.python_capi.serialized_dep.thrift_mutable_types")
+        return thrift.python.mutable_converter.to_mutable_python_struct_or_union(mutable_types.SerializedStruct, self)
+
     def _to_py3(self):
         import importlib
         py3_types = importlib.import_module("test.fixtures.python_capi.serialized_dep.types")
@@ -92,6 +101,8 @@ class SerializedStruct(metaclass=_fbthrift_python_types.StructMeta):
             py_asyncio_types = importlib.import_module("serialized_dep.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.SerializedStruct, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.SerializedStruct, SerializedStruct)
+_fbthrift_SerializedStruct = SerializedStruct
 
 class SerializedUnion(metaclass=_fbthrift_python_types.UnionMeta):
     _fbthrift_SPEC = (
@@ -119,6 +130,9 @@ class SerializedUnion(metaclass=_fbthrift_python_types.UnionMeta):
         ),
     )
 
+    _fbthrift_abstract_base_class = _fbthrift_abstract_types.SerializedUnion
+
+
     @staticmethod
     def __get_thrift_name__() -> str:
         return "serialized_dep.SerializedUnion"
@@ -133,6 +147,12 @@ class SerializedUnion(metaclass=_fbthrift_python_types.UnionMeta):
 
     def _to_python(self):
         return self
+
+    def _to_mutable_python(self):
+        import thrift.python.mutable_converter
+        import importlib
+        mutable_types = importlib.import_module("test.fixtures.python_capi.serialized_dep.thrift_mutable_types")
+        return thrift.python.mutable_converter.to_mutable_python_struct_or_union(mutable_types.SerializedUnion, self)
 
     def _to_py3(self):
         import importlib
@@ -150,6 +170,8 @@ class SerializedUnion(metaclass=_fbthrift_python_types.UnionMeta):
             py_asyncio_types = importlib.import_module("serialized_dep.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.SerializedUnion, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.SerializedUnion, SerializedUnion)
+_fbthrift_SerializedUnion = SerializedUnion
 
 class SerializedError(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
     _fbthrift_SPEC = (
@@ -188,6 +210,9 @@ class SerializedError(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
         ),
     )
 
+    _fbthrift_abstract_base_class = _fbthrift_abstract_types.SerializedError
+
+
     @staticmethod
     def __get_thrift_name__() -> str:
         return "serialized_dep.SerializedError"
@@ -202,6 +227,12 @@ class SerializedError(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
 
     def _to_python(self):
         return self
+
+    def _to_mutable_python(self):
+        import thrift.python.mutable_converter
+        import importlib
+        mutable_types = importlib.import_module("test.fixtures.python_capi.serialized_dep.thrift_mutable_types")
+        return thrift.python.mutable_converter.to_mutable_python_struct_or_union(mutable_types.SerializedError, self)
 
     def _to_py3(self):
         import importlib
@@ -218,7 +249,7 @@ class SerializedError(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
         except ModuleNotFoundError:
             py_asyncio_types = importlib.import_module("serialized_dep.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.SerializedError, self)
-
+_fbthrift_SerializedError = SerializedError
 
 class MarshalStruct(metaclass=_fbthrift_python_types.StructMeta):
     _fbthrift_SPEC = (
@@ -283,6 +314,12 @@ class MarshalStruct(metaclass=_fbthrift_python_types.StructMeta):
     def _to_python(self):
         return self
 
+    def _to_mutable_python(self):
+        import thrift.python.mutable_converter
+        import importlib
+        mutable_types = importlib.import_module("test.fixtures.python_capi.serialized_dep.thrift_mutable_types")
+        return thrift.python.mutable_converter.to_mutable_python_struct_or_union(mutable_types.MarshalStruct, self)
+
     def _to_py3(self):
         import importlib
         py3_types = importlib.import_module("test.fixtures.python_capi.serialized_dep.types")
@@ -299,6 +336,8 @@ class MarshalStruct(metaclass=_fbthrift_python_types.StructMeta):
             py_asyncio_types = importlib.import_module("serialized_dep.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.MarshalStruct, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.MarshalStruct, MarshalStruct)
+_fbthrift_MarshalStruct = MarshalStruct
 
 class MarshalUnion(metaclass=_fbthrift_python_types.UnionMeta):
     _fbthrift_SPEC = (
@@ -326,6 +365,9 @@ class MarshalUnion(metaclass=_fbthrift_python_types.UnionMeta):
         ),
     )
 
+    _fbthrift_abstract_base_class = _fbthrift_abstract_types.MarshalUnion
+
+
     @staticmethod
     def __get_thrift_name__() -> str:
         return "serialized_dep.MarshalUnion"
@@ -340,6 +382,12 @@ class MarshalUnion(metaclass=_fbthrift_python_types.UnionMeta):
 
     def _to_python(self):
         return self
+
+    def _to_mutable_python(self):
+        import thrift.python.mutable_converter
+        import importlib
+        mutable_types = importlib.import_module("test.fixtures.python_capi.serialized_dep.thrift_mutable_types")
+        return thrift.python.mutable_converter.to_mutable_python_struct_or_union(mutable_types.MarshalUnion, self)
 
     def _to_py3(self):
         import importlib
@@ -357,6 +405,8 @@ class MarshalUnion(metaclass=_fbthrift_python_types.UnionMeta):
             py_asyncio_types = importlib.import_module("serialized_dep.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.MarshalUnion, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.MarshalUnion, MarshalUnion)
+_fbthrift_MarshalUnion = MarshalUnion
 
 class MarshalError(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
     _fbthrift_SPEC = (
@@ -395,6 +445,9 @@ class MarshalError(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
         ),
     )
 
+    _fbthrift_abstract_base_class = _fbthrift_abstract_types.MarshalError
+
+
     @staticmethod
     def __get_thrift_name__() -> str:
         return "serialized_dep.MarshalError"
@@ -409,6 +462,12 @@ class MarshalError(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
 
     def _to_python(self):
         return self
+
+    def _to_mutable_python(self):
+        import thrift.python.mutable_converter
+        import importlib
+        mutable_types = importlib.import_module("test.fixtures.python_capi.serialized_dep.thrift_mutable_types")
+        return thrift.python.mutable_converter.to_mutable_python_struct_or_union(mutable_types.MarshalError, self)
 
     def _to_py3(self):
         import importlib
@@ -425,13 +484,14 @@ class MarshalError(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
         except ModuleNotFoundError:
             py_asyncio_types = importlib.import_module("serialized_dep.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.MarshalError, self)
+_fbthrift_MarshalError = MarshalError
 
 # This unfortunately has to be down here to prevent circular imports
 import test.fixtures.python_capi.serialized_dep.thrift_metadata
 
-
 _fbthrift_all_enums = [
 ]
+
 
 def _fbthrift_metadata__struct_SerializedStruct():
     return test.fixtures.python_capi.serialized_dep.thrift_metadata.gen_metadata_struct_SerializedStruct()

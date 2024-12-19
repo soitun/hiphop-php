@@ -127,7 +127,12 @@ CarbonRouterInstance<RouterInfo>* CarbonRouterInstance<RouterInfo>::createRaw(
     initFailureLogger();
   }
 
-  auto router = new CarbonRouterInstance<RouterInfo>(std::move(input_options));
+  // Custom deleter since ~CarbonRouterInstance() is private.
+  auto deleter = [](CarbonRouterInstance<RouterInfo>* inst) { delete inst; };
+  auto router =
+      std::unique_ptr<CarbonRouterInstance<RouterInfo>, decltype(deleter)>(
+          new CarbonRouterInstance<RouterInfo>(std::move(input_options)),
+          deleter);
 
   folly::Expected<folly::Unit, std::string> result;
   try {
@@ -141,7 +146,7 @@ CarbonRouterInstance<RouterInfo>* CarbonRouterInstance<RouterInfo>::createRaw(
 
     result = router->spinUp();
     if (result.hasValue()) {
-      return router;
+      return router.release();
     }
   } catch (...) {
     result = folly::makeUnexpected(
@@ -161,10 +166,20 @@ CarbonRouterInstance<RouterInfo>* CarbonRouterInstance<RouterInfo>::createRaw(
   // can be released.
   // We schedule the deletion on auxiliary thread pool
   // to avoid potential deadlock with the current thread.
-  auxThreadPool->add([router, auxThreadPool]() mutable {
-    router->resetMetadata();
-    router->resetAxonProxyClientFactory();
-  });
+  auxThreadPool->add(
+      [router = std::move(router),
+       auxThreadPool,
+       deleteRouter =
+           input_options.delete_carbon_instance_upon_init_failure]() mutable {
+        router->resetMetadata();
+        router->resetAxonProxyClientFactory();
+        if (!deleteRouter) {
+          // Leak it. unique_ptr::get() is guaranteed to return nullptr after
+          // this.
+          router.release();
+        }
+        // router gets destroyed here, unless configuration asks to leak it.
+      });
 
   throw std::runtime_error(std::move(result.error()));
 }

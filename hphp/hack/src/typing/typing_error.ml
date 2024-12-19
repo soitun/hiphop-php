@@ -337,9 +337,11 @@ module Primary = struct
       | Cross_pkg_access of {
           pos: Pos.t;
           decl_pos: Pos_or_decl.t;
-          package_pos: Pos.t;
-          current_package_opt: string option;
-          target_package_opt: string option;
+          current_package_pos: Pos.t;
+          current_package_def_pos: Pos.t;
+          current_package_name: string option;
+          target_package_pos: Pos.t;
+          target_package_name: string option;
           current_filename: Relative_path.t;
           target_filename: Relative_path.t;
         }
@@ -352,9 +354,11 @@ module Primary = struct
       | Soft_included_access of {
           pos: Pos.t;
           decl_pos: Pos_or_decl.t;
-          package_pos: Pos.t;
-          current_package_opt: string option;
-          target_package_opt: string option;
+          current_package_pos: Pos.t;
+          current_package_def_pos: Pos.t;
+          current_package_name: string option;
+          target_package_pos: Pos.t;
+          target_package_name: string option;
           current_filename: Relative_path.t;
           target_filename: Relative_path.t;
         }
@@ -1340,9 +1344,13 @@ module Primary = struct
         expr_ty: string Lazy.t;
         unsupported_tys: string Lazy.t list;
       }
-    | Class_pointer_to_string of {
+    | Class_const_to_string of {
         pos: Pos.t;
         cls_name: string;
+      }
+    | Class_pointer_to_string of {
+        pos: Pos.t;
+        ty: string;
       }
     | Optional_parameter_not_supported of Pos.t
     | Optional_parameter_not_abstract of Pos.t

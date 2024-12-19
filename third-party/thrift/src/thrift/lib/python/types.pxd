@@ -15,6 +15,7 @@
 from libc.stdint cimport uint32_t, int16_t, int64_t
 cimport folly.iobuf
 
+from cpython.object cimport PyTypeObject
 from cpython.ref cimport PyObject
 from libcpp.memory cimport unique_ptr
 
@@ -85,6 +86,8 @@ cdef extern from "<thrift/lib/python/types.h>" namespace "::apache::thrift::pyth
     cdef object getStandardImmutableDefaultValuePtrForType(
         const cTypeInfo& typeInfo
     ) except+
+    cdef void tag_object_as_sequence(PyTypeObject*)
+    cdef void tag_object_as_mapping(PyTypeObject*)
 
     cdef const cTypeInfo& boolTypeInfo
     cdef const cTypeInfo& byteTypeInfo
@@ -251,7 +254,7 @@ cdef tuple _validate_union_init_kwargs(
 )
 
 cdef class Union(StructOrUnion):
-    cdef readonly object type
+    cdef object py_type
     cdef readonly object value
     cdef void _fbthrift_update_current_field_attributes(self) except *
     cdef object _fbthrift_to_internal_data(self, type_value, value)
@@ -260,6 +263,7 @@ cdef class Union(StructOrUnion):
     cdef uint32_t _deserialize(
         Union self, folly.iobuf.IOBuf buf, Protocol proto
     ) except? 0
+    cdef object _fbthrift_py_type_enum(self)
 
 cdef class BadEnum:
     cdef object _enum

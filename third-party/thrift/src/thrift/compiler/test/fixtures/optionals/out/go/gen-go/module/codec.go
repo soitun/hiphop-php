@@ -7,150 +7,149 @@ package module
 
 
 import (
-    "reflect"
-    "sync"
-
     thrift "github.com/facebook/fbthrift/thrift/lib/go/thrift/types"
 )
 
 // (needed to ensure safety because of naive import list construction)
 var _ = thrift.ZERO
-var _ = reflect.Ptr
 
 // Premade codec specs
 var (
-    premadeCodecTypeSpec_module_Animal *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_double *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_Color *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_string *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_bool *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_Vehicle *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_i64 *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_PersonID *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_i16 *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_set_module_PersonID *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_map_module_Animal_string *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_list_module_Vehicle *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module_Person *thrift.TypeSpec = nil
-)
-
-// Premade codec specs initializer
-var premadeCodecSpecsInitOnce = sync.OnceFunc(func() {
-    premadeCodecTypeSpec_module_Animal = &thrift.TypeSpec{
-        FullName: "module.Animal",
-        CodecEnumSpec: &thrift.CodecEnumSpec{
+    premadeCodecTypeSpec_module_Animal = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.Animal",
+            CodecEnumSpec: &thrift.CodecEnumSpec{
     ScopedName: "module.Animal",
 },
 
-    }
-    premadeCodecTypeSpec_double = &thrift.TypeSpec{
-        FullName: "double",
-        CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
+        }
+    }()
+    premadeCodecTypeSpec_double = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "double",
+            CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
     PrimitiveType: thrift.CODEC_PRIMITIVE_TYPE_DOUBLE,
 },
 
-    }
-    premadeCodecTypeSpec_module_Color = &thrift.TypeSpec{
-        FullName: "module.Color",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_Color = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.Color",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.Color",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewColor() },
 },
 
-    }
-    premadeCodecTypeSpec_string = &thrift.TypeSpec{
-        FullName: "string",
-        CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
+        }
+    }()
+    premadeCodecTypeSpec_string = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "string",
+            CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
     PrimitiveType: thrift.CODEC_PRIMITIVE_TYPE_STRING,
 },
 
-    }
-    premadeCodecTypeSpec_bool = &thrift.TypeSpec{
-        FullName: "bool",
-        CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
+        }
+    }()
+    premadeCodecTypeSpec_bool = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "bool",
+            CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
     PrimitiveType: thrift.CODEC_PRIMITIVE_TYPE_BOOL,
 },
 
-    }
-    premadeCodecTypeSpec_module_Vehicle = &thrift.TypeSpec{
-        FullName: "module.Vehicle",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_Vehicle = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.Vehicle",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.Vehicle",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewVehicle() },
 },
 
-    }
-    premadeCodecTypeSpec_i64 = &thrift.TypeSpec{
-        FullName: "i64",
-        CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
+        }
+    }()
+    premadeCodecTypeSpec_i64 = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "i64",
+            CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
     PrimitiveType: thrift.CODEC_PRIMITIVE_TYPE_I64,
 },
 
-    }
-    premadeCodecTypeSpec_module_PersonID = &thrift.TypeSpec{
-        FullName: "module.PersonID",
-        CodecTypedefSpec: &thrift.CodecTypedefSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_PersonID = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.PersonID",
+            CodecTypedefSpec: &thrift.CodecTypedefSpec{
     ScopedName:         "module.PersonID",
 	UnderlyingTypeSpec: premadeCodecTypeSpec_i64,
 },
 
-    }
-    premadeCodecTypeSpec_i16 = &thrift.TypeSpec{
-        FullName: "i16",
-        CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
+        }
+    }()
+    premadeCodecTypeSpec_i16 = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "i16",
+            CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
     PrimitiveType: thrift.CODEC_PRIMITIVE_TYPE_I16,
 },
 
-    }
-    premadeCodecTypeSpec_set_module_PersonID = &thrift.TypeSpec{
-        FullName: "set<module.PersonID>",
-        CodecSetSpec: &thrift.CodecSetSpec{
+        }
+    }()
+    premadeCodecTypeSpec_set_module_PersonID = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "set<module.PersonID>",
+            CodecSetSpec: &thrift.CodecSetSpec{
     ElementWireType: thrift.I64,
 	ElementTypeSpec: premadeCodecTypeSpec_module_PersonID,
 },
 
-    }
-    premadeCodecTypeSpec_map_module_Animal_string = &thrift.TypeSpec{
-        FullName: "map<module.Animal, string>",
-        CodecMapSpec: &thrift.CodecMapSpec{
+        }
+    }()
+    premadeCodecTypeSpec_map_module_Animal_string = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "map<module.Animal, string>",
+            CodecMapSpec: &thrift.CodecMapSpec{
 	KeyTypeSpec:   premadeCodecTypeSpec_module_Animal,
 	ValueTypeSpec: premadeCodecTypeSpec_string,
     KeyWireType:   thrift.I32,
 	ValueWireType: thrift.STRING,
 },
 
-    }
-    premadeCodecTypeSpec_list_module_Vehicle = &thrift.TypeSpec{
-        FullName: "list<module.Vehicle>",
-        CodecListSpec: &thrift.CodecListSpec{
+        }
+    }()
+    premadeCodecTypeSpec_list_module_Vehicle = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "list<module.Vehicle>",
+            CodecListSpec: &thrift.CodecListSpec{
     ElementWireType: thrift.STRUCT,
 	ElementTypeSpec: premadeCodecTypeSpec_module_Vehicle,
 },
 
-    }
-    premadeCodecTypeSpec_module_Person = &thrift.TypeSpec{
-        FullName: "module.Person",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module_Person = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module.Person",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module.Person",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewPerson() },
 },
 
-    }
-})
+        }
+    }()
+)
 
 // Premade struct specs
 var (
-    premadeStructSpec_Color *thrift.StructSpec = nil
-    premadeStructSpec_Vehicle *thrift.StructSpec = nil
-    premadeStructSpec_Person *thrift.StructSpec = nil
-)
-
-// Premade struct specs initializer
-var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
-    premadeStructSpec_Color = &thrift.StructSpec{
+    premadeStructSpec_Color = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "Color",
     ScopedName:           "module.Color",
     IsUnion:              false,
@@ -202,7 +201,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "alpha": 3,
     },
 }
-    premadeStructSpec_Vehicle = &thrift.StructSpec{
+    }()
+    premadeStructSpec_Vehicle = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "Vehicle",
     ScopedName:           "module.Vehicle",
     IsUnion:              false,
@@ -264,7 +265,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "hasAC": 4,
     },
 }
-    premadeStructSpec_Person = &thrift.StructSpec{
+    }()
+    premadeStructSpec_Person = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "Person",
     ScopedName:           "module.Person",
     IsUnion:              false,
@@ -376,35 +379,35 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "vehicles": 9,
     },
 }
-})
-
-var premadeCodecSpecsMapOnce = sync.OnceValue(
-    func() map[string]*thrift.TypeSpec {
-        // Relies on premade codec specs initialization
-        premadeCodecSpecsInitOnce()
-
-        fbthriftTypeSpecsMap := make(map[string]*thrift.TypeSpec)
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_Animal.FullName] = premadeCodecTypeSpec_module_Animal
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_double.FullName] = premadeCodecTypeSpec_double
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_Color.FullName] = premadeCodecTypeSpec_module_Color
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_string.FullName] = premadeCodecTypeSpec_string
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_bool.FullName] = premadeCodecTypeSpec_bool
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_Vehicle.FullName] = premadeCodecTypeSpec_module_Vehicle
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_i64.FullName] = premadeCodecTypeSpec_i64
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_PersonID.FullName] = premadeCodecTypeSpec_module_PersonID
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_i16.FullName] = premadeCodecTypeSpec_i16
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_Person.FullName] = premadeCodecTypeSpec_module_Person
-        return fbthriftTypeSpecsMap
-    },
+    }()
 )
 
-func init() {
-    premadeCodecSpecsInitOnce()
-    premadeStructSpecsInitOnce()
-}
+// Premade slice of all struct specs
+var premadeStructSpecs = func() []*thrift.StructSpec {
+    fbthriftResults := make([]*thrift.StructSpec, 0)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_Color)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_Vehicle)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_Person)
+    return fbthriftResults
+}()
+
+var premadeCodecSpecsMap = func() map[string]*thrift.TypeSpec {
+    fbthriftTypeSpecsMap := make(map[string]*thrift.TypeSpec)
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_Animal.FullName] = premadeCodecTypeSpec_module_Animal
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_double.FullName] = premadeCodecTypeSpec_double
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_Color.FullName] = premadeCodecTypeSpec_module_Color
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_string.FullName] = premadeCodecTypeSpec_string
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_bool.FullName] = premadeCodecTypeSpec_bool
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_Vehicle.FullName] = premadeCodecTypeSpec_module_Vehicle
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_i64.FullName] = premadeCodecTypeSpec_i64
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_PersonID.FullName] = premadeCodecTypeSpec_module_PersonID
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_i16.FullName] = premadeCodecTypeSpec_i16
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module_Person.FullName] = premadeCodecTypeSpec_module_Person
+    return fbthriftTypeSpecsMap
+}()
 
 // GetMetadataThriftType (INTERNAL USE ONLY).
 // Returns metadata TypeSpec for a given full type name.
 func GetCodecTypeSpec(fullName string) *thrift.TypeSpec {
-    return premadeCodecSpecsMapOnce()[fullName]
+    return premadeCodecSpecsMap[fullName]
 }

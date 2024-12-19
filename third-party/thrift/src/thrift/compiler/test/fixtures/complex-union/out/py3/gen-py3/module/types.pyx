@@ -29,8 +29,6 @@ from thrift.py3.types cimport (
     init_unicode_from_cpp as __init_unicode_from_cpp,
     set_iter as __set_iter,
     map_iter as __map_iter,
-    map_contains as __map_contains,
-    map_getitem as __map_getitem,
     reference_shared_ptr as __reference_shared_ptr,
     get_field_name_by_index as __get_field_name_by_index,
     reset_field as __reset_field,
@@ -65,8 +63,10 @@ from module.types_impl_FBTHRIFT_ONLY_DO_NOT_USE import (
 from module.containers_FBTHRIFT_ONLY_DO_NOT_USE import (
     List__i64,
     List__string,
+    Map__i16_string,
 )
 
+_fbthrift__module_name__ = "module.types"
 
 cdef object get_types_reflection():
     return importlib.import_module(
@@ -77,6 +77,7 @@ cdef object get_types_reflection():
 
 @__cython.auto_pickle(False)
 cdef class ComplexUnion(thrift.py3.types.Union):
+    __module__ = _fbthrift__module_name__
     Type = __ComplexUnionType
 
     def __init__(
@@ -102,7 +103,7 @@ cdef class ComplexUnion(thrift.py3.types.Union):
           typedefValue,
           stringRef,
         )))
-        self._load_cache()
+        self._initialize_py()
 
     @staticmethod
     def fromValue(value):
@@ -162,7 +163,7 @@ cdef class ComplexUnion(thrift.py3.types.Union):
         if typedefValue is not None:
             if any_set:
                 raise TypeError("At most one field may be set when initializing a union")
-            deref(c_inst).set_typedefValue(<cmap[cint16_t,string]>deref(Map__i16_string(typedefValue)._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE))
+            deref(c_inst).set_typedefValue(Map__i16_string__make_instance(typedefValue))
             any_set = True
         if stringRef is not None:
             if any_set:
@@ -177,42 +178,42 @@ cdef class ComplexUnion(thrift.py3.types.Union):
     cdef _create_FBTHRIFT_ONLY_DO_NOT_USE(shared_ptr[_module_cbindings.cComplexUnion] cpp_obj):
         __fbthrift_inst = <ComplexUnion>ComplexUnion.__new__(ComplexUnion)
         __fbthrift_inst._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = cmove(cpp_obj)
-        __fbthrift_inst._load_cache()
+        __fbthrift_inst._initialize_py()
         return __fbthrift_inst
 
     @property
-    def intValue(self):
-        if self.type.value != 1:
+    def intValue(ComplexUnion self not None):
+        if self.type_int != 1:
             raise AttributeError(f'Union contains a value of type {self.type.name}, not intValue')
         return self.value
 
     @property
-    def stringValue(self):
-        if self.type.value != 5:
+    def stringValue(ComplexUnion self not None):
+        if self.type_int != 5:
             raise AttributeError(f'Union contains a value of type {self.type.name}, not stringValue')
         return self.value
 
     @property
-    def intListValue(self):
-        if self.type.value != 2:
+    def intListValue(ComplexUnion self not None):
+        if self.type_int != 2:
             raise AttributeError(f'Union contains a value of type {self.type.name}, not intListValue')
         return self.value
 
     @property
-    def stringListValue(self):
-        if self.type.value != 3:
+    def stringListValue(ComplexUnion self not None):
+        if self.type_int != 3:
             raise AttributeError(f'Union contains a value of type {self.type.name}, not stringListValue')
         return self.value
 
     @property
-    def typedefValue(self):
-        if self.type.value != 9:
+    def typedefValue(ComplexUnion self not None):
+        if self.type_int != 9:
             raise AttributeError(f'Union contains a value of type {self.type.name}, not typedefValue')
         return self.value
 
     @property
-    def stringRef(self):
-        if self.type.value != 14:
+    def stringRef(ComplexUnion self not None):
+        if self.type_int != 14:
             raise AttributeError(f'Union contains a value of type {self.type.name}, not stringRef')
         return self.value
 
@@ -220,27 +221,38 @@ cdef class ComplexUnion(thrift.py3.types.Union):
     def __hash__(ComplexUnion self):
         return  super().__hash__()
 
-    cdef _load_cache(ComplexUnion self):
-        self.type = ComplexUnion.Type(<int>(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).getType()))
-        cdef int type = self.type.value
-        if type == 0:    # Empty
-            self.value = None
-        elif type == 1:
-            self.value = deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_intValue()
-        elif type == 5:
-            self.value = bytes(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_stringValue()).decode('UTF-8')
-        elif type == 2:
-            self.value = List__i64__from_cpp(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_intListValue())
-        elif type == 3:
-            self.value = List__string__from_cpp(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_stringListValue())
-        elif type == 9:
-            self.value = Map__i16_string._create_FBTHRIFT_ONLY_DO_NOT_USE(make_shared[cmap[cint16_t,string]](deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_typedefValue()))
-        elif type == 14:
+    @property
+    def type(ComplexUnion self not None):
+        if self.py_type is None:
+            self.py_type = ComplexUnion.Type(self.type_int)
+        return self.py_type
+
+    @property
+    def value(ComplexUnion self not None):
+        if self.py_value is not None or self.type_int == 0:
+            return self.py_value
+        elif self.type_int == 1:
+            self.py_value = deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_intValue()
+        elif self.type_int == 5:
+            self.py_value = bytes(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_stringValue()).decode('UTF-8')
+        elif self.type_int == 2:
+            self.py_value = List__i64__from_cpp(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_intListValue())
+        elif self.type_int == 3:
+            self.py_value = List__string__from_cpp(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_stringListValue())
+        elif self.type_int == 9:
+            self.py_value = Map__i16_string__from_cpp(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_typedefValue())
+        elif self.type_int == 14:
             if not deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_stringRef():
-                self.value = None
+                self.py_value = None
             else:
             
-                self.value = str._create_FBTHRIFT_ONLY_DO_NOT_USE(__reference_shared_ptr(deref(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_stringRef()), self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE))
+                self.py_value = str._create_FBTHRIFT_ONLY_DO_NOT_USE(__reference_shared_ptr(deref(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_stringRef()), self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE))
+        return self.py_value
+
+    cdef _initialize_py(ComplexUnion self):
+        self.py_type = None
+        self.type_int = deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).getType()
+        self.py_value = None
 
     def __copy__(ComplexUnion self):
         cdef shared_ptr[_module_cbindings.cComplexUnion] cpp_obj = make_shared[_module_cbindings.cComplexUnion](
@@ -289,8 +301,8 @@ cdef class ComplexUnion(thrift.py3.types.Union):
         self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = make_shared[_module_cbindings.cComplexUnion]()
         with nogil:
             needed = serializer.cdeserialize[_module_cbindings.cComplexUnion](buf, self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE.get(), proto)
-        # force a cache reload since the underlying data's changed
-        self._load_cache()
+        # clear cache reload since the underlying data's changed
+        self._initialize_py()
         return needed
 
 
@@ -312,6 +324,7 @@ cdef class ComplexUnion(thrift.py3.types.Union):
 
 @__cython.auto_pickle(False)
 cdef class ListUnion(thrift.py3.types.Union):
+    __module__ = _fbthrift__module_name__
     Type = __ListUnionType
 
     def __init__(
@@ -324,7 +337,7 @@ cdef class ListUnion(thrift.py3.types.Union):
           intListValue,
           stringListValue,
         )))
-        self._load_cache()
+        self._initialize_py()
 
     @staticmethod
     def fromValue(value):
@@ -362,18 +375,18 @@ cdef class ListUnion(thrift.py3.types.Union):
     cdef _create_FBTHRIFT_ONLY_DO_NOT_USE(shared_ptr[_module_cbindings.cListUnion] cpp_obj):
         __fbthrift_inst = <ListUnion>ListUnion.__new__(ListUnion)
         __fbthrift_inst._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = cmove(cpp_obj)
-        __fbthrift_inst._load_cache()
+        __fbthrift_inst._initialize_py()
         return __fbthrift_inst
 
     @property
-    def intListValue(self):
-        if self.type.value != 2:
+    def intListValue(ListUnion self not None):
+        if self.type_int != 2:
             raise AttributeError(f'Union contains a value of type {self.type.name}, not intListValue')
         return self.value
 
     @property
-    def stringListValue(self):
-        if self.type.value != 3:
+    def stringListValue(ListUnion self not None):
+        if self.type_int != 3:
             raise AttributeError(f'Union contains a value of type {self.type.name}, not stringListValue')
         return self.value
 
@@ -381,15 +394,26 @@ cdef class ListUnion(thrift.py3.types.Union):
     def __hash__(ListUnion self):
         return  super().__hash__()
 
-    cdef _load_cache(ListUnion self):
-        self.type = ListUnion.Type(<int>(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).getType()))
-        cdef int type = self.type.value
-        if type == 0:    # Empty
-            self.value = None
-        elif type == 2:
-            self.value = List__i64__from_cpp(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_intListValue())
-        elif type == 3:
-            self.value = List__string__from_cpp(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_stringListValue())
+    @property
+    def type(ListUnion self not None):
+        if self.py_type is None:
+            self.py_type = ListUnion.Type(self.type_int)
+        return self.py_type
+
+    @property
+    def value(ListUnion self not None):
+        if self.py_value is not None or self.type_int == 0:
+            return self.py_value
+        elif self.type_int == 2:
+            self.py_value = List__i64__from_cpp(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_intListValue())
+        elif self.type_int == 3:
+            self.py_value = List__string__from_cpp(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_stringListValue())
+        return self.py_value
+
+    cdef _initialize_py(ListUnion self):
+        self.py_type = None
+        self.type_int = deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).getType()
+        self.py_value = None
 
     def __copy__(ListUnion self):
         cdef shared_ptr[_module_cbindings.cListUnion] cpp_obj = make_shared[_module_cbindings.cListUnion](
@@ -438,8 +462,8 @@ cdef class ListUnion(thrift.py3.types.Union):
         self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = make_shared[_module_cbindings.cListUnion]()
         with nogil:
             needed = serializer.cdeserialize[_module_cbindings.cListUnion](buf, self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE.get(), proto)
-        # force a cache reload since the underlying data's changed
-        self._load_cache()
+        # clear cache reload since the underlying data's changed
+        self._initialize_py()
         return needed
 
 
@@ -461,6 +485,7 @@ cdef class ListUnion(thrift.py3.types.Union):
 
 @__cython.auto_pickle(False)
 cdef class DataUnion(thrift.py3.types.Union):
+    __module__ = _fbthrift__module_name__
     Type = __DataUnionType
 
     def __init__(
@@ -473,7 +498,7 @@ cdef class DataUnion(thrift.py3.types.Union):
           binaryData,
           stringData,
         )))
-        self._load_cache()
+        self._initialize_py()
 
     @staticmethod
     def fromValue(value):
@@ -511,18 +536,18 @@ cdef class DataUnion(thrift.py3.types.Union):
     cdef _create_FBTHRIFT_ONLY_DO_NOT_USE(shared_ptr[_module_cbindings.cDataUnion] cpp_obj):
         __fbthrift_inst = <DataUnion>DataUnion.__new__(DataUnion)
         __fbthrift_inst._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = cmove(cpp_obj)
-        __fbthrift_inst._load_cache()
+        __fbthrift_inst._initialize_py()
         return __fbthrift_inst
 
     @property
-    def binaryData(self):
-        if self.type.value != 1:
+    def binaryData(DataUnion self not None):
+        if self.type_int != 1:
             raise AttributeError(f'Union contains a value of type {self.type.name}, not binaryData')
         return self.value
 
     @property
-    def stringData(self):
-        if self.type.value != 2:
+    def stringData(DataUnion self not None):
+        if self.type_int != 2:
             raise AttributeError(f'Union contains a value of type {self.type.name}, not stringData')
         return self.value
 
@@ -530,15 +555,26 @@ cdef class DataUnion(thrift.py3.types.Union):
     def __hash__(DataUnion self):
         return  super().__hash__()
 
-    cdef _load_cache(DataUnion self):
-        self.type = DataUnion.Type(<int>(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).getType()))
-        cdef int type = self.type.value
-        if type == 0:    # Empty
-            self.value = None
-        elif type == 1:
-            self.value = deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_binaryData()
-        elif type == 2:
-            self.value = bytes(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_stringData()).decode('UTF-8')
+    @property
+    def type(DataUnion self not None):
+        if self.py_type is None:
+            self.py_type = DataUnion.Type(self.type_int)
+        return self.py_type
+
+    @property
+    def value(DataUnion self not None):
+        if self.py_value is not None or self.type_int == 0:
+            return self.py_value
+        elif self.type_int == 1:
+            self.py_value = deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_binaryData()
+        elif self.type_int == 2:
+            self.py_value = bytes(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_stringData()).decode('UTF-8')
+        return self.py_value
+
+    cdef _initialize_py(DataUnion self):
+        self.py_type = None
+        self.type_int = deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).getType()
+        self.py_value = None
 
     def __copy__(DataUnion self):
         cdef shared_ptr[_module_cbindings.cDataUnion] cpp_obj = make_shared[_module_cbindings.cDataUnion](
@@ -587,8 +623,8 @@ cdef class DataUnion(thrift.py3.types.Union):
         self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = make_shared[_module_cbindings.cDataUnion]()
         with nogil:
             needed = serializer.cdeserialize[_module_cbindings.cDataUnion](buf, self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE.get(), proto)
-        # force a cache reload since the underlying data's changed
-        self._load_cache()
+        # clear cache reload since the underlying data's changed
+        self._initialize_py()
         return needed
 
 
@@ -608,6 +644,8 @@ cdef class DataUnion(thrift.py3.types.Union):
 
 @__cython.auto_pickle(False)
 cdef class Val(thrift.py3.types.Struct):
+    __module__ = _fbthrift__module_name__
+
     def __init__(Val self, **kwargs):
         self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = make_shared[_module_cbindings.cVal]()
         self._fields_setter = _fbthrift_types_fields.__Val_FieldsSetter._fbthrift_create(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE.get())
@@ -655,7 +693,7 @@ cdef class Val(thrift.py3.types.Struct):
 
     cdef inline typedefValue_impl(self):
         if self.__fbthrift_cached_typedefValue is None:
-            self.__fbthrift_cached_typedefValue = Map__i16_string._create_FBTHRIFT_ONLY_DO_NOT_USE(__reference_shared_ptr(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).typedefValue_ref().ref(), self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE))
+            self.__fbthrift_cached_typedefValue = Map__i16_string__from_cpp(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).typedefValue_ref().ref())
         return self.__fbthrift_cached_typedefValue
 
     @property
@@ -741,6 +779,7 @@ cdef class Val(thrift.py3.types.Struct):
 
 @__cython.auto_pickle(False)
 cdef class ValUnion(thrift.py3.types.Union):
+    __module__ = _fbthrift__module_name__
     Type = __ValUnionType
 
     def __init__(
@@ -753,7 +792,7 @@ cdef class ValUnion(thrift.py3.types.Union):
           v1,
           v2,
         )))
-        self._load_cache()
+        self._initialize_py()
 
     @staticmethod
     def fromValue(value):
@@ -791,18 +830,18 @@ cdef class ValUnion(thrift.py3.types.Union):
     cdef _create_FBTHRIFT_ONLY_DO_NOT_USE(shared_ptr[_module_cbindings.cValUnion] cpp_obj):
         __fbthrift_inst = <ValUnion>ValUnion.__new__(ValUnion)
         __fbthrift_inst._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = cmove(cpp_obj)
-        __fbthrift_inst._load_cache()
+        __fbthrift_inst._initialize_py()
         return __fbthrift_inst
 
     @property
-    def v1(self):
-        if self.type.value != 1:
+    def v1(ValUnion self not None):
+        if self.type_int != 1:
             raise AttributeError(f'Union contains a value of type {self.type.name}, not v1')
         return self.value
 
     @property
-    def v2(self):
-        if self.type.value != 2:
+    def v2(ValUnion self not None):
+        if self.type_int != 2:
             raise AttributeError(f'Union contains a value of type {self.type.name}, not v2')
         return self.value
 
@@ -810,15 +849,26 @@ cdef class ValUnion(thrift.py3.types.Union):
     def __hash__(ValUnion self):
         return  super().__hash__()
 
-    cdef _load_cache(ValUnion self):
-        self.type = ValUnion.Type(<int>(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).getType()))
-        cdef int type = self.type.value
-        if type == 0:    # Empty
-            self.value = None
-        elif type == 1:
-            self.value = Val._create_FBTHRIFT_ONLY_DO_NOT_USE(make_shared[_module_cbindings.cVal](deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_v1()))
-        elif type == 2:
-            self.value = Val._create_FBTHRIFT_ONLY_DO_NOT_USE(make_shared[_module_cbindings.cVal](deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_v2()))
+    @property
+    def type(ValUnion self not None):
+        if self.py_type is None:
+            self.py_type = ValUnion.Type(self.type_int)
+        return self.py_type
+
+    @property
+    def value(ValUnion self not None):
+        if self.py_value is not None or self.type_int == 0:
+            return self.py_value
+        elif self.type_int == 1:
+            self.py_value = Val._create_FBTHRIFT_ONLY_DO_NOT_USE(make_shared[_module_cbindings.cVal](deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_v1()))
+        elif self.type_int == 2:
+            self.py_value = Val._create_FBTHRIFT_ONLY_DO_NOT_USE(make_shared[_module_cbindings.cVal](deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_v2()))
+        return self.py_value
+
+    cdef _initialize_py(ValUnion self):
+        self.py_type = None
+        self.type_int = deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).getType()
+        self.py_value = None
 
     def __copy__(ValUnion self):
         cdef shared_ptr[_module_cbindings.cValUnion] cpp_obj = make_shared[_module_cbindings.cValUnion](
@@ -867,8 +917,8 @@ cdef class ValUnion(thrift.py3.types.Union):
         self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = make_shared[_module_cbindings.cValUnion]()
         with nogil:
             needed = serializer.cdeserialize[_module_cbindings.cValUnion](buf, self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE.get(), proto)
-        # force a cache reload since the underlying data's changed
-        self._load_cache()
+        # clear cache reload since the underlying data's changed
+        self._initialize_py()
         return needed
 
 
@@ -890,6 +940,7 @@ cdef class ValUnion(thrift.py3.types.Union):
 
 @__cython.auto_pickle(False)
 cdef class VirtualComplexUnion(thrift.py3.types.Union):
+    __module__ = _fbthrift__module_name__
     Type = __VirtualComplexUnionType
 
     def __init__(
@@ -902,7 +953,7 @@ cdef class VirtualComplexUnion(thrift.py3.types.Union):
           thingOne,
           thingTwo,
         )))
-        self._load_cache()
+        self._initialize_py()
 
     @staticmethod
     def fromValue(value):
@@ -940,18 +991,18 @@ cdef class VirtualComplexUnion(thrift.py3.types.Union):
     cdef _create_FBTHRIFT_ONLY_DO_NOT_USE(shared_ptr[_module_cbindings.cVirtualComplexUnion] cpp_obj):
         __fbthrift_inst = <VirtualComplexUnion>VirtualComplexUnion.__new__(VirtualComplexUnion)
         __fbthrift_inst._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = cmove(cpp_obj)
-        __fbthrift_inst._load_cache()
+        __fbthrift_inst._initialize_py()
         return __fbthrift_inst
 
     @property
-    def thingOne(self):
-        if self.type.value != 1:
+    def thingOne(VirtualComplexUnion self not None):
+        if self.type_int != 1:
             raise AttributeError(f'Union contains a value of type {self.type.name}, not thingOne')
         return self.value
 
     @property
-    def thingTwo(self):
-        if self.type.value != 2:
+    def thingTwo(VirtualComplexUnion self not None):
+        if self.type_int != 2:
             raise AttributeError(f'Union contains a value of type {self.type.name}, not thingTwo')
         return self.value
 
@@ -959,15 +1010,26 @@ cdef class VirtualComplexUnion(thrift.py3.types.Union):
     def __hash__(VirtualComplexUnion self):
         return  super().__hash__()
 
-    cdef _load_cache(VirtualComplexUnion self):
-        self.type = VirtualComplexUnion.Type(<int>(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).getType()))
-        cdef int type = self.type.value
-        if type == 0:    # Empty
-            self.value = None
-        elif type == 1:
-            self.value = bytes(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_thingOne()).decode('UTF-8')
-        elif type == 2:
-            self.value = bytes(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_thingTwo()).decode('UTF-8')
+    @property
+    def type(VirtualComplexUnion self not None):
+        if self.py_type is None:
+            self.py_type = VirtualComplexUnion.Type(self.type_int)
+        return self.py_type
+
+    @property
+    def value(VirtualComplexUnion self not None):
+        if self.py_value is not None or self.type_int == 0:
+            return self.py_value
+        elif self.type_int == 1:
+            self.py_value = bytes(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_thingOne()).decode('UTF-8')
+        elif self.type_int == 2:
+            self.py_value = bytes(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_thingTwo()).decode('UTF-8')
+        return self.py_value
+
+    cdef _initialize_py(VirtualComplexUnion self):
+        self.py_type = None
+        self.type_int = deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).getType()
+        self.py_value = None
 
     def __copy__(VirtualComplexUnion self):
         cdef shared_ptr[_module_cbindings.cVirtualComplexUnion] cpp_obj = make_shared[_module_cbindings.cVirtualComplexUnion](
@@ -1016,8 +1078,8 @@ cdef class VirtualComplexUnion(thrift.py3.types.Union):
         self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = make_shared[_module_cbindings.cVirtualComplexUnion]()
         with nogil:
             needed = serializer.cdeserialize[_module_cbindings.cVirtualComplexUnion](buf, self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE.get(), proto)
-        # force a cache reload since the underlying data's changed
-        self._load_cache()
+        # clear cache reload since the underlying data's changed
+        self._initialize_py()
         return needed
 
 
@@ -1037,6 +1099,8 @@ cdef class VirtualComplexUnion(thrift.py3.types.Union):
 
 @__cython.auto_pickle(False)
 cdef class NonCopyableStruct(thrift.py3.types.Struct):
+    __module__ = _fbthrift__module_name__
+
     def __init__(NonCopyableStruct self, **kwargs):
         self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = make_shared[_module_cbindings.cNonCopyableStruct]()
         self._fields_setter = _fbthrift_types_fields.__NonCopyableStruct_FieldsSetter._fbthrift_create(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE.get())
@@ -1139,6 +1203,7 @@ cdef class NonCopyableStruct(thrift.py3.types.Struct):
 
 @__cython.auto_pickle(False)
 cdef class NonCopyableUnion(thrift.py3.types.Union):
+    __module__ = _fbthrift__module_name__
     Type = __NonCopyableUnionType
 
     def __init__(
@@ -1149,7 +1214,7 @@ cdef class NonCopyableUnion(thrift.py3.types.Union):
           NULL,
           s,
         )))
-        self._load_cache()
+        self._initialize_py()
 
     @staticmethod
     def fromValue(value):
@@ -1179,12 +1244,12 @@ cdef class NonCopyableUnion(thrift.py3.types.Union):
     cdef _create_FBTHRIFT_ONLY_DO_NOT_USE(shared_ptr[_module_cbindings.cNonCopyableUnion] cpp_obj):
         __fbthrift_inst = <NonCopyableUnion>NonCopyableUnion.__new__(NonCopyableUnion)
         __fbthrift_inst._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = cmove(cpp_obj)
-        __fbthrift_inst._load_cache()
+        __fbthrift_inst._initialize_py()
         return __fbthrift_inst
 
     @property
-    def s(self):
-        if self.type.value != 1:
+    def s(NonCopyableUnion self not None):
+        if self.type_int != 1:
             raise AttributeError(f'Union contains a value of type {self.type.name}, not s')
         return self.value
 
@@ -1192,13 +1257,24 @@ cdef class NonCopyableUnion(thrift.py3.types.Union):
     def __hash__(NonCopyableUnion self):
         return  super().__hash__()
 
-    cdef _load_cache(NonCopyableUnion self):
-        self.type = NonCopyableUnion.Type(<int>(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).getType()))
-        cdef int type = self.type.value
-        if type == 0:    # Empty
-            self.value = None
-        elif type == 1:
-            self.value = NonCopyableStruct._create_FBTHRIFT_ONLY_DO_NOT_USE(make_shared[_module_cbindings.cNonCopyableStruct](deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_s()))
+    @property
+    def type(NonCopyableUnion self not None):
+        if self.py_type is None:
+            self.py_type = NonCopyableUnion.Type(self.type_int)
+        return self.py_type
+
+    @property
+    def value(NonCopyableUnion self not None):
+        if self.py_value is not None or self.type_int == 0:
+            return self.py_value
+        elif self.type_int == 1:
+            self.py_value = NonCopyableStruct._create_FBTHRIFT_ONLY_DO_NOT_USE(make_shared[_module_cbindings.cNonCopyableStruct](deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).get_s()))
+        return self.py_value
+
+    cdef _initialize_py(NonCopyableUnion self):
+        self.py_type = None
+        self.type_int = deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).getType()
+        self.py_value = None
 
     def __copy__(NonCopyableUnion self):
         raise TypeError("NonCopyableUnion is noncopyable")
@@ -1244,8 +1320,8 @@ cdef class NonCopyableUnion(thrift.py3.types.Union):
         self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = make_shared[_module_cbindings.cNonCopyableUnion]()
         with nogil:
             needed = serializer.cdeserialize[_module_cbindings.cNonCopyableUnion](buf, self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE.get(), proto)
-        # force a cache reload since the underlying data's changed
-        self._load_cache()
+        # clear cache reload since the underlying data's changed
+        self._initialize_py()
         return needed
 
 
@@ -1263,15 +1339,15 @@ cdef class NonCopyableUnion(thrift.py3.types.Union):
         py_deprecated_types = importlib.import_module("module.ttypes")
         return thrift.util.converter.to_py_struct(py_deprecated_types.NonCopyableUnion, self)
 
-
 cdef vector[cint64_t] List__i64__make_instance(object items) except *:
     cdef vector[cint64_t] c_inst
-    if items is not None:
-        for item in items:
-            if not isinstance(item, int):
-                raise TypeError(f"{item!r} is not of type int")
-            item = <cint64_t> item
-            c_inst.push_back(item)
+    if items is None:
+        return cmove(c_inst)
+    for item in items:
+        if not isinstance(item, int):
+            raise TypeError(f"{item!r} is not of type int")
+        item = <cint64_t> item
+        c_inst.push_back(item)
     return cmove(c_inst)
 
 cdef object List__i64__from_cpp(const vector[cint64_t]& c_vec) except *:
@@ -1281,16 +1357,16 @@ cdef object List__i64__from_cpp(const vector[cint64_t]& c_vec) except *:
         py_list.append(c_vec[idx])
     return List__i64(py_list, thrift.py3.types._fbthrift_list_private_ctor)
 
-
 cdef vector[string] List__string__make_instance(object items) except *:
     cdef vector[string] c_inst
-    if items is not None:
-        if isinstance(items, str):
-            raise TypeError("If you really want to pass a string into a _typing.Sequence[str] field, explicitly convert it first.")
-        for item in items:
-            if not isinstance(item, str):
-                raise TypeError(f"{item!r} is not of type str")
-            c_inst.push_back(item.encode('UTF-8'))
+    if items is None:
+        return cmove(c_inst)
+    if isinstance(items, str):
+        raise TypeError("If you really want to pass a string into a _typing.Sequence[str] field, explicitly convert it first.")
+    for item in items:
+        if not isinstance(item, str):
+            raise TypeError(f"{item!r} is not of type str")
+        c_inst.push_back(item.encode('UTF-8'))
     return cmove(c_inst)
 
 cdef object List__string__from_cpp(const vector[string]& c_vec) except *:
@@ -1300,100 +1376,18 @@ cdef object List__string__from_cpp(const vector[string]& c_vec) except *:
         py_list.append(__init_unicode_from_cpp(c_vec[idx]))
     return List__string(py_list, thrift.py3.types._fbthrift_list_private_ctor)
 
-@__cython.auto_pickle(False)
-@__cython.final
-cdef class Map__i16_string(thrift.py3.types.Map):
-    def __init__(self, items=None):
-        if isinstance(items, Map__i16_string):
-            self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = (<Map__i16_string> items)._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE
-        else:
-            self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = Map__i16_string__make_instance(items)
+cdef cmap[cint16_t,string] Map__i16_string__make_instance(object items) except *:
+    cdef cmap[cint16_t,string] c_inst
+    if items is None:
+        return cmove(c_inst)
+    for key, item in items.items():
+        if not isinstance(key, int):
+            raise TypeError(f"{key!r} is not of type int")
+        key = <cint16_t> key
+        if not isinstance(item, str):
+            raise TypeError(f"{item!r} is not of type str")
 
-    @staticmethod
-    cdef _create_FBTHRIFT_ONLY_DO_NOT_USE(shared_ptr[cmap[cint16_t,string]] c_items):
-        __fbthrift_inst = <Map__i16_string>Map__i16_string.__new__(Map__i16_string)
-        __fbthrift_inst._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = cmove(c_items)
-        return __fbthrift_inst
-
-    def __copy__(Map__i16_string self):
-        cdef shared_ptr[cmap[cint16_t,string]] cpp_obj = make_shared[cmap[cint16_t,string]](
-            deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE)
-        )
-        return Map__i16_string._create_FBTHRIFT_ONLY_DO_NOT_USE(cmove(cpp_obj))
-
-    def __len__(self):
-        return deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).size()
-
-    cdef _check_key_type(self, key):
-        if not self or key is None:
-            return
-        if isinstance(key, int):
-            return key
-
-    def __getitem__(self, key):
-        err = KeyError(f'{key}')
-        key = self._check_key_type(key)
-        if key is None:
-            raise err
-        cdef cint16_t ckey = key
-        if not __map_contains(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE, ckey):
-            raise err
-        cdef string citem
-        __map_getitem(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE, ckey, citem)
-        return bytes(citem).decode('UTF-8')
-
-    def __iter__(self):
-        if not self:
-            return
-        cdef __map_iter[cmap[cint16_t,string]] itr = __map_iter[cmap[cint16_t,string]](self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE)
-        cdef cint16_t citem = 0
-        for i in range(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).size()):
-            itr.genNextKey(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE, citem)
-            yield citem
-
-    def __contains__(self, key):
-        key = self._check_key_type(key)
-        if key is None:
-            return False
-        cdef cint16_t ckey = key
-        return __map_contains(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE, ckey)
-
-    def values(self):
-        if not self:
-            return
-        cdef __map_iter[cmap[cint16_t,string]] itr = __map_iter[cmap[cint16_t,string]](self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE)
-        cdef string citem
-        for i in range(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).size()):
-            itr.genNextValue(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE, citem)
-            yield bytes(citem).decode('UTF-8')
-
-    def items(self):
-        if not self:
-            return
-        cdef __map_iter[cmap[cint16_t,string]] itr = __map_iter[cmap[cint16_t,string]](self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE)
-        cdef cint16_t ckey = 0
-        cdef string citem
-        for i in range(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).size()):
-            itr.genNextItem(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE, ckey, citem)
-            yield (ckey, bytes(citem).decode('UTF-8'))
-
-    @staticmethod
-    def __get_reflection__():
-        return get_types_reflection().get_reflection__Map__i16_string()
-
-Mapping.register(Map__i16_string)
-
-cdef shared_ptr[cmap[cint16_t,string]] Map__i16_string__make_instance(object items) except *:
-    cdef shared_ptr[cmap[cint16_t,string]] c_inst = make_shared[cmap[cint16_t,string]]()
-    if items is not None:
-        for key, item in items.items():
-            if not isinstance(key, int):
-                raise TypeError(f"{key!r} is not of type int")
-            key = <cint16_t> key
-            if not isinstance(item, str):
-                raise TypeError(f"{item!r} is not of type str")
-
-            deref(c_inst)[key] = item.encode('UTF-8')
+        c_inst[key] = item.encode('UTF-8')
     return cmove(c_inst)
 
 cdef object Map__i16_string__from_cpp(const cmap[cint16_t,string]& c_map) except *:

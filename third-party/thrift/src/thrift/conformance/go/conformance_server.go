@@ -161,7 +161,7 @@ func newServer(processor thrift.Processor, addr string) (thrift.Server, net.Addr
 	if err != nil {
 		return nil, nil, err
 	}
-	return thrift.NewSimpleServer(processor, listener, thrift.TransportIDUpgradeToRocket), listener.Addr(), nil
+	return thrift.NewServer(processor, listener, thrift.TransportIDUpgradeToRocket), listener.Addr(), nil
 }
 
 type dataConformanceServiceHandler struct {
@@ -260,7 +260,7 @@ func newSerializer(protoc *protocol.ProtocolStruct) (*thrift.Serializer, error) 
 	switch protoc.GetStandard() {
 	case protocol.StandardProtocol_Custom:
 	case protocol.StandardProtocol_Binary:
-		return thrift.NewSerializer(), nil
+		return thrift.NewBinarySerializer(), nil
 	case protocol.StandardProtocol_Compact:
 		return thrift.NewCompactSerializer(), nil
 	case protocol.StandardProtocol_Json:
@@ -277,7 +277,7 @@ func newDeserializer(protoc *protocol.ProtocolStruct) (*thrift.Deserializer, err
 	switch protoc.GetStandard() {
 	case protocol.StandardProtocol_Custom:
 	case protocol.StandardProtocol_Binary:
-		return thrift.NewDeserializer(), nil
+		return thrift.NewBinaryDeserializer(), nil
 	case protocol.StandardProtocol_Compact:
 		return thrift.NewCompactDeserializer(), nil
 	case protocol.StandardProtocol_Json:

@@ -23,13 +23,15 @@
 #include "hphp/runtime/base/backtrace.h"
 #include "hphp/runtime/base/request-info.h"
 #include "hphp/runtime/base/surprise-flags.h"
+
+#include "hphp/util/configs/strobelight.h"
+#include "hphp/util/configs/xenon.h"
 #include "hphp/util/sync-signal.h"
 
 #include <mutex>
 #include <time.h>
 
-#include <folly/tracing/StaticTracepoint.h>
-FOLLY_SDT_DEFINE_SEMAPHORE(hhvm, hhvm_stack);
+#include <usdt/usdt.h>
 
 namespace HPHP {
 
@@ -49,7 +51,7 @@ struct strobelight::backtrace_t bt_slab;
 std::mutex usdt_mutex;
 
 void onStrobelightSignal(int signo) {
-  if (!RuntimeOption::StrobelightEnabled) {
+  if (!Cfg::Strobelight::Enabled) {
     // Handle the signal so we don't crash, but do nothing.
     return;
   }
@@ -128,7 +130,7 @@ bool logToUSDT(const Array& bt) {
   bt_slab.len = i;
 
   // Allow BPF to read the now-formatted stacktrace
-  FOLLY_SDT_WITH_SEMAPHORE(hhvm, hhvm_stack, &bt_slab);
+  USDT_WITH_SEMA(hhvm, hhvm_stack, &bt_slab);
 
   return true;
 }
@@ -155,11 +157,11 @@ bool Strobelight::active() {
   }
 
   // return true if a USDT probe function is listening
-  return FOLLY_SDT_IS_ENABLED(hhvm, hhvm_stack);
+  return USDT_IS_ACTIVE(hhvm, hhvm_stack);
 }
 
 bool Strobelight::isXenonActive() {
-  if (RuntimeOption::XenonForceAlwaysOn) {
+  if (Cfg::Xenon::ForceAlwaysOn) {
     return true;
   }
 
@@ -173,7 +175,7 @@ bool Strobelight::isXenonActive() {
 
 void Strobelight::log(Xenon::SampleType t,
                       c_WaitableWaitHandle* wh) const {
-  if (RuntimeOption::XenonForceAlwaysOn) {
+  if (Cfg::Xenon::ForceAlwaysOn) {
     // Disable strobelight if Xenon forced on
     // TODO remove this when strobelight has its own surpriseFlag
     return;
@@ -219,7 +221,7 @@ void Strobelight::surpriseAll() {
 }
 
 void Strobelight::shutdown() {
-  RuntimeOption::StrobelightEnabled = false;
+  Cfg::Strobelight::Enabled = false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

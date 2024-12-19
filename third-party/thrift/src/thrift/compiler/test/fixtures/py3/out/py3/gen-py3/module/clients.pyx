@@ -428,7 +428,7 @@ cdef void SimpleService_words_count_callback(
         pyfuture.set_exception(create_py_exception(result.exception(), <__RpcOptions>options))
     else:
         try:
-            pyfuture.set_result(_module_types.Map__string_i16._create_FBTHRIFT_ONLY_DO_NOT_USE(make_shared[cmap[string,cint16_t]](cmove(result.value()))))
+            pyfuture.set_result(_module_types.Map__string_i16__from_cpp(cmove(result.value())))
         except Exception as ex:
             pyfuture.set_exception(ex.with_traceback(None))
 
@@ -467,7 +467,7 @@ cdef void SimpleService_word_character_frequency_callback(
         pyfuture.set_exception(create_py_exception(result.exception(), <__RpcOptions>options))
     else:
         try:
-            pyfuture.set_result(_module_types.Map__string_Map__string_i32._create_FBTHRIFT_ONLY_DO_NOT_USE(make_shared[cmap[string,cmap[string,cint32_t]]](cmove(result.value()))))
+            pyfuture.set_result(_module_types.Map__string_Map__string_i32__from_cpp(cmove(result.value())))
         except Exception as ex:
             pyfuture.set_exception(ex.with_traceback(None))
 
@@ -644,6 +644,11 @@ cdef class SimpleService(thrift.py3.client.Client):
             cmove(channel)
         )
 
+    _fbthrift_annotations_DO_NOT_USE_get_five = {
+        'return': 'int',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def get_five(
             SimpleService self,
@@ -663,6 +668,11 @@ cdef class SimpleService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_add_five = {
+        'return': 'int',
+        'num': 'int', 
+    }
 
     @cython.always_allow_keywords(True)
     def add_five(
@@ -690,6 +700,11 @@ cdef class SimpleService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_do_nothing = {
+        'return': 'None',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def do_nothing(
             SimpleService self,
@@ -709,6 +724,11 @@ cdef class SimpleService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_concat = {
+        'return': 'str',
+        'first': 'str', 'second': 'str', 
+    }
 
     @cython.always_allow_keywords(True)
     def concat(
@@ -734,6 +754,11 @@ cdef class SimpleService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_get_value = {
+        'return': 'int',
+        'simple_struct': 'module.types.SimpleStruct', 
+    }
+
     @cython.always_allow_keywords(True)
     def get_value(
             SimpleService self,
@@ -756,6 +781,11 @@ cdef class SimpleService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_negate = {
+        'return': 'bool',
+        'input': 'bool', 
+    }
+
     @cython.always_allow_keywords(True)
     def negate(
             SimpleService self,
@@ -777,6 +807,11 @@ cdef class SimpleService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_tiny = {
+        'return': 'int',
+        'input': 'int', 
+    }
 
     @cython.always_allow_keywords(True)
     def tiny(
@@ -804,6 +839,11 @@ cdef class SimpleService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_small = {
+        'return': 'int',
+        'input': 'int', 
+    }
+
     @cython.always_allow_keywords(True)
     def small(
             SimpleService self,
@@ -829,6 +869,11 @@ cdef class SimpleService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_big = {
+        'return': 'int',
+        'input': 'int', 
+    }
 
     @cython.always_allow_keywords(True)
     def big(
@@ -856,6 +901,11 @@ cdef class SimpleService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_two = {
+        'return': 'float',
+        'input': 'float', 
+    }
+
     @cython.always_allow_keywords(True)
     def two(
             SimpleService self,
@@ -878,6 +928,11 @@ cdef class SimpleService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_expected_exception = {
+        'return': 'None',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def expected_exception(
             SimpleService self,
@@ -898,6 +953,11 @@ cdef class SimpleService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_unexpected_exception = {
+        'return': 'int',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def unexpected_exception(
             SimpleService self,
@@ -917,6 +977,11 @@ cdef class SimpleService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_sum_i16_list = {
+        'return': 'int',
+        'numbers': '_typing.Sequence[int]', 
+    }
 
     @cython.always_allow_keywords(True)
     def sum_i16_list(
@@ -942,6 +1007,11 @@ cdef class SimpleService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_sum_i32_list = {
+        'return': 'int',
+        'numbers': '_typing.Sequence[int]', 
+    }
+
     @cython.always_allow_keywords(True)
     def sum_i32_list(
             SimpleService self,
@@ -965,6 +1035,11 @@ cdef class SimpleService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_sum_i64_list = {
+        'return': 'int',
+        'numbers': '_typing.Sequence[int]', 
+    }
 
     @cython.always_allow_keywords(True)
     def sum_i64_list(
@@ -990,6 +1065,11 @@ cdef class SimpleService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_concat_many = {
+        'return': 'str',
+        'words': '_typing.Sequence[str]', 
+    }
+
     @cython.always_allow_keywords(True)
     def concat_many(
             SimpleService self,
@@ -1013,6 +1093,11 @@ cdef class SimpleService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_count_structs = {
+        'return': 'int',
+        'items': '_typing.Sequence[module.types.SimpleStruct]', 
+    }
 
     @cython.always_allow_keywords(True)
     def count_structs(
@@ -1038,6 +1123,11 @@ cdef class SimpleService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_sum_set = {
+        'return': 'int',
+        'numbers': '_typing.AbstractSet[int]', 
+    }
+
     @cython.always_allow_keywords(True)
     def sum_set(
             SimpleService self,
@@ -1061,6 +1151,11 @@ cdef class SimpleService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_contains_word = {
+        'return': 'bool',
+        'words': '_typing.AbstractSet[str]', 'word': 'str', 
+    }
 
     @cython.always_allow_keywords(True)
     def contains_word(
@@ -1088,6 +1183,11 @@ cdef class SimpleService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_get_map_value = {
+        'return': 'str',
+        'words': '_typing.Mapping[str, str]', 'key': 'str', 
+    }
+
     @cython.always_allow_keywords(True)
     def get_map_value(
             SimpleService self,
@@ -1106,13 +1206,18 @@ cdef class SimpleService(thrift.py3.client.Client):
         bridgeFutureWith[string](
             self._executor,
             down_cast_ptr[cSimpleServiceClientWrapper, cClientWrapper](self._client.get()).get_map_value(rpc_options._cpp_obj, 
-                deref((<_module_types.Map__string_string>words)._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE),
+                _module_types.Map__string_string__make_instance(words),
                 key.encode('UTF-8'),
             ),
             SimpleService_get_map_value_callback,
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_map_length = {
+        'return': 'int',
+        'items': '_typing.Mapping[str, module.types.SimpleStruct]', 
+    }
 
     @cython.always_allow_keywords(True)
     def map_length(
@@ -1131,12 +1236,17 @@ cdef class SimpleService(thrift.py3.client.Client):
         bridgeFutureWith[cint16_t](
             self._executor,
             down_cast_ptr[cSimpleServiceClientWrapper, cClientWrapper](self._client.get()).map_length(rpc_options._cpp_obj, 
-                deref((<_module_types.Map__string_SimpleStruct>items)._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE),
+                _module_types.Map__string_SimpleStruct__make_instance(items),
             ),
             SimpleService_map_length_callback,
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_sum_map_values = {
+        'return': 'int',
+        'items': '_typing.Mapping[str, int]', 
+    }
 
     @cython.always_allow_keywords(True)
     def sum_map_values(
@@ -1155,12 +1265,17 @@ cdef class SimpleService(thrift.py3.client.Client):
         bridgeFutureWith[cint16_t](
             self._executor,
             down_cast_ptr[cSimpleServiceClientWrapper, cClientWrapper](self._client.get()).sum_map_values(rpc_options._cpp_obj, 
-                deref((<_module_types.Map__string_i16>items)._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE),
+                _module_types.Map__string_i16__make_instance(items),
             ),
             SimpleService_sum_map_values_callback,
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_complex_sum_i32 = {
+        'return': 'int',
+        'counter': 'module.types.ComplexStruct', 
+    }
 
     @cython.always_allow_keywords(True)
     def complex_sum_i32(
@@ -1184,6 +1299,11 @@ cdef class SimpleService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_repeat_name = {
+        'return': 'str',
+        'counter': 'module.types.ComplexStruct', 
+    }
+
     @cython.always_allow_keywords(True)
     def repeat_name(
             SimpleService self,
@@ -1206,6 +1326,11 @@ cdef class SimpleService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_get_struct = {
+        'return': 'module.types.SimpleStruct',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def get_struct(
             SimpleService self,
@@ -1225,6 +1350,11 @@ cdef class SimpleService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_fib = {
+        'return': '_typing.Sequence[int]',
+        'n': 'int', 
+    }
 
     @cython.always_allow_keywords(True)
     def fib(
@@ -1252,6 +1382,11 @@ cdef class SimpleService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_unique_words = {
+        'return': '_typing.AbstractSet[str]',
+        'words': '_typing.Sequence[str]', 
+    }
+
     @cython.always_allow_keywords(True)
     def unique_words(
             SimpleService self,
@@ -1275,6 +1410,11 @@ cdef class SimpleService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_words_count = {
+        'return': '_typing.Mapping[str, int]',
+        'words': '_typing.Sequence[str]', 
+    }
 
     @cython.always_allow_keywords(True)
     def words_count(
@@ -1300,6 +1440,11 @@ cdef class SimpleService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_set_enum = {
+        'return': 'module.types.AnEnum',
+        'in_enum': 'module.types.AnEnum', 
+    }
+
     @cython.always_allow_keywords(True)
     def set_enum(
             SimpleService self,
@@ -1321,6 +1466,11 @@ cdef class SimpleService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_list_of_lists = {
+        'return': '_typing.Sequence[_typing.Sequence[int]]',
+        'num_lists': 'int', 'num_items': 'int', 
+    }
 
     @cython.always_allow_keywords(True)
     def list_of_lists(
@@ -1354,6 +1504,11 @@ cdef class SimpleService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_word_character_frequency = {
+        'return': '_typing.Mapping[str, _typing.Mapping[str, int]]',
+        'sentence': 'str', 
+    }
+
     @cython.always_allow_keywords(True)
     def word_character_frequency(
             SimpleService self,
@@ -1375,6 +1530,11 @@ cdef class SimpleService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_list_of_sets = {
+        'return': '_typing.Sequence[_typing.AbstractSet[str]]',
+        'some_words': 'str', 
+    }
 
     @cython.always_allow_keywords(True)
     def list_of_sets(
@@ -1398,6 +1558,11 @@ cdef class SimpleService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_nested_map_argument = {
+        'return': 'int',
+        'struct_map': '_typing.Mapping[str, _typing.Sequence[module.types.SimpleStruct]]', 
+    }
+
     @cython.always_allow_keywords(True)
     def nested_map_argument(
             SimpleService self,
@@ -1415,12 +1580,17 @@ cdef class SimpleService(thrift.py3.client.Client):
         bridgeFutureWith[cint32_t](
             self._executor,
             down_cast_ptr[cSimpleServiceClientWrapper, cClientWrapper](self._client.get()).nested_map_argument(rpc_options._cpp_obj, 
-                deref((<_module_types.Map__string_List__SimpleStruct>struct_map)._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE),
+                _module_types.Map__string_List__SimpleStruct__make_instance(struct_map),
             ),
             SimpleService_nested_map_argument_callback,
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_make_sentence = {
+        'return': 'str',
+        'word_chars': '_typing.Sequence[_typing.Sequence[str]]', 
+    }
 
     @cython.always_allow_keywords(True)
     def make_sentence(
@@ -1446,6 +1616,11 @@ cdef class SimpleService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_get_union = {
+        'return': '_typing.AbstractSet[int]',
+        'sets': '_typing.Sequence[_typing.AbstractSet[int]]', 
+    }
+
     @cython.always_allow_keywords(True)
     def get_union(
             SimpleService self,
@@ -1470,6 +1645,11 @@ cdef class SimpleService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_get_keys = {
+        'return': '_typing.AbstractSet[str]',
+        'string_map': '_typing.Sequence[_typing.Mapping[str, str]]', 
+    }
+
     @cython.always_allow_keywords(True)
     def get_keys(
             SimpleService self,
@@ -1493,6 +1673,11 @@ cdef class SimpleService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_lookup_double = {
+        'return': 'float',
+        'key': 'int', 
+    }
 
     @cython.always_allow_keywords(True)
     def lookup_double(
@@ -1520,6 +1705,11 @@ cdef class SimpleService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_retrieve_binary = {
+        'return': 'bytes',
+        'something': 'bytes', 
+    }
+
     @cython.always_allow_keywords(True)
     def retrieve_binary(
             SimpleService self,
@@ -1541,6 +1731,11 @@ cdef class SimpleService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_contain_binary = {
+        'return': '_typing.AbstractSet[bytes]',
+        'binaries': '_typing.Sequence[bytes]', 
+    }
 
     @cython.always_allow_keywords(True)
     def contain_binary(
@@ -1566,6 +1761,11 @@ cdef class SimpleService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_contain_enum = {
+        'return': '_typing.Sequence[module.types.AnEnum]',
+        'the_enum': '_typing.Sequence[module.types.AnEnum]', 
+    }
+
     @cython.always_allow_keywords(True)
     def contain_enum(
             SimpleService self,
@@ -1589,6 +1789,11 @@ cdef class SimpleService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_get_binary_union_struct = {
+        'return': 'module.types.BinaryUnionStruct',
+        'u': 'module.types.BinaryUnion', 
+    }
 
     @cython.always_allow_keywords(True)
     def get_binary_union_struct(
@@ -1644,6 +1849,11 @@ cdef class DerivedService(SimpleService):
             cmove(channel)
         )
 
+    _fbthrift_annotations_DO_NOT_USE_get_six = {
+        'return': 'int',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def get_six(
             DerivedService self,
@@ -1694,6 +1904,11 @@ cdef class RederivedService(DerivedService):
         self._client = makeClientWrapper[cRederivedServiceAsyncClient, cRederivedServiceClientWrapper](
             cmove(channel)
         )
+
+    _fbthrift_annotations_DO_NOT_USE_get_seven = {
+        'return': 'int',
+        
+    }
 
     @cython.always_allow_keywords(True)
     def get_seven(

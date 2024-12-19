@@ -8,6 +8,9 @@
 from __future__ import annotations
 
 import folly.iobuf as _fbthrift_iobuf
+
+from abc import ABCMeta as _fbthrift_ABCMeta
+import test.namespace_from_package_without_module_name.module.thrift_abstract_types as _fbthrift_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
 
@@ -43,6 +46,12 @@ class Foo(metaclass=_fbthrift_python_types.StructMeta):
     def _to_python(self):
         return self
 
+    def _to_mutable_python(self):
+        import thrift.python.mutable_converter
+        import importlib
+        mutable_types = importlib.import_module("test.namespace_from_package_without_module_name.module.thrift_mutable_types")
+        return thrift.python.mutable_converter.to_mutable_python_struct_or_union(mutable_types.Foo, self)
+
     def _to_py3(self):
         import importlib
         py3_types = importlib.import_module("test.namespace_from_package_without_module_name.module.types")
@@ -59,12 +68,15 @@ class Foo(metaclass=_fbthrift_python_types.StructMeta):
             py_asyncio_types = importlib.import_module("test.namespace_from_package_without_module_name.module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.Foo, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.Foo, Foo)
+_fbthrift_Foo = Foo
+
 # This unfortunately has to be down here to prevent circular imports
 import test.namespace_from_package_without_module_name.module.thrift_metadata
 
-
 _fbthrift_all_enums = [
 ]
+
 
 def _fbthrift_metadata__struct_Foo():
     return test.namespace_from_package_without_module_name.module.thrift_metadata.gen_metadata_struct_Foo()

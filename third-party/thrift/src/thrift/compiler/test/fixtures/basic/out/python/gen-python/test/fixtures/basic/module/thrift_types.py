@@ -8,9 +8,21 @@
 from __future__ import annotations
 
 import folly.iobuf as _fbthrift_iobuf
+
+from abc import ABCMeta as _fbthrift_ABCMeta
+import test.fixtures.basic.module.thrift_abstract_types as _fbthrift_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
 
+
+from test.fixtures.basic.module.thrift_enums import (
+    MyEnum,
+    MyEnum as _fbthrift_MyEnum,
+    _fbthrift_compatible_with_MyEnum,
+    HackEnum,
+    HackEnum as _fbthrift_HackEnum,
+    _fbthrift_compatible_with_HackEnum,
+)
 
 
 class MyStruct(metaclass=_fbthrift_python_types.StructMeta):
@@ -131,6 +143,12 @@ class MyStruct(metaclass=_fbthrift_python_types.StructMeta):
     def _to_python(self):
         return self
 
+    def _to_mutable_python(self):
+        import thrift.python.mutable_converter
+        import importlib
+        mutable_types = importlib.import_module("test.fixtures.basic.module.thrift_mutable_types")
+        return thrift.python.mutable_converter.to_mutable_python_struct_or_union(mutable_types.MyStruct, self)
+
     def _to_py3(self):
         import importlib
         py3_types = importlib.import_module("test.fixtures.basic.module.types")
@@ -147,6 +165,8 @@ class MyStruct(metaclass=_fbthrift_python_types.StructMeta):
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.MyStruct, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.MyStruct, MyStruct)
+_fbthrift_MyStruct = MyStruct
 
 class Containers(metaclass=_fbthrift_python_types.StructMeta):
     _fbthrift_SPEC = (
@@ -200,6 +220,12 @@ class Containers(metaclass=_fbthrift_python_types.StructMeta):
     def _to_python(self):
         return self
 
+    def _to_mutable_python(self):
+        import thrift.python.mutable_converter
+        import importlib
+        mutable_types = importlib.import_module("test.fixtures.basic.module.thrift_mutable_types")
+        return thrift.python.mutable_converter.to_mutable_python_struct_or_union(mutable_types.Containers, self)
+
     def _to_py3(self):
         import importlib
         py3_types = importlib.import_module("test.fixtures.basic.module.types")
@@ -216,6 +242,8 @@ class Containers(metaclass=_fbthrift_python_types.StructMeta):
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.Containers, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.Containers, Containers)
+_fbthrift_Containers = Containers
 
 class MyDataItem(metaclass=_fbthrift_python_types.StructMeta):
     _fbthrift_SPEC = (
@@ -236,6 +264,12 @@ class MyDataItem(metaclass=_fbthrift_python_types.StructMeta):
     def _to_python(self):
         return self
 
+    def _to_mutable_python(self):
+        import thrift.python.mutable_converter
+        import importlib
+        mutable_types = importlib.import_module("test.fixtures.basic.module.thrift_mutable_types")
+        return thrift.python.mutable_converter.to_mutable_python_struct_or_union(mutable_types.MyDataItem, self)
+
     def _to_py3(self):
         import importlib
         py3_types = importlib.import_module("test.fixtures.basic.module.types")
@@ -252,6 +286,8 @@ class MyDataItem(metaclass=_fbthrift_python_types.StructMeta):
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.MyDataItem, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.MyDataItem, MyDataItem)
+_fbthrift_MyDataItem = MyDataItem
 
 class MyUnion(metaclass=_fbthrift_python_types.UnionMeta):
     _fbthrift_SPEC = (
@@ -301,6 +337,9 @@ class MyUnion(metaclass=_fbthrift_python_types.UnionMeta):
         ),
     )
 
+    _fbthrift_abstract_base_class = _fbthrift_abstract_types.MyUnion
+
+
     @staticmethod
     def __get_thrift_name__() -> str:
         return "module.MyUnion"
@@ -315,6 +354,12 @@ class MyUnion(metaclass=_fbthrift_python_types.UnionMeta):
 
     def _to_python(self):
         return self
+
+    def _to_mutable_python(self):
+        import thrift.python.mutable_converter
+        import importlib
+        mutable_types = importlib.import_module("test.fixtures.basic.module.thrift_mutable_types")
+        return thrift.python.mutable_converter.to_mutable_python_struct_or_union(mutable_types.MyUnion, self)
 
     def _to_py3(self):
         import importlib
@@ -332,6 +377,8 @@ class MyUnion(metaclass=_fbthrift_python_types.UnionMeta):
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.MyUnion, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.MyUnion, MyUnion)
+_fbthrift_MyUnion = MyUnion
 
 class MyException(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
     _fbthrift_SPEC = (
@@ -381,6 +428,9 @@ class MyException(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
         ),
     )
 
+    _fbthrift_abstract_base_class = _fbthrift_abstract_types.MyException
+
+
     @staticmethod
     def __get_thrift_name__() -> str:
         return "module.MyException"
@@ -395,6 +445,12 @@ class MyException(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
 
     def _to_python(self):
         return self
+
+    def _to_mutable_python(self):
+        import thrift.python.mutable_converter
+        import importlib
+        mutable_types = importlib.import_module("test.fixtures.basic.module.thrift_mutable_types")
+        return thrift.python.mutable_converter.to_mutable_python_struct_or_union(mutable_types.MyException, self)
 
     def _to_py3(self):
         import importlib
@@ -411,7 +467,7 @@ class MyException(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
         except ModuleNotFoundError:
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.MyException, self)
-
+_fbthrift_MyException = MyException
 
 class MyExceptionWithMessage(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
     _fbthrift_SPEC = (
@@ -461,6 +517,9 @@ class MyExceptionWithMessage(metaclass=_fbthrift_python_exceptions.GeneratedErro
         ),
     )
 
+    _fbthrift_abstract_base_class = _fbthrift_abstract_types.MyExceptionWithMessage
+
+
     @staticmethod
     def __get_thrift_name__() -> str:
         return "module.MyExceptionWithMessage"
@@ -483,6 +542,12 @@ class MyExceptionWithMessage(metaclass=_fbthrift_python_exceptions.GeneratedErro
     def _to_python(self):
         return self
 
+    def _to_mutable_python(self):
+        import thrift.python.mutable_converter
+        import importlib
+        mutable_types = importlib.import_module("test.fixtures.basic.module.thrift_mutable_types")
+        return thrift.python.mutable_converter.to_mutable_python_struct_or_union(mutable_types.MyExceptionWithMessage, self)
+
     def _to_py3(self):
         import importlib
         py3_types = importlib.import_module("test.fixtures.basic.module.types")
@@ -498,7 +563,7 @@ class MyExceptionWithMessage(metaclass=_fbthrift_python_exceptions.GeneratedErro
         except ModuleNotFoundError:
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.MyExceptionWithMessage, self)
-
+_fbthrift_MyExceptionWithMessage = MyExceptionWithMessage
 
 class ReservedKeyword(metaclass=_fbthrift_python_types.StructMeta):
     _fbthrift_SPEC = (
@@ -530,6 +595,12 @@ class ReservedKeyword(metaclass=_fbthrift_python_types.StructMeta):
     def _to_python(self):
         return self
 
+    def _to_mutable_python(self):
+        import thrift.python.mutable_converter
+        import importlib
+        mutable_types = importlib.import_module("test.fixtures.basic.module.thrift_mutable_types")
+        return thrift.python.mutable_converter.to_mutable_python_struct_or_union(mutable_types.ReservedKeyword, self)
+
     def _to_py3(self):
         import importlib
         py3_types = importlib.import_module("test.fixtures.basic.module.types")
@@ -546,6 +617,8 @@ class ReservedKeyword(metaclass=_fbthrift_python_types.StructMeta):
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.ReservedKeyword, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.ReservedKeyword, ReservedKeyword)
+_fbthrift_ReservedKeyword = ReservedKeyword
 
 class UnionToBeRenamed(metaclass=_fbthrift_python_types.UnionMeta):
     _fbthrift_SPEC = (
@@ -562,6 +635,9 @@ class UnionToBeRenamed(metaclass=_fbthrift_python_types.UnionMeta):
         ),
     )
 
+    _fbthrift_abstract_base_class = _fbthrift_abstract_types.UnionToBeRenamed
+
+
     @staticmethod
     def __get_thrift_name__() -> str:
         return "module.UnionToBeRenamed"
@@ -576,6 +652,12 @@ class UnionToBeRenamed(metaclass=_fbthrift_python_types.UnionMeta):
 
     def _to_python(self):
         return self
+
+    def _to_mutable_python(self):
+        import thrift.python.mutable_converter
+        import importlib
+        mutable_types = importlib.import_module("test.fixtures.basic.module.thrift_mutable_types")
+        return thrift.python.mutable_converter.to_mutable_python_struct_or_union(mutable_types.UnionToBeRenamed, self)
 
     def _to_py3(self):
         import importlib
@@ -593,68 +675,17 @@ class UnionToBeRenamed(metaclass=_fbthrift_python_types.UnionMeta):
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.UnionToBeRenamed, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.UnionToBeRenamed, UnionToBeRenamed)
+_fbthrift_UnionToBeRenamed = UnionToBeRenamed
+
 # This unfortunately has to be down here to prevent circular imports
 import test.fixtures.basic.module.thrift_metadata
-
-
-class MyEnum(_fbthrift_python_types.Enum, int):
-    MyValue1 = 0
-    MyValue2 = 1
-    @staticmethod
-    def __get_thrift_name__() -> str:
-        return "module.MyEnum"
-
-    @staticmethod
-    def __get_thrift_uri__():
-        return "test.dev/fixtures/basic/MyEnum"
-
-    @staticmethod
-    def __get_metadata__():
-        return test.fixtures.basic.module.thrift_metadata.gen_metadata_enum_MyEnum()
-
-    def _to_python(self):
-        return self
-
-    def _to_py3(self):
-        import importlib
-        py3_types = importlib.import_module("test.fixtures.basic.module.types")
-        return py3_types.MyEnum(self.value)
-
-    def _to_py_deprecated(self):
-        return self.value
-
-
-class HackEnum(_fbthrift_python_types.Enum, int):
-    Value1 = 0
-    Value2 = 1
-    @staticmethod
-    def __get_thrift_name__() -> str:
-        return "module.HackEnum"
-
-    @staticmethod
-    def __get_thrift_uri__():
-        return "test.dev/fixtures/basic/HackEnum"
-
-    @staticmethod
-    def __get_metadata__():
-        return test.fixtures.basic.module.thrift_metadata.gen_metadata_enum_HackEnum()
-
-    def _to_python(self):
-        return self
-
-    def _to_py3(self):
-        import importlib
-        py3_types = importlib.import_module("test.fixtures.basic.module.types")
-        return py3_types.HackEnum(self.value)
-
-    def _to_py_deprecated(self):
-        return self.value
-
 
 _fbthrift_all_enums = [
     MyEnum,
     HackEnum,
 ]
+
 
 def _fbthrift_metadata__struct_MyStruct():
     return test.fixtures.basic.module.thrift_metadata.gen_metadata_struct_MyStruct()
@@ -719,8 +750,8 @@ ASet = _fbthrift_python_types.Set(_fbthrift_python_types.typeinfo_string, ("foo"
 
 AMap = _fbthrift_python_types.Map(_fbthrift_python_types.typeinfo_string, _fbthrift_python_types.ListTypeInfo(_fbthrift_python_types.typeinfo_i32), { "foo": _fbthrift_python_types.List(_fbthrift_python_types.typeinfo_i32, (1, 2, 3, 4, )), "bar": _fbthrift_python_types.List(_fbthrift_python_types.typeinfo_i32, (10, 32, 54, ))})
 
-MyEnumAlias = MyEnum
-MyDataItemAlias = MyDataItem
+MyEnumAlias = _fbthrift_MyEnum
+MyDataItemAlias = _fbthrift_MyDataItem
 
 
 

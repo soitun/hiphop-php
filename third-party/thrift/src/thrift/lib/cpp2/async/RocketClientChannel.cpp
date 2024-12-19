@@ -127,7 +127,7 @@ folly::Try<FirstResponsePayload> decodeResponseError(
 
   ResponseRpcError responseError;
   try {
-    rocket::PayloadSerializer::getInstance().unpack(
+    rocket::PayloadSerializer::getInstance()->unpack(
         responseError, ex.moveErrorData().get(), false);
   } catch (...) {
     return folly::Try<FirstResponsePayload>(
@@ -205,6 +205,22 @@ folly::Try<FirstResponsePayload> decodeResponseError(
     case ResponseRpcErrorCode::TENANT_BLOCKLISTED:
       exCode = kTenantBlocklistedErrorCode;
       exType = TApplicationException::TENANT_BLOCKLISTED;
+      break;
+    case ResponseRpcErrorCode::INTERACTION_LOADSHEDDED:
+      exCode = kInteractionLoadsheddedErrorCode;
+      exType = TApplicationException::LOADSHEDDING;
+      break;
+    case ResponseRpcErrorCode::INTERACTION_LOADSHEDDED_OVERLOAD:
+      exCode = kInteractionLoadsheddedOverloadErrorCode;
+      exType = TApplicationException::LOADSHEDDING;
+      break;
+    case ResponseRpcErrorCode::INTERACTION_LOADSHEDDED_APP_OVERLOAD:
+      exCode = kInteractionLoadsheddedAppOverloadErrorCode;
+      exType = TApplicationException::LOADSHEDDING;
+      break;
+    case ResponseRpcErrorCode::INTERACTION_LOADSHEDDED_QUEUE_TIMEOUT:
+      exCode = kInteractionLoadsheddedQueueTimeoutErrorCode;
+      exType = TApplicationException::LOADSHEDDING;
       break;
     default:
       exCode = kUnknownErrorCode;
@@ -600,9 +616,9 @@ class RocketClientChannel::SingleRequestSingleResponseCallback final
       stats.responseWireSizeBytes =
           payload->metadataAndDataSize() - payload->metadataSize();
 
-      response =
-          rocket::PayloadSerializer::getInstance().unpack<FirstResponsePayload>(
-              std::move(*payload), encodeMetadataUsingBinary_);
+      response = rocket::PayloadSerializer::getInstance()
+                     ->unpack<FirstResponsePayload>(
+                         std::move(*payload), encodeMetadataUsingBinary_);
       if (response.hasException()) {
         cb_.release()->onResponseError(std::move(response.exception()));
         return;
@@ -855,7 +871,7 @@ void RocketClientChannel::sendRequestStream(
       buf->computeChainDataLength(),
       *header);
 
-  auto payload = rocket::PayloadSerializer::getInstance().packWithFds(
+  auto payload = rocket::PayloadSerializer::getInstance()->packWithFds(
       &metadata,
       std::move(buf),
       rpcOptions.copySocketFdsToSend(),
@@ -897,7 +913,7 @@ void RocketClientChannel::sendRequestSink(
       buf->computeChainDataLength(),
       *header);
 
-  auto payload = rocket::PayloadSerializer::getInstance().packWithFds(
+  auto payload = rocket::PayloadSerializer::getInstance()->packWithFds(
       &metadata,
       std::move(buf),
       rpcOptions.copySocketFdsToSend(),
@@ -968,7 +984,7 @@ void RocketClientChannel::sendSingleRequestNoResponse(
     RequestRpcMetadata&& metadata,
     std::unique_ptr<folly::IOBuf> buf,
     RequestClientCallback::Ptr cb) {
-  auto requestPayload = rocket::PayloadSerializer::getInstance().packWithFds(
+  auto requestPayload = rocket::PayloadSerializer::getInstance()->packWithFds(
       &metadata,
       std::move(buf),
       rpcOptions.copySocketFdsToSend(),
@@ -994,7 +1010,7 @@ void RocketClientChannel::sendSingleRequestSingleResponse(
     std::unique_ptr<folly::IOBuf> buf,
     RequestClientCallback::Ptr cb) {
   const auto requestSerializedSize = buf->computeChainDataLength();
-  auto requestPayload = rocket::PayloadSerializer::getInstance().packWithFds(
+  auto requestPayload = rocket::PayloadSerializer::getInstance()->packWithFds(
       &metadata,
       std::move(buf),
       rpcOptions.copySocketFdsToSend(),
