@@ -12,6 +12,7 @@ import typing as _typing
 import enum
 
 import folly.iobuf as _fbthrift_iobuf
+import test.fixtures.python_capi.serialized_dep.thrift_abstract_types as _fbthrift_python_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
 
@@ -20,7 +21,7 @@ class _fbthrift_compatible_with_SerializedStruct:
     pass
 
 
-class SerializedStruct(_fbthrift_python_types.Struct, _fbthrift_compatible_with_SerializedStruct):
+class SerializedStruct(_fbthrift_python_types.Struct, _fbthrift_compatible_with_SerializedStruct, _fbthrift_python_abstract_types.SerializedStruct):
     s: _typing.Final[str] = ...
     i: _typing.Final[int] = ...
     os: _typing.Final[_typing.Optional[str]] = ...
@@ -42,15 +43,16 @@ class SerializedStruct(_fbthrift_python_types.Struct, _fbthrift_compatible_with_
     ) -> _typing.Self: ...
     def __iter__(self) -> _typing.Iterator[_typing.Tuple[str, _typing.Union[str, int, str, str]]]: ...
     def _to_python(self) -> _typing.Self: ...
+    def _to_mutable_python(self) -> "test.fixtures.python_capi.serialized_dep.thrift_mutable_types.SerializedStruct": ...  # type: ignore
     def _to_py3(self) -> "test.fixtures.python_capi.serialized_dep.types.SerializedStruct": ...  # type: ignore
     def _to_py_deprecated(self) -> "serialized_dep.ttypes.SerializedStruct": ...  # type: ignore
-
+_fbthrift_SerializedStruct = SerializedStruct
 
 class _fbthrift_compatible_with_SerializedUnion:
     pass
 
 
-class SerializedUnion(_fbthrift_python_types.Union, _fbthrift_compatible_with_SerializedUnion):
+class SerializedUnion(_fbthrift_python_types.Union, _fbthrift_compatible_with_SerializedUnion, _fbthrift_python_abstract_types.SerializedUnion):
     s: _typing.Final[str] = ...
     i: _typing.Final[int] = ...
     def __init__(
@@ -65,23 +67,29 @@ class SerializedUnion(_fbthrift_python_types.Union, _fbthrift_compatible_with_Se
         s: SerializedUnion.Type = ...
         i: SerializedUnion.Type = ...
 
-    FbThriftUnionFieldEnum = Type
+    class FbThriftUnionFieldEnum(enum.Enum):
+        EMPTY: SerializedUnion.FbThriftUnionFieldEnum = ...
+        s: SerializedUnion.FbThriftUnionFieldEnum = ...
+        i: SerializedUnion.FbThriftUnionFieldEnum = ...
 
+    fbthrift_current_value: _typing.Final[_typing.Union[None, str, int]]
+    fbthrift_current_field: _typing.Final[FbThriftUnionFieldEnum]
     @classmethod
     def fromValue(cls, value: _typing.Union[None, str, int]) -> SerializedUnion: ...
     value: _typing.Final[_typing.Union[None, str, int]]
     type: _typing.Final[Type]
     def get_type(self) -> Type: ...
     def _to_python(self) -> _typing.Self: ...
+    def _to_mutable_python(self) -> "test.fixtures.python_capi.serialized_dep.thrift_mutable_types.SerializedUnion": ...  # type: ignore
     def _to_py3(self) -> "test.fixtures.python_capi.serialized_dep.types.SerializedUnion": ...  # type: ignore
     def _to_py_deprecated(self) -> "serialized_dep.ttypes.SerializedUnion": ...  # type: ignore
-
+_fbthrift_SerializedUnion = SerializedUnion
 
 class _fbthrift_compatible_with_SerializedError:
     pass
 
 
-class SerializedError(_fbthrift_python_exceptions.GeneratedError, _fbthrift_compatible_with_SerializedError):
+class SerializedError(_fbthrift_python_exceptions.GeneratedError, _fbthrift_compatible_with_SerializedError, _fbthrift_python_abstract_types.SerializedError):
     msg: _typing.Final[str] = ...
     os: _typing.Final[_typing.Optional[str]] = ...
     rs: _typing.Final[str] = ...
@@ -94,15 +102,16 @@ class SerializedError(_fbthrift_python_exceptions.GeneratedError, _fbthrift_comp
 
     def __iter__(self) -> _typing.Iterator[_typing.Tuple[str, _typing.Union[str, str, str]]]: ...
     def _to_python(self) -> _typing.Self: ...
+    def _to_mutable_python(self) -> "test.fixtures.python_capi.serialized_dep.thrift_mutable_types.SerializedError": ...  # type: ignore
     def _to_py3(self) -> "test.fixtures.python_capi.serialized_dep.types.SerializedError": ...  # type: ignore
     def _to_py_deprecated(self) -> "serialized_dep.ttypes.SerializedError": ...  # type: ignore
-
+_fbthrift_SerializedError = SerializedError
 
 class _fbthrift_compatible_with_MarshalStruct:
     pass
 
 
-class MarshalStruct(_fbthrift_python_types.Struct, _fbthrift_compatible_with_MarshalStruct):
+class MarshalStruct(_fbthrift_python_types.Struct, _fbthrift_compatible_with_MarshalStruct, _fbthrift_python_abstract_types.MarshalStruct):
     s: _typing.Final[str] = ...
     i: _typing.Final[int] = ...
     os: _typing.Final[_typing.Optional[str]] = ...
@@ -124,15 +133,16 @@ class MarshalStruct(_fbthrift_python_types.Struct, _fbthrift_compatible_with_Mar
     ) -> _typing.Self: ...
     def __iter__(self) -> _typing.Iterator[_typing.Tuple[str, _typing.Union[str, int, str, str]]]: ...
     def _to_python(self) -> _typing.Self: ...
+    def _to_mutable_python(self) -> "test.fixtures.python_capi.serialized_dep.thrift_mutable_types.MarshalStruct": ...  # type: ignore
     def _to_py3(self) -> "test.fixtures.python_capi.serialized_dep.types.MarshalStruct": ...  # type: ignore
     def _to_py_deprecated(self) -> "serialized_dep.ttypes.MarshalStruct": ...  # type: ignore
-
+_fbthrift_MarshalStruct = MarshalStruct
 
 class _fbthrift_compatible_with_MarshalUnion:
     pass
 
 
-class MarshalUnion(_fbthrift_python_types.Union, _fbthrift_compatible_with_MarshalUnion):
+class MarshalUnion(_fbthrift_python_types.Union, _fbthrift_compatible_with_MarshalUnion, _fbthrift_python_abstract_types.MarshalUnion):
     s: _typing.Final[str] = ...
     i: _typing.Final[int] = ...
     def __init__(
@@ -147,23 +157,29 @@ class MarshalUnion(_fbthrift_python_types.Union, _fbthrift_compatible_with_Marsh
         s: MarshalUnion.Type = ...
         i: MarshalUnion.Type = ...
 
-    FbThriftUnionFieldEnum = Type
+    class FbThriftUnionFieldEnum(enum.Enum):
+        EMPTY: MarshalUnion.FbThriftUnionFieldEnum = ...
+        s: MarshalUnion.FbThriftUnionFieldEnum = ...
+        i: MarshalUnion.FbThriftUnionFieldEnum = ...
 
+    fbthrift_current_value: _typing.Final[_typing.Union[None, str, int]]
+    fbthrift_current_field: _typing.Final[FbThriftUnionFieldEnum]
     @classmethod
     def fromValue(cls, value: _typing.Union[None, str, int]) -> MarshalUnion: ...
     value: _typing.Final[_typing.Union[None, str, int]]
     type: _typing.Final[Type]
     def get_type(self) -> Type: ...
     def _to_python(self) -> _typing.Self: ...
+    def _to_mutable_python(self) -> "test.fixtures.python_capi.serialized_dep.thrift_mutable_types.MarshalUnion": ...  # type: ignore
     def _to_py3(self) -> "test.fixtures.python_capi.serialized_dep.types.MarshalUnion": ...  # type: ignore
     def _to_py_deprecated(self) -> "serialized_dep.ttypes.MarshalUnion": ...  # type: ignore
-
+_fbthrift_MarshalUnion = MarshalUnion
 
 class _fbthrift_compatible_with_MarshalError:
     pass
 
 
-class MarshalError(_fbthrift_python_exceptions.GeneratedError, _fbthrift_compatible_with_MarshalError):
+class MarshalError(_fbthrift_python_exceptions.GeneratedError, _fbthrift_compatible_with_MarshalError, _fbthrift_python_abstract_types.MarshalError):
     msg: _typing.Final[str] = ...
     os: _typing.Final[_typing.Optional[str]] = ...
     rs: _typing.Final[str] = ...
@@ -176,5 +192,7 @@ class MarshalError(_fbthrift_python_exceptions.GeneratedError, _fbthrift_compati
 
     def __iter__(self) -> _typing.Iterator[_typing.Tuple[str, _typing.Union[str, str, str]]]: ...
     def _to_python(self) -> _typing.Self: ...
+    def _to_mutable_python(self) -> "test.fixtures.python_capi.serialized_dep.thrift_mutable_types.MarshalError": ...  # type: ignore
     def _to_py3(self) -> "test.fixtures.python_capi.serialized_dep.types.MarshalError": ...  # type: ignore
     def _to_py_deprecated(self) -> "serialized_dep.ttypes.MarshalError": ...  # type: ignore
+_fbthrift_MarshalError = MarshalError

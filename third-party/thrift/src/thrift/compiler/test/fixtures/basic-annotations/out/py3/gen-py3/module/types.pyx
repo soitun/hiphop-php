@@ -29,8 +29,6 @@ from thrift.py3.types cimport (
     init_unicode_from_cpp as __init_unicode_from_cpp,
     set_iter as __set_iter,
     map_iter as __map_iter,
-    map_contains as __map_contains,
-    map_getitem as __map_getitem,
     reference_shared_ptr as __reference_shared_ptr,
     get_field_name_by_index as __get_field_name_by_index,
     reset_field as __reset_field,
@@ -61,6 +59,7 @@ from module.containers_FBTHRIFT_ONLY_DO_NOT_USE import (
     std_deque_std_string__List__string,
 )
 
+_fbthrift__module_name__ = "module.types"
 
 cdef object get_types_reflection():
     return importlib.import_module(
@@ -69,6 +68,8 @@ cdef object get_types_reflection():
 
 @__cython.auto_pickle(False)
 cdef class MyStructNestedAnnotation(thrift.py3.types.Struct):
+    __module__ = _fbthrift__module_name__
+
     def __init__(MyStructNestedAnnotation self, **kwargs):
         self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = make_shared[_module_cbindings.cMyStructNestedAnnotation]()
         self._fields_setter = _fbthrift_types_fields.__MyStructNestedAnnotation_FieldsSetter._fbthrift_create(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE.get())
@@ -182,6 +183,8 @@ cdef class MyStructNestedAnnotation(thrift.py3.types.Struct):
 
 @__cython.auto_pickle(False)
 cdef class SecretStruct(thrift.py3.types.Struct):
+    __module__ = _fbthrift__module_name__
+
     def __init__(SecretStruct self, **kwargs):
         self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = make_shared[_module_cbindings.cSecretStruct]()
         self._fields_setter = _fbthrift_types_fields.__SecretStruct_FieldsSetter._fbthrift_create(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE.get())
@@ -301,16 +304,16 @@ cdef class SecretStruct(thrift.py3.types.Struct):
         py_deprecated_types = importlib.import_module("module.ttypes")
         return thrift.util.converter.to_py_struct(py_deprecated_types.SecretStruct, self)
 
-
 cdef _module_cbindings.std_deque_std_string std_deque_std_string__List__string__make_instance(object items) except *:
     cdef _module_cbindings.std_deque_std_string c_inst
-    if items is not None:
-        if isinstance(items, str):
-            raise TypeError("If you really want to pass a string into a _typing.Sequence[str] field, explicitly convert it first.")
-        for item in items:
-            if not isinstance(item, str):
-                raise TypeError(f"{item!r} is not of type str")
-            c_inst.push_back(item.encode('UTF-8'))
+    if items is None:
+        return cmove(c_inst)
+    if isinstance(items, str):
+        raise TypeError("If you really want to pass a string into a _typing.Sequence[str] field, explicitly convert it first.")
+    for item in items:
+        if not isinstance(item, str):
+            raise TypeError(f"{item!r} is not of type str")
+        c_inst.push_back(item.encode('UTF-8'))
     return cmove(c_inst)
 
 cdef object std_deque_std_string__List__string__from_cpp(const _module_cbindings.std_deque_std_string& c_vec) except *:

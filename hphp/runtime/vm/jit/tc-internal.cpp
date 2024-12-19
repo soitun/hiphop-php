@@ -19,7 +19,6 @@
 
 #include "hphp/runtime/base/init-fini-node.h"
 #include "hphp/runtime/base/perf-warning.h"
-#include "hphp/runtime/base/runtime-option.h"
 #include "hphp/runtime/base/stats.h"
 #include "hphp/runtime/base/bespoke/layout.h"
 #include "hphp/runtime/vm/debug/debug.h"
@@ -28,6 +27,7 @@
 
 #include "hphp/runtime/vm/jit/code-cache.h"
 #include "hphp/runtime/vm/jit/guard-type-profile.h"
+#include "hphp/runtime/vm/jit/mcgen-async.h"
 #include "hphp/runtime/vm/jit/mcgen-translate.h"
 #include "hphp/runtime/vm/jit/mcgen.h"
 #include "hphp/runtime/vm/jit/perf-counters.h"
@@ -45,6 +45,7 @@
 #include "hphp/runtime/vm/jit/vasm-emit.h"
 #include "hphp/runtime/vm/jit/write-lease.h"
 
+#include "hphp/util/configs/codecache.h"
 #include "hphp/util/configs/eval.h"
 #include "hphp/util/configs/hhir.h"
 #include "hphp/util/disasm.h"
@@ -155,8 +156,8 @@ TranslationResult::Scope shouldTranslateNoSizeLimit(SrcKey sk, TransKind kind,
 
   auto const maxTransTime = Cfg::Jit::MaxRequestTranslationTime;
   if (maxTransTime >= 0 &&
-      RuntimeOption::ServerExecutionMode() &&
-      !Cfg::Eval::EnableAsyncJIT) {
+      Cfg::Server::Mode &&
+      !mcgen::isAsyncJitEnabled(kind)) {
     auto const transCounter = Timer::CounterValue(Timer::mcg_translate);
     if (transCounter.wall_time_elapsed >= maxTransTime) {
       if (Trace::moduleEnabledRelease(Trace::mcg, 1)) {
@@ -240,9 +241,9 @@ TranslationResult::Scope shouldTranslate(SrcKey sk, TransKind kind,
   const bool reachedMaxLiveMainLimit =
     getLiveMainUsage() >= Cfg::Jit::MaxLiveMainUsage;
 
-  auto const main_under = code().main().used() < CodeCache::AMaxUsage;
-  auto const cold_under = code().cold().used() < CodeCache::AColdMaxUsage;
-  auto const froz_under = code().frozen().used() < CodeCache::AFrozenMaxUsage;
+  auto const main_under = code().main().used() < Cfg::CodeCache::AMaxUsage;
+  auto const cold_under = code().cold().used() < Cfg::CodeCache::AColdMaxUsage;
+  auto const froz_under = code().frozen().used() < Cfg::CodeCache::AFrozenMaxUsage;
 
   if (!reachedMaxLiveMainLimit && main_under && cold_under && froz_under) {
     return shouldTranslateNoSizeLimit(sk, kind, noThreshold);
@@ -402,7 +403,7 @@ void checkFreeProfData() {
   // generated.
   if (profData() &&
       !Cfg::Eval::EnableReusableTC &&
-      (code().main().used() >= CodeCache::AMaxUsage ||
+      (code().main().used() >= Cfg::CodeCache::AMaxUsage ||
        getLiveMainUsage() >= Cfg::Jit::MaxLiveMainUsage) &&
       !transdb::enabled() &&
       !mcgen::retranslateAllEnabled()) {
@@ -429,7 +430,7 @@ bool profileFunc(const Func* func) {
   // being added to ProfData.
   if (mcgen::retranslateAllScheduled()) return false;
 
-  if (code().main().used() >= CodeCache::AMaxUsage) return false;
+  if (code().main().used() >= Cfg::CodeCache::AMaxUsage) return false;
 
   if (getLiveMainUsage() >= Cfg::Jit::MaxLiveMainUsage) {
     return false;
@@ -480,30 +481,30 @@ Translator::Translator(SrcKey sk, TransKind kind)
 
 Translator::~Translator() = default;
 
-Optional<TranslationResult>
-Translator::acquireLeaseAndRequisitePaperwork() {
+bool Translator::shouldEmitLiveTranslation() {
   computeKind();
-
   // Avoid a race where we would create a Live translation while
   // retranslateAll is in flight and we haven't generated an
   // Optimized translation yet.
-  auto const shouldEmitLiveTranslation = [&] {
-    if (mcgen::retranslateAllPending() && !isProfiling(kind) && profData()) {
-      // When bespokes are enabled, we can't emit live translations until the
-      // bespoke hierarchy is finalized.
-      if (allowBespokeArrayLikes() && !bespoke::Layout::HierarchyFinalized()) {
-        return false;
-      }
-      // Functions that are marked as being profiled or marked as having been
-      // optimized are about to have their translations invalidated during the
-      // publish phase of retranslate all.  Don't allow live translations to be
-      // emitted in this scenario.
-      auto const fid = sk.func()->getFuncId();
-      return !profData()->profiling(fid) &&
-             !profData()->optimized(fid);
+  if (mcgen::retranslateAllPending() && !isProfiling(kind) && profData()) {
+    // When bespokes are enabled, we can't emit live translations until the
+    // bespoke hierarchy is finalized.
+    if (allowBespokeArrayLikes() && !bespoke::Layout::HierarchyFinalized()) {
+      return false;
     }
-    return true;
-  };
+    // Functions that are marked as being profiled or marked as having been
+    // optimized are about to have their translations invalidated during the
+    // publish phase of retranslate all.  Don't allow live translations to be
+    // emitted in this scenario.
+    auto const fid = sk.func()->getFuncId();
+    return !profData()->profiling(fid) &&
+           !profData()->optimized(fid);
+  }
+  return true;
+}
+
+Optional<TranslationResult>
+Translator::acquireLeaseAndRequisitePaperwork() {
   if (!shouldEmitLiveTranslation()) {
     return TranslationResult::failTransiently();
   }
@@ -630,7 +631,7 @@ Translator::translate(Optional<CodeCache::View> view) {
         e.setStr("data_block", dbFull.name);
         e.setInt("bytes_dropped", bytes);
       });
-      if (RuntimeOption::ServerExecutionMode()) {
+      if (Cfg::Server::Mode) {
         Logger::Warning("TC area %s filled up!", dbFull.name.c_str());
       }
       reset();

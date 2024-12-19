@@ -35,6 +35,7 @@ from thrift.py3.types cimport (
 from thrift.python.common cimport cThriftMetadata as __fbthrift_cThriftMetadata
 cimport thrift.py3.exceptions
 cimport thrift.py3.types
+from libc.stdint cimport int64_t
 from thrift.python.common cimport (
     RpcOptions as __RpcOptions,
     MetadataBox as __MetadataBox,
@@ -53,9 +54,10 @@ cdef extern from "thrift/compiler/test/fixtures/refs/gen-py3/module/types.h":
 
 cdef class MyUnion(thrift.py3.types.Union):
     cdef shared_ptr[_module_cbindings.cMyUnion] _cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE
-    cdef readonly object type
-    cdef readonly object value
-    cdef _load_cache(MyUnion self)
+    cdef int64_t type_int
+    cdef object py_type
+    cdef object py_value
+    cdef _initialize_py(MyUnion self)
 
     @staticmethod
     cdef unique_ptr[_module_cbindings.cMyUnion] _make_instance(
@@ -71,9 +73,10 @@ cdef class MyUnion(thrift.py3.types.Union):
 
 cdef class NonTriviallyDestructibleUnion(thrift.py3.types.Union):
     cdef shared_ptr[_module_cbindings.cNonTriviallyDestructibleUnion] _cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE
-    cdef readonly object type
-    cdef readonly object value
-    cdef _load_cache(NonTriviallyDestructibleUnion self)
+    cdef int64_t type_int
+    cdef object py_type
+    cdef object py_value
+    cdef _initialize_py(NonTriviallyDestructibleUnion self)
 
     @staticmethod
     cdef unique_ptr[_module_cbindings.cNonTriviallyDestructibleUnion] _make_instance(
@@ -158,7 +161,7 @@ cdef class StructWithContainers(thrift.py3.types.Struct):
     cdef inline object list_ref_shared_const_impl(self)
     cdef object __fbthrift_cached_list_ref
     cdef object __fbthrift_cached_set_ref
-    cdef Map__i32_i32 __fbthrift_cached_map_ref
+    cdef object __fbthrift_cached_map_ref
     cdef object __fbthrift_cached_list_ref_unique
     cdef object __fbthrift_cached_set_ref_shared
     cdef object __fbthrift_cached_list_ref_shared_const
@@ -351,13 +354,7 @@ cdef object List__i32__from_cpp(const vector[cint32_t]&) except *
 cdef cset[cint32_t] Set__i32__make_instance(object items) except *
 cdef object Set__i32__from_cpp(const cset[cint32_t]&) except *
 
-cdef class Map__i32_i32(thrift.py3.types.Map):
-    cdef shared_ptr[cmap[cint32_t,cint32_t]] _cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE
-    @staticmethod
-    cdef _create_FBTHRIFT_ONLY_DO_NOT_USE(shared_ptr[cmap[cint32_t,cint32_t]])
-    cdef _check_key_type(self, key)
-
-cdef shared_ptr[cmap[cint32_t,cint32_t]] Map__i32_i32__make_instance(object items) except *
+cdef cmap[cint32_t,cint32_t] Map__i32_i32__make_instance(object items) except *
 cdef object Map__i32_i32__from_cpp(const cmap[cint32_t,cint32_t]&) except *
 
 cdef vector[cint64_t] List__i64__make_instance(object items) except *

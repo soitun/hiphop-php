@@ -83,18 +83,20 @@ TEST(CompilerTest, redefinition) {
 TEST(CompilerTest, zero_as_field_id) {
   check_compile(R"(
     struct Foo {
-      0: i32 field; # expected-warning: Nonpositive field id (0) differs from what is auto-assigned by thrift. The id must be positive or -1.
-                    # expected-warning@-1:  No field id specified for `field`, resulting protocol may have conflicts or not be backwards compatible!
+        0: i32 field; # expected-warning: Nonpositive field id (0) differs from what would be auto-assigned by thrift (if 'allow-neg-keys' was disabled): -1
+                      # expected-error@-1: Zero value (0) not allowed as a field id for `field`
       1: list<i32> other;
     }
   )");
 }
 
+// NOTE: As of Nov 2024, allow-neg-keys is ignored, so this should be identical
+// to the "zero_as_field_id" case above.
 TEST(CompilerTest, zero_as_field_id_neg_keys) {
   check_compile(
       R"(
       struct Foo {
-        0: i32 field; # expected-warning: Nonpositive field id (0) differs from what would be auto-assigned by thrift (-1).
+        0: i32 field; # expected-warning: Nonpositive field id (0) differs from what would be auto-assigned by thrift (if 'allow-neg-keys' was disabled): -1
                       # expected-error@-1: Zero value (0) not allowed as a field id for `field`
         1: list<i32> other;
       }
@@ -103,20 +105,6 @@ TEST(CompilerTest, zero_as_field_id_neg_keys) {
 }
 
 TEST(CompilerTest, no_field_id) {
-  check_compile(R"(
-    struct Experimental {} (thrift.uri = "facebook.com/thrift/annotation/Experimental") # expected-warning: The annotation thrift.uri is deprecated. Please use @thrift.Uri instead.
-    struct Foo {
-      @Experimental
-      i32 field2; # expected-warning@-1: No field id specified for `field2`, resulting protocol may have conflicts or not be backwards compatible!
-    }
-
-    struct Bar {
-      i32 field4; # expected-warning: No field id specified for `field4`, resulting protocol may have conflicts or not be backwards compatible!
-    }
-  )");
-}
-
-TEST(CompilerTest, no_field_id_with_validation) {
   check_compile(
       R"(
     struct Experimental {} (thrift.uri = "facebook.com/thrift/annotation/Experimental") # expected-warning: The annotation thrift.uri is deprecated. Please use @thrift.Uri instead.
@@ -127,34 +115,18 @@ TEST(CompilerTest, no_field_id_with_validation) {
 
     struct Bar {
       i32 field4; # expected-error: No field id specified for `field4`
-    }
-  )",
-      {"--extra-validation", "implicit_field_ids"});
+    })");
 }
 
 TEST(CompilerTest, zero_as_field_id_annotation) {
   check_compile(R"(
     struct Foo {
       0: i32 field (cpp.deprecated_allow_zero_as_field_id);
-        # expected-warning@-1: Nonpositive field id (0) differs from what is auto-assigned by thrift. The id must be positive or -1.
-        # expected-warning@-2: No field id specified for `field`, resulting protocol may have conflicts or not be backwards compatible!
+        # expected-warning@-1: Nonpositive field id (0) differs from what would be auto-assigned by thrift (if 'allow-neg-keys' was disabled): -1
 
       1: list<i32> other;
     }
   )");
-}
-
-TEST(CompilerTest, zero_as_field_id_allow_neg_keys) {
-  check_compile(
-      R"(
-      struct Foo {
-        0: i32 field (cpp.deprecated_allow_zero_as_field_id);
-          # expected-warning@-1: Nonpositive field id (0) differs from what would be auto-assigned by thrift (-1).
-
-        1: list<i32> other;
-      }
-      )",
-      {"--allow-neg-keys"});
 }
 
 TEST(CompilerTest, neg_field_ids) {
@@ -162,17 +134,16 @@ TEST(CompilerTest, neg_field_ids) {
       R"(
       struct Foo {
         i32 f1;  // auto id = -1
-          # expected-warning@-1: No field id specified for `f1`, resulting protocol may have conflicts or not be backwards compatible!
+          # expected-error@-1: No field id specified for `f1`
 
         -2: i32 f2; // auto and manual id = -2
         -32: i32 f3; // min value.
-          # expected-warning@-1: Nonpositive field id (-32) differs from what would be auto-assigned by thrift (-3).
+          # expected-warning@-1: Nonpositive field id (-32) differs from what would be auto-assigned by thrift (if 'allow-neg-keys' was disabled): -3
 
         -33: i32 f4; // min value - 1.
           # expected-error@-1: Reserved field id (-33) cannot be used for `f4`.
       }
-      )",
-      {"--allow-neg-keys"});
+      )");
 }
 
 TEST(CompilerTest, exhausted_neg_field_ids) {
@@ -180,13 +151,12 @@ TEST(CompilerTest, exhausted_neg_field_ids) {
       R"(
       struct Foo {
         -32: i32 f1; // min value.
-          # expected-warning@-1: Nonpositive field id (-32) differs from what would be auto-assigned by thrift (-1).
+          # expected-warning@-1: Nonpositive field id (-32) differs from what would be auto-assigned by thrift (if 'allow-neg-keys' was disabled): -1
 
         i32 f2; // auto id = -2 or min value - 1
           # expected-error@-1: Cannot allocate an id for `f2`. Automatic field ids are exhausted.
       }
-      )",
-      {"--allow-neg-keys"});
+      )");
 }
 
 TEST(CompilerTest, exhausted_pos_field_ids) {
@@ -205,10 +175,11 @@ TEST(CompilerTest, exhausted_pos_field_ids) {
 TEST(CompilerTest, out_of_range_field_ids_overflow) {
   check_compile(R"(
     struct Foo {
-      -32768: i32 f1; # expected-warning: Nonpositive field id (-32768) differs from what is auto-assigned by thrift. The id must be positive or -1.
+      -32768: i32 f1; # expected-warning: Nonpositive field id (-32768) differs from what would be auto-assigned by thrift (if 'allow-neg-keys' was disabled): -1
       32767: i32 f2;
       32768: i32 f3; # expected-error: Integer constant 32768 outside the range of field ids ([-32768, 32767]).
-                     # expected-warning@-1: Nonpositive field id (-32768) differs from what is auto-assigned by thrift. The id must be positive or -2.
+        # expected-error@-1: Field id -32768 for `f3` has already been used.
+        # expected-warning@-2: Nonpositive field id (-32768) differs from what would be auto-assigned by thrift (if 'allow-neg-keys' was disabled): 32767
     }
   )");
 }
@@ -216,7 +187,7 @@ TEST(CompilerTest, out_of_range_field_ids_overflow) {
 TEST(CompilerTest, out_of_range_field_ids_underflow) {
   check_compile(R"(
     struct Foo {
-      -32768: i32 f1; # expected-warning: Nonpositive field id (-32768) differs from what is auto-assigned by thrift. The id must be positive or -1.
+      -32768: i32 f1; # expected-warning: Nonpositive field id (-32768) differs from what would be auto-assigned by thrift (if 'allow-neg-keys' was disabled): -1
       32767: i32 f2;
 
       -32769: i32 f3; # expected-error: Integer constant -32769 outside the range of field ids ([-32768, 32767]).
@@ -1236,27 +1207,32 @@ TEST(CompilerTest, boxed_ref_and_optional) {
 
     struct A {
         1: optional i64 field (cpp.ref, thrift.box);
-          # expected-error@-1: The `@thrift.Box` annotation cannot be combined with the other reference annotations. Only annotate a single reference annotations from `field`.
+          # expected-error@-1: The `@thrift.Box` annotation cannot be combined with the other reference annotations. Only annotate a single reference annotation from `field`.
           # expected-warning@-2: The annotation thrift.box is deprecated. Please use @thrift.Box instead.
+
         @thrift.Box
-          # expected-error@-1: The `@thrift.InternBox` annotation cannot be combined with the other reference annotations. Only annotate a single reference annotations from `field2`.
+          # expected-error@-1: The `@thrift.InternBox` annotation cannot be combined with the other reference annotations. Only annotate a single reference annotation from `field2`.
           # expected-error@-2: The `@thrift.InternBox` annotation can only be used with a struct field.
           # expected-error@-3: The `@thrift.InternBox` annotation can only be used with unqualified or terse fields. Make sure `field2` is unqualified or annotated with `@thrift.TerseWrite`.
         @thrift.InternBox
         2: optional i64 field2;
+
         @thrift.InternBox
           # expected-error@-1: The `@thrift.InternBox` annotation currently does not support a field with custom default.
         3: MyStruct field3 = {"field1" : 1};
+
         @cpp.Ref
-          # expected-error@-1: The `@thrift.InternBox` annotation cannot be combined with the other reference annotations. Only annotate a single reference annotations from `field4`.
+          # expected-error@-1: The `@thrift.InternBox` annotation cannot be combined with the other reference annotations. Only annotate a single reference annotation from `field4`.
           # expected-error@-2: The `thrift.box` annotation can only be used with optional fields. Make sure `field4` is optional.
         @thrift.Box
         @thrift.InternBox
         @thrift.TerseWrite
         4: MyStruct field4;
+
         @thrift.InternBox
         @thrift.TerseWrite
         5: MyStruct field5;
+
         @thrift.InternBox
         @thrift.TerseWrite
         6: MyStruct2 field6;
@@ -1271,31 +1247,240 @@ TEST(CompilerTest, unique_ref) {
     struct Bar {
       1: optional Foo field1 (cpp.ref);
         # expected-warning@-1: cpp.ref, cpp2.ref are deprecated. Please use @thrift.Box annotation instead in `field1`.
+
       2: optional Foo field2 (cpp2.ref);
         # expected-warning@-1: cpp.ref, cpp2.ref are deprecated. Please use @thrift.Box annotation instead in `field2`.
+
       @cpp.Ref{type = cpp.RefType.Unique}
       3: optional Foo field3;
         # expected-warning@-2: @cpp.Ref{type = cpp.RefType.Unique} is deprecated. Please use @thrift.Box annotation instead in `field3`.
+
       @cpp.Ref{type = cpp.RefType.Shared}
       4: optional Foo field4;
+
       @cpp.Ref{type = cpp.RefType.SharedMutable}
       5: optional Foo field5;
+
       6: optional Foo field6 (cpp.ref_type = "unique");
         # expected-warning@-1: cpp.ref_type = `unique`, cpp2.ref_type = `unique` are deprecated. Please use @thrift.Box annotation instead in `field6`.
+
       7: optional Foo field7 (cpp2.ref_type = "unique");
         # expected-warning@-1: cpp.ref_type = `unique`, cpp2.ref_type = `unique` are deprecated. Please use @thrift.Box annotation instead in `field7`.
+
       8: optional Foo field8 (cpp.ref_type = "shared");
+
       9: optional Foo field9 (cpp2.ref_type = "shared");
+
       10: optional Foo field10 (cpp.ref = "true");
         # expected-warning@-1: cpp.ref, cpp2.ref are deprecated. Please use @thrift.Box annotation instead in `field10`.
+
       11: optional Foo field11 (cpp2.ref = "true");
         # expected-warning@-1: cpp.ref, cpp2.ref are deprecated. Please use @thrift.Box annotation instead in `field11`.
+
       12: optional Foo field12;
+
       13: optional Foo field13;
     }
 
     struct Foo {}
   )");
+}
+
+TEST(CompilerTest, non_optional_ref_and_box) {
+  check_compile(R"(
+    include "thrift/annotation/cpp.thrift"
+    include "thrift/annotation/thrift.thrift"
+
+    struct Bar {
+      1: Foo field1 (cpp.ref);
+        # expected-warning@-1: Field with @cpp.Ref (or similar) annotation should be optional: `field1` (in `Bar`).
+
+      2: Foo field2 (cpp2.ref);
+        # expected-warning@-1: Field with @cpp.Ref (or similar) annotation should be optional: `field2` (in `Bar`).
+
+      @cpp.Ref{type = cpp.RefType.Unique}
+      3: Foo field3;
+        # expected-warning@-2: Field with @cpp.Ref (or similar) annotation should be optional: `field3` (in `Bar`).
+
+      @cpp.Ref{type = cpp.RefType.Shared}
+      4: Foo field4;
+        # expected-warning@-2: Field with @cpp.Ref (or similar) annotation should be optional: `field4` (in `Bar`).
+
+      @cpp.Ref{type = cpp.RefType.SharedMutable}
+      5: Foo field5;
+        # expected-warning@-2: Field with @cpp.Ref (or similar) annotation should be optional: `field5` (in `Bar`).
+
+      6: Foo field6 (cpp.ref_type = "unique");
+        # expected-warning@-1: Field with @cpp.Ref (or similar) annotation should be optional: `field6` (in `Bar`).
+
+      7: Foo field7 (cpp2.ref_type = "unique");
+        # expected-warning@-1: Field with @cpp.Ref (or similar) annotation should be optional: `field7` (in `Bar`).
+
+      8: Foo field8 (cpp.ref_type = "shared");
+        # expected-warning@-1: Field with @cpp.Ref (or similar) annotation should be optional: `field8` (in `Bar`).
+
+      9: Foo field9 (cpp2.ref_type = "shared");
+        # expected-warning@-1: Field with @cpp.Ref (or similar) annotation should be optional: `field9` (in `Bar`).
+
+      10: Foo field10 (cpp.ref = "true");
+        # expected-warning@-1: Field with @cpp.Ref (or similar) annotation should be optional: `field10` (in `Bar`).
+
+      11: Foo field11 (cpp2.ref = "true");
+        # expected-warning@-1: Field with @cpp.Ref (or similar) annotation should be optional: `field11` (in `Bar`).
+
+      12: Foo field12;
+
+      @thrift.Box
+      13: Foo field13;
+        # expected-error@-2: The `thrift.box` annotation can only be used with optional fields. Make sure `field13` is optional.
+    }
+
+    struct Foo {}
+  )");
+}
+
+TEST(CompilerTest, non_optional_ref_and_box_forbidden) {
+  check_compile(
+      R"(
+    include "thrift/annotation/cpp.thrift"
+    include "thrift/annotation/thrift.thrift"
+
+    struct Bar {
+      1: Foo field1 (cpp.ref);
+        # expected-error@-1: Field with @cpp.Ref (or similar) annotation must be optional: `field1` (in `Bar`).
+
+      2: Foo field2 (cpp2.ref);
+        # expected-error@-1: Field with @cpp.Ref (or similar) annotation must be optional: `field2` (in `Bar`).
+
+      @cpp.Ref{type = cpp.RefType.Unique}
+      3: Foo field3;
+        # expected-error@-2: Field with @cpp.Ref (or similar) annotation must be optional: `field3` (in `Bar`).
+
+      @cpp.Ref{type = cpp.RefType.Shared}
+      4: Foo field4;
+        # expected-error@-2: Field with @cpp.Ref (or similar) annotation must be optional: `field4` (in `Bar`).
+
+      @cpp.Ref{type = cpp.RefType.SharedMutable}
+      5: Foo field5;
+        # expected-error@-2: Field with @cpp.Ref (or similar) annotation must be optional: `field5` (in `Bar`).
+
+      6: Foo field6 (cpp.ref_type = "unique");
+        # expected-error@-1: Field with @cpp.Ref (or similar) annotation must be optional: `field6` (in `Bar`).
+
+      7: Foo field7 (cpp2.ref_type = "unique");
+        # expected-error@-1: Field with @cpp.Ref (or similar) annotation must be optional: `field7` (in `Bar`).
+
+      8: Foo field8 (cpp.ref_type = "shared");
+        # expected-error@-1: Field with @cpp.Ref (or similar) annotation must be optional: `field8` (in `Bar`).
+
+      9: Foo field9 (cpp2.ref_type = "shared");
+        # expected-error@-1: Field with @cpp.Ref (or similar) annotation must be optional: `field9` (in `Bar`).
+
+      10: Foo field10 (cpp.ref = "true");
+        # expected-error@-1: Field with @cpp.Ref (or similar) annotation must be optional: `field10` (in `Bar`).
+
+      11: Foo field11 (cpp2.ref = "true");
+        # expected-error@-1: Field with @cpp.Ref (or similar) annotation must be optional: `field11` (in `Bar`).
+
+      12: Foo field12;
+
+      @thrift.Box
+      13: Foo field13;
+        # expected-error@-2: The `thrift.box` annotation can only be used with optional fields. Make sure `field13` is optional.
+    }
+
+    struct Foo {}
+  )",
+
+      {"--extra-validation", "forbid_non_optional_cpp_ref_fields"});
+}
+
+TEST(CompilerTest, non_optional_ref_and_box_legacy_allowed) {
+  check_compile(
+      R"(
+    include "thrift/annotation/cpp.thrift"
+    include "thrift/annotation/thrift.thrift"
+
+    struct Bar {
+      @cpp.AllowLegacyNonOptionalRef
+      1: Foo field1 (cpp.ref);
+        # expected-warning@-2: Field with @cpp.Ref (or similar) annotation should be optional: `field1` (in `Bar`).
+
+      @cpp.AllowLegacyNonOptionalRef
+      2: Foo field2 (cpp2.ref);
+        # expected-warning@-2: Field with @cpp.Ref (or similar) annotation should be optional: `field2` (in `Bar`).
+
+      @cpp.Ref{type = cpp.RefType.Unique}
+      @cpp.AllowLegacyNonOptionalRef
+      3: Foo field3;
+        # expected-warning@-3: Field with @cpp.Ref (or similar) annotation should be optional: `field3` (in `Bar`).
+
+      @cpp.Ref{type = cpp.RefType.Shared}
+      @cpp.AllowLegacyNonOptionalRef
+      4: Foo field4;
+        # expected-warning@-3: Field with @cpp.Ref (or similar) annotation should be optional: `field4` (in `Bar`).
+
+      @cpp.Ref{type = cpp.RefType.SharedMutable}
+      @cpp.AllowLegacyNonOptionalRef
+      5: Foo field5;
+        # expected-warning@-3: Field with @cpp.Ref (or similar) annotation should be optional: `field5` (in `Bar`).
+
+      @cpp.AllowLegacyNonOptionalRef
+      6: Foo field6 (cpp.ref_type = "unique");
+        # expected-warning@-2: Field with @cpp.Ref (or similar) annotation should be optional: `field6` (in `Bar`).
+
+      @cpp.AllowLegacyNonOptionalRef
+      7: Foo field7 (cpp2.ref_type = "unique");
+        # expected-warning@-2: Field with @cpp.Ref (or similar) annotation should be optional: `field7` (in `Bar`).
+
+      @cpp.AllowLegacyNonOptionalRef
+      8: Foo field8 (cpp.ref_type = "shared");
+        # expected-warning@-2: Field with @cpp.Ref (or similar) annotation should be optional: `field8` (in `Bar`).
+
+      @cpp.AllowLegacyNonOptionalRef
+      9: Foo field9 (cpp2.ref_type = "shared");
+        # expected-warning@-2: Field with @cpp.Ref (or similar) annotation should be optional: `field9` (in `Bar`).
+
+      @cpp.AllowLegacyNonOptionalRef
+      10: Foo field10 (cpp.ref = "true");
+        # expected-warning@-2: Field with @cpp.Ref (or similar) annotation should be optional: `field10` (in `Bar`).
+
+      @cpp.AllowLegacyNonOptionalRef
+      11: Foo field11 (cpp2.ref = "true");
+        # expected-warning@-2: Field with @cpp.Ref (or similar) annotation should be optional: `field11` (in `Bar`).
+
+      12: Foo field12;
+
+      @thrift.Box
+      13: Foo field13;
+        # expected-error@-2: The `thrift.box` annotation can only be used with optional fields. Make sure `field13` is optional.
+    }
+
+    struct Foo {}
+  )",
+
+      {"--extra-validation", "forbid_non_optional_cpp_ref_fields"});
+}
+
+TEST(CompilerTest, non_optional_ref_legacy_allowed_annotation_on_wrong_field) {
+  check_compile(
+      R"(
+    include "thrift/annotation/cpp.thrift"
+    include "thrift/annotation/thrift.thrift"
+
+    struct Bar {
+      1: Foo field1 (cpp.ref);
+        # expected-error@-1: Field with @cpp.Ref (or similar) annotation must be optional: `field1` (in `Bar`).
+
+      @cpp.AllowLegacyNonOptionalRef
+      2: Foo field2;
+        # expected-error@-2: Cannot annotate field with @cpp.AllowLegacyNonOptionalRef unless it is a reference field (i.e., @cpp.Ref): `field2`.
+    }
+
+    struct Foo {}
+  )",
+
+      {"--extra-validation", "forbid_non_optional_cpp_ref_fields"});
 }
 
 TEST(CompilerTest, nonexistent_field_name) {
@@ -1579,7 +1764,6 @@ TEST(CompilerTest, inject_metadata_fields_annotation) {
     // the field id gets implicitly converted -1.
     struct BoundaryFields {
       -1: i64 underflow;
-        # expected-warning@-1: Nonpositive value (-1) not allowed as a field id.
       1: i64 lower_boundary;
       999: i64 upper_boundary;
       1000: i64 overflow;
@@ -1980,7 +2164,7 @@ TEST(CompilerTest, warn_on_non_explicit_includes) {
   )";
 
   name_contents_map["path/to/transitive_struct_field.thrift"] = R"(
-    # expected-warning@3#original[]#replacement[include "path/to/upstream.thrift"\n]@5: Your thrift file depends on a type that it did not include. Please add the following include. [implicit-include]
+    # expected-error@3#original[]#replacement[include "path/to/upstream.thrift"\n]@5: Your thrift file depends on a type that it did not include. Please add the following include. [implicit-include]
     include "path/to/direct.thrift"
 
     struct A {

@@ -19,6 +19,7 @@ package thrift
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	rsocket "github.com/rsocket/rsocket-go"
 	"github.com/rsocket/rsocket-go/payload"
@@ -28,30 +29,31 @@ import (
 func rsocketBlock(ctx context.Context, client rsocket.Client, request payload.Payload) (payload.Payload, error) {
 	mono := client.RequestResponse(request)
 	// This implementation of subscriber avoids race conditions on close that is present in the default implementation in the rsocket library.
-	s := newSubscriber(ctx)
-	mono.SubscribeWith(ctx, s)
-	return s.Block()
+	sub := newSubscriber()
+	mono.SubscribeWith(ctx, sub)
+	return sub.Block(ctx)
 }
 
 type subsriber struct {
+	// Error and Complete are two possible terminal states.
 	errChan            chan error
-	valChan            chan payload.Payload
 	completeChan       chan struct{}
-	ctx                context.Context
+	payload            payload.Payload
+	payloadMutex       sync.Mutex
 	cancelSubscription func()
 }
 
-func newSubscriber(ctx context.Context) *subsriber {
+func newSubscriber() *subsriber {
 	return &subsriber{
 		errChan:      make(chan error, 1),
-		valChan:      make(chan payload.Payload, 1),
 		completeChan: make(chan struct{}, 1),
-		ctx:          ctx,
 	}
 }
 
 func (s *subsriber) OnNext(msg payload.Payload) {
-	s.valChan <- payload.Clone(msg)
+	s.payloadMutex.Lock()
+	defer s.payloadMutex.Unlock()
+	s.payload = payload.Clone(msg)
 }
 
 // OnError represents failed terminal state.
@@ -76,17 +78,17 @@ func (s *subsriber) OnSubscribe(ctx context.Context, subscription rx.Subscriptio
 	}
 }
 
-func (s *subsriber) Block() (payload.Payload, error) {
-	var val payload.Payload
+func (s *subsriber) Block(ctx context.Context) (payload.Payload, error) {
 	for {
 		select {
 		case err := <-s.errChan:
-			return val, err
-		case val = <-s.valChan:
+			return nil, err
 		case <-s.completeChan:
-			return val, nil
-		case <-s.ctx.Done():
-			return val, s.ctx.Err()
+			s.payloadMutex.Lock()
+			defer s.payloadMutex.Unlock()
+			return s.payload, nil
+		case <-ctx.Done():
+			return nil, ctx.Err()
 		}
 	}
 }

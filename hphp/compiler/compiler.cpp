@@ -464,7 +464,6 @@ RepoGlobalData getGlobalData() {
 
   Cfg::StoreToGlobalData(gd);
 
-  gd.EnableArgsInBacktraces      = RuntimeOption::EnableArgsInBacktraces;
   gd.EvalCoeffectEnforcementLevels = RO::EvalCoeffectEnforcementLevels;
 
   if (Option::ConstFoldFileBC) {
@@ -693,16 +692,16 @@ int prepareOptions(CompilerOptions &po, int argc, char **argv) {
   Cfg::Repo::Authoritative = true;
   // Set RepoPath to satisfy assertions (we need a path set in
   // RepoAuthoritative). It will never actually be used.
-  RuntimeOption::RepoPath = "/tmp/dummy.hhbc";
+  Cfg::Repo::Path = "/tmp/dummy.hhbc";
   // We don't want debug info in repo builds, since we don't support attaching
   // a debugger in repo authoritative mode, but we want the default for debug
   // info to be true so that it's present in sandboxes. Override that default
   // here, since we only get here when building for repo authoritative mode.
-  RuntimeOption::RepoDebugInfo = false;
+  Cfg::Repo::DebugInfo = false;
   RuntimeOption::Load(ini, runtime);
   Option::Load(ini, config);
   Cfg::Repo::Authoritative = false;
-  RuntimeOption::RepoPath = "";
+  Cfg::Repo::Path = "";
   Cfg::Jit::Enabled = false;
   Cfg::Eval::LowStaticArrays = false;
 
@@ -1356,7 +1355,6 @@ bool process(CompilerOptions &po) {
     auto const shouldIncludeInBuild = [&] (const Package::ParseMeta& p) {
       if (Cfg::Eval::ActiveDeployment.empty()) return true;
       if (Cfg::Eval::PackageV2) {
-        auto const file = Cfg::Server::SourceRoot + p.m_filepath->data();
         if (p.m_packageOverride) {
           auto const& packageInfo =
             RepoOptions::forFile(po.repoOptionsDir).packageInfo();
@@ -1366,6 +1364,7 @@ bool process(CompilerOptions &po) {
         }
         // match file with the include_path declarations and return
         // if most precise one that matches belongs to the active deployment
+        auto const file = p.m_filepath->toCppString();
         for (auto const& it : pathsInDeployment) {
           if (file.size() >= it.first.size() && std::equal(it.first.begin(), it.first.end(), file.begin())) {
             return it.second;

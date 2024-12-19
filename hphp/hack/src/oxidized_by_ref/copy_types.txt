@@ -1,3 +1,4 @@
+aast_defs::Argument
 aast_defs::ClassPtrKind
 aast_defs::CtxRefinement
 aast_defs::Hint_
@@ -265,6 +266,7 @@ typing_reason::ExprDepTypeReason
 typing_reason::FieldKind
 typing_reason::FlowKind
 typing_reason::LoclPhase
+typing_reason::PessimiseReason
 typing_reason::PosId
 typing_reason::PrjAsymm
 typing_reason::PrjSymm

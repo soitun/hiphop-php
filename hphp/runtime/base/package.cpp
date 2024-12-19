@@ -74,7 +74,8 @@ PackageInfo PackageInfo::fromFile(const std::filesystem::path& path) {
   PackageMap packages;
   DeploymentMap deployments;
 
-  auto info = package::package_info(Cfg::Eval::PackageV2, path.string());
+  auto info = package::package_info(
+    Cfg::Eval::PackageV2, Cfg::Server::SourceRoot, path.string());
 
   auto const convert = [&] (auto const& v) {
     hphp_vector_string_set result;
@@ -194,7 +195,7 @@ const PackageInfo::Deployment* PackageInfo::getActiveDeployment() const {
     return nullptr;
   };
 
-  if (Cfg::Repo::Authoritative || !RuntimeOption::ServerExecutionMode()) {
+  if (Cfg::Repo::Authoritative || !Cfg::Server::Mode) {
     return findDeploymentByName(Cfg::Eval::ActiveDeployment);
   }
   // If unset, set the cached active deployment to null by default.
@@ -203,7 +204,7 @@ const PackageInfo::Deployment* PackageInfo::getActiveDeployment() const {
       if (Cfg::Eval::PackageV2) {
         // If we're in the CLI server, get the active deployment from cli.hdf
         // Otherwise, read the active deployment from config.hdf
-        return is_cli_server_mode() ? findDeploymentByName(cli_get_active_deployment()) 
+        return is_cli_server_mode() ? findDeploymentByName(cli_get_active_deployment())
                                     : findDeploymentByName(Cfg::Eval::ActiveDeployment);
       }
       return findDeploymentByDomains();

@@ -7,10 +7,15 @@
 
 from __future__ import annotations
 
+import apache.thrift.metadata.thrift_types as _fbthrift_metadata
 import thrift.python.types as _fbthrift_python_types
-import apache.thrift.fixtures.types.module.thrift_metadata
+import typing as _std_python_typing
 
-class has_bitwise_ops(_fbthrift_python_types.Enum, int):
+class _fbthrift_compatible_with_has_bitwise_ops:
+    pass
+
+
+class has_bitwise_ops(_fbthrift_python_types.Enum, int, _fbthrift_compatible_with_has_bitwise_ops):
     none = 0
     zero = 1
     one = 2
@@ -21,25 +26,30 @@ class has_bitwise_ops(_fbthrift_python_types.Enum, int):
         return "module.has_bitwise_ops"
 
     @staticmethod
-    def __get_thrift_uri__():
+    def __get_thrift_uri__() -> _std_python_typing.Optional[str]:
         return "apache.org/thrift/fixtures/types/has_bitwise_ops"
 
     @staticmethod
-    def __get_metadata__():
-        return apache.thrift.fixtures.types.module.thrift_metadata.gen_metadata_enum_has_bitwise_ops()
+    def __get_metadata__() -> _fbthrift_metadata.ThriftMetadata:
+        return gen_metadata_enum_has_bitwise_ops()
 
-    def _to_python(self):
+    def _to_python(self) -> "has_bitwise_ops":
         return self
 
-    def _to_py3(self):
+    def _to_py3(self) -> "apache.thrift.fixtures.types.module.types.has_bitwise_ops": # type: ignore
         import importlib
         py3_types = importlib.import_module("apache.thrift.fixtures.types.module.types")
         return py3_types.has_bitwise_ops(self.value)
 
-    def _to_py_deprecated(self):
+    def _to_py_deprecated(self) -> int:
         return self.value
+import typing as _std_python_typing
 
-class is_unscoped(_fbthrift_python_types.Enum, int):
+class _fbthrift_compatible_with_is_unscoped:
+    pass
+
+
+class is_unscoped(_fbthrift_python_types.Enum, int, _fbthrift_compatible_with_is_unscoped):
     hello = 0
     world = 1
     @staticmethod
@@ -47,25 +57,30 @@ class is_unscoped(_fbthrift_python_types.Enum, int):
         return "module.is_unscoped"
 
     @staticmethod
-    def __get_thrift_uri__():
+    def __get_thrift_uri__() -> _std_python_typing.Optional[str]:
         return "apache.org/thrift/fixtures/types/is_unscoped"
 
     @staticmethod
-    def __get_metadata__():
-        return apache.thrift.fixtures.types.module.thrift_metadata.gen_metadata_enum_is_unscoped()
+    def __get_metadata__() -> _fbthrift_metadata.ThriftMetadata:
+        return gen_metadata_enum_is_unscoped()
 
-    def _to_python(self):
+    def _to_python(self) -> "is_unscoped":
         return self
 
-    def _to_py3(self):
+    def _to_py3(self) -> "apache.thrift.fixtures.types.module.types.is_unscoped": # type: ignore
         import importlib
         py3_types = importlib.import_module("apache.thrift.fixtures.types.module.types")
         return py3_types.is_unscoped(self.value)
 
-    def _to_py_deprecated(self):
+    def _to_py_deprecated(self) -> int:
         return self.value
+import typing as _std_python_typing
 
-class MyForwardRefEnum(_fbthrift_python_types.Enum, int):
+class _fbthrift_compatible_with_MyForwardRefEnum:
+    pass
+
+
+class MyForwardRefEnum(_fbthrift_python_types.Enum, int, _fbthrift_compatible_with_MyForwardRefEnum):
     ZERO = 0
     NONZERO = 12
     @staticmethod
@@ -73,20 +88,90 @@ class MyForwardRefEnum(_fbthrift_python_types.Enum, int):
         return "module.MyForwardRefEnum"
 
     @staticmethod
-    def __get_thrift_uri__():
+    def __get_thrift_uri__() -> _std_python_typing.Optional[str]:
         return "apache.org/thrift/fixtures/types/MyForwardRefEnum"
 
     @staticmethod
-    def __get_metadata__():
-        return apache.thrift.fixtures.types.module.thrift_metadata.gen_metadata_enum_MyForwardRefEnum()
+    def __get_metadata__() -> _fbthrift_metadata.ThriftMetadata:
+        return gen_metadata_enum_MyForwardRefEnum()
 
-    def _to_python(self):
+    def _to_python(self) -> "MyForwardRefEnum":
         return self
 
-    def _to_py3(self):
+    def _to_py3(self) -> "apache.thrift.fixtures.types.module.types.MyForwardRefEnum": # type: ignore
         import importlib
         py3_types = importlib.import_module("apache.thrift.fixtures.types.module.types")
         return py3_types.MyForwardRefEnum(self.value)
 
-    def _to_py_deprecated(self):
+    def _to_py_deprecated(self) -> int:
         return self.value
+
+def _fbthrift_gen_metadata_enum_has_bitwise_ops(metadata_struct: _fbthrift_metadata.ThriftMetadata) -> _fbthrift_metadata.ThriftMetadata:
+    qualified_name = "module.has_bitwise_ops"
+
+    if qualified_name in metadata_struct.enums:
+        return metadata_struct
+    elements = {
+        0: "none",
+        1: "zero",
+        2: "one",
+        4: "two",
+        8: "three",
+    }
+    structured_annotations = [
+    ]
+    enum_dict = dict(metadata_struct.enums)
+    enum_dict[qualified_name] = _fbthrift_metadata.ThriftEnum(name=qualified_name, elements=elements, structured_annotations=structured_annotations)
+    new_struct = metadata_struct(enums=enum_dict)
+
+    return new_struct
+
+def gen_metadata_enum_has_bitwise_ops() -> _fbthrift_metadata.ThriftMetadata:
+    return _fbthrift_gen_metadata_enum_has_bitwise_ops(
+        _fbthrift_metadata.ThriftMetadata(structs={}, enums={}, exceptions={}, services={})
+    )
+
+def _fbthrift_gen_metadata_enum_is_unscoped(metadata_struct: _fbthrift_metadata.ThriftMetadata) -> _fbthrift_metadata.ThriftMetadata:
+    qualified_name = "module.is_unscoped"
+
+    if qualified_name in metadata_struct.enums:
+        return metadata_struct
+    elements = {
+        0: "hello",
+        1: "world",
+    }
+    structured_annotations = [
+    ]
+    enum_dict = dict(metadata_struct.enums)
+    enum_dict[qualified_name] = _fbthrift_metadata.ThriftEnum(name=qualified_name, elements=elements, structured_annotations=structured_annotations)
+    new_struct = metadata_struct(enums=enum_dict)
+
+    return new_struct
+
+def gen_metadata_enum_is_unscoped() -> _fbthrift_metadata.ThriftMetadata:
+    return _fbthrift_gen_metadata_enum_is_unscoped(
+        _fbthrift_metadata.ThriftMetadata(structs={}, enums={}, exceptions={}, services={})
+    )
+
+def _fbthrift_gen_metadata_enum_MyForwardRefEnum(metadata_struct: _fbthrift_metadata.ThriftMetadata) -> _fbthrift_metadata.ThriftMetadata:
+    qualified_name = "module.MyForwardRefEnum"
+
+    if qualified_name in metadata_struct.enums:
+        return metadata_struct
+    elements = {
+        0: "ZERO",
+        12: "NONZERO",
+    }
+    structured_annotations = [
+    ]
+    enum_dict = dict(metadata_struct.enums)
+    enum_dict[qualified_name] = _fbthrift_metadata.ThriftEnum(name=qualified_name, elements=elements, structured_annotations=structured_annotations)
+    new_struct = metadata_struct(enums=enum_dict)
+
+    return new_struct
+
+def gen_metadata_enum_MyForwardRefEnum() -> _fbthrift_metadata.ThriftMetadata:
+    return _fbthrift_gen_metadata_enum_MyForwardRefEnum(
+        _fbthrift_metadata.ThriftMetadata(structs={}, enums={}, exceptions={}, services={})
+    )
+

@@ -7,7 +7,6 @@ package python
 
 import (
     "maps"
-    "sync"
 
     thrift "github.com/facebook/fbthrift/thrift/lib/go/thrift/types"
     metadata "github.com/facebook/fbthrift/thrift/lib/thrift/metadata"
@@ -20,54 +19,59 @@ var _ = metadata.GoUnusedProtection__
 
 // Premade Thrift types
 var (
-    premadeThriftType_python_Py3Hidden *metadata.ThriftType = nil
-    premadeThriftType_string *metadata.ThriftType = nil
-    premadeThriftType_python_PyDeprecatedHidden *metadata.ThriftType = nil
-    premadeThriftType_python_Flags *metadata.ThriftType = nil
-    premadeThriftType_python_Name *metadata.ThriftType = nil
-    premadeThriftType_python_Adapter *metadata.ThriftType = nil
-    premadeThriftType_bool *metadata.ThriftType = nil
-    premadeThriftType_python_UseCAPI *metadata.ThriftType = nil
-    premadeThriftType_python_Py3EnableCppAdapter *metadata.ThriftType = nil
+    premadeThriftType_python_Py3Hidden = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTStruct(
+            metadata.NewThriftStructType().
+                SetName("python.Py3Hidden"),
+        )
+    }()
+    premadeThriftType_string = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTPrimitive(
+            metadata.ThriftPrimitiveType_THRIFT_STRING_TYPE.Ptr(),
+        )
+    }()
+    premadeThriftType_python_PyDeprecatedHidden = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTStruct(
+            metadata.NewThriftStructType().
+                SetName("python.PyDeprecatedHidden"),
+        )
+    }()
+    premadeThriftType_python_Flags = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTStruct(
+            metadata.NewThriftStructType().
+                SetName("python.Flags"),
+        )
+    }()
+    premadeThriftType_python_Name = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTStruct(
+            metadata.NewThriftStructType().
+                SetName("python.Name"),
+        )
+    }()
+    premadeThriftType_python_Adapter = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTStruct(
+            metadata.NewThriftStructType().
+                SetName("python.Adapter"),
+        )
+    }()
+    premadeThriftType_bool = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTPrimitive(
+            metadata.ThriftPrimitiveType_THRIFT_BOOL_TYPE.Ptr(),
+        )
+    }()
+    premadeThriftType_python_UseCAPI = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTStruct(
+            metadata.NewThriftStructType().
+                SetName("python.UseCAPI"),
+        )
+    }()
+    premadeThriftType_python_Py3EnableCppAdapter = func() *metadata.ThriftType {
+        return metadata.NewThriftType().SetTStruct(
+            metadata.NewThriftStructType().
+                SetName("python.Py3EnableCppAdapter"),
+        )
+    }()
 )
-
-// Premade Thrift type initializer
-var premadeThriftTypesInitOnce = sync.OnceFunc(func() {
-    premadeThriftType_python_Py3Hidden = metadata.NewThriftType().SetTStruct(
-        metadata.NewThriftStructType().
-            SetName("python.Py3Hidden"),
-    )
-    premadeThriftType_string = metadata.NewThriftType().SetTPrimitive(
-        metadata.ThriftPrimitiveType_THRIFT_STRING_TYPE.Ptr(),
-    )
-    premadeThriftType_python_PyDeprecatedHidden = metadata.NewThriftType().SetTStruct(
-        metadata.NewThriftStructType().
-            SetName("python.PyDeprecatedHidden"),
-    )
-    premadeThriftType_python_Flags = metadata.NewThriftType().SetTStruct(
-        metadata.NewThriftStructType().
-            SetName("python.Flags"),
-    )
-    premadeThriftType_python_Name = metadata.NewThriftType().SetTStruct(
-        metadata.NewThriftStructType().
-            SetName("python.Name"),
-    )
-    premadeThriftType_python_Adapter = metadata.NewThriftType().SetTStruct(
-        metadata.NewThriftStructType().
-            SetName("python.Adapter"),
-    )
-    premadeThriftType_bool = metadata.NewThriftType().SetTPrimitive(
-        metadata.ThriftPrimitiveType_THRIFT_BOOL_TYPE.Ptr(),
-    )
-    premadeThriftType_python_UseCAPI = metadata.NewThriftType().SetTStruct(
-        metadata.NewThriftStructType().
-            SetName("python.UseCAPI"),
-    )
-    premadeThriftType_python_Py3EnableCppAdapter = metadata.NewThriftType().SetTStruct(
-        metadata.NewThriftStructType().
-            SetName("python.Py3EnableCppAdapter"),
-    )
-})
 
 // Helper type to allow us to store Thrift types in a slice at compile time,
 // and put them in a map at runtime. See comment at the top of template
@@ -77,136 +81,59 @@ type thriftTypeWithFullName struct {
     thriftType *metadata.ThriftType
 }
 
-var premadeThriftTypesMapOnce = sync.OnceValue(
-    func() map[string]*metadata.ThriftType {
-        // Relies on premade Thrift types initialization
-        premadeThriftTypesInitOnce()
+var premadeThriftTypesMap = func() map[string]*metadata.ThriftType {
+    thriftTypesWithFullName := make([]thriftTypeWithFullName, 0)
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "python.Py3Hidden", premadeThriftType_python_Py3Hidden })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "string", premadeThriftType_string })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "python.PyDeprecatedHidden", premadeThriftType_python_PyDeprecatedHidden })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "python.Flags", premadeThriftType_python_Flags })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "python.Name", premadeThriftType_python_Name })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "python.Adapter", premadeThriftType_python_Adapter })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "bool", premadeThriftType_bool })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "python.UseCAPI", premadeThriftType_python_UseCAPI })
+    thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "python.Py3EnableCppAdapter", premadeThriftType_python_Py3EnableCppAdapter })
 
-        thriftTypesWithFullName := make([]thriftTypeWithFullName, 0)
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "python.Py3Hidden", premadeThriftType_python_Py3Hidden })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "string", premadeThriftType_string })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "python.PyDeprecatedHidden", premadeThriftType_python_PyDeprecatedHidden })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "python.Flags", premadeThriftType_python_Flags })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "python.Name", premadeThriftType_python_Name })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "python.Adapter", premadeThriftType_python_Adapter })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "bool", premadeThriftType_bool })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "python.UseCAPI", premadeThriftType_python_UseCAPI })
-        thriftTypesWithFullName = append(thriftTypesWithFullName, thriftTypeWithFullName{ "python.Py3EnableCppAdapter", premadeThriftType_python_Py3EnableCppAdapter })
+    fbthriftThriftTypesMap := make(map[string]*metadata.ThriftType, len(thriftTypesWithFullName))
+    for _, value := range thriftTypesWithFullName {
+        fbthriftThriftTypesMap[value.fullName] = value.thriftType
+    }
+    return fbthriftThriftTypesMap
+}()
 
-        fbthriftThriftTypesMap := make(map[string]*metadata.ThriftType, len(thriftTypesWithFullName))
-        for _, value := range thriftTypesWithFullName {
-            fbthriftThriftTypesMap[value.fullName] = value.thriftType
+var structMetadatas = func() []*metadata.ThriftStruct {
+    fbthriftResults := make([]*metadata.ThriftStruct, 0)
+    for _, fbthriftStructSpec := range premadeStructSpecs {
+        if !fbthriftStructSpec.IsException {
+            fbthriftResults = append(fbthriftResults, getMetadataThriftStruct(fbthriftStructSpec))
         }
-        return fbthriftThriftTypesMap
-    },
-)
+    }
+    return fbthriftResults
+}()
 
-var structMetadatasOnce = sync.OnceValue(
-    func() []*metadata.ThriftStruct {
-        // Relies on premade Thrift types initialization
-        premadeThriftTypesInitOnce()
+var exceptionMetadatas = func() []*metadata.ThriftException {
+    fbthriftResults := make([]*metadata.ThriftException, 0)
+    for _, fbthriftStructSpec := range premadeStructSpecs {
+        if fbthriftStructSpec.IsException {
+            fbthriftResults = append(fbthriftResults, getMetadataThriftException(fbthriftStructSpec))
+        }
+    }
+    return fbthriftResults
+}()
 
-        fbthriftResults := make([]*metadata.ThriftStruct, 0)
-        fbthriftResults = append(fbthriftResults, metadata.NewThriftStruct().
-    SetName("python.Py3Hidden").
-    SetIsUnion(false))
-        fbthriftResults = append(fbthriftResults, metadata.NewThriftStruct().
-    SetName("python.PyDeprecatedHidden").
-    SetIsUnion(false).
-    SetFields(
-        []*metadata.ThriftField{
-            metadata.NewThriftField().
-    SetId(1).
-    SetName("reason").
-    SetIsOptional(false).
-    SetType(premadeThriftType_string),
-        },
-    ))
-        fbthriftResults = append(fbthriftResults, metadata.NewThriftStruct().
-    SetName("python.Flags").
-    SetIsUnion(false))
-        fbthriftResults = append(fbthriftResults, metadata.NewThriftStruct().
-    SetName("python.Name").
-    SetIsUnion(false).
-    SetFields(
-        []*metadata.ThriftField{
-            metadata.NewThriftField().
-    SetId(1).
-    SetName("name").
-    SetIsOptional(false).
-    SetType(premadeThriftType_string),
-        },
-    ))
-        fbthriftResults = append(fbthriftResults, metadata.NewThriftStruct().
-    SetName("python.Adapter").
-    SetIsUnion(false).
-    SetFields(
-        []*metadata.ThriftField{
-            metadata.NewThriftField().
-    SetId(1).
-    SetName("name").
-    SetIsOptional(false).
-    SetType(premadeThriftType_string),
-            metadata.NewThriftField().
-    SetId(2).
-    SetName("typeHint").
-    SetIsOptional(false).
-    SetType(premadeThriftType_string),
-        },
-    ))
-        fbthriftResults = append(fbthriftResults, metadata.NewThriftStruct().
-    SetName("python.UseCAPI").
-    SetIsUnion(false).
-    SetFields(
-        []*metadata.ThriftField{
-            metadata.NewThriftField().
-    SetId(1).
-    SetName("serialize").
-    SetIsOptional(false).
-    SetType(premadeThriftType_bool),
-        },
-    ))
-        fbthriftResults = append(fbthriftResults, metadata.NewThriftStruct().
-    SetName("python.Py3EnableCppAdapter").
-    SetIsUnion(false))
-        return fbthriftResults
-    },
-)
+var enumMetadatas = func() []*metadata.ThriftEnum {
+    fbthriftResults := make([]*metadata.ThriftEnum, 0)
+    return fbthriftResults
+}()
 
-var exceptionMetadatasOnce = sync.OnceValue(
-    func() []*metadata.ThriftException {
-        // Relies on premade Thrift types initialization
-        premadeThriftTypesInitOnce()
-
-        fbthriftResults := make([]*metadata.ThriftException, 0)
-        return fbthriftResults
-    },
-)
-
-var enumMetadatasOnce = sync.OnceValue(
-    func() []*metadata.ThriftEnum {
-        // Relies on premade Thrift types initialization
-        premadeThriftTypesInitOnce()
-
-        fbthriftResults := make([]*metadata.ThriftEnum, 0)
-        return fbthriftResults
-    },
-)
-
-var serviceMetadatasOnce = sync.OnceValue(
-    func() []*metadata.ThriftService {
-        // Relies on premade Thrift types initialization
-        premadeThriftTypesInitOnce()
-
-        fbthriftResults := make([]*metadata.ThriftService, 0)
-        return fbthriftResults
-    },
-)
+var serviceMetadatas = func() []*metadata.ThriftService {
+    fbthriftResults := make([]*metadata.ThriftService, 0)
+    return fbthriftResults
+}()
 
 // GetMetadataThriftType (INTERNAL USE ONLY).
 // Returns metadata ThriftType for a given full type name.
 func GetMetadataThriftType(fullName string) *metadata.ThriftType {
-    return premadeThriftTypesMapOnce()[fullName]
+    return premadeThriftTypesMap[fullName]
 }
 
 // GetThriftMetadata returns complete Thrift metadata for current and imported packages.
@@ -217,19 +144,19 @@ func GetThriftMetadata() *metadata.ThriftMetadata {
     allServicesMap := make(map[string]*metadata.ThriftService)
 
     // Add enum metadatas from the current program...
-    for _, enumMetadata := range enumMetadatasOnce() {
+    for _, enumMetadata := range enumMetadatas {
         allEnumsMap[enumMetadata.GetName()] = enumMetadata
     }
     // Add struct metadatas from the current program...
-    for _, structMetadata := range structMetadatasOnce() {
+    for _, structMetadata := range structMetadatas {
         allStructsMap[structMetadata.GetName()] = structMetadata
     }
     // Add exception metadatas from the current program...
-    for _, exceptionMetadata := range exceptionMetadatasOnce() {
+    for _, exceptionMetadata := range exceptionMetadatas {
         allExceptionsMap[exceptionMetadata.GetName()] = exceptionMetadata
     }
     // Add service metadatas from the current program...
-    for _, serviceMetadata := range serviceMetadatasOnce() {
+    for _, serviceMetadata := range serviceMetadatas {
         allServicesMap[serviceMetadata.GetName()] = serviceMetadata
     }
 
@@ -272,4 +199,124 @@ func GetThriftMetadataForService(scopedServiceName string) *metadata.ThriftMetad
     thriftMetadata.SetServices(relevantServicesMap)
 
     return thriftMetadata
+}
+
+func getMetadataThriftPrimitiveType(s *thrift.CodecPrimitiveSpec) *metadata.ThriftPrimitiveType {
+	var value metadata.ThriftPrimitiveType
+
+	switch s.PrimitiveType {
+	case thrift.CODEC_PRIMITIVE_TYPE_BYTE:
+		value = metadata.ThriftPrimitiveType_THRIFT_BYTE_TYPE
+	case thrift.CODEC_PRIMITIVE_TYPE_BOOL:
+		value = metadata.ThriftPrimitiveType_THRIFT_BOOL_TYPE
+	case thrift.CODEC_PRIMITIVE_TYPE_I16:
+		value = metadata.ThriftPrimitiveType_THRIFT_I16_TYPE
+	case thrift.CODEC_PRIMITIVE_TYPE_I32:
+		value = metadata.ThriftPrimitiveType_THRIFT_I32_TYPE
+	case thrift.CODEC_PRIMITIVE_TYPE_I64:
+		value = metadata.ThriftPrimitiveType_THRIFT_I64_TYPE
+	case thrift.CODEC_PRIMITIVE_TYPE_FLOAT:
+		value = metadata.ThriftPrimitiveType_THRIFT_FLOAT_TYPE
+	case thrift.CODEC_PRIMITIVE_TYPE_DOUBLE:
+		value = metadata.ThriftPrimitiveType_THRIFT_DOUBLE_TYPE
+	case thrift.CODEC_PRIMITIVE_TYPE_BINARY:
+		value = metadata.ThriftPrimitiveType_THRIFT_BINARY_TYPE
+	case thrift.CODEC_PRIMITIVE_TYPE_STRING:
+		value = metadata.ThriftPrimitiveType_THRIFT_STRING_TYPE
+	}
+
+	return value.Ptr()
+}
+
+func getMetadataThriftEnumType(s *thrift.CodecEnumSpec) *metadata.ThriftEnumType {
+	return metadata.NewThriftEnumType().
+		SetName(s.ScopedName)
+}
+
+func getMetadataThriftSetType(s *thrift.CodecSetSpec) *metadata.ThriftSetType {
+	return metadata.NewThriftSetType().
+		SetValueType(getMetadataThriftType(s.ElementTypeSpec))
+}
+
+func getMetadataThriftListType(s *thrift.CodecListSpec) *metadata.ThriftListType {
+	return metadata.NewThriftListType().
+		SetValueType(getMetadataThriftType(s.ElementTypeSpec))
+}
+
+func getMetadataThriftMapType(s *thrift.CodecMapSpec) *metadata.ThriftMapType {
+	return metadata.NewThriftMapType().
+		SetKeyType(getMetadataThriftType(s.KeyTypeSpec)).
+		SetValueType(getMetadataThriftType(s.ValueTypeSpec))
+}
+
+func getMetadataThriftTypedefType(s *thrift.CodecTypedefSpec) *metadata.ThriftTypedefType {
+	return metadata.NewThriftTypedefType().
+		SetName(s.ScopedName).
+		SetUnderlyingType(getMetadataThriftType(s.UnderlyingTypeSpec))
+}
+
+func getMetadataThriftStructType(s *thrift.CodecStructSpec) *metadata.ThriftStructType {
+	return metadata.NewThriftStructType().
+		SetName(s.ScopedName)
+}
+
+func getMetadataThriftUnionType(s *thrift.CodecStructSpec) *metadata.ThriftUnionType {
+	return metadata.NewThriftUnionType().
+		SetName(s.ScopedName)
+}
+
+func getMetadataThriftType(s *thrift.TypeSpec) *metadata.ThriftType {
+	thriftType := metadata.NewThriftType()
+	switch {
+	case s.CodecPrimitiveSpec != nil:
+		thriftType.SetTPrimitive(getMetadataThriftPrimitiveType(s.CodecPrimitiveSpec))
+	case s.CodecEnumSpec != nil:
+		thriftType.SetTEnum(getMetadataThriftEnumType(s.CodecEnumSpec))
+	case s.CodecSetSpec != nil:
+		thriftType.SetTSet(getMetadataThriftSetType(s.CodecSetSpec))
+	case s.CodecListSpec != nil:
+		thriftType.SetTList(getMetadataThriftListType(s.CodecListSpec))
+	case s.CodecMapSpec != nil:
+		thriftType.SetTMap(getMetadataThriftMapType(s.CodecMapSpec))
+	case s.CodecTypedefSpec != nil:
+		thriftType.SetTTypedef(getMetadataThriftTypedefType(s.CodecTypedefSpec))
+	case s.CodecStructSpec != nil:
+		if s.CodecStructSpec.IsUnion {
+			thriftType.SetTUnion(getMetadataThriftUnionType(s.CodecStructSpec))
+		} else {
+			thriftType.SetTStruct(getMetadataThriftStructType(s.CodecStructSpec))
+		}
+	}
+	return thriftType
+}
+
+func getMetadataThriftField(s *thrift.FieldSpec) *metadata.ThriftField {
+	return metadata.NewThriftField().
+		SetId(int32(s.ID)).
+		SetName(s.Name).
+		SetIsOptional(s.IsOptional).
+		SetType(getMetadataThriftType(s.ValueTypeSpec))
+}
+
+func getMetadataThriftStruct(s *thrift.StructSpec) *metadata.ThriftStruct {
+	metadataThriftFields := make([]*metadata.ThriftField, len(s.FieldSpecs), len(s.FieldSpecs))
+	for i, fieldSpec := range s.FieldSpecs {
+		metadataThriftFields[i] = getMetadataThriftField(&fieldSpec)
+	}
+
+	return metadata.NewThriftStruct().
+		SetName(s.ScopedName).
+		SetIsUnion(s.IsUnion).
+		SetFields(metadataThriftFields)
+}
+
+func getMetadataThriftException(s *thrift.StructSpec) *metadata.ThriftException {
+	metadataThriftFields := make([]*metadata.ThriftField, len(s.FieldSpecs), len(s.FieldSpecs))
+	for i, fieldSpec := range s.FieldSpecs {
+		metadataThriftFields[i] = getMetadataThriftField(&fieldSpec)
+	}
+
+	return metadata.NewThriftException().
+		SetName(s.ScopedName).
+		SetFields(metadataThriftFields)
 }

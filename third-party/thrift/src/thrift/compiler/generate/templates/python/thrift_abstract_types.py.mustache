@@ -18,8 +18,6 @@
 Generated Python classes for abstract thrift-python types.
 }}
 
-# EXPERIMENTAL - DO NOT USE !!!
-# See `experimental_generate_abstract_types` documentation in thrift compiler
 
 {{> common/auto_generated_py}}
 
@@ -48,12 +46,7 @@ import {{included_module_path}}.thrift_abstract_types as {{included_module_mangl
 {{#program:adapter_type_hint_modules}}
 import {{module_path}}
 {{/program:adapter_type_hint_modules}}
-
-{{#program:enums}}
-class {{enum:name}}:
-    pass
-
-{{/program:enums}}
+{{> types/import_enums}}
 {{#program:structs}}
 
 class {{> structs/unadapted_name}}({{!
@@ -68,17 +61,9 @@ class {{> structs/unadapted_name}}({{!
 {{> fields/maybe_abstract_method_annotation}}
     def {{field:py_name}}(self) -> {{> fields/field_type_pyi}}: ...
     {{/struct:fields_ordered_by_id}}
-    {{^struct:union?}}
-{{> fields/maybe_abstract_method_annotation}}
-    def __iter__(self) -> _typing.Iterator[_typing.Tuple[str, _typing.Union[{{^struct:fields_ordered_by_id}}None{{/struct:fields_ordered_by_id}}{{!
-        }}{{#struct:fields_ordered_by_id}}{{^first?}}, {{/first?}}{{> fields/adapted_type}}{{!
-        }}{{/struct:fields_ordered_by_id}}]]]: ...
-    {{/struct:union?}}
     {{#struct:legacy_api?}}
-{{#program:generate_to_mutable_python_conversion_methods?}}
 {{> fields/maybe_abstract_method_annotation}}
     def _to_mutable_python(self) -> "{{program:module_path}}.thrift_mutable_types.{{> structs/unadapted_name}}": ...  # type: ignore
-{{/program:generate_to_mutable_python_conversion_methods?}}
 {{> fields/maybe_abstract_method_annotation}}
     def _to_python(self) -> "{{program:module_path}}.thrift_types.{{> structs/unadapted_name}}": ...  # type: ignore
 {{> fields/maybe_abstract_method_annotation}}
@@ -98,15 +83,19 @@ class {{> structs/unadapted_name}}({{!
         used in immutable thrift-python, which is the name
         of the Union (sigh!)
     }}FbThriftUnionFieldEnum.__name__ = "{{struct:py_name}}"
-
-    fbthrift_current_value: _typing.Final[{{ > types/field_value_pep484_union_type}}]
-    fbthrift_current_field: _typing.Final[FbThriftUnionFieldEnum]
+    @_fbthrift_property
+{{> fields/maybe_abstract_method_annotation}}
+    def fbthrift_current_value(self) -> _typing.Final[{{> types/field_value_pep484_union_type}}]: ...
+    @_fbthrift_property
+{{> fields/maybe_abstract_method_annotation}}
+    def fbthrift_current_field(self) -> _typing.Final[FbThriftUnionFieldEnum]: ...
 
     {{/struct:union?}}
 {{#struct:has_adapter?}}
 
 {{struct:py_name}} = {{adapter:type_hint}}{{#adapter:is_generic?}}[{{> structs/unadapted_name}}]{{/adapter:is_generic?}}
-{{/struct:has_adapter?}}{{!
+{{/struct:has_adapter?}}
+{{> private/alias_prefix}}{{struct:py_name}} = {{struct:py_name}}{{!
 }}{{/program:structs}}
 {{#program:typedefs?}}
 

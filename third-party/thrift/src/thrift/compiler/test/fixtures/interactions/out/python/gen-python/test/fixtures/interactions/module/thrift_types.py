@@ -8,6 +8,9 @@
 from __future__ import annotations
 
 import folly.iobuf as _fbthrift_iobuf
+
+from abc import ABCMeta as _fbthrift_ABCMeta
+import test.fixtures.interactions.module.thrift_abstract_types as _fbthrift_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
 
@@ -31,6 +34,9 @@ class CustomException(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
         ),
     )
 
+    _fbthrift_abstract_base_class = _fbthrift_abstract_types.CustomException
+
+
     @staticmethod
     def __get_thrift_name__() -> str:
         return "module.CustomException"
@@ -45,6 +51,12 @@ class CustomException(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
 
     def _to_python(self):
         return self
+
+    def _to_mutable_python(self):
+        import thrift.python.mutable_converter
+        import importlib
+        mutable_types = importlib.import_module("test.fixtures.interactions.module.thrift_mutable_types")
+        return thrift.python.mutable_converter.to_mutable_python_struct_or_union(mutable_types.CustomException, self)
 
     def _to_py3(self):
         import importlib
@@ -61,7 +73,7 @@ class CustomException(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
         except ModuleNotFoundError:
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.CustomException, self)
-
+_fbthrift_CustomException = CustomException
 
 class ShouldBeBoxed(metaclass=_fbthrift_python_types.StructMeta):
     _fbthrift_SPEC = (
@@ -93,6 +105,12 @@ class ShouldBeBoxed(metaclass=_fbthrift_python_types.StructMeta):
     def _to_python(self):
         return self
 
+    def _to_mutable_python(self):
+        import thrift.python.mutable_converter
+        import importlib
+        mutable_types = importlib.import_module("test.fixtures.interactions.module.thrift_mutable_types")
+        return thrift.python.mutable_converter.to_mutable_python_struct_or_union(mutable_types.ShouldBeBoxed, self)
+
     def _to_py3(self):
         import importlib
         py3_types = importlib.import_module("test.fixtures.interactions.module.types")
@@ -109,12 +127,15 @@ class ShouldBeBoxed(metaclass=_fbthrift_python_types.StructMeta):
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.ShouldBeBoxed, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types.ShouldBeBoxed, ShouldBeBoxed)
+_fbthrift_ShouldBeBoxed = ShouldBeBoxed
+
 # This unfortunately has to be down here to prevent circular imports
 import test.fixtures.interactions.module.thrift_metadata
 
-
 _fbthrift_all_enums = [
 ]
+
 
 def _fbthrift_metadata__exception_CustomException():
     return test.fixtures.interactions.module.thrift_metadata.gen_metadata_exception_CustomException()

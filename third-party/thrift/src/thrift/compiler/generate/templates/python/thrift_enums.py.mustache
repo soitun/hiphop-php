@@ -19,13 +19,23 @@ Generated Python enums for Thrift types
 }}
 {{> common/auto_generated_py}}
 
+import apache.thrift.metadata.thrift_types as _fbthrift_metadata
 import {{program:base_library_package}}.types as _fbthrift_python_types
-import {{program:module_path}}.thrift_metadata
 {{#program:enums}}
+import typing as _std_python_typing
+
+{{!
+    This is necessary because thrift_abstract_types.py imports this.
+}}
+class _fbthrift_compatible_with_{{enum:name}}:
+    pass
+
 
 class {{enum:name}}(_fbthrift_python_types.{{!
         }}{{#enum:flags?}}Flag{{/enum:flags?}}{{!
-        }}{{^enum:flags?}}Enum, int{{/enum:flags?}}):
+        }}{{^enum:flags?}}Enum, int{{/enum:flags?}}{{!
+        }}, _fbthrift_compatible_with_{{enum:name}}{{!
+        }}):
     {{#enum:values}}
     {{enum_value:py_name}} = {{enum_value:value}}
     {{/enum:values}}
@@ -34,24 +44,56 @@ class {{enum:name}}(_fbthrift_python_types.{{!
         return "{{program:name}}.{{enum:name}}"
 
     @staticmethod
-    def __get_thrift_uri__():
+    def __get_thrift_uri__() -> _std_python_typing.Optional[str]:
         return {{#enum:thrift_uri}}"{{enum:thrift_uri}}"{{/enum:thrift_uri}}{{!
             }}{{^enum:thrift_uri}}None{{/enum:thrift_uri}}
 
     @staticmethod
-    def __get_metadata__():
-        return {{program:module_path}}.thrift_metadata.gen_metadata_enum_{{enum:name}}()
+    def __get_metadata__() -> _fbthrift_metadata.ThriftMetadata:
+        return gen_metadata_enum_{{enum:name}}()
 
     {{#enum:legacy_api?}}
-    def _to_python(self):
+    def _to_python(self) -> "{{enum:name}}":
         return self
 
-    def _to_py3(self):
+    def _to_py3(self) -> "{{program:module_path}}.types.{{enum:name}}": # type: ignore
         import importlib
         py3_types = importlib.import_module("{{program:module_path}}.types")
         return py3_types.{{enum:name}}(self.value)
 
-    def _to_py_deprecated(self):
+    def _to_py_deprecated(self) -> int:
         return self.value
     {{/enum:legacy_api?}}
+{{/program:enums}}
+
+{{#program:enums}}
+def _fbthrift_gen_metadata_enum_{{enum:name}}({{!
+}}metadata_struct: _fbthrift_metadata.ThriftMetadata) -> _fbthrift_metadata.ThriftMetadata:
+    qualified_name = "{{program:name}}.{{enum:name}}"
+
+    if qualified_name in metadata_struct.enums:
+        return metadata_struct
+    elements = {
+        {{#enum:values}}
+        {{enum_value:value}}: "{{enum_value:name}}",
+        {{/enum:values}}
+    }
+    structured_annotations = [
+        {{#enum:structured_annotations}}
+        {{#structured_annotation:const_struct?}}{{#structured_annotation:const}}{{#constant:value}}
+        {{> metadata/const_struct }},
+        {{/constant:value}}{{/structured_annotation:const}}{{/structured_annotation:const_struct?}}
+        {{/enum:structured_annotations}}
+    ]
+    enum_dict = dict(metadata_struct.enums)
+    enum_dict[qualified_name] = _fbthrift_metadata.ThriftEnum(name=qualified_name, elements=elements, structured_annotations=structured_annotations)
+    new_struct = metadata_struct(enums=enum_dict)
+
+    return new_struct
+
+def gen_metadata_enum_{{enum:name}}() -> _fbthrift_metadata.ThriftMetadata:
+    return _fbthrift_gen_metadata_enum_{{enum:name}}(
+        _fbthrift_metadata.ThriftMetadata(structs={}, enums={}, exceptions={}, services={})
+    )
+
 {{/program:enums}}

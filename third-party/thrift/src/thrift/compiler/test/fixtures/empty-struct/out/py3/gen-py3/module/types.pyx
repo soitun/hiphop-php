@@ -29,8 +29,6 @@ from thrift.py3.types cimport (
     init_unicode_from_cpp as __init_unicode_from_cpp,
     set_iter as __set_iter,
     map_iter as __map_iter,
-    map_contains as __map_contains,
-    map_getitem as __map_getitem,
     reference_shared_ptr as __reference_shared_ptr,
     get_field_name_by_index as __get_field_name_by_index,
     reset_field as __reset_field,
@@ -58,6 +56,7 @@ from module.types_impl_FBTHRIFT_ONLY_DO_NOT_USE import (
 )
 
 
+_fbthrift__module_name__ = "module.types"
 
 cdef object get_types_reflection():
     return importlib.import_module(
@@ -66,6 +65,8 @@ cdef object get_types_reflection():
 
 @__cython.auto_pickle(False)
 cdef class Empty(thrift.py3.types.Struct):
+    __module__ = _fbthrift__module_name__
+
     def __init__(Empty self, **kwargs):
         self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = make_shared[_module_cbindings.cEmpty]()
         self._fields_setter = _fbthrift_types_fields.__Empty_FieldsSetter._fbthrift_create(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE.get())
@@ -166,6 +167,7 @@ cdef class Empty(thrift.py3.types.Struct):
 
 @__cython.auto_pickle(False)
 cdef class Nada(thrift.py3.types.Union):
+    __module__ = _fbthrift__module_name__
     Type = __NadaType
 
     def __init__(
@@ -174,7 +176,7 @@ cdef class Nada(thrift.py3.types.Union):
         self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = __to_shared_ptr(cmove(Nada._make_instance(
           NULL,
         )))
-        self._load_cache()
+        self._initialize_py()
 
     @staticmethod
     def fromValue(value):
@@ -196,18 +198,29 @@ cdef class Nada(thrift.py3.types.Union):
     cdef _create_FBTHRIFT_ONLY_DO_NOT_USE(shared_ptr[_module_cbindings.cNada] cpp_obj):
         __fbthrift_inst = <Nada>Nada.__new__(Nada)
         __fbthrift_inst._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = cmove(cpp_obj)
-        __fbthrift_inst._load_cache()
+        __fbthrift_inst._initialize_py()
         return __fbthrift_inst
 
 
     def __hash__(Nada self):
         return  super().__hash__()
 
-    cdef _load_cache(Nada self):
-        self.type = Nada.Type(<int>(deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).getType()))
-        cdef int type = self.type.value
-        if type == 0:    # Empty
-            self.value = None
+    @property
+    def type(Nada self not None):
+        if self.py_type is None:
+            self.py_type = Nada.Type(self.type_int)
+        return self.py_type
+
+    @property
+    def value(Nada self not None):
+        if self.py_value is not None or self.type_int == 0:
+            return self.py_value
+        return self.py_value
+
+    cdef _initialize_py(Nada self):
+        self.py_type = None
+        self.type_int = deref(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE).getType()
+        self.py_value = None
 
     def __copy__(Nada self):
         cdef shared_ptr[_module_cbindings.cNada] cpp_obj = make_shared[_module_cbindings.cNada](
@@ -256,8 +269,8 @@ cdef class Nada(thrift.py3.types.Union):
         self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = make_shared[_module_cbindings.cNada]()
         with nogil:
             needed = serializer.cdeserialize[_module_cbindings.cNada](buf, self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE.get(), proto)
-        # force a cache reload since the underlying data's changed
-        self._load_cache()
+        # clear cache reload since the underlying data's changed
+        self._initialize_py()
         return needed
 
 

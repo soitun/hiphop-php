@@ -41,7 +41,8 @@ class WebTransport {
     GENERIC_ERROR = 0x00,
     INVALID_STREAM_ID,
     STREAM_CREATION_ERROR,
-    SEND_ERROR
+    SEND_ERROR,
+    STOP_SENDING
   };
 
   static bool isConnectMessage(const proxygen::HTTPMessage& msg) {
@@ -84,6 +85,11 @@ class WebTransport {
     explicit Exception(uint32_t inError)
         : std::runtime_error(folly::to<std::string>(
               "Peer reset or abandoned stream with error=", inError)),
+          error(inError) {
+    }
+    Exception(uint32_t inError, const std::string& msg)
+        : std::runtime_error(
+              folly::to<std::string>(msg, " with error=", inError)),
           error(inError) {
     }
     uint32_t error;
@@ -146,13 +152,13 @@ class WebTransport {
         uint32_t error) = 0;
   };
 
+  enum class FCState { BLOCKED, UNBLOCKED };
   // Handle for write streams
   class StreamWriteHandle : public StreamHandleBase {
    public:
     ~StreamWriteHandle() override = default;
 
-    // Write the data and optional fin to the stream.  The returned Future will
-    // complete when the stream is available for more writes.
+    // Write the data and optional fin to the stream.
     //
     // The StreamWriteHandle becomes invalid after calling writeStreamData with
     // fin=true or calling resetStream.
@@ -163,8 +169,8 @@ class WebTransport {
     // CancellationCallback.  Calling writeStreamData from the callback will
     // fail with a WebTransport::Exception with the stopSendingErrorCode.
     // After the cancellation callback, the StreamWriteHandle is invalid.
-    virtual folly::Expected<folly::SemiFuture<folly::Unit>, ErrorCode>
-    writeStreamData(std::unique_ptr<folly::IOBuf> data, bool fin) = 0;
+    virtual folly::Expected<FCState, ErrorCode> writeStreamData(
+        std::unique_ptr<folly::IOBuf> data, bool fin) = 0;
 
     // Reset the stream with the given error
     virtual folly::Expected<folly::Unit, ErrorCode> resetStream(
@@ -177,6 +183,11 @@ class WebTransport {
 
     virtual folly::Expected<folly::Unit, ErrorCode> setPriority(
         uint8_t level, uint64_t order, bool incremental) = 0;
+
+    // The returned Future will complete when the stream is available for more
+    // writes.
+    virtual folly::Expected<folly::SemiFuture<folly::Unit>, ErrorCode>
+    awaitWritable() = 0;
 
    protected:
     folly::Optional<uint32_t> stopSendingErrorCode_;
@@ -212,14 +223,14 @@ class WebTransport {
   virtual folly::Expected<folly::SemiFuture<StreamData>,
                           WebTransport::ErrorCode>
   readStreamData(uint64_t id) = 0;
-  virtual folly::Expected<folly::SemiFuture<folly::Unit>, ErrorCode>
-  writeStreamData(uint64_t id,
-                  std::unique_ptr<folly::IOBuf> data,
-                  bool fin) = 0;
+  virtual folly::Expected<FCState, ErrorCode> writeStreamData(
+      uint64_t id, std::unique_ptr<folly::IOBuf> data, bool fin) = 0;
   virtual folly::Expected<folly::Unit, ErrorCode> resetStream(
       uint64_t streamId, uint32_t error) = 0;
   virtual folly::Expected<folly::Unit, ErrorCode> setPriority(
       uint64_t streamId, uint8_t level, uint64_t order, bool incremental) = 0;
+  virtual folly::Expected<folly::SemiFuture<folly::Unit>, ErrorCode>
+  awaitWritable(uint64_t streamId) = 0;
 
   virtual folly::Expected<folly::Unit, ErrorCode> stopSending(
       uint64_t streamId, uint32_t error) = 0;

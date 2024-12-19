@@ -45,6 +45,7 @@
 #include "hphp/runtime/ext/std/ext_std_file.h"
 #include "hphp/runtime/ext/std/ext_std_function.h"
 #include "hphp/runtime/ext/string/ext_string.h"
+#include "hphp/runtime/ext/xreqsync/ext_xreqsync.h"
 #include "hphp/runtime/server/cli-server.h"
 #include "hphp/runtime/server/xbox-server.h"
 #include "hphp/runtime/vm/unit-parser.h"
@@ -114,6 +115,9 @@ bool cantPrefork() {
   }
   s_lock.lock();
   XboxServer::Stop();
+  if (XReqCallbackReaper::get().shouldRun()) {
+    XReqCallbackReaper::get().shutdownReaperThread();
+  }
   if (AsyncFuncImpl::count()) {
     XboxServer::Restart();
     s_lock.unlock();
@@ -126,6 +130,9 @@ bool cantPrefork() {
 void postfork(pid_t pid) {
   folly::SingletonVault::singleton()->reenableInstances();
   XboxServer::Restart();
+  if (XReqCallbackReaper::get().shouldRun()) {
+    XReqCallbackReaper::get().initReaperThread();
+  }
   if (pid == 0) {
     Logger::ResetPid();
     new (&s_lock) SimpleMutex();
@@ -178,7 +185,7 @@ int64_t HHVM_FUNCTION(pcntl_fork) {
     raise_error("forking not available via server CLI execution");
     return -1;
   }
-  if (RuntimeOption::ServerExecutionMode()) {
+  if (Cfg::Server::Mode) {
     raise_error("forking is disallowed in server mode");
     return -1;
   }
@@ -289,7 +296,7 @@ static uint32_t g_handlerMask = 0;
 static void sig_handler_cli(int signo) {
   if (g_handlerMask & (1u << signo)) {
     RequestInfo::BroadcastSignal(signo);
-  } else if (!RuntimeOption::ServerExecutionMode()) {
+  } else if (!Cfg::Server::Mode) {
     auto const raise_and_exit = [] (int sig) {
       // Forward to the default handler.
       reset_sync_signals();
@@ -376,7 +383,7 @@ bool HHVM_FUNCTION(pcntl_signal_dispatch) {
         raise_warning("%s threw and unknown exception",
                       handlerName.c_str());
       }
-    } else if (!RuntimeOption::ServerExecutionMode()) {
+    } else if (!Cfg::Server::Mode) {
       switch (signum) {
 #define SIG(S, E) case S: if (E) _Exit(signum + 128); else break;
         SYNC_SIGNALS
@@ -437,7 +444,7 @@ bool HHVM_FUNCTION(pcntl_sigprocmask,
     return invalid_argument();
   }
 
-  if (RuntimeOption::ServerExecutionMode()) {
+  if (Cfg::Server::Mode) {
     // Forbid manipulation of signal masks in server mode.
     raise_warning("pcntl_sigprocmask() not supported in server mode");
     return false;

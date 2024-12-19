@@ -26,6 +26,7 @@
 #include <filesystem>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 
 namespace apache::thrift::compiler {
 
@@ -62,28 +63,42 @@ class file {
   }
 };
 
+std::vector<uint_least32_t> get_line_offsets(std::string_view sv) {
+  std::vector<uint_least32_t> line_offsets;
+  line_offsets.push_back(0);
+
+  const char* const begin = sv.data();
+  const char* const end = begin + sv.size() - 1;
+  const char* ptr = begin;
+  for (;;) {
+    ptr = static_cast<const char*>(memchr(ptr, '\n', end - ptr));
+    if (ptr == nullptr) {
+      break;
+    }
+    ++ptr;
+    line_offsets.push_back(ptr - begin);
+  }
+  return line_offsets;
+}
+
 } // namespace
 
 source source_manager::add_source(
     const std::string& file_name, std::vector<char> text) {
   assert(text.back() == '\0');
-  auto sv = std::string_view(text.data(), text.size());
-  auto src = source_info{file_name, std::move(text), {}};
+  std::string_view sv(text.data(), text.size());
+  sources_.push_back(
+      source_info{file_name, std::move(text), get_line_offsets(sv)});
+  return {/* .start = */
+          source_location(/* source_id= */ sources_.size(), /** offset= */ 0),
+          /* .text = */ sv};
+}
 
-  src.line_offsets.push_back(0);
-  auto begin = sv.data(), end = begin + sv.size() - 1;
-  const char* ptr = begin;
-  for (;;) {
-    ptr = static_cast<const char*>(memchr(ptr, '\n', end - ptr));
-    if (!ptr) {
-      break;
-    }
-    ++ptr;
-    src.line_offsets.push_back(ptr - begin);
+std::string source_manager::get_file_path(const std::string& file_name) const {
+  if (file_source_map_.find(file_name) != file_source_map_.end()) {
+    return file_name;
   }
-
-  sources_.push_back(std::move(src));
-  return {source_location(sources_.size(), 0), sv};
+  return std::filesystem::absolute(file_name).string();
 }
 
 std::optional<source> source_manager::get_file(const std::string& file_name) {
@@ -98,6 +113,11 @@ std::optional<source> source_manager::get_file(const std::string& file_name) {
     path = itr->second;
   } else {
     path = file_name;
+  }
+
+  if (auto source = file_source_map_.find(std::string(path));
+      source != file_source_map_.end()) {
+    return source->second;
   }
 
   std::string absPath;
@@ -150,6 +170,16 @@ source source_manager::add_virtual_file(
 const char* source_manager::get_text(source_location loc) const {
   const source_info* source = get_source(loc.source_id_);
   return source ? &source->text[loc.offset_] : nullptr;
+}
+
+std::string_view source_manager::get_text_range(
+    const source_range& range) const {
+  assert(range.begin.source_id_ == range.end.source_id_);
+  const char* first = get_text(range.begin);
+  assert(first != nullptr);
+  const char* last = get_text(range.end);
+  assert(last != nullptr);
+  return std::string_view(first, /* count= */ last - first);
 }
 
 resolved_location::resolved_location(
@@ -218,7 +248,8 @@ source_manager::path_or_error source_manager::find_include_file(
     if ((*it) != "." && (*it) != "") {
       sfilename = std::filesystem::path(*(it)) / filename;
     }
-    if (std::filesystem::exists(sfilename)) {
+    if (std::filesystem::exists(sfilename) ||
+        file_source_map_.find(sfilename.string()) != file_source_map_.end()) {
       return found(sfilename.string());
     }
 #ifdef _WIN32

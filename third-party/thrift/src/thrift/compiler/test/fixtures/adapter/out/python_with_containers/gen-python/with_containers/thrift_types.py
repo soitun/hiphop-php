@@ -8,6 +8,9 @@
 from __future__ import annotations
 
 import folly.iobuf as _fbthrift_iobuf
+
+from abc import ABCMeta as _fbthrift_ABCMeta
+import with_containers.thrift_abstract_types as _fbthrift_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
 
@@ -55,6 +58,12 @@ class _fbthrift_unadapted_AnnotationWithContainers(metaclass=_fbthrift_python_ty
     def _to_python(self):
         return self
 
+    def _to_mutable_python(self):
+        import thrift.python.mutable_converter
+        import importlib
+        mutable_types = importlib.import_module("with_containers.thrift_mutable_types")
+        return thrift.python.mutable_converter.to_mutable_python_struct_or_union(mutable_types._fbthrift_unadapted_AnnotationWithContainers, self)
+
     def _to_py3(self):
         import importlib
         py3_types = importlib.import_module("with_containers.types")
@@ -71,9 +80,11 @@ class _fbthrift_unadapted_AnnotationWithContainers(metaclass=_fbthrift_python_ty
             py_asyncio_types = importlib.import_module("with_containers.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types._fbthrift_unadapted_AnnotationWithContainers, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types._fbthrift_unadapted_AnnotationWithContainers, _fbthrift_unadapted_AnnotationWithContainers)
+
 
 AnnotationWithContainers = my.AdaptedType[_fbthrift_unadapted_AnnotationWithContainers]
-
+_fbthrift_AnnotationWithContainers = AnnotationWithContainers
 
 class _fbthrift_unadapted_MyStruct(metaclass=_fbthrift_python_types.StructMeta):
     _fbthrift_SPEC = (
@@ -105,6 +116,12 @@ class _fbthrift_unadapted_MyStruct(metaclass=_fbthrift_python_types.StructMeta):
     def _to_python(self):
         return self
 
+    def _to_mutable_python(self):
+        import thrift.python.mutable_converter
+        import importlib
+        mutable_types = importlib.import_module("with_containers.thrift_mutable_types")
+        return thrift.python.mutable_converter.to_mutable_python_struct_or_union(mutable_types._fbthrift_unadapted_MyStruct, self)
+
     def _to_py3(self):
         import importlib
         py3_types = importlib.import_module("with_containers.types")
@@ -121,15 +138,18 @@ class _fbthrift_unadapted_MyStruct(metaclass=_fbthrift_python_types.StructMeta):
             py_asyncio_types = importlib.import_module("with_containers.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types._fbthrift_unadapted_MyStruct, self)
 
+_fbthrift_ABCMeta.register(_fbthrift_abstract_types._fbthrift_unadapted_MyStruct, _fbthrift_unadapted_MyStruct)
+
 
 MyStruct = my.AdaptedType[_fbthrift_unadapted_MyStruct]
+_fbthrift_MyStruct = MyStruct
 
 # This unfortunately has to be down here to prevent circular imports
 import with_containers.thrift_metadata
 
-
 _fbthrift_all_enums = [
 ]
+
 
 def _fbthrift_metadata__struct__fbthrift_unadapted_AnnotationWithContainers():
     return with_containers.thrift_metadata.gen_metadata_struct__fbthrift_unadapted_AnnotationWithContainers()

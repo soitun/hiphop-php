@@ -190,8 +190,7 @@ class EnumTests(unittest.TestCase):
 
     def test_changing_member(self) -> None:
         with self.assertRaises((AttributeError, TypeError)):
-            # pyre-fixme[8]: Attribute has type `Color`; used as `str`.
-            # raises TypeError in thrift-py3, AttributeError in thrift-python
+            # pyre-fixme[41]: Cannot reassign final attribute
             Color.red = "lol"
 
     def test_hash(self) -> None:
@@ -230,7 +229,7 @@ class EnumTests(unittest.TestCase):
             self.assertEqual(repr(e), f"<Color.{color}: {i}>")
 
     def test_enum_module(self) -> None:
-        module = "thrift_types" if is_auto_migrated() else "types"
+        module = "thrift_enums" if is_auto_migrated() else "types"
         self.assertEqual(Color.__module__, f"testing.{module}")
 
     def test_enum_print(self) -> None:

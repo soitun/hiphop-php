@@ -137,7 +137,6 @@ way to determine how much progress the server made.
 #include "hphp/runtime/base/memory-manager.h"
 #include "hphp/runtime/base/plain-file.h"
 #include "hphp/runtime/base/program-functions.h"
-#include "hphp/runtime/base/runtime-option.h"
 #include "hphp/runtime/base/surprise-flags.h"
 #include "hphp/runtime/base/stream-wrapper-registry.h"
 #include "hphp/runtime/base/stream-wrapper.h"
@@ -1761,9 +1760,9 @@ Optional<int> cli_process_command_loop(int fd, bool ignore_bg, bool isclone) {
     //   unpredicatble behavior depending on the value of the arg
     // - once we hit a non-string argument, we'll get an error from cli_read(cmd)
     FTRACE(2, "{}({}): bad command: {}\n", __func__, fd, cmd);
-    if (RuntimeOption::CheckCLIClientCommands == 1) {
+    if (Cfg::Eval::CheckCLIClientCommands == 1) {
       Logger::Warning("Unrecognized CLI client command: %s\n", cmd.c_str());
-    } else if (RuntimeOption::CheckCLIClientCommands == 2) {
+    } else if (Cfg::Eval::CheckCLIClientCommands == 2) {
       Logger::Error("Unrecognized CLI client command: %s\n", cmd.c_str());
       return 1;
     }
@@ -2203,7 +2202,7 @@ bool is_cli_server_mode() {
 }
 
 bool is_any_cli_mode() {
-  return is_cli_server_mode() || !RuntimeOption::ServerExecutionMode();
+  return is_cli_server_mode() || !Cfg::Server::Mode;
 }
 
 int cli_server_active_workers() {

@@ -106,6 +106,11 @@ TEST(MapUtil, getOptionalStd) {
   EXPECT_TRUE(get_optional<std::optional>(m, 1).has_value());
   EXPECT_EQ(2, get_optional<std::optional>(m, 1).value());
   EXPECT_FALSE(get_optional<std::optional>(m, 2).has_value());
+
+  std::map<int, std::map<int, int>> m2{{1, {{2, 3}}}};
+  EXPECT_TRUE(get_optional<std::optional>(m2, 1, 2).has_value());
+  EXPECT_EQ(3, get_optional<std::optional>(m2, 1, 2).value());
+  EXPECT_FALSE(get_optional<std::optional>(m2, 1, 3).has_value());
 }
 
 TEST(MapUtil, getRefDefault) {
@@ -125,8 +130,9 @@ TEST(MapUtil, getRefDefaultFunction) {
   EXPECT_EQ(42, get_ref_default(m, 2, [&i]() -> const int& { return i; }));
   EXPECT_EQ(
       std::addressof(i),
-      std::addressof(
-          get_ref_default(m, 2, [&i]() -> const int& { return i; })));
+      std::addressof(get_ref_default(m, 2, [&i]() -> const int& {
+        return i;
+      })));
   // statically disallowed:
   // get_ref_default(m, 2, [] { return 7; });
 }

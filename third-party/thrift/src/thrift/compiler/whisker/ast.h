@@ -31,7 +31,7 @@ struct comment;
 struct section_block;
 struct conditional_block;
 struct partial_apply;
-struct variable;
+struct interpolation;
 
 /**
  * The top-level types of constructs allowed in a Whisker source file.
@@ -40,7 +40,7 @@ using body = std::variant<
     text,
     newline,
     comment,
-    variable,
+    interpolation,
     section_block,
     conditional_block,
     partial_apply>;
@@ -109,14 +109,34 @@ struct variable_lookup {
 };
 
 /**
- * A top-level variable within a template body. It is similar to variable_lookup
- * except its source_range includes the surrounding "{{ }}".
+ * The base value type in Whisker, which can be used in interpolation or as
+ * arguments to blocks such as conditionals.
  */
-struct variable {
+struct expression {
   source_range loc;
-  variable_lookup lookup;
+  struct function_call {
+    struct not_tag {};
+    struct and_or_tag {}; // for convenience of writing matchers
+    struct and_tag : and_or_tag {};
+    struct or_tag : and_or_tag {};
+    std::variant<not_tag, and_tag, or_tag> which;
+    std::vector<expression> args;
 
-  std::string chain_string() const { return lookup.chain_string(); }
+    std::string_view name() const;
+  };
+  std::variant<variable_lookup, function_call> content;
+
+  std::string to_string() const;
+};
+/**
+ * A top-level use of an expression within a template body. It is similar to
+ * expression except its source_range includes the surrounding "{{ }}".
+ */
+struct interpolation {
+  source_range loc;
+  expression content;
+
+  std::string to_string() const { return content.to_string(); }
 };
 
 /**
@@ -135,23 +155,17 @@ struct section_block {
 };
 
 /**
- * A Whisker construct for conditionals. A conditional_block represents one of
- * two (very similar) block types: if-block and unless-block.
+ * A Whisker construct for conditionals, i.e. the if-block.
  * This matches Handlebars:
  *   https://handlebarsjs.com/guide/builtin-helpers.html#if
- *   https://handlebarsjs.com/guide/builtin-helpers.html#unless
  */
 struct conditional_block {
   source_range loc;
-  /**
-   * {{#if     ⇒ unless == false
-   * {{#unless ⇒ unless == true
-   */
-  bool unless;
-  variable_lookup variable;
+
+  expression condition;
   bodies body_elements;
 
-  // The {{else}} clause, if present.
+  // The {{#else}} clause, if present.
   struct else_block {
     source_range loc;
     bodies body_elements;

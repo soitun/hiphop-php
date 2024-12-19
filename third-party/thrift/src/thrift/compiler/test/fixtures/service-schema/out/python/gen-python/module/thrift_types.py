@@ -8,12 +8,21 @@
 from __future__ import annotations
 
 import folly.iobuf as _fbthrift_iobuf
+
+from abc import ABCMeta as _fbthrift_ABCMeta
+import module.thrift_abstract_types as _fbthrift_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
 
 
 import include.thrift_types
 import include.thrift_types as _fbthrift__include__thrift_types
+
+from module.thrift_enums import (
+    Result,
+    Result as _fbthrift_Result,
+    _fbthrift_compatible_with_Result,
+)
 
 
 class CustomException(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
@@ -42,6 +51,9 @@ class CustomException(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
         ),
     )
 
+    _fbthrift_abstract_base_class = _fbthrift_abstract_types.CustomException
+
+
     @staticmethod
     def __get_thrift_name__() -> str:
         return "module.CustomException"
@@ -56,6 +68,12 @@ class CustomException(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
 
     def _to_python(self):
         return self
+
+    def _to_mutable_python(self):
+        import thrift.python.mutable_converter
+        import importlib
+        mutable_types = importlib.import_module("module.thrift_mutable_types")
+        return thrift.python.mutable_converter.to_mutable_python_struct_or_union(mutable_types.CustomException, self)
 
     def _to_py3(self):
         import importlib
@@ -72,42 +90,15 @@ class CustomException(metaclass=_fbthrift_python_exceptions.GeneratedErrorMeta):
         except ModuleNotFoundError:
             py_asyncio_types = importlib.import_module("module.ttypes")
             return thrift.util.converter.to_py_struct(py_asyncio_types.CustomException, self)
+_fbthrift_CustomException = CustomException
 
 # This unfortunately has to be down here to prevent circular imports
 import module.thrift_metadata
 
-
-class Result(_fbthrift_python_types.Enum, int):
-    OK = 0
-    SO_SO = 1
-    GOOD = 2
-    @staticmethod
-    def __get_thrift_name__() -> str:
-        return "module.Result"
-
-    @staticmethod
-    def __get_thrift_uri__():
-        return None
-
-    @staticmethod
-    def __get_metadata__():
-        return module.thrift_metadata.gen_metadata_enum_Result()
-
-    def _to_python(self):
-        return self
-
-    def _to_py3(self):
-        import importlib
-        py3_types = importlib.import_module("module.types")
-        return py3_types.Result(self.value)
-
-    def _to_py_deprecated(self):
-        return self.value
-
-
 _fbthrift_all_enums = [
     Result,
 ]
+
 
 def _fbthrift_metadata__exception_CustomException():
     return module.thrift_metadata.gen_metadata_exception_CustomException()

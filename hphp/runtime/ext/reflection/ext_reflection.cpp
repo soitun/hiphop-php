@@ -20,7 +20,6 @@
 #include "hphp/runtime/base/array-init.h"
 #include "hphp/runtime/base/builtin-functions.h"
 #include "hphp/runtime/base/file.h"
-#include "hphp/runtime/base/runtime-option.h"
 #include "hphp/runtime/base/string-hash-set.h"
 #include "hphp/runtime/base/string-util.h"
 #include "hphp/runtime/base/tv-refcount.h"
@@ -406,7 +405,7 @@ Variant HHVM_FUNCTION(hphp_invoke_method, const Variant& obj,
 
   auto const providedClass = Class::load(cls.get());
   if (!providedClass) {
-    raise_error("Call to undefined method %s::%s()", cls.data(), name.data());
+    raise_error("Class undefined: %s", cls.data());
   }
   auto const selectedFunc = providedClass->lookupMethod(name.get());
   if (!selectedFunc) {
@@ -457,7 +456,7 @@ Variant HHVM_FUNCTION(hphp_get_property, const Object& obj, const String& cls,
 
 void HHVM_FUNCTION(hphp_set_property, const Object& obj, const String& cls,
                                       const String& prop, const Variant& value) {
-  if (!cls.empty() && RuntimeOption::EvalAuthoritativeMode) {
+  if (!cls.empty() && Cfg::Eval::AuthoritativeMode) {
     raise_error(
       "We've already made many assumptions about private variables. "
       "You can't change accessibility in Whole Program mode"
@@ -501,7 +500,7 @@ void HHVM_FUNCTION(hphp_set_static_property, const String& cls,
                                              const String& prop,
                                              const Variant& value,
                                              bool force) {
-  if (RuntimeOption::EvalAuthoritativeMode) {
+  if (Cfg::Eval::AuthoritativeMode) {
     raise_error("Setting static properties through reflection is not "
       "allowed in RepoAuthoritative mode");
   }
@@ -1064,7 +1063,7 @@ static int64_t HHVM_METHOD(ReflectionMethod, getModifiers) {
 }
 
 static String HHVM_METHOD(ReflectionMethod, getCanonicalClassname) {
-  if (RuntimeOption::EvalAuthoritativeMode) {
+  if (Cfg::Eval::AuthoritativeMode) {
     Reflection::ThrowReflectionExceptionObject(s_canonical_class_in_repo_mode);
   }
   auto const func = ReflectionFuncHandle::GetFuncFor(this_);

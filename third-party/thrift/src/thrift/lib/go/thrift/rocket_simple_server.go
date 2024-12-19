@@ -72,7 +72,7 @@ func (s *rocketSimpleServer) acceptor(ctx context.Context, setup payload.SetupPa
 	if err := checkRequestSetupMetadata8(setup); err != nil {
 		return nil, err
 	}
-	serverMetadataPush, err := encodeServerMetadataPushVersion8(s.zstdSupported)
+	serverMetadataPush, err := encodeServerMetadataPush(s.zstdSupported)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,10 @@ func newRocketSimpleServerSocket(ctx context.Context, proc Processor, log func(f
 }
 
 func (s *rocketSimpleServerSocket) metadataPush(msg payload.Payload) {
-	_ = decodeClientMetadataPush(msg)
+	_, err := decodeClientMetadataPush(msg)
+	if err != nil {
+		panic(err)
+	}
 	// This is usually something like transportMetadata = map[deciding_accessors:IP=...], but we do not handle it.
 }
 

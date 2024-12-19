@@ -25,11 +25,14 @@
 #include "hphp/util/configs/eval.h"
 #include "hphp/util/match.h"
 #include "hphp/util/trace.h"
+#include "hphp/runtime/base/annot-type.h"
 
 #include "hphp/runtime/base/autoload-handler.h"
 #include "hphp/runtime/base/datatype.h"
 #include "hphp/runtime/base/execution-context.h"
 #include "hphp/runtime/base/runtime-error.h"
+#include "hphp/runtime/base/tv-type.h"
+#include "hphp/runtime/base/typed-value.h"
 #include "hphp/runtime/base/type-structure-helpers.h"
 #include "hphp/runtime/vm/act-rec.h"
 #include "hphp/runtime/vm/class.h"
@@ -237,6 +240,18 @@ Optional<TypeConstraint> TypeConstraint::UnionBuilder::recordConstraint(const Ty
     }
     case AnnotType::Classname: {
       m_preciseTypeMask |= kUnionTypeClassname;
+      break;
+    }
+    case AnnotType::Class: {
+      // TODO(T199611023) when we enforce the inner class, share the SubObject bit
+      m_preciseTypeMask |= kUnionTypeClass;
+      break;
+    }
+    case AnnotType::ClassOrClassname: {
+      // This type won't be supported by case types, nor will class<T> or classname<T>
+      // until configs ClassPassesClassname and StringPassesClass are both false
+      m_preciseTypeMask |= kUnionTypeClassname;
+      m_preciseTypeMask |= kUnionTypeClass;
       break;
     }
     case AnnotType::SubObject: {
@@ -532,6 +547,38 @@ size_t stableHashVec(R&& v) {
   }
   return h;
 }
+
+// Returns the set of all possible default values for a given annot-type.
+AnnotTypeDefault annotTypeDefaultValues(AnnotType at) {
+  switch (at) {
+    case AnnotType::This:
+    case AnnotType::Callable:
+    case AnnotType::Resource:
+    case AnnotType::Object:
+    case AnnotType::SubObject:
+    case AnnotType::Nothing:
+    case AnnotType::NoReturn:
+    case AnnotType::Classname:
+    case AnnotType::Class:
+    case AnnotType::ClassOrClassname:
+    case AnnotType::Null:       return AnnotTypeDefault::Null;
+    case AnnotType::Mixed:      return AnnotTypeDefault::Any;
+    case AnnotType::Nonnull:    return AnnotTypeDefault::AnyNonNull;
+    case AnnotType::Number:     return AnnotTypeDefault::ZeroNumber;
+    case AnnotType::ArrayKey:   return AnnotTypeDefault::ZeroIntOrEmptyString;
+    case AnnotType::Int:        return AnnotTypeDefault::ZeroInt;
+    case AnnotType::Bool:       return AnnotTypeDefault::False;
+    case AnnotType::Float:      return AnnotTypeDefault::ZeroDouble;
+    case AnnotType::ArrayLike:  return AnnotTypeDefault::EmptyArray;
+    case AnnotType::VecOrDict:  return AnnotTypeDefault::EmptyVecOrDict;
+    case AnnotType::Vec:        return AnnotTypeDefault::EmptyVec;
+    case AnnotType::String:     return AnnotTypeDefault::EmptyString;
+    case AnnotType::Dict:       return AnnotTypeDefault::EmptyDict;
+    case AnnotType::Keyset:     return AnnotTypeDefault::EmptyKeyset;
+    case AnnotType::Unresolved: return AnnotTypeDefault::None;
+  }
+  always_assert(false);
+}
 } // anonymous namespace
 
 size_t UnionClassList::stableHash() const {
@@ -736,6 +783,8 @@ std::string TypeConstraint::displayName(const Class* context /*= nullptr*/,
         case AnnotType::ArrayLike: str = "AnyArray"; break;
         case AnnotType::Nonnull:  str = "nonnull"; break;
         case AnnotType::Classname: str = "classname"; break;
+        case AnnotType::Class:    str = "class"; break;
+        case AnnotType::ClassOrClassname: str = "class_or_classname"; break;
         case AnnotType::SubObject: str = clsName()->data(); break;
         case AnnotType::This:
         case AnnotType::Mixed:
@@ -780,6 +829,7 @@ std::string showUnionTypeMask(UnionTypeMask mask) {
   bitName(res, mask, TypeConstraint::kUnionTypeVec, "vec");
   bitName(res, mask, TypeConstraint::kUnionTypeSubObject, "subObject");
   bitName(res, mask, TypeConstraint::kUnionTypeClassname, "classname");
+  bitName(res, mask, TypeConstraint::kUnionTypeClass, "class");
   assertx(mask == 0);
   return res;
 };
@@ -827,6 +877,8 @@ std::string show(AnnotType t) {
     case AnnotType::NoReturn: return "NoReturn";
     case AnnotType::Nothing: return "Nothing";
     case AnnotType::Classname: return "Classname";
+    case AnnotType::Class: return "Class";
+    case AnnotType::ClassOrClassname: return "ClassOrClassname";
     case AnnotType::Unresolved: return "Unresolved";
   }
   not_reached();
@@ -867,12 +919,47 @@ std::string TypeConstraint::debugName() const {
   }
 }
 
-TypedValue TypeConstraint::defaultValue() const {
+AnnotTypeDefault TypeConstraint::getPossibleDefaultValues() const {
   // Nullable type-constraints should always default to null, as Hack
   // guarantees this.
-  if (!isCheckable() || isNullable()) return make_tv<KindOfNull>();
-  AnnotType annotType = (*eachTypeConstraintInUnion(*this).begin()).type();
-  return annotDefaultValue(annotType);
+  if (isNullable()) return AnnotTypeDefault::Null;
+  AnnotTypeDefault dv = AnnotTypeDefault::None;
+  for (const auto& tc : eachTypeConstraintInUnion(*this)) {
+    dv = (dv | annotTypeDefaultValues(tc.type()));
+  }
+  return dv;
+}
+
+/*
+ * Choose a default value that satisfies all the constraints in the given
+ * intersection. Returns nullopt if no such default value exists.
+ */
+HPHP::Optional<TypedValue> TypeIntersectionConstraint::defaultValue() const {
+  AnnotTypeDefault dv = AnnotTypeDefault::Any;
+  for (auto const& tc : range()) {
+    dv = (dv & tc.getPossibleDefaultValues());
+  }
+
+  // It is possible that multiple default values satisfy the given
+  // intersection. Choose one in the following order of precedence.
+  if (has_flag(dv, AnnotTypeDefault::Null)) return make_tv<KindOfNull>();
+  if (has_flag(dv, AnnotTypeDefault::ZeroInt)) return make_tv<KindOfInt64>(0);
+  if (has_flag(dv, AnnotTypeDefault::False)) return make_tv<KindOfBoolean>(false);
+  if (has_flag(dv, AnnotTypeDefault::ZeroDouble)) return make_tv<KindOfDouble>(0.0);
+  if (has_flag(dv, AnnotTypeDefault::EmptyString)) {
+    return make_tv<KindOfPersistentString>(staticEmptyString());
+  }
+  if (has_flag(dv, AnnotTypeDefault::EmptyVec)) {
+    return make_tv<KindOfPersistentVec>(staticEmptyVec());
+  }
+  if (has_flag(dv, AnnotTypeDefault::EmptyDict)) {
+    return make_tv<KindOfPersistentDict>(staticEmptyDictArray());
+  }
+  if (has_flag(dv, AnnotTypeDefault::EmptyKeyset)) {
+    return make_tv<KindOfPersistentKeyset>(staticEmptyKeysetArray());
+  }
+  assertx(dv == AnnotTypeDefault::None);
+  return std::nullopt;
 }
 
 namespace {
@@ -1097,6 +1184,8 @@ bool TypeConstraint::equivalentForProp(const TypeConstraint& other) const {
       case MetaType::VecOrDict:
       case MetaType::ArrayLike:
       case MetaType::Classname:
+      case MetaType::Class:
+      case MetaType::ClassOrClassname:
       case MetaType::Precise:
       case MetaType::SubObject:
         return { tc.type(), tc.clsName(), tc.isNullable() };
@@ -1163,6 +1252,13 @@ bool TypeConstraint::checkNamedTypeNonObj(tv_rval val,
             if (Assert) return true;
             fallback = fallback ? std::min(*fallback, result) : result;
             continue;
+          case AnnotAction::WarnClass:
+            assertx(isStringType(val.type()));
+            assertx(Cfg::Eval::ClassTypeLevel == 0);
+            assertx(Cfg::Eval::ClassNoticesSampleRate > 0);
+            if (Assert) return true;
+            fallback = fallback ? std::min(*fallback, result) : result;
+            continue;
           case AnnotAction::ObjectCheck:
           case AnnotAction::Fallback:
           case AnnotAction::FallbackCoerce:
@@ -1180,6 +1276,11 @@ bool TypeConstraint::checkNamedTypeNonObj(tv_rval val,
         case AnnotAction::WarnClassname:
           if (folly::Random::oneIn(Cfg::Eval::ClassnameNoticesSampleRate)) {
             raise_notice(Strings::CLASS_TO_CLASSNAME);
+          }
+          return true;
+        case AnnotAction::WarnClass:
+          if (folly::Random::oneIn(Cfg::Eval::ClassNoticesSampleRate)) {
+            raise_notice(Strings::STRING_TO_CLASS);
           }
           return true;
         default:
@@ -1238,6 +1339,8 @@ bool TypeConstraint::checkTypeAliasImpl(const ClassConstraint& oc, const Class* 
       case AnnotMetaType::VecOrDict:
       case AnnotMetaType::ArrayLike:
       case AnnotMetaType::Classname:  // TODO: T83332251
+      case AnnotMetaType::Class:
+      case AnnotMetaType::ClassOrClassname:
         continue;
       case AnnotMetaType::SubObject:
         if (klass && cls->classof(klass)) return true;
@@ -1333,6 +1436,8 @@ bool TypeConstraint::checkImpl(tv_rval val,
       case MetaType::VecOrDict:
       case MetaType::ArrayLike:
       case MetaType::Classname:
+      case MetaType::Class:
+      case MetaType::ClassOrClassname:
         return false;
       case MetaType::Nonnull:
         return true;
@@ -1383,6 +1488,15 @@ bool TypeConstraint::checkImpl(tv_rval val,
           fallback = fallback ? std::min(*fallback, result) : result;
         }
         break;
+      case AnnotAction::WarnClass:
+        if (!isPasses) {
+          assertx(isStringType(val.type()));
+          assertx(Cfg::Eval::ClassTypeLevel == 0);
+          assertx(Cfg::Eval::ClassNoticesSampleRate > 0);
+          if (isAssert) return true;
+          fallback = fallback ? std::min(*fallback, result) : result;
+        }
+        break;
       case AnnotAction::ObjectCheck:
         not_reached();
     }
@@ -1398,6 +1512,11 @@ bool TypeConstraint::checkImpl(tv_rval val,
     case AnnotAction::WarnClassname:
       if (folly::Random::oneIn(Cfg::Eval::ClassnameNoticesSampleRate)) {
         raise_notice(Strings::CLASS_TO_CLASSNAME);
+      }
+      return true;
+    case AnnotAction::WarnClass:
+      if (folly::Random::oneIn(Cfg::Eval::ClassNoticesSampleRate)) {
+        raise_notice(Strings::STRING_TO_CLASS);
       }
       return true;
     default:
@@ -1451,6 +1570,8 @@ bool TypeConstraint::alwaysPasses(const StringData* checkedClsName) const {
     case MetaType::VecOrDict:
     case MetaType::ArrayLike:
     case MetaType::Classname:
+    case MetaType::Class:
+    case MetaType::ClassOrClassname:
       return false;
     case MetaType::Nonnull:
       return true;
@@ -1492,6 +1613,7 @@ bool TypeConstraint::alwaysPasses(DataType dt) const {
     case AnnotAction::WarnLazyClassToString:
     case AnnotAction::ConvertLazyClassToString:
     case AnnotAction::WarnClassname:
+    case AnnotAction::WarnClass:
       return false;
   }
   not_reached();
@@ -1954,6 +2076,10 @@ MemoKeyConstraint memoKeyConstraintFromTC(const TypeConstraint& tc) {
       return tc.isNullable() ? MK::None : MK::IntOrStr;
     case AnnotMetaType::Classname:
       return tc.isNullable() ? MK::StrOrNull : MK::Str;
+    case AnnotMetaType::Class:
+      return tc.isNullable() ? MK::StrOrNull : MK::Str;
+    case AnnotMetaType::ClassOrClassname:
+      return tc.isNullable() ? MK::StrOrNull : MK::Str;
     case AnnotMetaType::SubObject:
       return tc.isNullable() ? MK::ObjectOrNull : MK::Object;
     case AnnotMetaType::Mixed:
@@ -2063,6 +2189,10 @@ void TcUnionPieceIterator::buildUnionTypeConstraint() {
     }
     case TypeConstraint::kUnionTypeClassname: {
       m_outTc = TypeConstraint{ AnnotType::Classname, flags, CC{LAZY_STATIC_STRING(annotTypeName(AnnotType::Classname))} };
+      break;
+    }
+    case TypeConstraint::kUnionTypeClass: {
+      m_outTc = TypeConstraint{ AnnotType::Class, flags, CC{LAZY_STATIC_STRING(annotTypeName(AnnotType::Class))} };
       break;
     }
 

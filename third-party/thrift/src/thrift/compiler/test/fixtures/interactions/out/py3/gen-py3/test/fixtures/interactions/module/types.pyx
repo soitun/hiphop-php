@@ -29,8 +29,6 @@ from thrift.py3.types cimport (
     init_unicode_from_cpp as __init_unicode_from_cpp,
     set_iter as __set_iter,
     map_iter as __map_iter,
-    map_contains as __map_contains,
-    map_getitem as __map_getitem,
     reference_shared_ptr as __reference_shared_ptr,
     get_field_name_by_index as __get_field_name_by_index,
     reset_field as __reset_field,
@@ -59,6 +57,7 @@ import test.fixtures.another_interactions.shared.types as _test_fixtures_another
 import test.fixtures.interactions.module.thrift_types as _fbthrift_python_types
 
 
+_fbthrift__module_name__ = "test.fixtures.interactions.module.types"
 
 cdef object get_types_reflection():
     return importlib.import_module(
@@ -67,6 +66,8 @@ cdef object get_types_reflection():
 
 @__cython.auto_pickle(False)
 cdef class CustomException(thrift.py3.exceptions.GeneratedError):
+    __module__ = _fbthrift__module_name__
+
     def __init__(CustomException self, *args, **kwargs):
         self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = make_shared[_test_fixtures_interactions_module_cbindings.cCustomException]()
         self._fields_setter = _fbthrift_types_fields.__CustomException_FieldsSetter._fbthrift_create(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE.get())
@@ -171,6 +172,8 @@ cdef class CustomException(thrift.py3.exceptions.GeneratedError):
 
 @__cython.auto_pickle(False)
 cdef class ShouldBeBoxed(thrift.py3.types.Struct):
+    __module__ = _fbthrift__module_name__
+
     def __init__(ShouldBeBoxed self, **kwargs):
         self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE = make_shared[_test_fixtures_interactions_module_cbindings.cShouldBeBoxed]()
         self._fields_setter = _fbthrift_types_fields.__ShouldBeBoxed_FieldsSetter._fbthrift_create(self._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE.get())

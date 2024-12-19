@@ -10,6 +10,7 @@ from __future__ import annotations
 import typing as _typing
 
 import folly.iobuf as _fbthrift_iobuf
+import service.thrift_abstract_types as _fbthrift_python_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
 
@@ -18,6 +19,7 @@ import includes.thrift_types as _fbthrift__includes__thrift_types
 import module.thrift_types as _fbthrift__module__thrift_types
 
 import transitive.thrift_types as _fbthrift__transitive__thrift_types
+
 
 IncludesIncluded = _fbthrift__includes__thrift_types.Included
 IncludesTransitiveFoo = _fbthrift__transitive__thrift_types.Foo

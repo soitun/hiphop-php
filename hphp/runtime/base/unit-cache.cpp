@@ -26,7 +26,6 @@
 #include "hphp/runtime/base/plain-file.h"
 #include "hphp/runtime/base/program-functions.h"
 #include "hphp/runtime/base/record-replay.h"
-#include "hphp/runtime/base/runtime-option.h"
 #include "hphp/runtime/base/stat-cache.h"
 #include "hphp/runtime/base/stream-wrapper-registry.h"
 #include "hphp/runtime/base/string-util.h"
@@ -518,7 +517,7 @@ bool anyDepsChanged(
  * Determine whether or not cachedUnit can be used from the cache or requires
  * recompilation from disk.
  *
- * When RO::EnableDecl is false this a pure function of whether or not the
+ * When Cfg::Eval::EnableDecl is false this a pure function of whether or not the
  * source text of the file has been modified. In this function we check to see
  * if the stat() information has changed on disk as a shortcut.
  *
@@ -953,7 +952,7 @@ getNonRepoCacheWithWrapper(const StringData* rpath) {
 const StringData* resolveRequestedPath(const StringData* requestedPath,
                                        bool alreadyRealpath) {
   auto const rpath = [&] (const StringData* p) {
-    if (!RuntimeOption::CheckSymLink || alreadyRealpath) {
+    if (!Cfg::Eval::CheckSymLink || alreadyRealpath) {
       return makeStaticString(p);
     }
     std::string rp;
@@ -1517,9 +1516,6 @@ std::string mangleUnitSha1(const folly::StringPiece fileSha1,
     folly::to<std::string>(
       fileSha1, '|',
       repoSchemaId().toString(),
-#define R(Opt)  RuntimeOption::Opt, '|',
-      UNITCACHEFLAGS()
-#undef R
 #define C(Config, ...) Config, '|',
       CONFIGS_FOR_UNITCACHEFLAGS()
 #undef C
@@ -2014,7 +2010,7 @@ void unitCacheSyncRepo(AutoloadMap* map,
     if (dirtyUnit(absPath)) updated.emplace_back(absPath);
   }
 
-  if (RO::ServerExecutionMode() &&
+  if (Cfg::Server::Mode &&
       (!deleted.empty() || !changed.empty() || !updated.empty())) {
     Logger::FInfo(
       "Synced {}: {} deleted; {} modified; {} evicted; {} to prefetch",
@@ -2050,7 +2046,7 @@ void unitCacheSyncRepo(AutoloadMap* map,
         // destructor will take care of it.
         Treadmill::enqueue([v = std::move(oldUnits)] {});
 
-        if (RO::ServerExecutionMode()) {
+        if (Cfg::Server::Mode) {
           Logger::FInfo("Prefetched {} modified units", count);
         }
       };

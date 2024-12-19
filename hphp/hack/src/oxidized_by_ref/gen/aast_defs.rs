@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<56ad43bdc2f9f7a8ded994015c09f610>>
+// @generated SignedSource<<29487812aacba9fb55b877a1ed5ba971>>
 //
 // To regenerate this file, run:
 //   hphp/hack/src/oxidized_regen.sh
@@ -1194,6 +1194,15 @@ pub enum Expr_<'a, Ex, En> {
     ///     $foo + $bar
     #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
     Binop(&'a Binop<'a, Ex, En>),
+    #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
+    #[rust_to_ocaml(inline_tuple)]
+    Assign(
+        &'a (
+            &'a Expr<'a, Ex, En>,
+            Option<ast_defs::Bop>,
+            &'a Expr<'a, Ex, En>,
+        ),
+    ),
     /// Pipe expression. The lid is the ID of the $$ that is implicitly
     /// declared by this pipe.
     ///
@@ -1461,9 +1470,8 @@ arena_deserializer::impl_deserialize_in_arena!(HoleSource<'arena>);
 #[rust_to_ocaml(and)]
 #[repr(C)]
 pub struct Binop<'a, Ex, En> {
-    #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
     #[rust_to_ocaml(attr = "transform.opaque")]
-    pub bop: ast_defs::Bop<'a>,
+    pub bop: ast_defs::Bop,
     #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
     #[rust_to_ocaml(attr = "transform.explicit")]
     pub lhs: &'a Expr<'a, Ex, En>,
@@ -2040,13 +2048,43 @@ pub struct CallExpr<'a, Ex, En> {
     pub targs: &'a [&'a Targ<'a, Ex>],
     /// positional args, plus their calling convention
     #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
-    pub args: &'a [(ast_defs::ParamKind<'a>, &'a Expr<'a, Ex, En>)],
+    pub args: &'a [Argument<'a, Ex, En>],
     /// unpacked arg
     #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
     pub unpacked_arg: Option<&'a Expr<'a, Ex, En>>,
 }
 impl<'a, Ex: TrivialDrop, En: TrivialDrop> TrivialDrop for CallExpr<'a, Ex, En> {}
 arena_deserializer::impl_deserialize_in_arena!(CallExpr<'arena, Ex, En>);
+
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Deserialize,
+    Eq,
+    FromOcamlRepIn,
+    Hash,
+    NoPosHash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+    ToOcamlRep
+)]
+#[serde(bound(
+    deserialize = "Ex: 'de + arena_deserializer::DeserializeInArena<'de>, En: 'de + arena_deserializer::DeserializeInArena<'de>"
+))]
+#[rust_to_ocaml(and)]
+#[repr(C, u8)]
+pub enum Argument<'a, Ex, En> {
+    #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
+    #[rust_to_ocaml(inline_tuple)]
+    Ainout(&'a (&'a Pos<'a>, &'a Expr<'a, Ex, En>)),
+    #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
+    Anormal(&'a Expr<'a, Ex, En>),
+}
+impl<'a, Ex: TrivialDrop, En: TrivialDrop> TrivialDrop for Argument<'a, Ex, En> {}
+arena_deserializer::impl_deserialize_in_arena!(Argument<'arena, Ex, En>);
 
 #[derive(
     Clone,
@@ -2145,6 +2183,7 @@ impl<'a, Ex: TrivialDrop, En: TrivialDrop> TrivialDrop for Tparam<'a, Ex, En> {}
 arena_deserializer::impl_deserialize_in_arena!(Tparam<'arena, Ex, En>);
 
 pub use oxidized::aast_defs::EmitId;
+pub use oxidized::aast_defs::PackageMembership;
 pub use oxidized::aast_defs::RequireKind;
 
 #[derive(
@@ -2246,7 +2285,7 @@ pub struct Class_<'a, Ex, En> {
     #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
     pub module: Option<Sid<'a>>,
     #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
-    pub package: Option<&'a str>,
+    pub package: Option<&'a oxidized::aast_defs::PackageMembership>,
 }
 impl<'a, Ex: TrivialDrop, En: TrivialDrop> TrivialDrop for Class_<'a, Ex, En> {}
 arena_deserializer::impl_deserialize_in_arena!(Class_<'arena, Ex, En>);
@@ -2801,7 +2840,7 @@ pub struct Typedef<'a, Ex, En> {
     #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
     pub doc_comment: Option<&'a DocComment<'a>>,
     #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
-    pub package: Option<&'a str>,
+    pub package: Option<&'a oxidized::aast_defs::PackageMembership>,
 }
 impl<'a, Ex: TrivialDrop, En: TrivialDrop> TrivialDrop for Typedef<'a, Ex, En> {}
 arena_deserializer::impl_deserialize_in_arena!(Typedef<'arena, Ex, En>);
@@ -2892,7 +2931,7 @@ pub struct FunDef<'a, Ex, En> {
     #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
     pub where_constraints: &'a [&'a WhereConstraintHint<'a>],
     #[serde(deserialize_with = "arena_deserializer::arena", borrow)]
-    pub package: Option<&'a str>,
+    pub package: Option<&'a oxidized::aast_defs::PackageMembership>,
 }
 impl<'a, Ex: TrivialDrop, En: TrivialDrop> TrivialDrop for FunDef<'a, Ex, En> {}
 arena_deserializer::impl_deserialize_in_arena!(FunDef<'arena, Ex, En>);

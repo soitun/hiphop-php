@@ -53,13 +53,15 @@ class FakeStreamHandle
     }
   }
   GenericApiRet stopSending(uint32_t code) override {
-    stopSendingErrorCode_ = code;
-    cs_.requestCancellation();
+    if (!stopSendingErrorCode_) {
+      stopSendingErrorCode_ = code;
+      cs_.requestCancellation();
+    }
     return folly::unit;
   }
 
   using WriteStreamDataRet =
-      folly::Expected<folly::SemiFuture<folly::Unit>, WebTransport::ErrorCode>;
+      folly::Expected<WebTransport::FCState, WebTransport::ErrorCode>;
   WriteStreamDataRet writeStreamData(std::unique_ptr<folly::IOBuf> data,
                                      bool fin) override {
     buf_.append(std::move(data));
@@ -69,6 +71,11 @@ class FakeStreamHandle
       promise_.reset();
     } else {
     }
+    return WebTransport::FCState::UNBLOCKED;
+  }
+
+  folly::Expected<folly::SemiFuture<folly::Unit>, WebTransport::ErrorCode>
+  awaitWritable() override {
     return folly::makeFuture(folly::unit);
   }
 
@@ -85,6 +92,10 @@ class FakeStreamHandle
                             bool inc) override {
     pri.emplace(std::forward_as_tuple(urgency, order, inc));
     return folly::unit;
+  }
+
+  bool open() const {
+    return !fin_ && !writeErr_ && (!promise_ || !promise_->isFulfilled());
   }
 
   uint64_t id{0};
@@ -169,13 +180,22 @@ class FakeSharedWebTransport : public WebTransport {
     return h->second->readStreamData();
   }
 
-  folly::Expected<folly::SemiFuture<folly::Unit>, ErrorCode> writeStreamData(
+  folly::Expected<FCState, ErrorCode> writeStreamData(
       uint64_t id, std::unique_ptr<folly::IOBuf> data, bool fin) override {
     auto h = writeHandles.find(id);
     if (h == writeHandles.end()) {
       return folly::makeUnexpected(WebTransport::ErrorCode::GENERIC_ERROR);
     }
     return h->second->writeStreamData(std::move(data), fin);
+  }
+
+  folly::Expected<folly::SemiFuture<folly::Unit>, ErrorCode> awaitWritable(
+      uint64_t id) override {
+    auto h = writeHandles.find(id);
+    if (h == writeHandles.end()) {
+      return folly::makeUnexpected(WebTransport::ErrorCode::GENERIC_ERROR);
+    }
+    return h->second->awaitWritable();
   }
 
   folly::Expected<folly::Unit, ErrorCode> resetStream(uint64_t streamId,
@@ -221,7 +241,9 @@ class FakeSharedWebTransport : public WebTransport {
   folly::Expected<folly::Unit, ErrorCode> closeSession(
       folly::Optional<uint32_t> error = folly::none) override {
     for (auto& h : writeHandles) {
-      h.second->resetStream(std::numeric_limits<uint32_t>::max());
+      if (h.second->open()) {
+        h.second->resetStream(std::numeric_limits<uint32_t>::max());
+      }
     }
     writeHandles.clear();
     for (auto& h : readHandles) {
