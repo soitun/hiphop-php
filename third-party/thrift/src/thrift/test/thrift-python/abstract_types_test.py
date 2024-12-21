@@ -18,6 +18,10 @@ import datetime
 import typing
 import unittest
 
+import thrift.test.thrift_python.enum_test.thrift_abstract_types as enum_test_abstract_types
+
+import thrift.test.thrift_python.enum_test.thrift_enums as enum_test_enums
+
 import thrift.test.thrift_python.included.thrift_abstract_types
 
 from folly import iobuf
@@ -144,6 +148,24 @@ class ThriftPythonAbstractTypesTest(unittest.TestCase):
         library_fn(TestUnionImmutable(string_field="hello"))
         self.assertTrue(issubclass(TestUnionImmutable, TestUnionAbstract))
 
+    def test_union_current_field_immutable(self) -> None:
+        def make_abstract(u: TestUnionAbstract) -> TestUnionAbstract:
+            return u
+
+        # GIVEN
+        u = make_abstract(TestUnionImmutable(string_field="hello"))
+        # This fixme is required due to the Pyre limitation that it does not recognize nested
+        # type aliases as types for type annotations.
+        # pyre-fixme[9]: expected has type `TestUnionAbstract.FbThriftUnionFieldEnum`; used as
+        #  `TestUnionImmutable.FbThriftUnionFieldEnum`.
+        expected: TestUnionAbstract.FbThriftUnionFieldEnum = (
+            TestUnionImmutable.FbThriftUnionFieldEnum.string_field
+        )
+
+        # WHEN
+        actual: TestUnionAbstract.FbThriftUnionFieldEnum = u.fbthrift_current_field
+        self.assertEqual(expected, actual)
+
     def test_fn_call_with_read_only_abstract_base_class_with_mutable_union(
         self,
     ) -> None:
@@ -162,6 +184,24 @@ class ThriftPythonAbstractTypesTest(unittest.TestCase):
         # WHEN
         library_fn(TestUnionMutable(string_field="hello"))
         self.assertTrue(issubclass(TestUnionMutable, TestUnionAbstract))
+
+    def test_union_current_field_mutable(self) -> None:
+        def make_abstract(u: TestUnionAbstract) -> TestUnionAbstract:
+            return u
+
+        # GIVEN
+        u = make_abstract(TestUnionMutable(string_field="hello"))
+        # This fixme is required due to the Pyre limitation that it does not recognize nested
+        # type aliases as types for type annotations.
+        # pyre-fixme[9]: expected has type `TestUnionAbstract.FbThriftUnionFieldEnum`; used as
+        #  `TestUnionMutable.FbThriftUnionFieldEnum`.
+        expected: TestUnionAbstract.FbThriftUnionFieldEnum = (
+            TestUnionMutable.FbThriftUnionFieldEnum.string_field
+        )
+
+        # WHEN
+        actual: TestUnionAbstract.FbThriftUnionFieldEnum = u.fbthrift_current_field
+        self.assertEqual(expected, actual)
 
     @parameterized.expand(
         [
@@ -640,7 +680,7 @@ class ThriftPythonAbstractTypesTest(unittest.TestCase):
             ),
             (
                 "TestUnionAmbiguousTypeFieldNameAbstract.Type",
-                TestUnionAmbiguousTypeFieldNameAbstract.Type,
+                TestUnionAmbiguousTypeFieldNameAbstract.Type_,
                 int,
             ),
         ]
@@ -696,6 +736,13 @@ class ThriftPythonAbstractTypesTest(unittest.TestCase):
             # Incompatible parameter type [6]: In call `set.__init__`,
             # for 1st positional argument, expected `Iterable[Variable[_T]]`
             # but got `TestStructAbstract`
+            # DO_BEFORE(satishvk, 20250630): Add __iter__ to abstract types.
+            # Removed because of type-check failures in the presence of
+            # __iter__ for mutable types when there are invariant types used as
+            # keys in the map.
+            #
+            # pyre-fixme[6]: For 1st argument expected `Iterable[_T]` but got
+            #  `TestStructAbstract`.
             set(ts),
             {("unqualified_string", "hello"), ("optional_string", None)},
         )
@@ -841,3 +888,14 @@ class ThriftPythonAbstractTypesTest(unittest.TestCase):
             AttributeError,
         ):
             string_field_union.int_field
+
+    def test_enum_identity(self) -> None:
+        self.assertIs(
+            enum_test_enums.PositiveNumber, enum_test_abstract_types.PositiveNumber
+        )
+
+    def test_enum_value(self) -> None:
+        self.assertEqual(
+            enum_test_enums.PositiveNumber.THREE,
+            enum_test_abstract_types.PositiveNumber.THREE,
+        )

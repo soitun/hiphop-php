@@ -35,10 +35,10 @@
 #include <folly/Function.h>
 #include <folly/Optional.h>
 #include <folly/Range.h>
-#include <folly/experimental/io/Liburing.h>
 #include <folly/io/IOBuf.h>
 #include <folly/io/async/EventBaseBackendBase.h>
 #include <folly/io/async/IoUringBase.h>
+#include <folly/io/async/Liburing.h>
 #include <folly/portability/Asm.h>
 #include <folly/small_vector.h>
 
@@ -328,6 +328,9 @@ class IoUringBackend : public EventBaseBackendBase {
       unsigned int mask,
       struct statx* statxbuf,
       FileOpCallback&& cb);
+
+  void queueRename(
+      const char* oldPath, const char* newPath, FileOpCallback&& cb);
 
   void queueFallocate(
       int fd, int mode, off_t offset, off_t len, FileOpCallback&& cb);
@@ -934,6 +937,26 @@ class IoUringBackend : public EventBaseBackendBase {
     int flags_;
     unsigned int mask_;
     struct statx* statxbuf_;
+  };
+
+  struct FRenameIoSqe : public FileOpIoSqe {
+    FRenameIoSqe(
+        IoUringBackend* backend,
+        const char* oldPath,
+        const char* newPath,
+        FileOpCallback&& cb)
+        : FileOpIoSqe(backend, -1, std::move(cb)),
+          oldPath_(oldPath),
+          newPath_(newPath) {}
+
+    void processSubmit(struct io_uring_sqe* sqe) noexcept override {
+      ::io_uring_prep_rename(sqe, oldPath_, newPath_);
+      ::io_uring_sqe_set_data(sqe, this);
+    }
+
+    const char* oldPath_;
+    const char* newPath_;
+    int flags_;
   };
 
   struct FAllocateIoSqe : public FileOpIoSqe {

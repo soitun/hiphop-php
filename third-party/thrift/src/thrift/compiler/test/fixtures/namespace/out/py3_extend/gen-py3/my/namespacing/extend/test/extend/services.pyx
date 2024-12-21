@@ -62,8 +62,7 @@ import my.namespacing.test.hsmodule.types as _my_namespacing_test_hsmodule_types
 cimport my.namespacing.test.hsmodule.types as _my_namespacing_test_hsmodule_types
 cimport my.namespacing.test.hsmodule.cbindings as _my_namespacing_test_hsmodule_cbindings
 
-import my.namespacing.extend.test.extend.services_reflection as _services_reflection
-cimport my.namespacing.extend.test.extend.services_reflection as _services_reflection
+cimport my.namespacing.extend.test.extend.services_interface as _fbthrift_services_interface
 
 import asyncio
 import functools
@@ -123,19 +122,20 @@ cdef class ExtendTestServiceInterface(
             get_executor()
         )
 
+    _fbthrift_annotations_DO_NOT_USE_check = {
+        'return': 'bool',
+        'struct1': 'my.namespacing.test.hsmodule.types.HsFoo', 
+    }
+
     async def check(
             self,
             struct1):
         raise NotImplementedError("async def check is not implemented")
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__ExtendTestService(for_clients=False)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cExtendTestServiceSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cExtendTestServiceSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod

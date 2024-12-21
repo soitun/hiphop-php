@@ -339,33 +339,18 @@ class ast_builder : public parser_actions {
     if (field.id() > 0) {
       return;
     }
-    if (params_.allow_neg_field_keys) {
-      // allow_neg_field_keys exists to allow users to add explicitly specified
-      // id values to old .thrift files without breaking protocol compatibility.
-      if (field.id() != next_id) {
-        diags_.warning(
-            field,
-            "Nonpositive field id ({}) differs from what would be "
-            "auto-assigned by thrift ({}).",
-            field.id(),
-            next_id);
-      }
-    } else if (field.id() == next_id) {
+
+    if (field.id() != next_id) {
+      // DO_BEFORE(aristidis,20250301): Remove when --ignore-non-positive-keys
+      // no longer exists.
       diags_.warning(
           field,
-          "Nonpositive value ({}) not allowed as a field id.",
-          field.id());
-    } else {
-      // TODO: Make ignoring the user provided value a failure.
-      diags_.warning(
-          field,
-          "Nonpositive field id ({}) differs from what is auto-assigned by "
-          "thrift. The id must be positive or {}.",
+          "Nonpositive field id ({}) differs from what would be "
+          "auto-assigned by thrift (if 'allow-neg-keys' was disabled): {}",
           field.id(),
           next_id);
-      // Ignore user provided value and auto assign an id.
-      allocate_field_id(next_id, field);
     }
+
     // Skip past any negative, manually assigned ids.
     if (field.id() < 0) {
       // Update the next field id to be one less than the value.
@@ -585,11 +570,11 @@ class ast_builder : public parser_actions {
     auto find_base_service = [&]() -> const t_service* {
       if (base.str.size() != 0) {
         auto base_name = base.str;
-        if (const t_service* result = scope_->find_service(base_name)) {
+        if (const t_service* result = scope_->find<t_service>(base_name)) {
           return result;
         }
         if (const t_service* result =
-                scope_->find_service(program_.scope_name(base_name))) {
+                scope_->find<t_service>(program_.scope_name(base_name))) {
           return result;
         }
         diags_.error(
@@ -635,7 +620,7 @@ class ast_builder : public parser_actions {
         qualified_name = program_.scope_name(return_name);
         return_name = qualified_name;
       }
-      if (auto interaction_ptr = scope_->find_interaction(return_name)) {
+      if (auto interaction_ptr = scope_->find<t_interaction>(return_name)) {
         interaction = t_type_ref::from_ptr(
             interaction_ptr, {ret.name.loc, ret.name.loc + size});
       } else if (ret.type) {
@@ -885,11 +870,11 @@ class ast_builder : public parser_actions {
     auto find_const =
         [this](source_location loc, const std::string& name) -> const t_const* {
       validate_not_ambiguous_enum(loc, name);
-      if (const t_const* constant = scope_->find_constant(name)) {
+      if (const t_const* constant = scope_->find<t_const>(name)) {
         return constant;
       }
       if (const t_const* constant =
-              scope_->find_constant(program_.scope_name(name))) {
+              scope_->find<t_const>(program_.scope_name(name))) {
         validate_not_ambiguous_enum(loc, program_.scope_name(name));
         return constant;
       }
@@ -1007,19 +992,18 @@ std::unique_ptr<t_program_bundle> parse_ast(
     const parsing_params& params,
     const sema_params* sparams,
     t_program_bundle* already_parsed) {
+  std::string full_root_path = sm.get_file_path(path);
   auto programs = std::make_unique<t_program_bundle>(
       std::make_unique<t_program>(
-          path, already_parsed ? already_parsed->get_root_program() : nullptr),
+          path,
+          full_root_path,
+          already_parsed ? already_parsed->get_root_program() : nullptr),
       already_parsed);
-  assert(!already_parsed || !already_parsed->find_program(path));
+  assert(
+      !already_parsed ||
+      !already_parsed->find_program_by_full_path(full_root_path));
 
   auto circular_deps = std::set<std::string>{path};
-
-  // Always enable allow_neg_field_keys when parsing included files.
-  // This way if a Thrift file has negative keys, --allow-neg-keys doesn't
-  // have to be used by everyone that includes it.
-  auto include_params = params;
-  include_params.allow_neg_field_keys = true;
 
   include_handler on_include = [&](source_range range,
                                    const std::string& include_path,
@@ -1039,26 +1023,28 @@ std::unique_ptr<t_program_bundle> parse_ast(
     }
 
     // Skip already parsed files.
-    t_program* program = programs->find_program(include_path);
+    t_program* program = nullptr;
     const std::string* resolved_path = &include_path;
-    if (!program && path_or_error.index() == 0) {
-      program = programs->find_program(std::get<0>(path_or_error));
+    const std::string* full_path = resolved_path;
+    if (path_or_error.index() == 0) {
+      full_path = &std::get<0>(path_or_error);
+      program = programs->find_program_by_full_path(*full_path);
       if (program) {
         // We've already seen this program but know it by another path.
-        resolved_path = &std::get<0>(path_or_error);
+        resolved_path = &program->path();
       }
     }
     if (program) {
       if (program == programs->get_root_program()) {
         // If we're including the root program we must have a dependency cycle.
-        assert(circular_deps.count(*resolved_path));
+        assert(circular_deps.count(*full_path));
       } else {
         return program;
       }
     }
 
     // Fail on circular dependencies.
-    if (!circular_deps.insert(*resolved_path).second) {
+    if (!circular_deps.insert(*full_path).second) {
       diags.error(
           range.begin,
           "Circular dependency found: file `{}` is already parsed.",
@@ -1070,12 +1056,12 @@ std::unique_ptr<t_program_bundle> parse_ast(
     // set its include_prefix by parsing the directory which it is
     // included from.
     auto included_program =
-        std::make_unique<t_program>(*resolved_path, &parent);
+        std::make_unique<t_program>(*resolved_path, *full_path, &parent);
     program = included_program.get();
     programs->add_program(std::move(included_program));
 
     try {
-      ast_builder(diags, *program, include_params, on_include)
+      ast_builder(diags, *program, params, on_include)
           .parse_file(sm, range.begin);
     } catch (...) {
       if (!params.allow_missing_includes) {
@@ -1083,7 +1069,7 @@ std::unique_ptr<t_program_bundle> parse_ast(
       }
     }
 
-    circular_deps.erase(*resolved_path);
+    circular_deps.erase(*full_path);
     return program;
   };
 

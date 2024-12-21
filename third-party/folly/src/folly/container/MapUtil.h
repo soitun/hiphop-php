@@ -51,8 +51,9 @@ typename Map::mapped_type get_default(
     const Map& map, const Key& key, Value&& dflt) {
   using M = typename Map::mapped_type;
   auto pos = map.find(key);
-  return (pos != map.end()) ? pos->second
-                            : static_cast<M>(static_cast<Value&&>(dflt));
+  return (pos != map.end())
+      ? pos->second
+      : static_cast<M>(static_cast<Value&&>(dflt));
 }
 
 /**
@@ -147,9 +148,8 @@ const typename Map::mapped_type& get_ref_default(
 
 template <class Map, typename Key = typename Map::key_type>
 const typename Map::mapped_type& get_ref_default(
-    const Map& map,
-    const Key& key,
-    const typename Map::mapped_type&& dflt) = delete;
+    const Map& map, const Key& key, const typename Map::mapped_type&& dflt) =
+    delete;
 
 /**
  * Given a map and a key, return a reference to the value corresponding to the
@@ -272,14 +272,22 @@ auto extract_default(const KeysDefault&... keysDefault) ->
  * Given a map of maps and a path of keys, return a Optional<V> if the nested
  * key exists and None if the nested keys does not exist in the map.
  */
-template <class Map, class Key1, class Key2, class... Keys>
+template <
+    template <typename> class Optional = folly::Optional,
+    class Map,
+    class Key1,
+    class Key2,
+    class... Keys>
 auto get_optional(
     const Map& map, const Key1& key1, const Key2& key2, const Keys&... keys)
-    -> folly::Optional<
+    -> Optional<
         typename detail::NestedMapType<Map, 2 + sizeof...(Keys)>::type> {
   auto pos = map.find(key1);
-  return pos != map.end() ? get_optional(pos->second, key2, keys...)
-                          : folly::none;
+  if (pos != map.end()) {
+    return get_optional<Optional>(pos->second, key2, keys...);
+  } else {
+    return {};
+  }
 }
 
 /**

@@ -169,6 +169,7 @@ pub struct ShallowClass<R: Reason> {
     pub req_extends: Box<[Ty<R>]>,
     pub req_implements: Box<[Ty<R>]>,
     pub req_class: Box<[Ty<R>]>,
+    pub req_this_as: Box<[Ty<R>]>,
     pub implements: Box<[Ty<R>]>,
     pub support_dynamic_type: bool,
     pub consts: Box<[ShallowClassConst<R>]>,
@@ -181,7 +182,7 @@ pub struct ShallowClass<R: Reason> {
     pub user_attributes: Box<[UserAttribute<R::Pos>]>,
     pub enum_type: Option<EnumType<R>>,
     pub docs_url: Option<String>,
-    pub package: Option<String>,
+    pub package: Option<oxidized::aast_defs::PackageMembership>,
 }
 
 walkable!(ShallowClass<R> as visit_shallow_class => [

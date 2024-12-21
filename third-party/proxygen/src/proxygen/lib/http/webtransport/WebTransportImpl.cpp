@@ -24,7 +24,8 @@ void WebTransportImpl::destroy() {
     // Deliver an error to the application if needed
     if (stream.open()) {
       VLOG(4) << "aborting WT ingress id=" << id;
-      stream.deliverReadError(WebTransport::kInternalError);
+      stream.deliverReadError(WebTransport::Exception(
+          WebTransport::kInternalError, "shutting down"));
       stopReadingWebTransportIngress(id, WebTransport::kInternalError);
       // TODO: does the spec say how to handle this at the transport?  Eg: the
       // peer must RESET any open write streams.
@@ -60,6 +61,7 @@ WebTransportImpl::newWebTransportUniStream() {
   auto res = wtEgressStreams_.emplace(std::piecewise_construct,
                                       std::forward_as_tuple(*id),
                                       std::forward_as_tuple(*this, *id));
+  sp_.refreshTimeout();
   return &res.first->second;
 }
 
@@ -76,6 +78,7 @@ WebTransportImpl::newWebTransportBidiStream() {
                                 std::forward_as_tuple(*this, *id));
   auto readHandle = &ingressRes.first->second;
   tp_.initiateReadOnBidiStream(*id, readHandle);
+  sp_.refreshTimeout();
   auto egressRes = wtEgressStreams_.emplace(std::piecewise_construct,
                                             std::forward_as_tuple(*id),
                                             std::forward_as_tuple(*this, *id));
@@ -104,16 +107,16 @@ WebTransportImpl::StreamReadHandle* WebTransportImpl::onWebTransportUniStream(
   return &ingRes.first->second;
 }
 
-folly::Expected<WebTransportImpl::TransportProvider::FCState,
+folly::Expected<WebTransportImpl::WebTransport::FCState,
                 WebTransport::ErrorCode>
 WebTransportImpl::sendWebTransportStreamData(HTTPCodec::StreamID id,
                                              std::unique_ptr<folly::IOBuf> data,
-                                             bool eof,
-                                             quic::StreamWriteCallback* wcb) {
-  auto res = tp_.sendWebTransportStreamData(id, std::move(data), eof, wcb);
+                                             bool eof) {
+  auto res = tp_.sendWebTransportStreamData(id, std::move(data), eof);
   if (eof || res.hasError()) {
     wtEgressStreams_.erase(id);
   }
+  sp_.refreshTimeout();
   return res;
 }
 
@@ -122,6 +125,7 @@ WebTransportImpl::resetWebTransportEgress(HTTPCodec::StreamID id,
                                           uint32_t errorCode) {
   auto res = tp_.resetWebTransportEgress(id, errorCode);
   wtEgressStreams_.erase(id);
+  sp_.refreshTimeout();
   return res;
 }
 
@@ -130,34 +134,46 @@ WebTransportImpl::stopReadingWebTransportIngress(HTTPCodec::StreamID id,
                                                  uint32_t errorCode) {
   auto res = tp_.stopReadingWebTransportIngress(id, errorCode);
   wtIngressStreams_.erase(id);
+  sp_.refreshTimeout();
   return res;
 }
 
-folly::Expected<folly::SemiFuture<folly::Unit>, WebTransport::ErrorCode>
+folly::Expected<WebTransport::FCState, WebTransport::ErrorCode>
 WebTransportImpl::StreamWriteHandle::writeStreamData(
     std::unique_ptr<folly::IOBuf> data, bool fin) {
-  CHECK(!writePromise_) << "Wait for previous write to complete";
   if (stopSendingErrorCode_) {
-    return folly::makeSemiFuture<folly::Unit>(
-        folly::make_exception_wrapper<WebTransport::Exception>(
-            *stopSendingErrorCode_));
+    return folly::makeUnexpected(WebTransport::ErrorCode::STOP_SENDING);
   }
-  auto fcState =
-      impl_.sendWebTransportStreamData(id_, std::move(data), fin, this);
+  impl_.sp_.refreshTimeout();
+  auto fcState = impl_.sendWebTransportStreamData(id_, std::move(data), fin);
   if (fcState.hasError()) {
     return folly::makeUnexpected(fcState.error());
   }
-  if (*fcState == TransportProvider::FCState::UNBLOCKED) {
-    return folly::makeSemiFuture(folly::unit);
-  } else {
-    auto contract = folly::makePromiseContract<folly::Unit>();
-    writePromise_.emplace(std::move(contract.promise));
-    return std::move(contract.future);
-  }
+  return *fcState;
+}
+
+folly::Expected<folly::SemiFuture<folly::Unit>, WebTransport::ErrorCode>
+WebTransportImpl::StreamWriteHandle::awaitWritable() {
+  CHECK(!writePromise_) << "awaitWritable already called";
+  auto contract = folly::makePromiseContract<folly::Unit>();
+  writePromise_.emplace(std::move(contract.promise));
+  writePromise_->setInterruptHandler(
+      [this](const folly::exception_wrapper& ex) {
+        VLOG(4) << "Exception from interrupt handler ex=" << ex.what();
+        // if awaitWritable is cancelled, just reset it
+        CHECK(ex.with_exception([this](const folly::FutureCancellation& ex) {
+          VLOG(5) << "Setting exception ex=" << ex.what();
+          writePromise_->setException(ex);
+          writePromise_.reset();
+        })) << "Unexpected exception type";
+      });
+  impl_.tp_.notifyPendingWriteOnStream(id_, this);
+  return std::move(contract.future);
 }
 
 void WebTransportImpl::onWebTransportStopSending(HTTPCodec::StreamID id,
                                                  uint32_t errorCode) {
+  // The caller already decodes errorCode, if necessary
   auto it = wtEgressStreams_.find(id);
   if (it != wtEgressStreams_.end()) {
     it->second.onStopSending(errorCode);
@@ -165,6 +181,7 @@ void WebTransportImpl::onWebTransportStopSending(HTTPCodec::StreamID id,
 }
 
 void WebTransportImpl::StreamWriteHandle::onStopSending(uint32_t errorCode) {
+  // The caller already decodes errorCode, if necessary
   auto token = cancellationSource_.getToken();
   if (writePromise_) {
     writePromise_->setException(WebTransport::Exception(errorCode));
@@ -189,13 +206,23 @@ WebTransportImpl::StreamReadHandle::readStreamData() {
   VLOG(4) << __func__;
   CHECK(!readPromise_) << "One read at a time";
   if (error_) {
-    auto ex = folly::make_exception_wrapper<WebTransport::Exception>(*error_);
+    auto ex = std::move(*error_);
     impl_.wtIngressStreams_.erase(getID());
     return folly::makeSemiFuture<WebTransport::StreamData>(std::move(ex));
   } else if (buf_.empty() && !eof_) {
     VLOG(4) << __func__ << " waiting for data";
     auto contract = folly::makePromiseContract<WebTransport::StreamData>();
     readPromise_.emplace(std::move(contract.promise));
+    readPromise_->setInterruptHandler(
+        [this](const folly::exception_wrapper& ex) {
+          VLOG(4) << "Exception from interrupt handler ex=" << ex.what();
+          CHECK(ex.with_exception([this](const folly::FutureCancellation& ex) {
+            // TODO: allow app to configure the reset code on cancellation?
+            impl_.tp_.stopReadingWebTransportIngress(
+                id_, WebTransport::kInternalError);
+            deliverReadError(ex);
+          })) << "Unexpected exception type";
+        });
     return std::move(contract.future);
   } else {
     VLOG(4) << __func__ << " returning data len=" << buf_.chainLength();
@@ -213,6 +240,7 @@ WebTransportImpl::StreamReadHandle::readStreamData() {
 
 void WebTransportImpl::StreamReadHandle::readAvailable(
     quic::StreamId id) noexcept {
+  impl_.sp_.refreshTimeout();
   auto readRes = impl_.tp_.readWebTransportData(id, 65535);
   if (readRes.hasError()) {
     LOG(ERROR) << "Got synchronous read error=" << uint32_t(readRes.error());
@@ -226,14 +254,13 @@ void WebTransportImpl::StreamReadHandle::readAvailable(
   bool eof = readRes.value().second;
   // deliver data, eof
   auto state = dataAvailable(std::move(data), eof);
-  if (state == TransportProvider::FCState::BLOCKED && !eof) {
+  if (state == WebTransport::FCState::BLOCKED && !eof) {
     VLOG(4) << __func__ << " pausing reads";
     impl_.tp_.pauseWebTransportIngress(id);
   }
 }
 
-WebTransportImpl::TransportProvider::FCState
-WebTransportImpl::StreamReadHandle::dataAvailable(
+WebTransport::FCState WebTransportImpl::StreamReadHandle::dataAvailable(
     std::unique_ptr<folly::IOBuf> data, bool eof) {
   VLOG(4)
       << "dataAvailable buflen=" << (data ? data->computeChainDataLength() : 0)
@@ -243,7 +270,7 @@ WebTransportImpl::StreamReadHandle::dataAvailable(
     readPromise_.reset();
     if (eof) {
       impl_.wtIngressStreams_.erase(getID());
-      return TransportProvider::FCState::UNBLOCKED;
+      return WebTransport::FCState::UNBLOCKED;
     }
   } else {
     buf_.append(std::move(data));
@@ -251,34 +278,47 @@ WebTransportImpl::StreamReadHandle::dataAvailable(
   }
   VLOG(4) << "dataAvailable buflen=" << buf_.chainLength();
   return (eof || buf_.chainLength() < kMaxWTIngressBuf)
-             ? TransportProvider::FCState::UNBLOCKED
-             : TransportProvider::FCState::BLOCKED;
+             ? WebTransport::FCState::UNBLOCKED
+             : WebTransport::FCState::BLOCKED;
 }
 
 void WebTransportImpl::StreamReadHandle::readError(
     quic::StreamId id, quic::QuicError error) noexcept {
   // Do I need to setReadCallback(id, nullptr);
+  impl_.sp_.refreshTimeout();
   auto quicAppErrorCode = error.code.asApplicationErrorCode();
   if (quicAppErrorCode) {
-    auto appErrorCode =
-        proxygen::WebTransport::toApplicationErrorCode(*quicAppErrorCode);
-    if (appErrorCode) {
-      deliverReadError(*appErrorCode);
-      return;
+    folly::Expected<uint32_t, WebTransport::ErrorCode> appErrorCode{
+        *quicAppErrorCode};
+    if (impl_.tp_.usesEncodedApplicationErrorCodes()) {
+      appErrorCode =
+          proxygen::WebTransport::toApplicationErrorCode(*quicAppErrorCode);
+      if (!appErrorCode) {
+        deliverReadError(WebTransport::Exception(
+            *quicAppErrorCode, "received invalid reset_stream"));
+        return;
+      }
     }
+    deliverReadError(
+        WebTransport::Exception(*appErrorCode, "received reset_stream"));
+    return;
+  } else {
+    VLOG(4) << error;
   }
   // any other error
-  deliverReadError(proxygen::WebTransport::kInternalError);
+  deliverReadError(WebTransport::Exception(
+      proxygen::WebTransport::kInternalError, "quic error"));
 }
 
-void WebTransportImpl::StreamReadHandle::deliverReadError(uint32_t error) {
+void WebTransportImpl::StreamReadHandle::deliverReadError(
+    const folly::exception_wrapper& ex) {
   cancellationSource_.requestCancellation();
   if (readPromise_) {
-    readPromise_->setException(WebTransport::Exception(error));
+    readPromise_->setException(ex);
     readPromise_.reset();
     impl_.wtIngressStreams_.erase(getID());
   } else {
-    error_ = error;
+    error_ = ex;
   }
 }
 

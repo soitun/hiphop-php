@@ -57,8 +57,7 @@ cimport module.types as _module_types
 cimport module.cbindings as _module_cbindings
 import module.types as _module_types
 
-import module.services_reflection as _services_reflection
-cimport module.services_reflection as _services_reflection
+cimport module.services_interface as _fbthrift_services_interface
 
 import asyncio
 import functools
@@ -104,18 +103,19 @@ cdef class MyRootInterface(
             get_executor()
         )
 
+    _fbthrift_annotations_DO_NOT_USE_do_root = {
+        'return': 'None',
+        
+    }
+
     async def do_root(
             self):
         raise NotImplementedError("async def do_root is not implemented")
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__MyRoot(for_clients=False)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cMyRootSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cMyRootSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod
@@ -138,18 +138,19 @@ MyRootInterface
             get_executor()
         )
 
+    _fbthrift_annotations_DO_NOT_USE_do_mid = {
+        'return': 'None',
+        
+    }
+
     async def do_mid(
             self):
         raise NotImplementedError("async def do_mid is not implemented")
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__MyNode(for_clients=False)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cMyNodeSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cMyNodeSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod
@@ -172,18 +173,19 @@ MyNodeInterface
             get_executor()
         )
 
+    _fbthrift_annotations_DO_NOT_USE_do_leaf = {
+        'return': 'None',
+        
+    }
+
     async def do_leaf(
             self):
         raise NotImplementedError("async def do_leaf is not implemented")
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__MyLeaf(for_clients=False)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cMyLeafSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cMyLeafSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod

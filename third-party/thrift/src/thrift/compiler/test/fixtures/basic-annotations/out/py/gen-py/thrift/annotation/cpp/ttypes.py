@@ -52,7 +52,7 @@ class ThriftEnumWrapper(int):
 all_structs = []
 UTF8STRINGS = bool(0) or sys.version_info.major >= 3
 
-__all__ = ['UTF8STRINGS', 'RefType', 'EnumUnderlyingType', 'Name', 'Type', 'Ref', 'Lazy', 'DisableLazyChecksum', 'Adapter', 'PackIsset', 'MinimizePadding', 'ScopedEnumAsUnionType', 'FieldInterceptor', 'UseOpEncode', 'EnumType', 'Frozen2Exclude', 'Frozen2RequiresCompleteContainerParams', 'ProcessInEbThreadUnsafe', 'RuntimeAnnotation', 'UseCursorSerialization', 'GenerateDeprecatedHeaderClientMethods']
+__all__ = ['UTF8STRINGS', 'RefType', 'EnumUnderlyingType', 'Name', 'Type', 'Ref', 'Lazy', 'DisableLazyChecksum', 'Adapter', 'PackIsset', 'MinimizePadding', 'ScopedEnumAsUnionType', 'FieldInterceptor', 'UseOpEncode', 'EnumType', 'Frozen2Exclude', 'Frozen2RequiresCompleteContainerParams', 'ProcessInEbThreadUnsafe', 'RuntimeAnnotation', 'UseCursorSerialization', 'GenerateDeprecatedHeaderClientMethods', 'AllowLegacyNonOptionalRef']
 
 class RefType:
   r"""
@@ -209,6 +209,12 @@ class Name:
     python_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_types")
     return thrift.python.converter.to_python_struct(python_types.Name, self)
 
+  def _to_mutable_python(self):
+    import importlib
+    import thrift.python.mutable_converter
+    python_mutable_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_mutable_types")
+    return thrift.python.mutable_converter.to_mutable_python_struct_or_union(python_mutable_types.Name, self)
+
   def _to_py3(self):
     import importlib
     import thrift.py3.converter
@@ -353,6 +359,12 @@ class Type:
     python_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_types")
     return thrift.python.converter.to_python_struct(python_types.Type, self)
 
+  def _to_mutable_python(self):
+    import importlib
+    import thrift.python.mutable_converter
+    python_mutable_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_mutable_types")
+    return thrift.python.mutable_converter.to_mutable_python_struct_or_union(python_mutable_types.Type, self)
+
   def _to_py3(self):
     import importlib
     import thrift.py3.converter
@@ -478,6 +490,12 @@ class Ref:
     import thrift.python.converter
     python_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_types")
     return thrift.python.converter.to_python_struct(python_types.Ref, self)
+
+  def _to_mutable_python(self):
+    import importlib
+    import thrift.python.mutable_converter
+    python_mutable_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_mutable_types")
+    return thrift.python.mutable_converter.to_mutable_python_struct_or_union(python_mutable_types.Ref, self)
 
   def _to_py3(self):
     import importlib
@@ -607,6 +625,12 @@ class Lazy:
     python_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_types")
     return thrift.python.converter.to_python_struct(python_types.Lazy, self)
 
+  def _to_mutable_python(self):
+    import importlib
+    import thrift.python.mutable_converter
+    python_mutable_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_mutable_types")
+    return thrift.python.mutable_converter.to_mutable_python_struct_or_union(python_mutable_types.Lazy, self)
+
   def _to_py3(self):
     import importlib
     import thrift.py3.converter
@@ -697,6 +721,12 @@ class DisableLazyChecksum:
     import thrift.python.converter
     python_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_types")
     return thrift.python.converter.to_python_struct(python_types.DisableLazyChecksum, self)
+
+  def _to_mutable_python(self):
+    import importlib
+    import thrift.python.mutable_converter
+    python_mutable_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_mutable_types")
+    return thrift.python.mutable_converter.to_mutable_python_struct_or_union(python_mutable_types.DisableLazyChecksum, self)
 
   def _to_py3(self):
     import importlib
@@ -924,6 +954,12 @@ class Adapter:
     python_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_types")
     return thrift.python.converter.to_python_struct(python_types.Adapter, self)
 
+  def _to_mutable_python(self):
+    import importlib
+    import thrift.python.mutable_converter
+    python_mutable_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_mutable_types")
+    return thrift.python.mutable_converter.to_mutable_python_struct_or_union(python_mutable_types.Adapter, self)
+
   def _to_py3(self):
     import importlib
     import thrift.py3.converter
@@ -1039,6 +1075,12 @@ class PackIsset:
     import thrift.python.converter
     python_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_types")
     return thrift.python.converter.to_python_struct(python_types.PackIsset, self)
+
+  def _to_mutable_python(self):
+    import importlib
+    import thrift.python.mutable_converter
+    python_mutable_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_mutable_types")
+    return thrift.python.mutable_converter.to_mutable_python_struct_or_union(python_mutable_types.PackIsset, self)
 
   def _to_py3(self):
     import importlib
@@ -1158,6 +1200,12 @@ class MinimizePadding:
     python_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_types")
     return thrift.python.converter.to_python_struct(python_types.MinimizePadding, self)
 
+  def _to_mutable_python(self):
+    import importlib
+    import thrift.python.mutable_converter
+    python_mutable_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_mutable_types")
+    return thrift.python.mutable_converter.to_mutable_python_struct_or_union(python_mutable_types.MinimizePadding, self)
+
   def _to_py3(self):
     import importlib
     import thrift.py3.converter
@@ -1248,6 +1296,12 @@ class ScopedEnumAsUnionType:
     import thrift.python.converter
     python_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_types")
     return thrift.python.converter.to_python_struct(python_types.ScopedEnumAsUnionType, self)
+
+  def _to_mutable_python(self):
+    import importlib
+    import thrift.python.mutable_converter
+    python_mutable_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_mutable_types")
+    return thrift.python.mutable_converter.to_mutable_python_struct_or_union(python_mutable_types.ScopedEnumAsUnionType, self)
 
   def _to_py3(self):
     import importlib
@@ -1403,6 +1457,12 @@ class FieldInterceptor:
     python_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_types")
     return thrift.python.converter.to_python_struct(python_types.FieldInterceptor, self)
 
+  def _to_mutable_python(self):
+    import importlib
+    import thrift.python.mutable_converter
+    python_mutable_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_mutable_types")
+    return thrift.python.mutable_converter.to_mutable_python_struct_or_union(python_mutable_types.FieldInterceptor, self)
+
   def _to_py3(self):
     import importlib
     import thrift.py3.converter
@@ -1493,6 +1553,12 @@ class UseOpEncode:
     import thrift.python.converter
     python_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_types")
     return thrift.python.converter.to_python_struct(python_types.UseOpEncode, self)
+
+  def _to_mutable_python(self):
+    import importlib
+    import thrift.python.mutable_converter
+    python_mutable_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_mutable_types")
+    return thrift.python.mutable_converter.to_mutable_python_struct_or_union(python_mutable_types.UseOpEncode, self)
 
   def _to_py3(self):
     import importlib
@@ -1630,6 +1696,12 @@ class EnumType:
     python_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_types")
     return thrift.python.converter.to_python_struct(python_types.EnumType, self)
 
+  def _to_mutable_python(self):
+    import importlib
+    import thrift.python.mutable_converter
+    python_mutable_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_mutable_types")
+    return thrift.python.mutable_converter.to_mutable_python_struct_or_union(python_mutable_types.EnumType, self)
+
   def _to_py3(self):
     import importlib
     import thrift.py3.converter
@@ -1723,6 +1795,12 @@ class Frozen2Exclude:
     import thrift.python.converter
     python_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_types")
     return thrift.python.converter.to_python_struct(python_types.Frozen2Exclude, self)
+
+  def _to_mutable_python(self):
+    import importlib
+    import thrift.python.mutable_converter
+    python_mutable_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_mutable_types")
+    return thrift.python.mutable_converter.to_mutable_python_struct_or_union(python_mutable_types.Frozen2Exclude, self)
 
   def _to_py3(self):
     import importlib
@@ -1818,6 +1896,12 @@ class Frozen2RequiresCompleteContainerParams:
     import thrift.python.converter
     python_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_types")
     return thrift.python.converter.to_python_struct(python_types.Frozen2RequiresCompleteContainerParams, self)
+
+  def _to_mutable_python(self):
+    import importlib
+    import thrift.python.mutable_converter
+    python_mutable_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_mutable_types")
+    return thrift.python.mutable_converter.to_mutable_python_struct_or_union(python_mutable_types.Frozen2RequiresCompleteContainerParams, self)
 
   def _to_py3(self):
     import importlib
@@ -1921,6 +2005,12 @@ class ProcessInEbThreadUnsafe:
     python_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_types")
     return thrift.python.converter.to_python_struct(python_types.ProcessInEbThreadUnsafe, self)
 
+  def _to_mutable_python(self):
+    import importlib
+    import thrift.python.mutable_converter
+    python_mutable_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_mutable_types")
+    return thrift.python.mutable_converter.to_mutable_python_struct_or_union(python_mutable_types.ProcessInEbThreadUnsafe, self)
+
   def _to_py3(self):
     import importlib
     import thrift.py3.converter
@@ -2014,6 +2104,12 @@ class RuntimeAnnotation:
     import thrift.python.converter
     python_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_types")
     return thrift.python.converter.to_python_struct(python_types.RuntimeAnnotation, self)
+
+  def _to_mutable_python(self):
+    import importlib
+    import thrift.python.mutable_converter
+    python_mutable_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_mutable_types")
+    return thrift.python.mutable_converter.to_mutable_python_struct_or_union(python_mutable_types.RuntimeAnnotation, self)
 
   def _to_py3(self):
     import importlib
@@ -2111,6 +2207,12 @@ class UseCursorSerialization:
     import thrift.python.converter
     python_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_types")
     return thrift.python.converter.to_python_struct(python_types.UseCursorSerialization, self)
+
+  def _to_mutable_python(self):
+    import importlib
+    import thrift.python.mutable_converter
+    python_mutable_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_mutable_types")
+    return thrift.python.mutable_converter.to_mutable_python_struct_or_union(python_mutable_types.UseCursorSerialization, self)
 
   def _to_py3(self):
     import importlib
@@ -2220,11 +2322,127 @@ class GenerateDeprecatedHeaderClientMethods:
     python_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_types")
     return thrift.python.converter.to_python_struct(python_types.GenerateDeprecatedHeaderClientMethods, self)
 
+  def _to_mutable_python(self):
+    import importlib
+    import thrift.python.mutable_converter
+    python_mutable_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_mutable_types")
+    return thrift.python.mutable_converter.to_mutable_python_struct_or_union(python_mutable_types.GenerateDeprecatedHeaderClientMethods, self)
+
   def _to_py3(self):
     import importlib
     import thrift.py3.converter
     py3_types = importlib.import_module("facebook.thrift.annotation.cpp.types")
     return thrift.py3.converter.to_py3_struct(py3_types.GenerateDeprecatedHeaderClientMethods, self)
+
+  def _to_py_deprecated(self):
+    return self
+
+class AllowLegacyNonOptionalRef:
+  r"""
+  Allows the field to be annotated @cpp.Ref (or cpp[2].ref[_type]) even if it
+  is not optional (or in a union, which is effectively optional).
+  
+  This annotation is provided for a limited time, to exempt pre-existing fields
+  while rolling out a stricter enforcement of the condition above.
+  
+  Reminder: reference fields should be optional because the corresponding smart
+  pointers (std::unique_ptr, std::shared_ptr) can always be reset or set to
+  nullptr by the clients. If the field is not optional, this leads to a
+  confusing (or non-sensical) situation, wherein a field that should always
+  have a value has nullptr instead.
+  """
+
+  thrift_spec = None
+  thrift_field_annotations = None
+  thrift_struct_annotations = None
+  @staticmethod
+  def isUnion():
+    return False
+
+  def read(self, iprot):
+    if (isinstance(iprot, TBinaryProtocol.TBinaryProtocolAccelerated) or (isinstance(iprot, THeaderProtocol.THeaderProtocolAccelerate) and iprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_BINARY_PROTOCOL)) and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastproto is not None:
+      fastproto.decode(self, iprot.trans, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=0)
+      return
+    if (isinstance(iprot, TCompactProtocol.TCompactProtocolAccelerated) or (isinstance(iprot, THeaderProtocol.THeaderProtocolAccelerate) and iprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_COMPACT_PROTOCOL)) and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastproto is not None:
+      fastproto.decode(self, iprot.trans, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=2)
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if (isinstance(oprot, TBinaryProtocol.TBinaryProtocolAccelerated) or (isinstance(oprot, THeaderProtocol.THeaderProtocolAccelerate) and oprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_BINARY_PROTOCOL)) and self.thrift_spec is not None and fastproto is not None:
+      oprot.trans.write(fastproto.encode(self, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=0))
+      return
+    if (isinstance(oprot, TCompactProtocol.TCompactProtocolAccelerated) or (isinstance(oprot, THeaderProtocol.THeaderProtocolAccelerate) and oprot.get_protocol_id() == THeaderProtocol.THeaderProtocol.T_COMPACT_PROTOCOL)) and self.thrift_spec is not None and fastproto is not None:
+      oprot.trans.write(fastproto.encode(self, [self.__class__, self.thrift_spec, False], utf8strings=UTF8STRINGS, protoid=2))
+      return
+    oprot.writeStructBegin('AllowLegacyNonOptionalRef')
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def readFromJson(self, json, is_text=True, **kwargs):
+    kwargs_copy = dict(kwargs)
+    relax_enum_validation = bool(kwargs_copy.pop('relax_enum_validation', False))
+    set_cls = kwargs_copy.pop('custom_set_cls', set)
+    dict_cls = kwargs_copy.pop('custom_dict_cls', dict)
+    wrap_enum_constants = kwargs_copy.pop('wrap_enum_constants', False)
+    if wrap_enum_constants and relax_enum_validation:
+        raise ValueError(
+            'wrap_enum_constants cannot be used together with relax_enum_validation'
+        )
+    if kwargs_copy:
+        extra_kwargs = ', '.join(kwargs_copy.keys())
+        raise ValueError(
+            'Unexpected keyword arguments: ' + extra_kwargs
+        )
+    json_obj = json
+    if is_text:
+      json_obj = loads(json)
+
+  def __repr__(self):
+    L = []
+    padding = ' ' * 4
+    return "%s(%s)" % (self.__class__.__name__, "\n" + ",\n".join(L) if L else '')
+
+  def __eq__(self, other):
+    if not isinstance(other, self.__class__):
+      return False
+
+    return self.__dict__ == other.__dict__ 
+
+  def __ne__(self, other):
+    return not (self == other)
+
+  def __dir__(self):
+    return (
+    )
+
+  __hash__ = object.__hash__
+
+  def _to_python(self):
+    import importlib
+    import thrift.python.converter
+    python_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_types")
+    return thrift.python.converter.to_python_struct(python_types.AllowLegacyNonOptionalRef, self)
+
+  def _to_mutable_python(self):
+    import importlib
+    import thrift.python.mutable_converter
+    python_mutable_types = importlib.import_module("facebook.thrift.annotation.cpp.thrift_mutable_types")
+    return thrift.python.mutable_converter.to_mutable_python_struct_or_union(python_mutable_types.AllowLegacyNonOptionalRef, self)
+
+  def _to_py3(self):
+    import importlib
+    import thrift.py3.converter
+    py3_types = importlib.import_module("facebook.thrift.annotation.cpp.types")
+    return thrift.py3.converter.to_py3_struct(py3_types.AllowLegacyNonOptionalRef, self)
 
   def _to_py_deprecated(self):
     return self
@@ -2511,6 +2729,15 @@ GenerateDeprecatedHeaderClientMethods.thrift_spec = tuple(__EXPAND_THRIFT_SPEC((
 GenerateDeprecatedHeaderClientMethods.thrift_struct_annotations = {
 }
 GenerateDeprecatedHeaderClientMethods.thrift_field_annotations = {
+}
+
+all_structs.append(AllowLegacyNonOptionalRef)
+AllowLegacyNonOptionalRef.thrift_spec = tuple(__EXPAND_THRIFT_SPEC((
+)))
+
+AllowLegacyNonOptionalRef.thrift_struct_annotations = {
+}
+AllowLegacyNonOptionalRef.thrift_field_annotations = {
 }
 
 fix_spec(all_structs)

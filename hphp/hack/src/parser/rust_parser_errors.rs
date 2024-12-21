@@ -440,7 +440,7 @@ fn attr_spec_to_node_list<'a>(node: S<'a>) -> impl DoubleEndedIterator<Item = S<
 
 fn attr_constructor_call<'a>(
     node: S<'a>,
-) -> &'a SyntaxVariant<'_, PositionedToken<'a>, PositionedValue<'a>> {
+) -> &'a SyntaxVariant<'a, PositionedToken<'a>, PositionedValue<'a>> {
     match &node.children {
         ConstructorCall(_) => &node.children,
         Attribute(x) => &x.attribute_name.children,
@@ -5530,6 +5530,9 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
 
             ParameterDeclaration(_) => self.param_default_decl_errors(node),
             RequireClause(_) => self.require_errors(node),
+            RequireClauseConstraint(_) => {
+                self.check_can_use_feature(node, &FeatureName::RequireConstraint)
+            }
             ClassishDeclaration(_) => {
                 self.classish_errors(node);
                 self.class_reified_param_errors(node);

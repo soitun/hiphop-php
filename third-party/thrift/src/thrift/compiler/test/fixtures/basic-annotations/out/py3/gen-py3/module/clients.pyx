@@ -53,8 +53,7 @@ cimport module.types as _module_types
 cimport module.cbindings as _module_cbindings
 import module.types as _module_types
 
-import module.services_reflection as _services_reflection
-cimport module.services_reflection as _services_reflection
+cimport module.services_interface as _fbthrift_services_interface
 
 from module.clients_wrapper cimport cMyServiceAsyncClient, cMyServiceClientWrapper
 from module.clients_wrapper cimport cMyServicePrioParentAsyncClient, cMyServicePrioParentClientWrapper
@@ -283,6 +282,11 @@ cdef class MyService(thrift.py3.client.Client):
             cmove(channel)
         )
 
+    _fbthrift_annotations_DO_NOT_USE_ping = {
+        'return': 'None',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def ping(
             MyService self,
@@ -303,6 +307,11 @@ cdef class MyService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_getRandomData = {
+        'return': 'str',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def getRandomData(
             MyService self,
@@ -322,6 +331,11 @@ cdef class MyService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_hasDataById = {
+        'return': 'bool',
+        'id': 'int', 
+    }
 
     @cython.always_allow_keywords(True)
     def hasDataById(
@@ -349,6 +363,11 @@ cdef class MyService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_getDataById = {
+        'return': 'str',
+        'id': 'int', 
+    }
+
     @cython.always_allow_keywords(True)
     def getDataById(
             MyService self,
@@ -374,6 +393,11 @@ cdef class MyService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_putDataById = {
+        'return': 'None',
+        'id': 'int', 'data': 'str', 
+    }
 
     @cython.always_allow_keywords(True)
     def putDataById(
@@ -403,6 +427,11 @@ cdef class MyService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_lobDataById = {
+        'return': 'None',
+        'id': 'int', 'data': 'str', 
+    }
+
     @cython.always_allow_keywords(True)
     def lobDataById(
             MyService self,
@@ -431,6 +460,11 @@ cdef class MyService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_doNothing = {
+        'return': 'None',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def doNothing(
             MyService self,
@@ -452,14 +486,10 @@ cdef class MyService(thrift.py3.client.Client):
         return asyncio_shield(__future)
 
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__MyService(for_clients=True)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cMyServiceSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cMyServiceSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod
@@ -482,6 +512,11 @@ cdef class MyServicePrioParent(thrift.py3.client.Client):
             cmove(channel)
         )
 
+    _fbthrift_annotations_DO_NOT_USE_ping = {
+        'return': 'None',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def ping(
             MyServicePrioParent self,
@@ -501,6 +536,11 @@ cdef class MyServicePrioParent(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_pong = {
+        'return': 'None',
+        
+    }
 
     @cython.always_allow_keywords(True)
     def pong(
@@ -523,14 +563,10 @@ cdef class MyServicePrioParent(thrift.py3.client.Client):
         return asyncio_shield(__future)
 
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__MyServicePrioParent(for_clients=True)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cMyServicePrioParentSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cMyServicePrioParentSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod
@@ -553,6 +589,11 @@ cdef class MyServicePrioChild(MyServicePrioParent):
             cmove(channel)
         )
 
+    _fbthrift_annotations_DO_NOT_USE_pang = {
+        'return': 'None',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def pang(
             MyServicePrioChild self,
@@ -574,14 +615,10 @@ cdef class MyServicePrioChild(MyServicePrioParent):
         return asyncio_shield(__future)
 
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__MyServicePrioChild(for_clients=True)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cMyServicePrioChildSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cMyServicePrioChildSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod
@@ -603,6 +640,11 @@ cdef class BadService(thrift.py3.client.Client):
         self._client = makeClientWrapper[cBadServiceAsyncClient, cBadServiceClientWrapper](
             cmove(channel)
         )
+
+    _fbthrift_annotations_DO_NOT_USE_bar = {
+        'return': 'int',
+        
+    }
 
     @cython.always_allow_keywords(True)
     def bar(
@@ -642,14 +684,10 @@ cdef class BadService(thrift.py3.client.Client):
     ):
         return self.createBadInteraction()
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__BadService(for_clients=True)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cGoodServiceSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cGoodServiceSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod
@@ -695,6 +733,11 @@ cdef class FooBarBazService(thrift.py3.client.Client):
             cmove(channel)
         )
 
+    _fbthrift_annotations_DO_NOT_USE_foo = {
+        'return': 'None',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def foo(
             FooBarBazService self,
@@ -715,6 +758,11 @@ cdef class FooBarBazService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_bar = {
+        'return': 'None',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def bar(
             FooBarBazService self,
@@ -734,6 +782,11 @@ cdef class FooBarBazService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_baz = {
+        'return': 'None',
+        
+    }
 
     @cython.always_allow_keywords(True)
     def baz(
@@ -756,14 +809,10 @@ cdef class FooBarBazService(thrift.py3.client.Client):
         return asyncio_shield(__future)
 
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__FooBarBazService(for_clients=True)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cFooBarBazServiceSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cFooBarBazServiceSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod

@@ -18,7 +18,6 @@ package thrift
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"time"
 
@@ -30,25 +29,24 @@ import (
 
 // RSocketClient is a client that uses a rsocket library.
 type RSocketClient interface {
-	SendSetup(serverMetadataPush OnServerMetadataPush) error
-	FireAndForget(messageName string, protoID types.ProtocolID, typeID types.MessageType, headers map[string]string, zstd bool, dataBytes []byte) error
-	RequestResponse(ctx context.Context, messageName string, protoID types.ProtocolID, typeID types.MessageType, headers map[string]string, zstd bool, dataBytes []byte) (map[string]string, []byte, error)
+	SendSetup(ctx context.Context) error
+	FireAndForget(messageName string, protoID types.ProtocolID, typeID types.MessageType, headers map[string]string, dataBytes []byte) error
+	RequestResponse(ctx context.Context, messageName string, protoID types.ProtocolID, typeID types.MessageType, headers map[string]string, dataBytes []byte) (map[string]string, []byte, error)
 	Close() error
 }
 
 type rsocketClient struct {
 	client rsocket.Client
 	conn   net.Conn
-}
 
-// OnServerMetadataPush is called when the server sends a metadata push.
-type OnServerMetadataPush func(zstd bool, drain bool)
+	useZstd bool
+}
 
 func newRSocketClient(conn net.Conn) RSocketClient {
 	return &rsocketClient{conn: conn}
 }
 
-func (r *rsocketClient) SendSetup(serverMetadataPush OnServerMetadataPush) error {
+func (r *rsocketClient) SendSetup(_ context.Context) error {
 	if r.client != nil {
 		// already setup
 		return nil
@@ -57,38 +55,42 @@ func (r *rsocketClient) SendSetup(serverMetadataPush OnServerMetadataPush) error
 	if err != nil {
 		return err
 	}
-	clientBuilder := rsocket.Connect()
 	// See T182939211. This copies the keep alives from Java Rocket.
 	// KeepaliveLifetime = time.Duration(missedAcks = 1) * (ackTimeout = 3600000)
-	clientBuilder = clientBuilder.KeepAlive(time.Millisecond*30000, time.Millisecond*3600000, 1)
-	clientBuilder = clientBuilder.SetupPayload(setupPayload)
-	clientBuilder = clientBuilder.OnClose(func(error) {})
-	clientStarter := clientBuilder.Acceptor(acceptor(serverMetadataPush))
+	clientBuilder := rsocket.Connect().
+		KeepAlive(time.Millisecond*30000, time.Millisecond*3600000, 1).
+		MetadataMimeType(RocketMetadataCompactMimeType).
+		SetupPayload(setupPayload).
+		OnClose(func(error) {})
+
+	clientStarter := clientBuilder.Acceptor(
+		func(_ context.Context, _ rsocket.RSocket) rsocket.RSocket {
+			return rsocket.NewAbstractSocket(
+				rsocket.MetadataPush(
+					r.onServerMetadataPush,
+				),
+			)
+		},
+	)
+
 	client, err := clientStarter.Transport(transporter(r.conn)).Start(context.Background())
+	if err != nil {
+		return err
+	}
 	r.client = client
-	if client == nil && err == nil {
-		return fmt.Errorf("rsocket returnen nil client")
-	}
-	return err
+	return nil
 }
 
-func acceptor(onMetadataPush OnServerMetadataPush) func(_ context.Context, socket rsocket.RSocket) rsocket.RSocket {
-	return func(_ context.Context, socket rsocket.RSocket) rsocket.RSocket {
-		return rsocket.NewAbstractSocket(
-			rsocket.MetadataPush(
-				metadataPush(onMetadataPush),
-			),
-		)
+func (r *rsocketClient) onServerMetadataPush(pay payload.Payload) {
+	metadata, err := decodeServerMetadataPush(pay)
+	if err != nil {
+		panic(err)
 	}
-}
-
-func metadataPush(onMetadataPush OnServerMetadataPush) func(pay payload.Payload) {
-	return func(pay payload.Payload) {
-		metadata, err := decodeServerMetadataPushVersion8(pay)
-		if err != nil {
-			panic(err)
-		}
-		onMetadataPush(metadata.zstd, metadata.drain)
+	if metadata.SetupResponse != nil {
+		setupResponse := metadata.SetupResponse
+		serverSupportsZstd := (setupResponse.ZstdSupported != nil && *setupResponse.ZstdSupported)
+		// zstd is only supported if both the client and the server support it.
+		r.useZstd = r.useZstd && serverSupportsZstd
 	}
 }
 
@@ -108,9 +110,9 @@ func (r *rsocketClient) resetDeadline() {
 	r.conn.SetDeadline(time.Time{})
 }
 
-func (r *rsocketClient) RequestResponse(ctx context.Context, messageName string, protoID types.ProtocolID, typeID types.MessageType, headers map[string]string, zstd bool, dataBytes []byte) (map[string]string, []byte, error) {
+func (r *rsocketClient) RequestResponse(ctx context.Context, messageName string, protoID types.ProtocolID, typeID types.MessageType, headers map[string]string, dataBytes []byte) (map[string]string, []byte, error) {
 	r.resetDeadline()
-	request, err := encodeRequestPayload(messageName, protoID, typeID, headers, zstd, dataBytes)
+	request, err := encodeRequestPayload(messageName, protoID, typeID, headers, r.useZstd, dataBytes)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -125,9 +127,9 @@ func (r *rsocketClient) RequestResponse(ctx context.Context, messageName string,
 	return nil, nil, err
 }
 
-func (r *rsocketClient) FireAndForget(messageName string, protoID types.ProtocolID, typeID types.MessageType, headers map[string]string, zstd bool, dataBytes []byte) error {
+func (r *rsocketClient) FireAndForget(messageName string, protoID types.ProtocolID, typeID types.MessageType, headers map[string]string, dataBytes []byte) error {
 	r.resetDeadline()
-	request, err := encodeRequestPayload(messageName, protoID, typeID, headers, zstd, dataBytes)
+	request, err := encodeRequestPayload(messageName, protoID, typeID, headers, r.useZstd, dataBytes)
 	if err != nil {
 		return err
 	}

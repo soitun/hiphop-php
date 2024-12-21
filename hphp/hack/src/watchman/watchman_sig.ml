@@ -7,6 +7,8 @@
  *
  *)
 
+open Ppx_yojson_conv_lib.Yojson_conv.Primitives
+
 module Types = struct
   exception Timeout
 
@@ -40,7 +42,7 @@ module Types = struct
   }
 
   (** The message's clock. *)
-  type clock = string [@@deriving show]
+  type clock = string [@@deriving eq, show]
 
   type pushed_changes =
     (*
@@ -68,6 +70,14 @@ module Types = struct
     | Watchman_unavailable
     | Watchman_pushed of pushed_changes
     | Watchman_synchronous of pushed_changes list
+
+  (** The response from watchman for the `watch` command should contain these fields *)
+  type watch_project_response = {
+    watch: string;  (** Corresponds to the VCS repo root. *)
+    relative_path: string option; [@yojson.option]
+        (** The path being watched relative to the `watch` path *)
+  }
+  [@@deriving of_yojson] [@@yojson.allow_extra_fields]
 end
 
 (** The abstract types, and the types that are defined in terms of
@@ -87,91 +97,41 @@ module Abstract_types = struct
     | Watchman_alive of env
 end
 
-module type WATCHMAN_PROCESS = sig
-  type 'a result
-
-  type conn
-
-  exception Read_payload_too_long
-
-  val ( >>= ) : 'a result -> ('a -> 'b result) -> 'b result
-
-  val ( >|= ) : 'a result -> ('a -> 'b) -> 'b result
-
-  val return : 'a -> 'a result
-
-  val catch :
-    f:(unit -> 'b result) -> catch:(Exception.t -> 'b result) -> 'b result
-
-  val list_fold_values :
-    'a list -> init:'b -> f:('b -> 'a -> 'b result) -> 'b result
-
-  val open_connection :
-    timeout:Types.timeout -> sockname:string option -> conn result
-
-  val request :
-    debug_logging:bool ->
-    ?conn:conn ->
-    ?timeout:Types.timeout ->
-    sockname:string option ->
-    Hh_json.json ->
-    Hh_json.json result
-
-  val send_request_and_do_not_wait_for_response :
-    debug_logging:bool -> conn:conn -> Hh_json.json -> unit result
-
-  val blocking_read :
-    debug_logging:bool ->
-    ?timeout:Types.timeout ->
-    conn ->
-    Hh_json.json option result
-
-  val close_connection : conn -> unit result
-
-  module Testing : sig
-    val get_test_conn : unit -> conn result
-  end
-end
-
 module type S = sig
   include module type of Types
 
   include module type of Abstract_types
 
-  type 'a result
-
   type conn
 
-  val init :
-    ?since_clockspec:string -> init_settings -> unit -> env option result
+  val init : ?since_clockspec:string -> init_settings -> unit -> env option
 
-  val get_all_files : env -> string list result
+  val get_all_files : env -> string list
 
-  val get_changes_since_mergebase :
-    ?timeout:timeout -> env -> string list result
+  val get_changes_since_mergebase : ?timeout:timeout -> env -> string list
 
-  val get_mergebase : ?timeout:timeout -> env -> Hg.Rev.t result
+  val get_mergebase : ?timeout:timeout -> env -> Hg.Rev.t
 
   val get_changes :
-    ?deadline:float -> watchman_instance -> (watchman_instance * changes) result
+    ?deadline:float -> watchman_instance -> watchman_instance * changes
 
   val get_changes_synchronously :
-    timeout:int ->
-    watchman_instance ->
-    (watchman_instance * pushed_changes list) result
+    timeout:int -> watchman_instance -> watchman_instance * pushed_changes list
 
   val get_clock : watchman_instance -> clock
 
   val conn_of_instance : watchman_instance -> conn option
 
-  val close : env -> unit result
+  val close : env -> unit
 
   val with_instance :
     watchman_instance ->
     try_to_restart:bool ->
-    on_alive:(env -> 'a result) ->
-    on_dead:(dead_env -> 'a result) ->
-    'a result
+    on_alive:(env -> 'a) ->
+    on_dead:(dead_env -> 'a) ->
+    'a
+
+  val get_reader : watchman_instance -> Buffered_line_reader.t option
 
   module RepoStates : sig
     val get_as_telemetry : unit -> Telemetry.t
@@ -179,7 +139,7 @@ module type S = sig
 
   (* Expose some things for testing. *)
   module Testing : sig
-    val get_test_env : unit -> env result
+    val get_test_env : unit -> env
 
     val test_settings : init_settings
 
@@ -194,4 +154,41 @@ module type S = sig
 
     val get_changes_returns : changes -> unit
   end
+end
+
+module type Exec = sig
+  type 'a future
+
+  type error
+
+  val error_to_string : error -> string
+
+  module Monad_infix : sig
+    val ( >>| ) : 'a future -> ('a -> 'b) -> 'b future
+
+    val ( >|= ) :
+      ('a, 'e) result future ->
+      ('a -> ('b, 'e) result) ->
+      ('b, 'e) result future
+  end
+
+  val exec : Exec_command.t -> string list -> (string, error) result future
+end
+
+module type Process_S = sig
+  type 'a future
+
+  type exec_error
+
+  type error =
+    | Process_failure of exec_error
+    | Unexpected_json of { json_string: string }
+
+  val error_to_string : error -> string
+
+  (** [watch_project ~root ~socket] queries watchman to watch a [root]. *)
+  val watch_project :
+    root:Path.t ->
+    sockname:Path.t option ->
+    (Types.watch_project_response, error) result future
 end

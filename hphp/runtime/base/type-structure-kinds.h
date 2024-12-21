@@ -20,7 +20,7 @@
 namespace HPHP {
 
 // These values are exposed to the user in
-// hphp/runtime/ext/reflection/ext_reflection-TypeInfo.php
+// hphp/runtime/ext/reflection/ext_reflection-classes.php
 enum class TypeStructureKind : uint8_t {
   T_void = 0,
   T_int = 1,
@@ -61,6 +61,12 @@ enum class TypeStructureKind : uint8_t {
   T_dynamic = 30,
   T_union = 31,
   T_recursiveUnion = 32,
+
+  // Represents class<T> type
+  T_class_ptr = 33,
+  // HH\class_or_classname<T> type == AnnotType::ClassOrClassname
+  T_class_or_classname = 34,
+
   // Make sure to update kMaxResolvedKind below if you add a new kind here
 
   // The following kinds needs class/alias resolution, and
@@ -75,7 +81,7 @@ enum class TypeStructureKind : uint8_t {
 struct Variant typeStructureKindToVariant(TypeStructureKind kind);
 
 namespace TypeStructure {
-constexpr uint8_t kMaxResolvedKind = 32;
+constexpr uint8_t kMaxResolvedKind = 34;
 using Kind = HPHP::TypeStructureKind;
 }
 

@@ -47,6 +47,7 @@
 
 #include "hphp/util/configs/eval.h"
 #include "hphp/util/configs/jit.h"
+#include "hphp/util/configs/setprofile.h"
 #include "hphp/util/struct-log.h"
 
 namespace HPHP {
@@ -232,6 +233,8 @@ Array getReifiedClasses(const ActRec* ar) {
     case K::T_null:
     case K::T_nothing:
     case K::T_dynamic:
+    case K::T_class_ptr:
+    case K::T_class_or_classname:
       clist.append(init_null());
       break;
 
@@ -265,7 +268,7 @@ void addFramePointers(const ActRec* ar, Array& frameinfo, bool isCall) {
     frameinfo.set(s_this_ptr, Variant(intptr_t(this_)));
 
     if ((g_context->m_setprofileFlags & EventHook::ProfileThisObject) != 0
-        && !RuntimeOption::SetProfileNullThisObject && this_) {
+        && !Cfg::SetProfile::NullThisObject && this_) {
       frameinfo.set(s_this_obj, Variant(this_));
     }
   }

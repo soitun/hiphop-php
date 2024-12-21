@@ -80,11 +80,8 @@ struct ast_visitor {
   void visit(
       const ast::conditional_block& conditional_block,
       tree_printer::scope scope) const {
-    scope.println(
-        " {}-block {}",
-        conditional_block.unless ? "unless" : "if",
-        location(conditional_block.loc));
-    visit(conditional_block.variable, scope.open_property());
+    scope.println(" if-block {}", location(conditional_block.loc));
+    visit(conditional_block.condition, scope.open_property());
     visit(conditional_block.body_elements, scope.open_node());
 
     if (auto else_clause = conditional_block.else_clause) {
@@ -118,9 +115,21 @@ struct ast_visitor {
         location(variable.loc),
         variable.chain_string());
   }
-  void visit(const ast::variable& variable, tree_printer::scope scope) const {
+  void visit(const ast::expression& expr, tree_printer::scope scope) const {
+    scope.println(" expression {} '{}'", location(expr.loc), expr.to_string());
+  }
+  void visit(const ast::interpolation& interpolation, tree_printer::scope scope)
+      const {
     scope.println(
-        " variable {} '{}'", location(variable.loc), variable.chain_string());
+        " interpolation {} '{}'",
+        location(interpolation.loc),
+        interpolation.to_string());
+  }
+  void visit(const ast::let_statement& let_statement, tree_printer::scope scope)
+      const {
+    scope.println(" let-statement {}", location(let_statement.loc));
+    visit(let_statement.id, scope.open_property());
+    visit(let_statement.value, scope.open_property());
   }
   // Prevent implicit conversion to ast::body. Otherwise, we can silently
   // compile an infinitely recursive visit() chain if there is a missing

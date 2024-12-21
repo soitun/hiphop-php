@@ -312,10 +312,6 @@ class MapPatch : public BaseContainerPatch<Patch, MapPatch<Patch>> {
       }
     }
   }
-  template <typename C = T>
-  [[deprecated("Use tryPutMulti(...) method instead.")]] void add(C&& entries) {
-    tryPutMulti(std::forward<C>(entries));
-  }
 
   /// Removes keys.
   template <typename C = std::unordered_set<typename T::key_type>>
@@ -366,21 +362,21 @@ class MapPatch : public BaseContainerPatch<Patch, MapPatch<Patch>> {
   ///     struct Visitor {
   ///       void assign(const Map&);
   ///       void clear();
-  ///       void add(const Map&);
-  ///       void put(const Map&);
-  ///       void remove(const std::unordered_set<Key>&);
+  ///       void tryPutMulti(const Map&);
+  ///       void putMulti(const Map&);
+  ///       void removeMulti(const std::unordered_set<Key>&);
   ///       void patchIfSet(const std::unordered_map<Key, ValuePatch>&);
   ///     }
   ///
   /// For example:
   ///
   ///     MapPatch<MapI32StringPatch> patch;
-  ///     patch.add({{10, "10"}});
+  ///     patch.tryPutMulti({{10, "10"}});
   ///     patch.ensureAndPatchByKey(20).append("_");
   ///
   /// `patch.customVisit(v)` will invoke the following methods
   ///
-  ///     v.add({{10, "10"}, {20, ""}});
+  ///     v.tryPutMulti({{10, "10"}, {20, ""}});
   ///     v.patchIfSet({{20, StringPatch::createAppend("_")}});
   template <class Visitor>
   void customVisit(Visitor&& v) const {
@@ -389,7 +385,7 @@ class MapPatch : public BaseContainerPatch<Patch, MapPatch<Patch>> {
       v.assign(T{});
       v.clear();
       v.patchIfSet(P{});
-      v.add(T{});
+      v.tryPutMulti(T{});
       v.putMulti(T{});
       v.removeMulti(std::unordered_set<typename T::key_type>{});
     }
@@ -399,7 +395,7 @@ class MapPatch : public BaseContainerPatch<Patch, MapPatch<Patch>> {
     }
 
     v.patchIfSet(*data_.patchPrior());
-    v.add(*data_.add());
+    v.tryPutMulti(*data_.add());
     v.removeMulti(*data_.remove());
     v.putMulti(*data_.put());
     v.patchIfSet(*data_.patch());
@@ -421,7 +417,7 @@ class MapPatch : public BaseContainerPatch<Patch, MapPatch<Patch>> {
       void removeMulti(const std::unordered_set<typename T::key_type>& keys) {
         erase_all(v, keys);
       }
-      void add(const T& t) { v.insert(t.begin(), t.end()); }
+      void tryPutMulti(const T& t) { v.insert(t.begin(), t.end()); }
       void putMulti(const T& t) {
         for (const auto& entry : t) {
           v.insert_or_assign(entry.first, entry.second);

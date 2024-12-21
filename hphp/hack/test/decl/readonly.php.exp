@@ -7,11 +7,11 @@
        sc_extends = []; sc_uses = []; sc_xhp_attr_uses = [];
        sc_xhp_enum_values = {}; sc_xhp_marked_empty = false;
        sc_req_extends = []; sc_req_implements = []; sc_req_class = [];
-       sc_implements = []; sc_support_dynamic_type = false; sc_consts = [];
-       sc_typeconsts = []; sc_props = []; sc_sprops = [];
-       sc_constructor = None; sc_static_methods = []; sc_methods = [];
-       sc_user_attributes = []; sc_enum_type = None; sc_docs_url = None;
-       sc_package = None }));
+       sc_req_this_as = []; sc_implements = [];
+       sc_support_dynamic_type = false; sc_consts = []; sc_typeconsts = [];
+       sc_props = []; sc_sprops = []; sc_constructor = None;
+       sc_static_methods = []; sc_methods = []; sc_user_attributes = [];
+       sc_enum_type = None; sc_docs_url = None; sc_package = None }));
   ("\\returns_readonly",
    (Shallow_decl_defs.Fun
       { Typing_defs.fe_deprecated = None; fe_module = None;
@@ -32,7 +32,7 @@
                 is_function_pointer = false; returns_readonly = true;
                 readonly_this = false; support_dynamic_type = false;
                 is_memoized = false; variadic = false };
-              ft_cross_package = None }));
+              ft_cross_package = None; ft_instantiated = true }));
         fe_pos = [5:16-32]; fe_php_std_lib = false;
         fe_support_dynamic_type = false; fe_no_auto_dynamic = false;
         fe_no_auto_likes = false }));
@@ -56,7 +56,7 @@
                 is_function_pointer = false; returns_readonly = false;
                 readonly_this = false; support_dynamic_type = false;
                 is_memoized = false; variadic = false };
-              ft_cross_package = None }));
+              ft_cross_package = None; ft_instantiated = true }));
         fe_pos = [9:16-30]; fe_php_std_lib = false;
         fe_support_dynamic_type = false; fe_no_auto_dynamic = false;
         fe_no_auto_likes = false }));
@@ -69,8 +69,8 @@
         sc_extends = []; sc_uses = []; sc_xhp_attr_uses = [];
         sc_xhp_enum_values = {}; sc_xhp_marked_empty = false;
         sc_req_extends = []; sc_req_implements = []; sc_req_class = [];
-        sc_implements = []; sc_support_dynamic_type = false; sc_consts = [];
-        sc_typeconsts = [];
+        sc_req_this_as = []; sc_implements = [];
+        sc_support_dynamic_type = false; sc_consts = []; sc_typeconsts = [];
         sc_props =
         [{ Shallow_decl_defs.sp_name = ([14:23-25], "x"); sp_xhp_attr = None;
            sp_type =
@@ -124,7 +124,7 @@
                         returns_readonly = false; readonly_this = false;
                         support_dynamic_type = false; is_memoized = false;
                         variadic = false };
-                      ft_cross_package = None }));
+                      ft_cross_package = None; ft_instantiated = true }));
                 sm_visibility = Public; sm_deprecated = None;
                 sm_flags =
                 { Shallow_decl_defs.MethodFlags.abstract = false;
@@ -156,7 +156,7 @@
                             returns_readonly = false; readonly_this = true;
                             support_dynamic_type = false;
                             is_memoized = false; variadic = false };
-                          ft_cross_package = None }));
+                          ft_cross_package = None; ft_instantiated = true }));
                     fp_flags =
                     { Typing_defs_flags.FunParam.accept_disposable = false;
                       inout = false; is_optional = false; readonly = false;
@@ -172,7 +172,7 @@
                    is_function_pointer = false; returns_readonly = false;
                    readonly_this = true; support_dynamic_type = false;
                    is_memoized = false; variadic = false };
-                 ft_cross_package = None }));
+                 ft_cross_package = None; ft_instantiated = true }));
            sm_visibility = Public; sm_deprecated = None;
            sm_flags =
            { Shallow_decl_defs.MethodFlags.abstract = false; final = false;

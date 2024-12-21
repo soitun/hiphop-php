@@ -64,8 +64,7 @@ import test.fixtures.another_interactions.shared.types as _test_fixtures_another
 cimport test.fixtures.another_interactions.shared.types as _test_fixtures_another_interactions_shared_types
 cimport test.fixtures.another_interactions.shared.cbindings as _test_fixtures_another_interactions_shared_cbindings
 
-import test.fixtures.interactions.module.services_reflection as _services_reflection
-cimport test.fixtures.interactions.module.services_reflection as _services_reflection
+cimport test.fixtures.interactions.module.services_interface as _fbthrift_services_interface
 
 import asyncio
 import functools
@@ -333,18 +332,38 @@ cdef class MyServiceInterface(
             get_executor()
         )
 
+    _fbthrift_annotations_DO_NOT_USE_foo = {
+        'return': 'None',
+        
+    }
+
     async def foo(
             self):
         raise NotImplementedError("async def foo is not implemented")
+
+    _fbthrift_annotations_DO_NOT_USE_interact = {
+        'return': 'None',
+        'arg': 'int', 
+    }
 
     async def interact(
             self,
             arg):
         raise NotImplementedError("async def interact is not implemented")
 
+    _fbthrift_annotations_DO_NOT_USE_interactFast = {
+        'return': 'int',
+        
+    }
+
     async def interactFast(
             self):
         raise NotImplementedError("async def interactFast is not implemented")
+
+    _fbthrift_annotations_DO_NOT_USE_serialize = {
+        'return': 'None',
+        
+    }
 
     async def serialize(
             self):
@@ -356,14 +375,10 @@ cdef class MyServiceInterface(
 
         return (ServerStream_cint32_t._fbthrift_create(cmove(deref(streams).first)), ServerPublisher_cint32_t._fbthrift_create(cmove(deref(streams).second)))
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__MyService(for_clients=False)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cMyServiceSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cMyServiceSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod
@@ -386,18 +401,38 @@ cdef class FactoriesInterface(
             get_executor()
         )
 
+    _fbthrift_annotations_DO_NOT_USE_foo = {
+        'return': 'None',
+        
+    }
+
     async def foo(
             self):
         raise NotImplementedError("async def foo is not implemented")
+
+    _fbthrift_annotations_DO_NOT_USE_interact = {
+        'return': 'None',
+        'arg': 'int', 
+    }
 
     async def interact(
             self,
             arg):
         raise NotImplementedError("async def interact is not implemented")
 
+    _fbthrift_annotations_DO_NOT_USE_interactFast = {
+        'return': 'int',
+        
+    }
+
     async def interactFast(
             self):
         raise NotImplementedError("async def interactFast is not implemented")
+
+    _fbthrift_annotations_DO_NOT_USE_serialize = {
+        'return': 'None',
+        
+    }
 
     async def serialize(
             self):
@@ -409,14 +444,10 @@ cdef class FactoriesInterface(
 
         return (ServerStream_cint32_t._fbthrift_create(cmove(deref(streams).first)), ServerPublisher_cint32_t._fbthrift_create(cmove(deref(streams).second)))
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__Factories(for_clients=False)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cFactoriesSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cFactoriesSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod
@@ -439,18 +470,19 @@ cdef class PerformInterface(
             get_executor()
         )
 
+    _fbthrift_annotations_DO_NOT_USE_foo = {
+        'return': 'None',
+        
+    }
+
     async def foo(
             self):
         raise NotImplementedError("async def foo is not implemented")
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__Perform(for_clients=False)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cPerformSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cPerformSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod
@@ -473,18 +505,19 @@ cdef class InteractWithSharedInterface(
             get_executor()
         )
 
+    _fbthrift_annotations_DO_NOT_USE_do_some_similar_things = {
+        'return': 'test.fixtures.another_interactions.shared.types.DoSomethingResult',
+        
+    }
+
     async def do_some_similar_things(
             self):
         raise NotImplementedError("async def do_some_similar_things is not implemented")
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__InteractWithShared(for_clients=False)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cInteractWithSharedSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cInteractWithSharedSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod
@@ -507,19 +540,20 @@ cdef class BoxServiceInterface(
             get_executor()
         )
 
+    _fbthrift_annotations_DO_NOT_USE_getABoxSession = {
+        'return': 'test.fixtures.interactions.module.types.ShouldBeBoxed',
+        'req': 'test.fixtures.interactions.module.types.ShouldBeBoxed', 
+    }
+
     async def getABoxSession(
             self,
             req):
         raise NotImplementedError("async def getABoxSession is not implemented")
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__BoxService(for_clients=False)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cBoxServiceSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cBoxServiceSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod

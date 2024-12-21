@@ -66,8 +66,7 @@ import transitive.types as _transitive_types
 cimport transitive.types as _transitive_types
 cimport transitive.cbindings as _transitive_cbindings
 
-import service.services_reflection as _services_reflection
-cimport service.services_reflection as _services_reflection
+cimport service.services_interface as _fbthrift_services_interface
 
 import asyncio
 import functools
@@ -111,11 +110,21 @@ cdef class MyServiceInterface(
             get_executor()
         )
 
+    _fbthrift_annotations_DO_NOT_USE_query = {
+        'return': 'None',
+        's': 'module.types.MyStruct', 'i': 'includes.types.Included', 
+    }
+
     async def query(
             self,
             s,
             i):
         raise NotImplementedError("async def query is not implemented")
+
+    _fbthrift_annotations_DO_NOT_USE_has_arg_docs = {
+        'return': 'None',
+        's': 'module.types.MyStruct', 'i': 'includes.types.Included', 
+    }
 
     async def has_arg_docs(
             self,
@@ -123,14 +132,10 @@ cdef class MyServiceInterface(
             i):
         raise NotImplementedError("async def has_arg_docs is not implemented")
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__MyService(for_clients=False)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cMyServiceSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cMyServiceSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod

@@ -62,7 +62,7 @@ type class_elt = {
 type fun_elt = {
   fe_deprecated: string option;
   fe_module: Ast_defs.id option;
-  fe_package: string option;
+  fe_package: Aast_defs.package_membership option;
   fe_internal: bool;
   fe_type: decl_ty;
   fe_pos: Pos_or_decl.t;
@@ -150,7 +150,7 @@ type typedef_type = {
   td_attributes: user_attribute list;
   td_internal: bool;
   td_docs_url: string option;
-  td_package: string option;
+  td_package: Aast_defs.package_membership option;
 }
 [@@deriving eq, show]
 
@@ -401,6 +401,8 @@ val class_elt_is_private_or_protected_not_lsb : class_elt -> bool
 val error_Tunapplied_alias_in_illegal_context : unit -> 'a
 
 val is_typeconst_type_abstract : typeconst_type -> bool
+
+val is_arraykey : locl_ty -> bool
 
 module Attributes : sig
   val mem : string -> user_attribute Hh_prelude.List.t -> bool

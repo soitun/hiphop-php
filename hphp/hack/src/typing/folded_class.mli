@@ -54,7 +54,7 @@ val get_docs_url : t -> string option
 
 val get_module : t -> string option
 
-val get_package : t -> string option
+val get_package : t -> Aast_defs.package_membership option
 
 val internal : t -> bool
 
@@ -102,6 +102,12 @@ val all_ancestor_req_names : t -> string list
     * included in all_ancestor_reqs or all_ancestor_req_names
     *)
 val all_ancestor_req_class_requirements : t -> requirement list
+
+(** All the require this as requirements
+    * These requirements impose a non-strict subtype constraint 
+    * and are not included in all_ancestor_reqs or all_ancestor_req_names
+    *)
+val all_ancestor_req_this_as_requirements : t -> requirement list
 
 val get_const : t -> string -> class_const option
 

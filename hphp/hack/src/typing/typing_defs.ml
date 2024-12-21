@@ -99,7 +99,7 @@ type class_elt = {
 type fun_elt = {
   fe_deprecated: string option;
   fe_module: Ast_defs.id option;
-  fe_package: string option;
+  fe_package: Aast_defs.package_membership option;
   fe_internal: bool;  (** Top-level functions have limited visibilities *)
   fe_type: decl_ty;
   fe_pos: Pos_or_decl.t;
@@ -226,7 +226,7 @@ type typedef_type = {
   td_attributes: user_attribute list;
   td_internal: bool;
   td_docs_url: string option;
-  td_package: string option;
+  td_package: Aast_defs.package_membership option;
 }
 [@@deriving eq, show]
 
@@ -695,6 +695,11 @@ let is_typeconst_type_abstract tc =
   match tc.ttc_kind with
   | TCConcrete _ -> false
   | TCAbstract _ -> true
+
+let is_arraykey t =
+  match get_node t with
+  | Tprim Aast.Tarraykey -> true
+  | _ -> false
 
 module Attributes = struct
   let mem x xs =

@@ -180,10 +180,13 @@ bool coerce_to_boolean(const array& value) {
   return !value.empty();
 }
 bool coerce_to_boolean(const native_object::ptr& value) {
-  if (auto sequence = value->as_sequence(); sequence != nullptr) {
-    return sequence->size() != 0;
+  if (auto array_like = value->as_array_like(); array_like != nullptr) {
+    return array_like->size() != 0;
   }
-  return true;
+  if (auto map_like = value->as_map_like(); map_like != nullptr) {
+    return true;
+  }
+  return false;
 }
 bool coerce_to_boolean(const map&) {
   return true;
@@ -333,14 +336,62 @@ class render_engine {
         });
   }
 
-  void visit(const ast::variable& variable) {
-    const object& value = lookup_variable(variable.lookup);
+  object evaluate(const ast::expression& expr) {
+    return detail::variant_match(
+        expr.content,
+        [&](const ast::variable_lookup& variable_lookup) {
+          return lookup_variable(variable_lookup);
+        },
+        [&](const ast::expression::function_call& func) {
+          return detail::variant_match(
+              func.which,
+              [&](ast::expression::function_call::not_tag) {
+                assert(func.args.size() == 1); // enforced by the parser
+                return object{!evaluate_as_bool(func.args[0])};
+              },
+              [&](ast::expression::function_call::and_tag) {
+                for (const ast::expression& arg : func.args) {
+                  if (!evaluate_as_bool(arg)) {
+                    return object{false};
+                  }
+                }
+                return object{true};
+              },
+              [&](ast::expression::function_call::or_tag) {
+                for (const ast::expression& arg : func.args) {
+                  if (evaluate_as_bool(arg)) {
+                    return object{true};
+                  }
+                }
+                return object{false};
+              });
+        });
+  }
+
+  void visit(const ast::let_statement& let_statement) {
+    whisker::visit(
+        eval_context_.bind_local(
+            let_statement.id.name, evaluate(let_statement.value)),
+        [](std::monostate) {
+          // The binding was successful
+        },
+        [&](const eval_name_already_bound_error& err) {
+          diags_.error(
+              let_statement.loc.begin,
+              "Name '{}' is already bound in the current scope.",
+              err.name());
+          throw abort_rendering();
+        });
+  }
+
+  void visit(const ast::interpolation& interpolation) {
+    const object& value = evaluate(interpolation.content);
 
     const auto report_unprintable_message_only = [&](diagnostic_level level) {
-      maybe_report(variable.lookup.loc, level, [&] {
+      maybe_report(interpolation.loc, level, [&] {
         return fmt::format(
             "Object named '{}' is not printable. The encountered value is:\n{}",
-            variable.lookup.chain_string(),
+            interpolation.to_string(),
             to_string(value));
       });
     };
@@ -383,12 +434,12 @@ class render_engine {
    * provided value and render_options::strict_boolean_conditional.
    */
   void maybe_report_boolean_coercion(
-      const ast::variable_lookup& lookup, const object& value) {
+      const ast::expression& expr, const object& value) {
     auto diag_level = opts_.strict_boolean_conditional;
-    maybe_report(lookup.loc, diag_level, [&] {
+    maybe_report(expr.loc, diag_level, [&] {
       return fmt::format(
           "Condition '{}' is not a boolean. The encountered value is:\n{}",
-          lookup.chain_string(),
+          expr.to_string(),
           to_string(value));
     });
     if (diag_level == diagnostic_level::error) {
@@ -396,12 +447,23 @@ class render_engine {
       throw abort_rendering();
     }
   }
+  bool evaluate_as_bool(const ast::expression& expr) {
+    const object result = evaluate(expr);
+    return result.visit(
+        [&](boolean value) { return value; },
+        [&](const auto& value) {
+          maybe_report_boolean_coercion(expr, result);
+          return coerce_to_boolean(value);
+        });
+  }
 
   void visit(const ast::section_block& section) {
     const object& section_variable = lookup_variable(section.variable);
 
     const auto maybe_report_coercion = [&] {
-      maybe_report_boolean_coercion(section.variable, section_variable);
+      maybe_report_boolean_coercion(
+          ast::expression{section.variable.loc, section.variable},
+          section_variable);
     };
 
     const auto do_visit = [&](const object& scope) {
@@ -438,25 +500,36 @@ class render_engine {
             // This native_object is being used as a conditional
             maybe_report_coercion();
             if (!coerce_to_boolean(value)) {
-              // Empty sequences are falsy
+              // Empty array-like objects are falsy
               do_visit(whisker::make::null);
             }
             return;
           }
-          // native_object can behave like a map or an array, depending on its
-          // implementation. The "default" implementation is map-like because
-          // lookup_property() must always be implemented.
-          // native::object::sequence is an optional extension.
-          // Our implementation here gives preference for the more specialized
-          // sequence interface.
-          if (auto sequence = value->as_sequence()) {
-            const std::size_t size = sequence->size();
+          // When used as a section_block, a native_object which is both
+          // "map"-like and "array"-like is ambiguous. We arbitrarily choose
+          // "array"-like as the winner. In practice, a native_object is most
+          // likely to be one or the other.
+          //
+          // This is one of the reasons that section blocks are deprecated in
+          // favor of `{{#each}}` and `{{#with}}`.
+          if (auto array_like = value->as_array_like()) {
+            const std::size_t size = array_like->size();
             for (std::size_t i = 0; i < size; ++i) {
-              do_visit(sequence->at(i));
+              do_visit(array_like->at(i));
             }
             return;
           }
-          do_visit(section_variable);
+          if (auto map_like = value->as_map_like()) {
+            do_visit(section_variable);
+            return;
+          }
+
+          // Since this native_object is neither array-like nor map-like, it is
+          // being used as a conditional
+          maybe_report_coercion();
+          if (coerce_to_boolean(value)) {
+            do_visit(whisker::make::null);
+          }
         },
         [&](const map&) {
           if (section.inverted) {
@@ -477,34 +550,18 @@ class render_engine {
   }
 
   void visit(const ast::conditional_block& conditional_block) {
-    const object& condition = lookup_variable(conditional_block.variable);
-
-    const auto maybe_report_coercion = [&] {
-      maybe_report_boolean_coercion(conditional_block.variable, condition);
-    };
-
-    const auto do_visit = [&](const object& scope,
-                              const ast::bodies& body_elements) {
-      eval_context_.push_scope(scope);
+    const auto do_visit = [&](const ast::bodies& body_elements) {
+      eval_context_.push_scope(whisker::make::null);
       visit(body_elements);
       eval_context_.pop_scope();
     };
 
-    const auto do_conditional_visit = [&](bool condition) {
-      if (condition ^ conditional_block.unless) {
-        do_visit(whisker::make::null, conditional_block.body_elements);
-      } else if (conditional_block.else_clause.has_value()) {
-        do_visit(
-            whisker::make::null, conditional_block.else_clause->body_elements);
-      }
-    };
-
-    condition.visit(
-        [&](boolean value) { do_conditional_visit(value); },
-        [&](const auto& value) {
-          maybe_report_coercion();
-          do_conditional_visit(coerce_to_boolean(value));
-        });
+    const bool condition = evaluate_as_bool(conditional_block.condition);
+    if (condition) {
+      do_visit(conditional_block.body_elements);
+    } else if (conditional_block.else_clause.has_value()) {
+      do_visit(conditional_block.else_clause->body_elements);
+    }
   }
 
   void visit(const ast::partial_apply& partial_apply) {

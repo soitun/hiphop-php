@@ -22,9 +22,15 @@
 #include <folly/coro/Task.h>
 #include <folly/io/async/EventBase.h>
 #include <thrift/lib/cpp/concurrency/ThreadManager.h>
+#include <thrift/lib/cpp2/Flags.h>
+#include <thrift/lib/cpp2/async/InteractionOverloadPolicy.h>
+
+THRIFT_FLAG_DECLARE_bool(enable_interaction_overload_protection_server);
 
 namespace apache::thrift {
 namespace detail {
+
+class TileInternalAPI;
 
 enum class InternalPriority;
 
@@ -115,15 +121,38 @@ class Tile {
   }
   void decRef(folly::EventBase& eb, InteractionReleaseEvent event);
 
+  InteractionOverloadPolicy* getOverloadPolicy() {
+    return overloadPolicy_.get();
+  }
+  void setOverloadPolicy(std::unique_ptr<InteractionOverloadPolicy> policy) {
+    overloadPolicy_ = std::move(policy);
+  }
+
   size_t refCount_{0};
   folly::Executor::KeepAlive<concurrency::ThreadManager> tm_;
   folly::Executor::KeepAlive<> executor_{}; // Used only for ResourcePools
   folly::Function<void()> onDestroy_;
+  std::unique_ptr<InteractionOverloadPolicy> overloadPolicy_{nullptr};
   friend class TilePromise;
   friend class TilePtr;
   friend class TileStreamGuard;
+  friend class detail::TileInternalAPI;
   friend class GeneratedAsyncProcessorBase;
 };
+
+namespace detail {
+class TileInternalAPI {
+ public:
+  explicit TileInternalAPI(Tile& tile) : tile_(tile) {}
+
+  InteractionOverloadPolicy* FOLLY_NULLABLE getOverloadPolicy() {
+    return tile_.getOverloadPolicy();
+  }
+
+ private:
+  Tile& tile_;
+};
+} // namespace detail
 
 class SerialInteractionTile : public Tile {
  private:
@@ -145,7 +174,9 @@ class TilePromise final : public Tile {
  public:
   explicit TilePromise(bool isFactoryFunction)
       : factoryPending_(isFactoryFunction),
-        isFactoryFunction_(isFactoryFunction) {}
+        isFactoryFunction_(isFactoryFunction) {
+    overloadPolicy_ = InteractionOverloadPolicy::createFromThriftFlag();
+  }
 
   void fulfill(
       Tile& tile, concurrency::ThreadManager* tm, folly::EventBase& eb);

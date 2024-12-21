@@ -114,8 +114,9 @@ CO_TEST(TaskWrapper, throws) {
 }
 
 CO_TEST(TaskWrapper, co_awaitTry) {
-  auto res = co_await co_awaitTry(
-      []() -> TinyTask<void> { co_yield co_error(MyError{}); }());
+  auto res = co_await co_awaitTry([]() -> TinyTask<void> {
+    co_yield co_error(MyError{});
+  }());
   EXPECT_TRUE(res.hasException<MyError>());
 }
 
@@ -175,6 +176,31 @@ CO_TEST(TaskWrapper, recursiveUnwrap) {
   EXPECT_EQ(3, co_await t().unwrap());
   static_assert(std::is_same_v<decltype(t().unwrap().unwrap()), TinyTask<int>>);
   EXPECT_EQ(3, co_await t().unwrap().unwrap());
+}
+
+template <typename>
+struct OpaqueTask;
+
+namespace detail {
+template <typename T>
+class OpaqueTaskPromise final
+    : public TaskPromiseWrapper<T, OpaqueTask<T>, TaskPromise<T>> {};
+} // namespace detail
+
+template <typename T>
+struct FOLLY_CORO_TASK_ATTRS OpaqueTask final
+    : public OpaqueTaskWrapperCrtp<OpaqueTask<T>, T, Task<T>> {
+  using promise_type = detail::OpaqueTaskPromise<T>;
+  using OpaqueTaskWrapperCrtp<OpaqueTask<T>, T, Task<T>>::OpaqueTaskWrapperCrtp;
+  using OpaqueTaskWrapperCrtp<OpaqueTask<T>, T, Task<T>>::unwrap;
+};
+
+static_assert(is_semi_awaitable_v<TinyTask<int>>);
+static_assert(!is_semi_awaitable_v<OpaqueTask<int>>);
+
+CO_TEST(TaskWrapper, opaque) {
+  auto ot = [](int x) -> OpaqueTask<int> { co_return 1300 + x; }(37);
+  EXPECT_EQ(1337, co_await std::move(ot).unwrap());
 }
 
 } // namespace folly::coro

@@ -27,7 +27,6 @@ use crate::{
 
 #[allow(clippy::assign_op_pattern)]
 #[allow(clippy::let_and_return)]
-
 impl<'a, C, T, V> SyntaxType<C> for Syntax<'a, T, V>
 where
     T: LexableToken + Copy,
@@ -476,6 +475,18 @@ where
         let syntax = SyntaxVariant::RequireClause(ctx.get_arena().alloc(RequireClauseChildren {
             keyword,
             kind,
+            name,
+            semicolon,
+        }));
+        let value = V::from_values(syntax.iter_children().map(|child| &child.value));
+        Self::make(syntax, value)
+    }
+
+    fn make_require_clause_constraint(ctx: &C, keyword: Self, this: Self, operator: Self, name: Self, semicolon: Self) -> Self {
+        let syntax = SyntaxVariant::RequireClauseConstraint(ctx.get_arena().alloc(RequireClauseConstraintChildren {
+            keyword,
+            this,
+            operator,
             name,
             semicolon,
         }));

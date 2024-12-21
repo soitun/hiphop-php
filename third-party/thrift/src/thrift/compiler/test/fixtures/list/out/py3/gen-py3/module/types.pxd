@@ -35,6 +35,7 @@ from thrift.py3.types cimport (
 from thrift.python.common cimport cThriftMetadata as __fbthrift_cThriftMetadata
 cimport thrift.py3.exceptions
 cimport thrift.py3.types
+from libc.stdint cimport int64_t
 from thrift.python.common cimport (
     RpcOptions as __RpcOptions,
     MetadataBox as __MetadataBox,
@@ -53,13 +54,7 @@ cdef extern from "thrift/compiler/test/fixtures/list/gen-py3/module/types.h":
 cdef vector[string] List__string__make_instance(object items) except *
 cdef object List__string__from_cpp(const vector[string]&) except *
 
-cdef class Map__i64_List__string(thrift.py3.types.Map):
-    cdef shared_ptr[cmap[cint64_t,vector[string]]] _cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE
-    @staticmethod
-    cdef _create_FBTHRIFT_ONLY_DO_NOT_USE(shared_ptr[cmap[cint64_t,vector[string]]])
-    cdef _check_key_type(self, key)
-
-cdef shared_ptr[cmap[cint64_t,vector[string]]] Map__i64_List__string__make_instance(object items) except *
+cdef cmap[cint64_t,vector[string]] Map__i64_List__string__make_instance(object items) except *
 cdef object Map__i64_List__string__from_cpp(const cmap[cint64_t,vector[string]]&) except *
 
 

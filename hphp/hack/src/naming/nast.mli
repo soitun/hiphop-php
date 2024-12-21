@@ -27,6 +27,8 @@ val show_expr : expr -> Ppx_deriving_runtime.string
 
 type expr_ = (unit, unit) Aast.expr_
 
+type argument = (unit, unit) Aast.argument
+
 type stmt = (unit, unit) Aast.stmt
 
 type block = (unit, unit) Aast.block
@@ -190,12 +192,16 @@ module Visitor_DEPRECATED : sig
 
       method on_binop : 'a -> Ast_defs.bop -> expr -> expr -> 'a
 
+      method on_assign : 'a -> expr -> Ast_defs.bop option -> expr -> 'a
+
       method on_block : 'a -> block -> 'a
 
       method on_break : 'a -> 'a
 
       method on_call :
-        'a -> expr -> (Ast_defs.param_kind * expr) list -> expr option -> 'a
+        'a -> expr -> (unit, unit) Aast_defs.argument list -> expr option -> 'a
+
+      method on_argument : 'a -> (unit, unit) Aast_defs.argument -> 'a
 
       method on_case : 'a -> case -> 'a
 

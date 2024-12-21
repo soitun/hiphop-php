@@ -35,7 +35,7 @@ to the client.
   }}cmove(<string>result)){{!
 }}{{/type:flexibleBinary?}}{{!
 }}{{^function:stream?}}{{!
-}}{{^type:hasCustomTypeBehavior?}}{{!
+}}{{^type:customBinaryType?}}{{!
 }}{{#type:bool?}}<cbool> result{{/type:bool?}}{{!
 }}{{#type:byte?}}<cint8_t> result{{/type:byte?}}{{!
 }}{{#type:i16?}}<cint16_t> result{{/type:i16?}}{{!
@@ -60,24 +60,19 @@ to the client.
 }}{{/type:struct}}{{!
 }}{{#type:container?}}{{!
   }}{{^function:stack_arguments?}}make_unique[{{> types/cython_cpp_type}}]({{/function:stack_arguments?}}{{!
-  }}{{^type:map?}}{{!
     }}{{> types/container_to_cpp}}(result){{!
-  }}{{/type:map?}}{{!
-  }}{{#type:map?}}{{!
-    }}deref((<{{> types/cython_python_type}}?> result).{{> types/cpp_obj}}){{!
-  }}{{/type:map?}}{{!
   }}{{^function:stack_arguments?}}){{/function:stack_arguments?}}{{!
 }}{{/type:container?}}{{!
 }}{{#type:void?}}c_unit{{/type:void?}}{{!
 }}{{#type:enum?}}<{{> types/cython_cpp_type}}><int>result{{/type:enum?}}{{!
-}}{{/type:hasCustomTypeBehavior?}}{{!
+}}{{/type:customBinaryType?}}{{!
 }}{{/function:stream?}}{{!
 }}{{#function:stream?}}{{!
   }}{{#function:stream_has_first_response?}}createResponseAndServerStream[{{!
-  }}{{#function:stream_first_response_type}}{{ >types/cython_cpp_type}}{{/function:stream_first_response_type}},{{!
-  }}{{#function:stream_elem_type}}{{ >types/cython_cpp_type}}{{/function:stream_elem_type}}]({{!
+  }}{{#function:stream_first_response_type}}{{> types/cython_cpp_type}}{{/function:stream_first_response_type}},{{!
+  }}{{#function:stream_elem_type}}{{> types/cython_cpp_type}}{{/function:stream_elem_type}}]({{!
   }}{{#function:stream_first_response_type}}(<{{> types/cython_cpp_type}}?> {{> types/cython_python_to_cpp_item}}){{/function:stream_first_response_type}}, {{!
   }}{{/function:stream_has_first_response?}}{{!
-  }}cmove(deref((<ServerStream_{{#function:stream_elem_type}}{{ >types/cython_cpp_type_ident }}{{/function:stream_elem_type}}?>result).cStream)){{!
+  }}cmove(deref((<ServerStream_{{#function:stream_elem_type}}{{> types/cython_cpp_type_ident }}{{/function:stream_elem_type}}?>result).cStream)){{!
   }}{{#function:stream_has_first_response?}}){{/function:stream_has_first_response?}}{{!
 }}{{/function:stream?}}

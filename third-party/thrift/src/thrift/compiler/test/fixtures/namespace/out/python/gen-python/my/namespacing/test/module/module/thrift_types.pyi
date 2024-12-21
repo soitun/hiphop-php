@@ -10,6 +10,7 @@ from __future__ import annotations
 import typing as _typing
 
 import folly.iobuf as _fbthrift_iobuf
+import python_module_root.my.namespacing.test.module.module.thrift_abstract_types as _fbthrift_python_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
 
@@ -18,7 +19,7 @@ class _fbthrift_compatible_with_Foo:
     pass
 
 
-class Foo(_fbthrift_python_types.Struct, _fbthrift_compatible_with_Foo):
+class Foo(_fbthrift_python_types.Struct, _fbthrift_compatible_with_Foo, _fbthrift_python_abstract_types.Foo):
     MyInt: _typing.Final[int] = ...
     def __init__(
         self, *,
@@ -31,8 +32,10 @@ class Foo(_fbthrift_python_types.Struct, _fbthrift_compatible_with_Foo):
     ) -> _typing.Self: ...
     def __iter__(self) -> _typing.Iterator[_typing.Tuple[str, _typing.Union[int]]]: ...
     def _to_python(self) -> _typing.Self: ...
+    def _to_mutable_python(self) -> "python_module_root.my.namespacing.test.module.module.thrift_mutable_types.Foo": ...  # type: ignore
     def _to_py3(self) -> "python_module_root.my.namespacing.test.module.module.types.Foo": ...  # type: ignore
     def _to_py_deprecated(self) -> "my.namespacing.test.module.ttypes.Foo": ...  # type: ignore
+_fbthrift_Foo = Foo
 
 
 class _fbthrift_TestService_init_args(_fbthrift_python_types.Struct):

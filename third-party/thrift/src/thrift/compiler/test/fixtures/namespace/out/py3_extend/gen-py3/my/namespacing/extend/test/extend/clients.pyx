@@ -58,8 +58,7 @@ import my.namespacing.test.hsmodule.types as _my_namespacing_test_hsmodule_types
 cimport my.namespacing.test.hsmodule.clients as _my_namespacing_test_hsmodule_clients
 import my.namespacing.test.hsmodule.clients as _my_namespacing_test_hsmodule_clients
 
-import my.namespacing.extend.test.extend.services_reflection as _services_reflection
-cimport my.namespacing.extend.test.extend.services_reflection as _services_reflection
+cimport my.namespacing.extend.test.extend.services_interface as _fbthrift_services_interface
 
 from my.namespacing.extend.test.extend.clients_wrapper cimport cExtendTestServiceAsyncClient, cExtendTestServiceClientWrapper
 from my.namespacing.test.hsmodule.clients_wrapper cimport cHsTestServiceClientWrapper
@@ -95,6 +94,11 @@ cdef class ExtendTestService(_my_namespacing_test_hsmodule_clients.HsTestService
             cmove(channel)
         )
 
+    _fbthrift_annotations_DO_NOT_USE_check = {
+        'return': 'bool',
+        'struct1': 'my.namespacing.test.hsmodule.types.HsFoo', 
+    }
+
     @cython.always_allow_keywords(True)
     def check(
             ExtendTestService self,
@@ -118,14 +122,10 @@ cdef class ExtendTestService(_my_namespacing_test_hsmodule_clients.HsTestService
         return asyncio_shield(__future)
 
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__ExtendTestService(for_clients=True)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cExtendTestServiceSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cExtendTestServiceSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod

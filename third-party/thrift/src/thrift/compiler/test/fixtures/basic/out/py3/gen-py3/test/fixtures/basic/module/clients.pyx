@@ -53,8 +53,7 @@ cimport test.fixtures.basic.module.types as _test_fixtures_basic_module_types
 cimport test.fixtures.basic.module.cbindings as _test_fixtures_basic_module_cbindings
 import test.fixtures.basic.module.types as _test_fixtures_basic_module_types
 
-import test.fixtures.basic.module.services_reflection as _services_reflection
-cimport test.fixtures.basic.module.services_reflection as _services_reflection
+cimport test.fixtures.basic.module.services_interface as _fbthrift_services_interface
 
 from test.fixtures.basic.module.clients_wrapper cimport cFooServiceAsyncClient, cFooServiceClientWrapper
 from test.fixtures.basic.module.clients_wrapper cimport cFB303ServiceAsyncClient, cFB303ServiceClientWrapper
@@ -261,6 +260,11 @@ cdef class FooService(thrift.py3.client.Client):
             cmove(channel)
         )
 
+    _fbthrift_annotations_DO_NOT_USE_simple_rpc = {
+        'return': 'None',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def simple_rpc(
             FooService self,
@@ -282,14 +286,10 @@ cdef class FooService(thrift.py3.client.Client):
         return asyncio_shield(__future)
 
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__FooService(for_clients=True)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cFooServiceSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cFooServiceSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod
@@ -311,6 +311,11 @@ cdef class FB303Service(thrift.py3.client.Client):
         self._client = makeClientWrapper[cFB303ServiceAsyncClient, cFB303ServiceClientWrapper](
             cmove(channel)
         )
+
+    _fbthrift_annotations_DO_NOT_USE_simple_rpc = {
+        'return': 'test.fixtures.basic.module.types.ReservedKeyword',
+        'int_parameter': 'int', 
+    }
 
     @cython.always_allow_keywords(True)
     def simple_rpc(
@@ -339,14 +344,10 @@ cdef class FB303Service(thrift.py3.client.Client):
         return asyncio_shield(__future)
 
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__FB303Service(for_clients=True)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cFB303ServiceSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cFB303ServiceSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod
@@ -369,6 +370,11 @@ cdef class MyService(thrift.py3.client.Client):
             cmove(channel)
         )
 
+    _fbthrift_annotations_DO_NOT_USE_ping = {
+        'return': 'None',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def ping(
             MyService self,
@@ -389,6 +395,11 @@ cdef class MyService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_getRandomData = {
+        'return': 'str',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def getRandomData(
             MyService self,
@@ -408,6 +419,11 @@ cdef class MyService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_sink = {
+        'return': 'None',
+        'sink': 'int', 
+    }
 
     @cython.always_allow_keywords(True)
     def sink(
@@ -434,6 +450,11 @@ cdef class MyService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_putDataById = {
+        'return': 'None',
+        'id': 'int', 'data': 'str', 
+    }
 
     @cython.always_allow_keywords(True)
     def putDataById(
@@ -463,6 +484,11 @@ cdef class MyService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_hasDataById = {
+        'return': 'bool',
+        'id': 'int', 
+    }
+
     @cython.always_allow_keywords(True)
     def hasDataById(
             MyService self,
@@ -488,6 +514,11 @@ cdef class MyService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_getDataById = {
+        'return': 'str',
+        'id': 'int', 
+    }
 
     @cython.always_allow_keywords(True)
     def getDataById(
@@ -515,6 +546,11 @@ cdef class MyService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_deleteDataById = {
+        'return': 'None',
+        'id': 'int', 
+    }
+
     @cython.always_allow_keywords(True)
     def deleteDataById(
             MyService self,
@@ -540,6 +576,11 @@ cdef class MyService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_lobDataById = {
+        'return': 'None',
+        'id': 'int', 'data': 'str', 
+    }
 
     @cython.always_allow_keywords(True)
     def lobDataById(
@@ -569,6 +610,11 @@ cdef class MyService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_invalid_return_for_hack = {
+        'return': '_typing.AbstractSet[float]',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def invalid_return_for_hack(
             MyService self,
@@ -588,6 +634,11 @@ cdef class MyService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_rpc_skipped_codegen = {
+        'return': 'None',
+        
+    }
 
     @cython.always_allow_keywords(True)
     def rpc_skipped_codegen(
@@ -610,14 +661,10 @@ cdef class MyService(thrift.py3.client.Client):
         return asyncio_shield(__future)
 
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__MyService(for_clients=True)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cMyServiceSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cMyServiceSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod
@@ -640,6 +687,11 @@ cdef class DbMixedStackArguments(thrift.py3.client.Client):
             cmove(channel)
         )
 
+    _fbthrift_annotations_DO_NOT_USE_getDataByKey0 = {
+        'return': 'bytes',
+        'key': 'str', 
+    }
+
     @cython.always_allow_keywords(True)
     def getDataByKey0(
             DbMixedStackArguments self,
@@ -661,6 +713,11 @@ cdef class DbMixedStackArguments(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_getDataByKey1 = {
+        'return': 'bytes',
+        'key': 'str', 
+    }
 
     @cython.always_allow_keywords(True)
     def getDataByKey1(
@@ -685,14 +742,10 @@ cdef class DbMixedStackArguments(thrift.py3.client.Client):
         return asyncio_shield(__future)
 
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__DbMixedStackArguments(for_clients=True)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cDbMixedStackArgumentsSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cDbMixedStackArgumentsSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod

@@ -35,6 +35,7 @@ from thrift.py3.types cimport (
 from thrift.python.common cimport cThriftMetadata as __fbthrift_cThriftMetadata
 cimport thrift.py3.exceptions
 cimport thrift.py3.types
+from libc.stdint cimport int64_t
 from thrift.python.common cimport (
     RpcOptions as __RpcOptions,
     MetadataBox as __MetadataBox,
@@ -53,9 +54,10 @@ cdef extern from "thrift/compiler/test/fixtures/complex-union/gen-py3/module/typ
 
 cdef class ComplexUnion(thrift.py3.types.Union):
     cdef shared_ptr[_module_cbindings.cComplexUnion] _cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE
-    cdef readonly object type
-    cdef readonly object value
-    cdef _load_cache(ComplexUnion self)
+    cdef int64_t type_int
+    cdef object py_type
+    cdef object py_value
+    cdef _initialize_py(ComplexUnion self)
 
     @staticmethod
     cdef unique_ptr[_module_cbindings.cComplexUnion] _make_instance(
@@ -75,9 +77,10 @@ cdef class ComplexUnion(thrift.py3.types.Union):
 
 cdef class ListUnion(thrift.py3.types.Union):
     cdef shared_ptr[_module_cbindings.cListUnion] _cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE
-    cdef readonly object type
-    cdef readonly object value
-    cdef _load_cache(ListUnion self)
+    cdef int64_t type_int
+    cdef object py_type
+    cdef object py_value
+    cdef _initialize_py(ListUnion self)
 
     @staticmethod
     cdef unique_ptr[_module_cbindings.cListUnion] _make_instance(
@@ -93,9 +96,10 @@ cdef class ListUnion(thrift.py3.types.Union):
 
 cdef class DataUnion(thrift.py3.types.Union):
     cdef shared_ptr[_module_cbindings.cDataUnion] _cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE
-    cdef readonly object type
-    cdef readonly object value
-    cdef _load_cache(DataUnion self)
+    cdef int64_t type_int
+    cdef object py_type
+    cdef object py_value
+    cdef _initialize_py(DataUnion self)
 
     @staticmethod
     cdef unique_ptr[_module_cbindings.cDataUnion] _make_instance(
@@ -115,7 +119,7 @@ cdef class Val(thrift.py3.types.Struct):
     cdef inline object strVal_impl(self)
     cdef inline object intVal_impl(self)
     cdef inline object typedefValue_impl(self)
-    cdef Map__i16_string __fbthrift_cached_typedefValue
+    cdef object __fbthrift_cached_typedefValue
 
     @staticmethod
     cdef _create_FBTHRIFT_ONLY_DO_NOT_USE(shared_ptr[_module_cbindings.cVal])
@@ -124,9 +128,10 @@ cdef class Val(thrift.py3.types.Struct):
 
 cdef class ValUnion(thrift.py3.types.Union):
     cdef shared_ptr[_module_cbindings.cValUnion] _cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE
-    cdef readonly object type
-    cdef readonly object value
-    cdef _load_cache(ValUnion self)
+    cdef int64_t type_int
+    cdef object py_type
+    cdef object py_value
+    cdef _initialize_py(ValUnion self)
 
     @staticmethod
     cdef unique_ptr[_module_cbindings.cValUnion] _make_instance(
@@ -142,9 +147,10 @@ cdef class ValUnion(thrift.py3.types.Union):
 
 cdef class VirtualComplexUnion(thrift.py3.types.Union):
     cdef shared_ptr[_module_cbindings.cVirtualComplexUnion] _cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE
-    cdef readonly object type
-    cdef readonly object value
-    cdef _load_cache(VirtualComplexUnion self)
+    cdef int64_t type_int
+    cdef object py_type
+    cdef object py_value
+    cdef _initialize_py(VirtualComplexUnion self)
 
     @staticmethod
     cdef unique_ptr[_module_cbindings.cVirtualComplexUnion] _make_instance(
@@ -170,9 +176,10 @@ cdef class NonCopyableStruct(thrift.py3.types.Struct):
 
 cdef class NonCopyableUnion(thrift.py3.types.Union):
     cdef shared_ptr[_module_cbindings.cNonCopyableUnion] _cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE
-    cdef readonly object type
-    cdef readonly object value
-    cdef _load_cache(NonCopyableUnion self)
+    cdef int64_t type_int
+    cdef object py_type
+    cdef object py_value
+    cdef _initialize_py(NonCopyableUnion self)
 
     @staticmethod
     cdef unique_ptr[_module_cbindings.cNonCopyableUnion] _make_instance(
@@ -190,13 +197,7 @@ cdef object List__i64__from_cpp(const vector[cint64_t]&) except *
 cdef vector[string] List__string__make_instance(object items) except *
 cdef object List__string__from_cpp(const vector[string]&) except *
 
-cdef class Map__i16_string(thrift.py3.types.Map):
-    cdef shared_ptr[cmap[cint16_t,string]] _cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE
-    @staticmethod
-    cdef _create_FBTHRIFT_ONLY_DO_NOT_USE(shared_ptr[cmap[cint16_t,string]])
-    cdef _check_key_type(self, key)
-
-cdef shared_ptr[cmap[cint16_t,string]] Map__i16_string__make_instance(object items) except *
+cdef cmap[cint16_t,string] Map__i16_string__make_instance(object items) except *
 cdef object Map__i16_string__from_cpp(const cmap[cint16_t,string]&) except *
 
 

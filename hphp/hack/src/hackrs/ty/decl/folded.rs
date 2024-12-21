@@ -11,6 +11,7 @@ use hash::IndexMap;
 use hash::IndexSet;
 use ocamlrep::FromOcamlRep;
 use ocamlrep::ToOcamlRep;
+use oxidized::ast::PackageMembership;
 pub use oxidized::ast_defs::Abstraction;
 pub use oxidized::ast_defs::ClassishKind;
 use pos::Bytes;
@@ -63,7 +64,7 @@ pub struct FoldedElement {
 /// class B<Tb> extends A<Tb, int> {}
 /// class C extends B<string> {}
 /// ```
-
+///
 /// The method `A::test()` has the type `(function(Ta1, Ta2): void)` in the
 /// context of class `A`. However in the context of class `B`, it will have type
 /// `(function(Tb, int): void)`.
@@ -215,6 +216,10 @@ pub struct FoldedClass<R: Reason> {
     /// declared in self and ancestors. Note that `require class` requirements
     /// are _not_ stored in `req_ancestors` or `req_ancestors_extends` fields.
     pub req_class_ancestors: Box<[Requirement<R>]>,
+    /// `req_this_as_ancestors` gathers all the `require this as` requirements
+    /// declared in self and ancestors. Note that `require this as` requirements
+    /// are _not_ stored in `req_ancestors` or `req_ancestors_extends` fields.
+    pub req_this_as_ancestors: Box<[Requirement<R>]>,
     pub sealed_whitelist: Option<IndexSet<TypeName>>,
     pub deferred_init_members: IndexSet<PropName>,
     pub decl_errors: Box<[DeclError<R::Pos>]>,
@@ -223,7 +228,7 @@ pub struct FoldedClass<R: Reason> {
     pub allow_multiple_instantiations: bool,
     /// The string provided by the <<__AutocompleteSortText>> attribute.
     pub sort_text: Option<String>,
-    pub package: Option<String>,
+    pub package: Option<PackageMembership>,
 }
 
 impl<R: Reason> FoldedClass<R> {

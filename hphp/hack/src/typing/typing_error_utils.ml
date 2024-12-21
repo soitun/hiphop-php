@@ -1577,16 +1577,18 @@ end = struct
     let cross_pkg_access
         (pos : Pos.t)
         (decl_pos : Pos_or_decl.t)
-        (package_pos : Pos.t)
-        (current_package_opt : string option)
-        (target_package_opt : string option)
+        (current_package_pos : Pos.t)
+        (current_package_def_pos : Pos.t)
+        (current_package_name : string option)
+        (target_package_pos : Pos.t)
+        (target_package_name : string option)
         (current_filename : Relative_path.t)
         (target_filename : Relative_path.t)
         (soft : bool) =
       let current_filename = Relative_path.suffix current_filename in
       let target_filename = Relative_path.suffix target_filename in
-      let current_package = get_package_str current_package_opt in
-      let target_package = get_package_str target_package_opt in
+      let current_package = get_package_str current_package_name in
+      let target_package = get_package_str target_package_name in
       let relationship =
         if soft then
           "only soft includes"
@@ -1603,16 +1605,16 @@ end = struct
       and reason =
         lazy
           [
-            ( decl_pos,
+            (decl_pos, Printf.sprintf "This is from %s" target_filename);
+            ( Pos_or_decl.of_raw_pos target_package_pos,
+              Printf.sprintf "%s belongs to %s" target_filename target_package
+            );
+            ( Pos_or_decl.of_raw_pos current_package_pos,
+              Printf.sprintf "But %s is in %s" current_filename current_package
+            );
+            ( Pos_or_decl.of_raw_pos current_package_def_pos,
               Printf.sprintf
-                "This is from %s, which belongs to %s"
-                target_filename
-                target_package );
-            ( Pos_or_decl.of_raw_pos package_pos,
-              Printf.sprintf
-                "But %s is in %s, and %s %s %s"
-                current_filename
-                current_package
+                "And %s %s %s"
                 current_package
                 relationship
                 target_package );
@@ -1676,18 +1678,22 @@ end = struct
           {
             pos;
             decl_pos;
-            package_pos;
-            current_package_opt;
-            target_package_opt;
+            current_package_pos;
+            current_package_def_pos;
+            current_package_name;
+            target_package_pos;
+            target_package_name;
             current_filename;
             target_filename;
           } ->
         cross_pkg_access
           pos
           decl_pos
-          package_pos
-          current_package_opt
-          target_package_opt
+          current_package_pos
+          current_package_def_pos
+          current_package_name
+          target_package_pos
+          target_package_name
           current_filename
           target_filename
           false (* Soft *)
@@ -1702,18 +1708,22 @@ end = struct
           {
             pos;
             decl_pos;
-            package_pos;
-            current_package_opt;
-            target_package_opt;
+            current_package_pos;
+            current_package_def_pos;
+            current_package_name;
+            target_package_pos;
+            target_package_name;
             current_filename;
             target_filename;
           } ->
         cross_pkg_access
           pos
           decl_pos
-          package_pos
-          current_package_opt
-          target_package_opt
+          current_package_pos
+          current_package_def_pos
+          current_package_name
+          target_package_pos
+          target_package_name
           current_filename
           target_filename
           true (* Soft *)
@@ -1997,6 +2007,30 @@ end = struct
       lazy
         (let r =
            (trait_pos, "This requires to be exactly " ^ Render.strip_ns req_name)
+         in
+         if Pos_or_decl.equal trait_pos req_pos then
+           [r]
+         else
+           [r; (req_pos, "Required here")])
+    and claim =
+      lazy
+        ( pos,
+          "This class does not satisfy all the requirements of its traits or interfaces."
+        )
+    in
+    ( Error_code.UnsatisfiedReq,
+      claim,
+      reasons,
+      lazy Explanation.empty,
+      [],
+      User_error_flags.empty )
+
+  let unsatisfied_req_this_as pos trait_pos req_name req_pos =
+    let reasons =
+      lazy
+        (let r =
+           ( trait_pos,
+             "This requires to be a subtype of " ^ Render.strip_ns req_name )
          in
          if Pos_or_decl.equal trait_pos req_pos then
            [r]
@@ -5429,7 +5463,7 @@ end = struct
       [],
       User_error_flags.empty )
 
-  let class_pointer_to_string pos cid_str =
+  let class_const_to_string pos cid_str =
     let cid_str = Utils.strip_ns cid_str in
     let nameof = "nameof " ^ cid_str in
     let nameof_md = Markdown_lite.md_codify nameof in
@@ -5451,6 +5485,23 @@ end = struct
       lazy [],
       lazy Explanation.empty,
       quickfixes,
+      User_error_flags.empty )
+
+  let class_pointer_to_string pos ty =
+    let class_to_classname = "HH\\class_to_classname" in
+    let class_to_classname_md = Markdown_lite.md_codify class_to_classname in
+    ( Error_code.ClassPointerToString,
+      lazy
+        ( pos,
+          "Using "
+          ^ ty
+          ^ " in this position will trigger an implicit runtime conversion to string. "
+          ^ "You may use "
+          ^ class_to_classname_md
+          ^ " to get the class name as a string." ),
+      lazy [],
+      lazy Explanation.empty,
+      [],
       User_error_flags.empty )
 
   let to_error t ~env : error =
@@ -5486,6 +5537,8 @@ end = struct
       unsatisfied_req pos trait_pos req_name req_pos
     | Unsatisfied_req_class { pos; trait_pos; req_name; req_pos } ->
       unsatisfied_req_class pos trait_pos req_name req_pos
+    | Unsatisfied_req_this_as { pos; trait_pos; req_name; req_pos } ->
+      unsatisfied_req_this_as pos trait_pos req_name req_pos
     | Req_class_not_final { pos; trait_pos; req_pos } ->
       req_class_not_final pos trait_pos req_pos
     | Incompatible_reqs { pos; req_name; req_class_pos; req_extends_pos } ->
@@ -6027,8 +6080,9 @@ end = struct
         pos
         (Lazy.force expr_ty)
         (List.map unsupported_tys ~f:Lazy.force)
-    | Class_pointer_to_string { pos; cls_name } ->
-      class_pointer_to_string pos cls_name
+    | Class_const_to_string { pos; cls_name } ->
+      class_const_to_string pos cls_name
+    | Class_pointer_to_string { pos; ty } -> class_pointer_to_string pos ty
     | Optional_parameter_not_supported pos ->
       optional_parameter_not_supported pos
     | Optional_parameter_not_abstract pos -> optional_parameter_not_abstract pos

@@ -276,6 +276,7 @@ impl<R: Reason> From<&obr::typing_defs::FunType<'_>> for ty::FunType<R, Ty<R>> {
             ret: ft.ret.into(),
             flags: ft.flags,
             cross_package: ft.cross_package.as_ref().map(|s| (*s).into()),
+            instantiated: ft.instantiated,
         }
     }
 }
@@ -432,6 +433,7 @@ impl<R: Reason> From<&obr::shallow_decl_defs::ClassDecl<'_>> for shallow::Shallo
             req_extends,
             req_implements,
             req_class,
+            req_this_as,
             implements,
             support_dynamic_type,
             consts,
@@ -467,6 +469,7 @@ impl<R: Reason> From<&obr::shallow_decl_defs::ClassDecl<'_>> for shallow::Shallo
             req_extends: slice(req_extends),
             req_implements: slice(req_implements),
             req_class: slice(req_class),
+            req_this_as: slice(req_this_as),
             implements: slice(implements),
             support_dynamic_type: *support_dynamic_type,
             consts: slice(consts),
@@ -479,7 +482,7 @@ impl<R: Reason> From<&obr::shallow_decl_defs::ClassDecl<'_>> for shallow::Shallo
             user_attributes: slice(user_attributes),
             enum_type: enum_type.map(Into::into),
             docs_url: docs_url.map(Into::into),
-            package: package.map(Into::into),
+            package: package.cloned(),
         }
     }
 }
@@ -496,7 +499,7 @@ impl<R: Reason> From<&obr::shallow_decl_defs::FunDecl<'_>> for shallow::FunDecl<
             support_dynamic_type: sf.support_dynamic_type,
             no_auto_dynamic: sf.no_auto_dynamic,
             no_auto_likes: sf.no_auto_likes,
-            package: sf.package.map(Into::into),
+            package: sf.package.cloned(),
         }
     }
 }
@@ -514,7 +517,7 @@ impl<R: Reason> From<&obr::shallow_decl_defs::TypedefDecl<'_>> for shallow::Type
             attributes: slice(x.attributes),
             internal: x.internal,
             docs_url: x.docs_url.map(Into::into),
-            package: x.package.map(Into::into),
+            package: x.package.cloned(),
         }
     }
 }
@@ -733,6 +736,7 @@ impl<R: Reason> From<&obr::decl_defs::DeclClassType<'_>> for folded::FoldedClass
             req_ancestors,
             req_ancestors_extends,
             req_class_ancestors,
+            req_this_as_ancestors,
             extends,
             sealed_whitelist,
             xhp_attr_deps,
@@ -781,6 +785,10 @@ impl<R: Reason> From<&obr::decl_defs::DeclClassType<'_>> for folded::FoldedClass
                 .copied()
                 .map(Into::into)
                 .collect(),
+            req_this_as_ancestors: (req_this_as_ancestors.iter())
+                .copied()
+                .map(Into::into)
+                .collect(),
             sealed_whitelist: (sealed_whitelist)
                 .map(|l| l.iter().copied().map(Into::into).collect()),
             deferred_init_members: (deferred_init_members.iter())
@@ -791,7 +799,7 @@ impl<R: Reason> From<&obr::decl_defs::DeclClassType<'_>> for folded::FoldedClass
             docs_url: docs_url.map(Into::into),
             allow_multiple_instantiations: *allow_multiple_instantiations,
             sort_text: sort_text.map(Into::into),
-            package: package.map(Into::into),
+            package: package.cloned(),
         }
     }
 }

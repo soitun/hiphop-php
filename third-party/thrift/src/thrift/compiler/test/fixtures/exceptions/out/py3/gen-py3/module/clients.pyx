@@ -53,8 +53,7 @@ cimport module.types as _module_types
 cimport module.cbindings as _module_cbindings
 import module.types as _module_types
 
-import module.services_reflection as _services_reflection
-cimport module.services_reflection as _services_reflection
+cimport module.services_interface as _fbthrift_services_interface
 
 from module.clients_wrapper cimport cRaiserAsyncClient, cRaiserClientWrapper
 
@@ -170,6 +169,11 @@ cdef class Raiser(thrift.py3.client.Client):
             cmove(channel)
         )
 
+    _fbthrift_annotations_DO_NOT_USE_doBland = {
+        'return': 'None',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def doBland(
             Raiser self,
@@ -189,6 +193,11 @@ cdef class Raiser(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_doRaise = {
+        'return': 'None',
+        
+    }
 
     @cython.always_allow_keywords(True)
     def doRaise(
@@ -210,6 +219,11 @@ cdef class Raiser(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_get200 = {
+        'return': 'str',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def get200(
             Raiser self,
@@ -229,6 +243,11 @@ cdef class Raiser(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_get500 = {
+        'return': 'str',
+        
+    }
 
     @cython.always_allow_keywords(True)
     def get500(
@@ -251,14 +270,10 @@ cdef class Raiser(thrift.py3.client.Client):
         return asyncio_shield(__future)
 
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__Raiser(for_clients=True)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cRaiserSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cRaiserSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod

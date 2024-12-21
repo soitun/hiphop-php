@@ -183,7 +183,7 @@ TEST_F(LexerTest, multiple_identifiers) {
 }
 
 TEST_F(LexerTest, ids_and_punctuations) {
-  auto lexer = make_lexer("{{ |. ! bas ^> ic /# }}{{()}}");
+  auto lexer = make_lexer("{{ |. ! bas ^> = ic /# }}{{()}}");
   const std::vector<token_description> expected = {
       {tok::open, {}},
       {tok::pipe, {}},
@@ -192,6 +192,7 @@ TEST_F(LexerTest, ids_and_punctuations) {
       {tok::identifier, "bas"},
       {tok::caret, {}},
       {tok::gt, {}},
+      {tok::eq, {}},
       {tok::identifier, "ic"},
       {tok::slash, {}},
       {tok::pound, {}},
@@ -274,7 +275,7 @@ TEST_F(LexerTest, partial_apply) {
 }
 
 TEST_F(LexerTest, partial_apply_single_component) {
-  auto lexer = make_lexer("{{ > foo }}");
+  auto lexer = make_lexer("{{> foo }}");
   const std::vector<token_description> expected = {
       {tok::open, {}},
       {tok::gt, {}},
@@ -299,7 +300,7 @@ TEST_F(LexerTest, partial_apply_no_path) {
 }
 
 TEST_F(LexerTest, partial_apply_keyword_and_dots) {
-  auto lexer = make_lexer("{{ > foo-bar / true /source.cpp }}");
+  auto lexer = make_lexer("{{> foo-bar / true /source.cpp }}");
   const std::vector<token_description> expected = {
       {tok::open, {}},
       {tok::gt, {}},

@@ -22,7 +22,6 @@ use crate::syntax_kind::SyntaxKind;
 
 #[allow(clippy::assign_op_pattern)]
 #[allow(clippy::let_and_return)]
-
 impl<T, V, C> SyntaxType<C> for Syntax<T, V>
 where
     T: LexableToken,
@@ -472,6 +471,18 @@ where
             require_kind,
             require_name,
             require_semicolon,
+        }));
+        let value = V::from_values(syntax.iter_children().map(|child| &child.value));
+        Self::make(syntax, value)
+    }
+
+    fn make_require_clause_constraint(_: &C, require_constraint_keyword: Self, require_constraint_this: Self, require_constraint_operator: Self, require_constraint_name: Self, require_constraint_semicolon: Self) -> Self {
+        let syntax = SyntaxVariant::RequireClauseConstraint(Box::new(RequireClauseConstraintChildren {
+            require_constraint_keyword,
+            require_constraint_this,
+            require_constraint_operator,
+            require_constraint_name,
+            require_constraint_semicolon,
         }));
         let value = V::from_values(syntax.iter_children().map(|child| &child.value));
         Self::make(syntax, value)
@@ -2023,7 +2034,6 @@ where
 
 #[allow(clippy::assign_op_pattern)]
 #[allow(clippy::let_and_return)]
-
 impl<T, V> Syntax<T, V>
 where
     T: LexableToken,
@@ -2370,6 +2380,15 @@ where
                 let acc = f(require_kind, acc);
                 let acc = f(require_name, acc);
                 let acc = f(require_semicolon, acc);
+                acc
+            },
+            SyntaxVariant::RequireClauseConstraint(x) => {
+                let RequireClauseConstraintChildren { require_constraint_keyword, require_constraint_this, require_constraint_operator, require_constraint_name, require_constraint_semicolon } = *x;
+                let acc = f(require_constraint_keyword, acc);
+                let acc = f(require_constraint_this, acc);
+                let acc = f(require_constraint_operator, acc);
+                let acc = f(require_constraint_name, acc);
+                let acc = f(require_constraint_semicolon, acc);
                 acc
             },
             SyntaxVariant::ConstDeclaration(x) => {
@@ -3537,6 +3556,7 @@ where
             SyntaxVariant::ClassishBody {..} => SyntaxKind::ClassishBody,
             SyntaxVariant::TraitUse {..} => SyntaxKind::TraitUse,
             SyntaxVariant::RequireClause {..} => SyntaxKind::RequireClause,
+            SyntaxVariant::RequireClauseConstraint {..} => SyntaxKind::RequireClauseConstraint,
             SyntaxVariant::ConstDeclaration {..} => SyntaxKind::ConstDeclaration,
             SyntaxVariant::ConstantDeclarator {..} => SyntaxKind::ConstantDeclarator,
             SyntaxVariant::TypeConstDeclaration {..} => SyntaxKind::TypeConstDeclaration,
@@ -3973,6 +3993,14 @@ where
                  require_name: ts.pop().unwrap(),
                  require_kind: ts.pop().unwrap(),
                  require_keyword: ts.pop().unwrap(),
+                 
+             })),
+             (SyntaxKind::RequireClauseConstraint, 5) => SyntaxVariant::RequireClauseConstraint(Box::new(RequireClauseConstraintChildren {
+                 require_constraint_semicolon: ts.pop().unwrap(),
+                 require_constraint_name: ts.pop().unwrap(),
+                 require_constraint_operator: ts.pop().unwrap(),
+                 require_constraint_this: ts.pop().unwrap(),
+                 require_constraint_keyword: ts.pop().unwrap(),
                  
              })),
              (SyntaxKind::ConstDeclaration, 6) => SyntaxVariant::ConstDeclaration(Box::new(ConstDeclarationChildren {
@@ -4998,6 +5026,7 @@ where
             SyntaxVariant::ClassishBody(x) => unsafe { std::slice::from_raw_parts(&x.classish_body_left_brace, 3) },
             SyntaxVariant::TraitUse(x) => unsafe { std::slice::from_raw_parts(&x.trait_use_keyword, 3) },
             SyntaxVariant::RequireClause(x) => unsafe { std::slice::from_raw_parts(&x.require_keyword, 4) },
+            SyntaxVariant::RequireClauseConstraint(x) => unsafe { std::slice::from_raw_parts(&x.require_constraint_keyword, 5) },
             SyntaxVariant::ConstDeclaration(x) => unsafe { std::slice::from_raw_parts(&x.const_attribute_spec, 6) },
             SyntaxVariant::ConstantDeclarator(x) => unsafe { std::slice::from_raw_parts(&x.constant_declarator_name, 2) },
             SyntaxVariant::TypeConstDeclaration(x) => unsafe { std::slice::from_raw_parts(&x.type_const_attribute_spec, 10) },
@@ -5188,6 +5217,7 @@ where
             SyntaxVariant::ClassishBody(x) => unsafe { std::slice::from_raw_parts_mut(&mut x.classish_body_left_brace, 3) },
             SyntaxVariant::TraitUse(x) => unsafe { std::slice::from_raw_parts_mut(&mut x.trait_use_keyword, 3) },
             SyntaxVariant::RequireClause(x) => unsafe { std::slice::from_raw_parts_mut(&mut x.require_keyword, 4) },
+            SyntaxVariant::RequireClauseConstraint(x) => unsafe { std::slice::from_raw_parts_mut(&mut x.require_constraint_keyword, 5) },
             SyntaxVariant::ConstDeclaration(x) => unsafe { std::slice::from_raw_parts_mut(&mut x.const_attribute_spec, 6) },
             SyntaxVariant::ConstantDeclarator(x) => unsafe { std::slice::from_raw_parts_mut(&mut x.constant_declarator_name, 2) },
             SyntaxVariant::TypeConstDeclaration(x) => unsafe { std::slice::from_raw_parts_mut(&mut x.type_const_attribute_spec, 10) },
@@ -5701,6 +5731,16 @@ pub struct RequireClauseChildren<T, V> {
     pub require_kind: Syntax<T, V>,
     pub require_name: Syntax<T, V>,
     pub require_semicolon: Syntax<T, V>,
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct RequireClauseConstraintChildren<T, V> {
+    pub require_constraint_keyword: Syntax<T, V>,
+    pub require_constraint_this: Syntax<T, V>,
+    pub require_constraint_operator: Syntax<T, V>,
+    pub require_constraint_name: Syntax<T, V>,
+    pub require_constraint_semicolon: Syntax<T, V>,
 }
 
 #[derive(Debug, Clone)]
@@ -7007,6 +7047,7 @@ pub enum SyntaxVariant<T, V> {
     ClassishBody(Box<ClassishBodyChildren<T, V>>),
     TraitUse(Box<TraitUseChildren<T, V>>),
     RequireClause(Box<RequireClauseChildren<T, V>>),
+    RequireClauseConstraint(Box<RequireClauseConstraintChildren<T, V>>),
     ConstDeclaration(Box<ConstDeclarationChildren<T, V>>),
     ConstantDeclarator(Box<ConstantDeclaratorChildren<T, V>>),
     TypeConstDeclaration(Box<TypeConstDeclarationChildren<T, V>>),
@@ -7153,7 +7194,6 @@ pub enum SyntaxVariant<T, V> {
 
 #[allow(clippy::assign_op_pattern)]
 #[allow(clippy::let_and_return)]
-
 impl<'a, T, V> SyntaxChildrenIterator<'a, T, V> {
     pub fn next_impl(&mut self, direction : bool) -> Option<&'a Syntax<T, V>> {
         use SyntaxVariant::*;
@@ -7579,6 +7619,17 @@ impl<'a, T, V> SyntaxChildrenIterator<'a, T, V> {
                     1 => Some(&x.require_kind),
                     2 => Some(&x.require_name),
                     3 => Some(&x.require_semicolon),
+                        _ => None,
+                    }
+                })
+            },
+            RequireClauseConstraint(x) => {
+                get_index(5).and_then(|index| { match index {
+                        0 => Some(&x.require_constraint_keyword),
+                    1 => Some(&x.require_constraint_this),
+                    2 => Some(&x.require_constraint_operator),
+                    3 => Some(&x.require_constraint_name),
+                    4 => Some(&x.require_constraint_semicolon),
                         _ => None,
                     }
                 })

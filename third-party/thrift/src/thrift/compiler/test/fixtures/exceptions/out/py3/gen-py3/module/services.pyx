@@ -57,8 +57,7 @@ cimport module.types as _module_types
 cimport module.cbindings as _module_cbindings
 import module.types as _module_types
 
-import module.services_reflection as _services_reflection
-cimport module.services_reflection as _services_reflection
+cimport module.services_interface as _fbthrift_services_interface
 
 import asyncio
 import functools
@@ -118,30 +117,46 @@ cdef class RaiserInterface(
             get_executor()
         )
 
+    _fbthrift_annotations_DO_NOT_USE_doBland = {
+        'return': 'None',
+        
+    }
+
     async def doBland(
             self):
         raise NotImplementedError("async def doBland is not implemented")
+
+    _fbthrift_annotations_DO_NOT_USE_doRaise = {
+        'return': 'None',
+        
+    }
 
     async def doRaise(
             self):
         raise NotImplementedError("async def doRaise is not implemented")
 
+    _fbthrift_annotations_DO_NOT_USE_get200 = {
+        'return': 'str',
+        
+    }
+
     async def get200(
             self):
         raise NotImplementedError("async def get200 is not implemented")
+
+    _fbthrift_annotations_DO_NOT_USE_get500 = {
+        'return': 'str',
+        
+    }
 
     async def get500(
             self):
         raise NotImplementedError("async def get500 is not implemented")
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__Raiser(for_clients=False)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cRaiserSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cRaiserSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod

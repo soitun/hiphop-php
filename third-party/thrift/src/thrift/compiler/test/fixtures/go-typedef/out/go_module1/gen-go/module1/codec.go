@@ -7,9 +7,6 @@ package module1
 
 
 import (
-    "reflect"
-    "sync"
-
     module0 "module0"
     module2 "module2"
     thrift "github.com/facebook/fbthrift/thrift/lib/go/thrift/types"
@@ -19,238 +16,241 @@ var _ = module0.GoUnusedProtection__
 var _ = module2.GoUnusedProtection__
 // (needed to ensure safety because of naive import list construction)
 var _ = thrift.ZERO
-var _ = reflect.Ptr
 
 // Premade codec specs
 var (
-    premadeCodecTypeSpec_string *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module1_Plate *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_i32 *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module1_Year *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_list_string *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module1_Drivers *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module1_Accessory *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_list_module1_Accessory *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module1_PartName *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_map_i32_module1_PartName *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module1_Automobile *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_i64 *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module1_MapKey *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_map_module1_MapKey_string *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module1_MapContainer *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module1_Car *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module1_Pair *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_list_module1_Automobile *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_list_module1_Car *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module1_Collection *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module1_State *thrift.TypeSpec = nil
-    premadeCodecTypeSpec_module1_Enum *thrift.TypeSpec = nil
-)
-
-// Premade codec specs initializer
-var premadeCodecSpecsInitOnce = sync.OnceFunc(func() {
-    premadeCodecTypeSpec_string = &thrift.TypeSpec{
-        FullName: "string",
-        CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
+    premadeCodecTypeSpec_string = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "string",
+            CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
     PrimitiveType: thrift.CODEC_PRIMITIVE_TYPE_STRING,
 },
 
-    }
-    premadeCodecTypeSpec_module1_Plate = &thrift.TypeSpec{
-        FullName: "module1.Plate",
-        CodecTypedefSpec: &thrift.CodecTypedefSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module1_Plate = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module1.Plate",
+            CodecTypedefSpec: &thrift.CodecTypedefSpec{
     ScopedName:         "module1.Plate",
 	UnderlyingTypeSpec: premadeCodecTypeSpec_string,
 },
 
-    }
-    premadeCodecTypeSpec_i32 = &thrift.TypeSpec{
-        FullName: "i32",
-        CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
+        }
+    }()
+    premadeCodecTypeSpec_i32 = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "i32",
+            CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
     PrimitiveType: thrift.CODEC_PRIMITIVE_TYPE_I32,
 },
 
-    }
-    premadeCodecTypeSpec_module1_Year = &thrift.TypeSpec{
-        FullName: "module1.Year",
-        CodecTypedefSpec: &thrift.CodecTypedefSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module1_Year = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module1.Year",
+            CodecTypedefSpec: &thrift.CodecTypedefSpec{
     ScopedName:         "module1.Year",
 	UnderlyingTypeSpec: premadeCodecTypeSpec_i32,
 },
 
-    }
-    premadeCodecTypeSpec_list_string = &thrift.TypeSpec{
-        FullName: "list<string>",
-        CodecListSpec: &thrift.CodecListSpec{
+        }
+    }()
+    premadeCodecTypeSpec_list_string = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "list<string>",
+            CodecListSpec: &thrift.CodecListSpec{
     ElementWireType: thrift.STRING,
 	ElementTypeSpec: premadeCodecTypeSpec_string,
 },
 
-    }
-    premadeCodecTypeSpec_module1_Drivers = &thrift.TypeSpec{
-        FullName: "module1.Drivers",
-        CodecTypedefSpec: &thrift.CodecTypedefSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module1_Drivers = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module1.Drivers",
+            CodecTypedefSpec: &thrift.CodecTypedefSpec{
     ScopedName:         "module1.Drivers",
 	UnderlyingTypeSpec: premadeCodecTypeSpec_list_string,
 },
 
-    }
-    premadeCodecTypeSpec_module1_Accessory = &thrift.TypeSpec{
-        FullName: "module1.Accessory",
-        CodecTypedefSpec: &thrift.CodecTypedefSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module1_Accessory = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module1.Accessory",
+            CodecTypedefSpec: &thrift.CodecTypedefSpec{
     ScopedName:         "module1.Accessory",
 	UnderlyingTypeSpec: module0.GetCodecTypeSpec("module0.Accessory"),
 },
 
-    }
-    premadeCodecTypeSpec_list_module1_Accessory = &thrift.TypeSpec{
-        FullName: "list<module1.Accessory>",
-        CodecListSpec: &thrift.CodecListSpec{
+        }
+    }()
+    premadeCodecTypeSpec_list_module1_Accessory = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "list<module1.Accessory>",
+            CodecListSpec: &thrift.CodecListSpec{
     ElementWireType: thrift.STRUCT,
 	ElementTypeSpec: premadeCodecTypeSpec_module1_Accessory,
 },
 
-    }
-    premadeCodecTypeSpec_module1_PartName = &thrift.TypeSpec{
-        FullName: "module1.PartName",
-        CodecTypedefSpec: &thrift.CodecTypedefSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module1_PartName = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module1.PartName",
+            CodecTypedefSpec: &thrift.CodecTypedefSpec{
     ScopedName:         "module1.PartName",
 	UnderlyingTypeSpec: module0.GetCodecTypeSpec("module0.PartName"),
 },
 
-    }
-    premadeCodecTypeSpec_map_i32_module1_PartName = &thrift.TypeSpec{
-        FullName: "map<i32, module1.PartName>",
-        CodecMapSpec: &thrift.CodecMapSpec{
+        }
+    }()
+    premadeCodecTypeSpec_map_i32_module1_PartName = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "map<i32, module1.PartName>",
+            CodecMapSpec: &thrift.CodecMapSpec{
 	KeyTypeSpec:   premadeCodecTypeSpec_i32,
 	ValueTypeSpec: premadeCodecTypeSpec_module1_PartName,
     KeyWireType:   thrift.I32,
 	ValueWireType: thrift.STRUCT,
 },
 
-    }
-    premadeCodecTypeSpec_module1_Automobile = &thrift.TypeSpec{
-        FullName: "module1.Automobile",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module1_Automobile = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module1.Automobile",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module1.Automobile",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewAutomobile() },
 },
 
-    }
-    premadeCodecTypeSpec_i64 = &thrift.TypeSpec{
-        FullName: "i64",
-        CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
+        }
+    }()
+    premadeCodecTypeSpec_i64 = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "i64",
+            CodecPrimitiveSpec: &thrift.CodecPrimitiveSpec{
     PrimitiveType: thrift.CODEC_PRIMITIVE_TYPE_I64,
 },
 
-    }
-    premadeCodecTypeSpec_module1_MapKey = &thrift.TypeSpec{
-        FullName: "module1.MapKey",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module1_MapKey = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module1.MapKey",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module1.MapKey",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewMapKey() },
 },
 
-    }
-    premadeCodecTypeSpec_map_module1_MapKey_string = &thrift.TypeSpec{
-        FullName: "map<module1.MapKey, string>",
-        CodecMapSpec: &thrift.CodecMapSpec{
+        }
+    }()
+    premadeCodecTypeSpec_map_module1_MapKey_string = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "map<module1.MapKey, string>",
+            CodecMapSpec: &thrift.CodecMapSpec{
 	KeyTypeSpec:   premadeCodecTypeSpec_module1_MapKey,
 	ValueTypeSpec: premadeCodecTypeSpec_string,
     KeyWireType:   thrift.STRUCT,
 	ValueWireType: thrift.STRING,
 },
 
-    }
-    premadeCodecTypeSpec_module1_MapContainer = &thrift.TypeSpec{
-        FullName: "module1.MapContainer",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module1_MapContainer = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module1.MapContainer",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module1.MapContainer",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewMapContainer() },
 },
 
-    }
-    premadeCodecTypeSpec_module1_Car = &thrift.TypeSpec{
-        FullName: "module1.Car",
-        CodecTypedefSpec: &thrift.CodecTypedefSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module1_Car = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module1.Car",
+            CodecTypedefSpec: &thrift.CodecTypedefSpec{
     ScopedName:         "module1.Car",
 	UnderlyingTypeSpec: premadeCodecTypeSpec_module1_Automobile,
 },
 
-    }
-    premadeCodecTypeSpec_module1_Pair = &thrift.TypeSpec{
-        FullName: "module1.Pair",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module1_Pair = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module1.Pair",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module1.Pair",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewPair() },
 },
 
-    }
-    premadeCodecTypeSpec_list_module1_Automobile = &thrift.TypeSpec{
-        FullName: "list<module1.Automobile>",
-        CodecListSpec: &thrift.CodecListSpec{
+        }
+    }()
+    premadeCodecTypeSpec_list_module1_Automobile = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "list<module1.Automobile>",
+            CodecListSpec: &thrift.CodecListSpec{
     ElementWireType: thrift.STRUCT,
 	ElementTypeSpec: premadeCodecTypeSpec_module1_Automobile,
 },
 
-    }
-    premadeCodecTypeSpec_list_module1_Car = &thrift.TypeSpec{
-        FullName: "list<module1.Car>",
-        CodecListSpec: &thrift.CodecListSpec{
+        }
+    }()
+    premadeCodecTypeSpec_list_module1_Car = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "list<module1.Car>",
+            CodecListSpec: &thrift.CodecListSpec{
     ElementWireType: thrift.STRUCT,
 	ElementTypeSpec: premadeCodecTypeSpec_module1_Car,
 },
 
-    }
-    premadeCodecTypeSpec_module1_Collection = &thrift.TypeSpec{
-        FullName: "module1.Collection",
-        CodecStructSpec: &thrift.CodecStructSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module1_Collection = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module1.Collection",
+            CodecStructSpec: &thrift.CodecStructSpec{
     ScopedName: "module1.Collection",
     IsUnion:    false,
     NewFunc:    func() thrift.Struct { return NewCollection() },
 },
 
-    }
-    premadeCodecTypeSpec_module1_State = &thrift.TypeSpec{
-        FullName: "module1.State",
-        CodecTypedefSpec: &thrift.CodecTypedefSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module1_State = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module1.State",
+            CodecTypedefSpec: &thrift.CodecTypedefSpec{
     ScopedName:         "module1.State",
 	UnderlyingTypeSpec: premadeCodecTypeSpec_string,
 },
 
-    }
-    premadeCodecTypeSpec_module1_Enum = &thrift.TypeSpec{
-        FullName: "module1.Enum",
-        CodecTypedefSpec: &thrift.CodecTypedefSpec{
+        }
+    }()
+    premadeCodecTypeSpec_module1_Enum = func() *thrift.TypeSpec {
+        return &thrift.TypeSpec{
+            FullName: "module1.Enum",
+            CodecTypedefSpec: &thrift.CodecTypedefSpec{
     ScopedName:         "module1.Enum",
 	UnderlyingTypeSpec: module2.GetCodecTypeSpec("module2.Enum"),
 },
 
-    }
-})
+        }
+    }()
+)
 
 // Premade struct specs
 var (
-    premadeStructSpec_Automobile *thrift.StructSpec = nil
-    premadeStructSpec_MapKey *thrift.StructSpec = nil
-    premadeStructSpec_MapContainer *thrift.StructSpec = nil
-    premadeStructSpec_Pair *thrift.StructSpec = nil
-    premadeStructSpec_Collection *thrift.StructSpec = nil
-    premadeStructSpec_reqFinderByPlate *thrift.StructSpec = nil
-    premadeStructSpec_respFinderByPlate *thrift.StructSpec = nil
-    premadeStructSpec_reqFinderAliasByPlate *thrift.StructSpec = nil
-    premadeStructSpec_respFinderAliasByPlate *thrift.StructSpec = nil
-    premadeStructSpec_reqFinderPreviousPlate *thrift.StructSpec = nil
-    premadeStructSpec_respFinderPreviousPlate *thrift.StructSpec = nil
-)
-
-// Premade struct specs initializer
-var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
-    premadeStructSpec_Automobile = &thrift.StructSpec{
+    premadeStructSpec_Automobile = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "Automobile",
     ScopedName:           "module1.Automobile",
     IsUnion:              false,
@@ -332,7 +332,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "PartNames": 6,
     },
 }
-    premadeStructSpec_MapKey = &thrift.StructSpec{
+    }()
+    premadeStructSpec_MapKey = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "MapKey",
     ScopedName:           "module1.MapKey",
     IsUnion:              false,
@@ -364,7 +366,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "strval": 1,
     },
 }
-    premadeStructSpec_MapContainer = &thrift.StructSpec{
+    }()
+    premadeStructSpec_MapContainer = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "MapContainer",
     ScopedName:           "module1.MapContainer",
     IsUnion:              false,
@@ -386,7 +390,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "mapval": 0,
     },
 }
-    premadeStructSpec_Pair = &thrift.StructSpec{
+    }()
+    premadeStructSpec_Pair = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "Pair",
     ScopedName:           "module1.Pair",
     IsUnion:              false,
@@ -418,7 +424,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "car": 1,
     },
 }
-    premadeStructSpec_Collection = &thrift.StructSpec{
+    }()
+    premadeStructSpec_Collection = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "Collection",
     ScopedName:           "module1.Collection",
     IsUnion:              false,
@@ -450,7 +458,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "cars": 1,
     },
 }
-    premadeStructSpec_reqFinderByPlate = &thrift.StructSpec{
+    }()
+    premadeStructSpec_reqFinderByPlate = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "reqFinderByPlate",
     ScopedName:           "module1.reqFinderByPlate",
     IsUnion:              false,
@@ -472,7 +482,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "plate": 0,
     },
 }
-    premadeStructSpec_respFinderByPlate = &thrift.StructSpec{
+    }()
+    premadeStructSpec_respFinderByPlate = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "respFinderByPlate",
     ScopedName:           "module1.respFinderByPlate",
     IsUnion:              false,
@@ -494,7 +506,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "success": 0,
     },
 }
-    premadeStructSpec_reqFinderAliasByPlate = &thrift.StructSpec{
+    }()
+    premadeStructSpec_reqFinderAliasByPlate = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "reqFinderAliasByPlate",
     ScopedName:           "module1.reqFinderAliasByPlate",
     IsUnion:              false,
@@ -516,7 +530,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "plate": 0,
     },
 }
-    premadeStructSpec_respFinderAliasByPlate = &thrift.StructSpec{
+    }()
+    premadeStructSpec_respFinderAliasByPlate = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "respFinderAliasByPlate",
     ScopedName:           "module1.respFinderAliasByPlate",
     IsUnion:              false,
@@ -538,7 +554,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "success": 0,
     },
 }
-    premadeStructSpec_reqFinderPreviousPlate = &thrift.StructSpec{
+    }()
+    premadeStructSpec_reqFinderPreviousPlate = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "reqFinderPreviousPlate",
     ScopedName:           "module1.reqFinderPreviousPlate",
     IsUnion:              false,
@@ -560,7 +578,9 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "plate": 0,
     },
 }
-    premadeStructSpec_respFinderPreviousPlate = &thrift.StructSpec{
+    }()
+    premadeStructSpec_respFinderPreviousPlate = func() *thrift.StructSpec {
+        return &thrift.StructSpec{
     Name:                 "respFinderPreviousPlate",
     ScopedName:           "module1.respFinderPreviousPlate",
     IsUnion:              false,
@@ -582,41 +602,43 @@ var premadeStructSpecsInitOnce = sync.OnceFunc(func() {
         "success": 0,
     },
 }
-})
-
-var premadeCodecSpecsMapOnce = sync.OnceValue(
-    func() map[string]*thrift.TypeSpec {
-        // Relies on premade codec specs initialization
-        premadeCodecSpecsInitOnce()
-
-        fbthriftTypeSpecsMap := make(map[string]*thrift.TypeSpec)
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_string.FullName] = premadeCodecTypeSpec_string
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module1_Plate.FullName] = premadeCodecTypeSpec_module1_Plate
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_i32.FullName] = premadeCodecTypeSpec_i32
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module1_Year.FullName] = premadeCodecTypeSpec_module1_Year
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module1_Drivers.FullName] = premadeCodecTypeSpec_module1_Drivers
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module1_Accessory.FullName] = premadeCodecTypeSpec_module1_Accessory
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module1_PartName.FullName] = premadeCodecTypeSpec_module1_PartName
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module1_Automobile.FullName] = premadeCodecTypeSpec_module1_Automobile
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_i64.FullName] = premadeCodecTypeSpec_i64
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module1_MapKey.FullName] = premadeCodecTypeSpec_module1_MapKey
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module1_MapContainer.FullName] = premadeCodecTypeSpec_module1_MapContainer
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module1_Car.FullName] = premadeCodecTypeSpec_module1_Car
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module1_Pair.FullName] = premadeCodecTypeSpec_module1_Pair
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module1_Collection.FullName] = premadeCodecTypeSpec_module1_Collection
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module1_State.FullName] = premadeCodecTypeSpec_module1_State
-        fbthriftTypeSpecsMap[premadeCodecTypeSpec_module1_Enum.FullName] = premadeCodecTypeSpec_module1_Enum
-        return fbthriftTypeSpecsMap
-    },
+    }()
 )
 
-func init() {
-    premadeCodecSpecsInitOnce()
-    premadeStructSpecsInitOnce()
-}
+// Premade slice of all struct specs
+var premadeStructSpecs = func() []*thrift.StructSpec {
+    fbthriftResults := make([]*thrift.StructSpec, 0)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_Automobile)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_MapKey)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_MapContainer)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_Pair)
+    fbthriftResults = append(fbthriftResults, premadeStructSpec_Collection)
+    return fbthriftResults
+}()
+
+var premadeCodecSpecsMap = func() map[string]*thrift.TypeSpec {
+    fbthriftTypeSpecsMap := make(map[string]*thrift.TypeSpec)
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_string.FullName] = premadeCodecTypeSpec_string
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module1_Plate.FullName] = premadeCodecTypeSpec_module1_Plate
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_i32.FullName] = premadeCodecTypeSpec_i32
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module1_Year.FullName] = premadeCodecTypeSpec_module1_Year
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module1_Drivers.FullName] = premadeCodecTypeSpec_module1_Drivers
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module1_Accessory.FullName] = premadeCodecTypeSpec_module1_Accessory
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module1_PartName.FullName] = premadeCodecTypeSpec_module1_PartName
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module1_Automobile.FullName] = premadeCodecTypeSpec_module1_Automobile
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_i64.FullName] = premadeCodecTypeSpec_i64
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module1_MapKey.FullName] = premadeCodecTypeSpec_module1_MapKey
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module1_MapContainer.FullName] = premadeCodecTypeSpec_module1_MapContainer
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module1_Car.FullName] = premadeCodecTypeSpec_module1_Car
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module1_Pair.FullName] = premadeCodecTypeSpec_module1_Pair
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module1_Collection.FullName] = premadeCodecTypeSpec_module1_Collection
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module1_State.FullName] = premadeCodecTypeSpec_module1_State
+    fbthriftTypeSpecsMap[premadeCodecTypeSpec_module1_Enum.FullName] = premadeCodecTypeSpec_module1_Enum
+    return fbthriftTypeSpecsMap
+}()
 
 // GetMetadataThriftType (INTERNAL USE ONLY).
 // Returns metadata TypeSpec for a given full type name.
 func GetCodecTypeSpec(fullName string) *thrift.TypeSpec {
-    return premadeCodecSpecsMapOnce()[fullName]
+    return premadeCodecSpecsMap[fullName]
 }

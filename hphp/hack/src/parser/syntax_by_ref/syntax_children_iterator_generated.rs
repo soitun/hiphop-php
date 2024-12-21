@@ -24,7 +24,6 @@ use super::{
 
 #[allow(clippy::assign_op_pattern)]
 #[allow(clippy::let_and_return)]
-
 impl<'a, T, V> SyntaxChildrenIterator<'a, T, V> {
     pub fn next_impl(&mut self, direction : bool) -> Option<&'a Syntax<'a, T, V>> {
         use SyntaxVariant::*;
@@ -450,6 +449,17 @@ impl<'a, T, V> SyntaxChildrenIterator<'a, T, V> {
                     1 => Some(&x.kind),
                     2 => Some(&x.name),
                     3 => Some(&x.semicolon),
+                        _ => None,
+                    }
+                })
+            },
+            RequireClauseConstraint(x) => {
+                get_index(5).and_then(|index| { match index {
+                        0 => Some(&x.keyword),
+                    1 => Some(&x.this),
+                    2 => Some(&x.operator),
+                    3 => Some(&x.name),
+                    4 => Some(&x.semicolon),
                         _ => None,
                     }
                 })

@@ -33,7 +33,7 @@ citem.
 }}{{#type:flexibleBinary?}}{{!
   }}(<const char*>citem.data())[:citem.size()]{{!
 }}{{/type:flexibleBinary?}}{{!
-}}{{^type:hasCustomTypeBehavior?}}{{!
+}}{{^type:customBinaryType?}}{{!
 }}{{#type:bool?}}citem{{/type:bool?}}{{!
 }}{{#type:byte?}}citem{{/type:byte?}}{{!
 }}{{#type:i16?}}citem{{/type:i16?}}{{!
@@ -52,4 +52,4 @@ citem.
 }}{{#type:set?}}{{> types/container_from_cpp }}(citem){{/type:set?}}{{!
 }}{{#type:enum}}translate_cpp_enum_to_python({{!
     }}{{> types/python_type }}, <int> citem){{/type:enum}}{{!
-}}{{/type:hasCustomTypeBehavior?}}
+}}{{/type:customBinaryType?}}

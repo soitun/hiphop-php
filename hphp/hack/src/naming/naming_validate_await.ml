@@ -99,7 +99,8 @@ and check_await_usage expr =
           (* Can't have await in || or && (parse error) *)
           lhs = expr1;
           rhs = expr2;
-        } ->
+        }
+    | Assign (expr1, _, expr2) ->
       combine_con (check_await_usage expr1) (check_await_usage expr2)
     (* Expressions with lists of sub-expressions that we can lift an await out of
        and run concurrently *)
@@ -115,8 +116,14 @@ and check_await_usage expr =
       List.fold_right args ~init:NoAwait ~f:await_fold
     | Shape fields -> List.fold_right fields ~init:NoAwait ~f:await_fold_tuple
     | Call { func; targs = _; args; unpacked_arg } ->
+      let arg_exprs =
+        List.map ~f:(fun arg -> ((), Aast_utils.arg_to_expr arg)) args
+      in
       let res =
-        List.fold_right args ~init:(check_await_usage func) ~f:await_fold_tuple
+        List.fold_right
+          arg_exprs
+          ~init:(check_await_usage func)
+          ~f:await_fold_tuple
       in
       (match unpacked_arg with
       | None -> res

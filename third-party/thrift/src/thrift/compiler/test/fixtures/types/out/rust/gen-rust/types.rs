@@ -2004,7 +2004,13 @@ impl ::std::default::Default for self::ComplexNestedWithDefault {
                     a: "3".to_owned(),
                     b: {
                         let mut map = ::std::collections::BTreeMap::new();
-                        map.insert("a".to_owned(), 3);
+                        {
+                            #[inline(never)]
+                            fn __do_insert(map: &mut ::std::collections::BTreeMap<::std::string::String, ::std::primitive::i32>) {
+                                map.insert("a".to_owned(), 3);
+                            }
+                            __do_insert(&mut map);
+                        }
                         map
                     },
                     ..::std::default::Default::default()
@@ -2094,7 +2100,13 @@ where
                     a: "3".to_owned(),
                     b: {
                         let mut map = ::std::collections::BTreeMap::new();
-                        map.insert("a".to_owned(), 3);
+                        {
+                            #[inline(never)]
+                            fn __do_insert(map: &mut ::std::collections::BTreeMap<::std::string::String, ::std::primitive::i32>) {
+                                map.insert("a".to_owned(), 3);
+                            }
+                            __do_insert(&mut map);
+                        }
                         map
                     },
                     ..::std::default::Default::default()
@@ -4917,12 +4929,30 @@ impl ::fbthrift::metadata::ThriftAnnotations for AllocatorAware {
                     let r: &mut ::std::option::Option<T> = r.downcast_mut().unwrap();
                     return r.take();
                 }
+
+                if type_id == ::std::any::TypeId::of::<cpp__types::AllowLegacyNonOptionalRef>() {
+                    let mut tmp = ::std::option::Option::Some(cpp__types::AllowLegacyNonOptionalRef {
+                        ..::std::default::Default::default()
+                    });
+                    let r: &mut dyn ::std::any::Any = &mut tmp;
+                    let r: &mut ::std::option::Option<T> = r.downcast_mut().unwrap();
+                    return r.take();
+                }
             },
             7 => {
 
                 if type_id == ::std::any::TypeId::of::<cpp__types::Ref>() {
                     let mut tmp = ::std::option::Option::Some(cpp__types::Ref {
                         r#type: cpp__types::RefType::SharedMutable,
+                        ..::std::default::Default::default()
+                    });
+                    let r: &mut dyn ::std::any::Any = &mut tmp;
+                    let r: &mut ::std::option::Option<T> = r.downcast_mut().unwrap();
+                    return r.take();
+                }
+
+                if type_id == ::std::any::TypeId::of::<cpp__types::AllowLegacyNonOptionalRef>() {
+                    let mut tmp = ::std::option::Option::Some(cpp__types::AllowLegacyNonOptionalRef {
                         ..::std::default::Default::default()
                     });
                     let r: &mut dyn ::std::any::Any = &mut tmp;

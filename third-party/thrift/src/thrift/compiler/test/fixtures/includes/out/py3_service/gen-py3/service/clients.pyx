@@ -62,8 +62,7 @@ cimport transitive.types as _transitive_types
 cimport transitive.cbindings as _transitive_cbindings
 import transitive.types as _transitive_types
 
-import service.services_reflection as _services_reflection
-cimport service.services_reflection as _services_reflection
+cimport service.services_interface as _fbthrift_services_interface
 
 from service.clients_wrapper cimport cMyServiceAsyncClient, cMyServiceClientWrapper
 
@@ -111,6 +110,11 @@ cdef class MyService(thrift.py3.client.Client):
             cmove(channel)
         )
 
+    _fbthrift_annotations_DO_NOT_USE_query = {
+        'return': 'None',
+        's': 'module.types.MyStruct', 'i': 'includes.types.Included', 
+    }
+
     @cython.always_allow_keywords(True)
     def query(
             MyService self,
@@ -134,6 +138,11 @@ cdef class MyService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_has_arg_docs = {
+        'return': 'None',
+        's': 'module.types.MyStruct', 'i': 'includes.types.Included', 
+    }
 
     @cython.always_allow_keywords(True)
     def has_arg_docs(
@@ -160,14 +169,10 @@ cdef class MyService(thrift.py3.client.Client):
         return asyncio_shield(__future)
 
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__MyService(for_clients=True)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cMyServiceSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cMyServiceSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod

@@ -601,6 +601,10 @@ and ('ex, 'en) expr_ =
       (** Binary operator.
        *
        *     $foo + $bar *)
+  | Assign of
+      ('ex, 'en) expr
+      * (Ast_defs.bop[@transform.opaque]) option
+      * ('ex, 'en) expr
   | Pipe of lid * ('ex, 'en) expr * ('ex, 'en) expr
       (** Pipe expression. The lid is the ID of the $$ that is implicitly
        * declared by this pipe.
@@ -881,11 +885,15 @@ and ('ex, 'en) call_expr = {
       (** function *)
   targs: 'ex targ list;
       (** explicit type annotations *)
-  args: ((Ast_defs.param_kind[@transform.opaque]) * ('ex, 'en) expr) list;
+  args: ('ex, 'en) argument list;
       (** positional args, plus their calling convention *)
   unpacked_arg: ('ex, 'en) expr option;
       (** unpacked arg *)
 }
+
+and ('ex, 'en) argument =
+  | Ainout of (pos[@transform.opaque]) * ('ex, 'en) expr
+  | Anormal of ('ex, 'en) expr
 
 and ('ex, 'en) user_attribute = {
   ua_name: sid;
@@ -911,6 +919,7 @@ and require_kind =
   | RequireExtends
   | RequireImplements
   | RequireClass
+  | RequireThisAs
 [@@transform.opaque]
 
 and emit_id =
@@ -918,6 +927,13 @@ and emit_id =
       (** For globally defined type, the ID used in the .main function. *)
   | Anonymous
       (** Closures are hoisted to classes, but they don't get an entry in .main. *)
+[@@transform.opaque]
+
+and package_membership =
+  | PackageOverride of pos * string
+      (** Package membership derived from the file attribute __PackageOverride *)
+  | PackageConfigAssignment of string
+      (** Package membership derived from the package specification in PACKAGES.toml *)
 [@@transform.opaque]
 
 and ('ex, 'en) class_ = {
@@ -961,7 +977,7 @@ and ('ex, 'en) class_ = {
   c_emit_id: emit_id option;
   c_internal: bool;
   c_module: sid option;
-  c_package: string option;
+  c_package: package_membership option;
 }
 
 and class_req = class_hint * require_kind
@@ -1115,7 +1131,7 @@ and ('ex, 'en) typedef = {
   t_module: sid option;
   t_docs_url: string option;
   t_doc_comment: doc_comment option;
-  t_package: string option;
+  t_package: package_membership option;
 }
 
 and ('ex, 'en) gconst = {
@@ -1140,7 +1156,7 @@ and ('ex, 'en) fun_def = {
   fd_module: sid option;
   fd_tparams: ('ex, 'en) tparam list;
   fd_where_constraints: where_constraint_hint list;
-  fd_package: string option;
+  fd_package: package_membership option;
 }
 
 and ('ex, 'en) module_def = {

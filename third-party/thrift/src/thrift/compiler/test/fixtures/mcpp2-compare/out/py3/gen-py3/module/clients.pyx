@@ -56,8 +56,7 @@ cimport includes.types as _includes_types
 cimport includes.cbindings as _includes_cbindings
 import includes.types as _includes_types
 
-import module.services_reflection as _services_reflection
-cimport module.services_reflection as _services_reflection
+cimport module.services_interface as _fbthrift_services_interface
 
 from module.clients_wrapper cimport cEmptyServiceAsyncClient, cEmptyServiceClientWrapper
 from module.clients_wrapper cimport cReturnServiceAsyncClient, cReturnServiceClientWrapper
@@ -190,7 +189,7 @@ cdef void ReturnService_mapReturn_callback(
         pyfuture.set_exception(create_py_exception(result.exception(), <__RpcOptions>options))
     else:
         try:
-            pyfuture.set_result(_module_types.Map__string_i64._create_FBTHRIFT_ONLY_DO_NOT_USE(make_shared[cmap[string,cint64_t]](cmove(result.value()))))
+            pyfuture.set_result(_module_types.Map__string_i64__from_cpp(cmove(result.value())))
         except Exception as ex:
             pyfuture.set_exception(ex.with_traceback(None))
 
@@ -567,7 +566,7 @@ cdef void ParamService_map_ret_bool_param_callback(
         pyfuture.set_exception(create_py_exception(result.exception(), <__RpcOptions>options))
     else:
         try:
-            pyfuture.set_result(_module_types.Map__string_i64._create_FBTHRIFT_ONLY_DO_NOT_USE(make_shared[cmap[string,cint64_t]](cmove(result.value()))))
+            pyfuture.set_result(_module_types.Map__string_i64__from_cpp(cmove(result.value())))
         except Exception as ex:
             pyfuture.set_exception(ex.with_traceback(None))
 
@@ -593,7 +592,7 @@ cdef void ParamService_mapsetlistmapliststring_ret_listlistlist_param_callback(
         pyfuture.set_exception(create_py_exception(result.exception(), <__RpcOptions>options))
     else:
         try:
-            pyfuture.set_result(_module_types.Map__Set__List__i32_Map__List__Set__string_string._create_FBTHRIFT_ONLY_DO_NOT_USE(make_shared[cmap[cset[vector[cint32_t]],cmap[vector[cset[string]],string]]](cmove(result.value()))))
+            pyfuture.set_result(_module_types.Map__Set__List__i32_Map__List__Set__string_string__from_cpp(cmove(result.value())))
         except Exception as ex:
             pyfuture.set_exception(ex.with_traceback(None))
 
@@ -732,14 +731,10 @@ cdef class EmptyService(thrift.py3.client.Client):
         )
 
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__EmptyService(for_clients=True)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cEmptyServiceSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cEmptyServiceSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod
@@ -762,6 +757,11 @@ cdef class ReturnService(thrift.py3.client.Client):
             cmove(channel)
         )
 
+    _fbthrift_annotations_DO_NOT_USE_noReturn = {
+        'return': 'None',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def noReturn(
             ReturnService self,
@@ -781,6 +781,11 @@ cdef class ReturnService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_boolReturn = {
+        'return': 'bool',
+        
+    }
 
     @cython.always_allow_keywords(True)
     def boolReturn(
@@ -802,6 +807,11 @@ cdef class ReturnService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_i16Return = {
+        'return': 'int',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def i16Return(
             ReturnService self,
@@ -821,6 +831,11 @@ cdef class ReturnService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_i32Return = {
+        'return': 'int',
+        
+    }
 
     @cython.always_allow_keywords(True)
     def i32Return(
@@ -842,6 +857,11 @@ cdef class ReturnService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_i64Return = {
+        'return': 'int',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def i64Return(
             ReturnService self,
@@ -861,6 +881,11 @@ cdef class ReturnService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_floatReturn = {
+        'return': 'float',
+        
+    }
 
     @cython.always_allow_keywords(True)
     def floatReturn(
@@ -882,6 +907,11 @@ cdef class ReturnService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_doubleReturn = {
+        'return': 'float',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def doubleReturn(
             ReturnService self,
@@ -901,6 +931,11 @@ cdef class ReturnService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_stringReturn = {
+        'return': 'str',
+        
+    }
 
     @cython.always_allow_keywords(True)
     def stringReturn(
@@ -922,6 +957,11 @@ cdef class ReturnService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_binaryReturn = {
+        'return': 'bytes',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def binaryReturn(
             ReturnService self,
@@ -941,6 +981,11 @@ cdef class ReturnService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_mapReturn = {
+        'return': '_typing.Mapping[str, int]',
+        
+    }
 
     @cython.always_allow_keywords(True)
     def mapReturn(
@@ -962,6 +1007,11 @@ cdef class ReturnService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_simpleTypedefReturn = {
+        'return': 'int',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def simpleTypedefReturn(
             ReturnService self,
@@ -981,6 +1031,11 @@ cdef class ReturnService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_complexTypedefReturn = {
+        'return': '_typing.Sequence[_typing.Mapping[module.types.Empty, module.types.MyStruct]]',
+        
+    }
 
     @cython.always_allow_keywords(True)
     def complexTypedefReturn(
@@ -1002,6 +1057,11 @@ cdef class ReturnService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_list_mostComplexTypedefReturn = {
+        'return': '_typing.Sequence[_typing.Sequence[_typing.Sequence[_typing.Mapping[module.types.Empty, module.types.MyStruct]]]]',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def list_mostComplexTypedefReturn(
             ReturnService self,
@@ -1021,6 +1081,11 @@ cdef class ReturnService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_enumReturn = {
+        'return': 'module.types.MyEnumA',
+        
+    }
 
     @cython.always_allow_keywords(True)
     def enumReturn(
@@ -1042,6 +1107,11 @@ cdef class ReturnService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_list_EnumReturn = {
+        'return': '_typing.Sequence[module.types.MyEnumA]',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def list_EnumReturn(
             ReturnService self,
@@ -1061,6 +1131,11 @@ cdef class ReturnService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_structReturn = {
+        'return': 'module.types.MyStruct',
+        
+    }
 
     @cython.always_allow_keywords(True)
     def structReturn(
@@ -1082,6 +1157,11 @@ cdef class ReturnService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_set_StructReturn = {
+        'return': '_typing.AbstractSet[module.types.MyStruct]',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def set_StructReturn(
             ReturnService self,
@@ -1101,6 +1181,11 @@ cdef class ReturnService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_unionReturn = {
+        'return': 'module.types.ComplexUnion',
+        
+    }
 
     @cython.always_allow_keywords(True)
     def unionReturn(
@@ -1122,6 +1207,11 @@ cdef class ReturnService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_list_UnionReturn = {
+        'return': '_typing.Sequence[module.types.ComplexUnion]',
+        
+    }
+
     @cython.always_allow_keywords(True)
     def list_UnionReturn(
             ReturnService self,
@@ -1141,6 +1231,11 @@ cdef class ReturnService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_readDataEb = {
+        'return': '_fbthrift_iobuf.IOBuf',
+        'size': 'int', 
+    }
 
     @cython.always_allow_keywords(True)
     def readDataEb(
@@ -1167,6 +1262,11 @@ cdef class ReturnService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_readData = {
+        'return': '_fbthrift_iobuf.IOBuf',
+        'size': 'int', 
+    }
 
     @cython.always_allow_keywords(True)
     def readData(
@@ -1195,14 +1295,10 @@ cdef class ReturnService(thrift.py3.client.Client):
         return asyncio_shield(__future)
 
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__ReturnService(for_clients=True)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cReturnServiceSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cReturnServiceSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod
@@ -1224,6 +1320,11 @@ cdef class ParamService(thrift.py3.client.Client):
         self._client = makeClientWrapper[cParamServiceAsyncClient, cParamServiceClientWrapper](
             cmove(channel)
         )
+
+    _fbthrift_annotations_DO_NOT_USE_void_ret_i16_param = {
+        'return': 'None',
+        'param1': 'int', 
+    }
 
     @cython.always_allow_keywords(True)
     def void_ret_i16_param(
@@ -1250,6 +1351,11 @@ cdef class ParamService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_void_ret_byte_i16_param = {
+        'return': 'None',
+        'param1': 'int', 'param2': 'int', 
+    }
 
     @cython.always_allow_keywords(True)
     def void_ret_byte_i16_param(
@@ -1283,6 +1389,11 @@ cdef class ParamService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_void_ret_map_param = {
+        'return': 'None',
+        'param1': '_typing.Mapping[str, int]', 
+    }
+
     @cython.always_allow_keywords(True)
     def void_ret_map_param(
             ParamService self,
@@ -1300,12 +1411,17 @@ cdef class ParamService(thrift.py3.client.Client):
         bridgeFutureWith[cFollyUnit](
             self._executor,
             down_cast_ptr[cParamServiceClientWrapper, cClientWrapper](self._client.get()).void_ret_map_param(rpc_options._cpp_obj, 
-                deref((<_module_types.Map__string_i64>param1)._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE),
+                _module_types.Map__string_i64__make_instance(param1),
             ),
             ParamService_void_ret_map_param_callback,
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_void_ret_map_setlist_param = {
+        'return': 'None',
+        'param1': '_typing.Mapping[str, int]', 'param2': '_typing.AbstractSet[_typing.Sequence[str]]', 
+    }
 
     @cython.always_allow_keywords(True)
     def void_ret_map_setlist_param(
@@ -1327,13 +1443,18 @@ cdef class ParamService(thrift.py3.client.Client):
         bridgeFutureWith[cFollyUnit](
             self._executor,
             down_cast_ptr[cParamServiceClientWrapper, cClientWrapper](self._client.get()).void_ret_map_setlist_param(rpc_options._cpp_obj, 
-                deref((<_module_types.Map__string_i64>param1)._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE),
+                _module_types.Map__string_i64__make_instance(param1),
                 _module_types.Set__List__string__make_instance(param2),
             ),
             ParamService_void_ret_map_setlist_param_callback,
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_void_ret_map_typedef_param = {
+        'return': 'None',
+        'param1': 'int', 
+    }
 
     @cython.always_allow_keywords(True)
     def void_ret_map_typedef_param(
@@ -1361,6 +1482,11 @@ cdef class ParamService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_void_ret_enum_param = {
+        'return': 'None',
+        'param1': 'module.types.MyEnumA', 
+    }
+
     @cython.always_allow_keywords(True)
     def void_ret_enum_param(
             ParamService self,
@@ -1383,6 +1509,11 @@ cdef class ParamService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_void_ret_struct_param = {
+        'return': 'None',
+        'param1': 'module.types.MyStruct', 
+    }
+
     @cython.always_allow_keywords(True)
     def void_ret_struct_param(
             ParamService self,
@@ -1404,6 +1535,11 @@ cdef class ParamService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_void_ret_listunion_param = {
+        'return': 'None',
+        'param1': '_typing.Sequence[module.types.ComplexUnion]', 
+    }
 
     @cython.always_allow_keywords(True)
     def void_ret_listunion_param(
@@ -1428,6 +1564,11 @@ cdef class ParamService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_bool_ret_i32_i64_param = {
+        'return': 'bool',
+        'param1': 'int', 'param2': 'int', 
+    }
 
     @cython.always_allow_keywords(True)
     def bool_ret_i32_i64_param(
@@ -1461,6 +1602,11 @@ cdef class ParamService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_bool_ret_map_param = {
+        'return': 'bool',
+        'param1': '_typing.Mapping[str, int]', 
+    }
+
     @cython.always_allow_keywords(True)
     def bool_ret_map_param(
             ParamService self,
@@ -1478,12 +1624,17 @@ cdef class ParamService(thrift.py3.client.Client):
         bridgeFutureWith[cbool](
             self._executor,
             down_cast_ptr[cParamServiceClientWrapper, cClientWrapper](self._client.get()).bool_ret_map_param(rpc_options._cpp_obj, 
-                deref((<_module_types.Map__string_i64>param1)._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE),
+                _module_types.Map__string_i64__make_instance(param1),
             ),
             ParamService_bool_ret_map_param_callback,
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_bool_ret_union_param = {
+        'return': 'bool',
+        'param1': 'module.types.ComplexUnion', 
+    }
 
     @cython.always_allow_keywords(True)
     def bool_ret_union_param(
@@ -1506,6 +1657,11 @@ cdef class ParamService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_i64_ret_float_double_param = {
+        'return': 'int',
+        'param1': 'float', 'param2': 'float', 
+    }
 
     @cython.always_allow_keywords(True)
     def i64_ret_float_double_param(
@@ -1530,6 +1686,11 @@ cdef class ParamService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_i64_ret_string_typedef_param = {
+        'return': 'int',
+        'param1': 'str', 'param2': '_typing.AbstractSet[_typing.Sequence[_typing.Sequence[_typing.Mapping[module.types.Empty, module.types.MyStruct]]]]', 
+    }
 
     @cython.always_allow_keywords(True)
     def i64_ret_string_typedef_param(
@@ -1556,6 +1717,11 @@ cdef class ParamService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_i64_ret_i32_i32_i32_i32_i32_param = {
+        'return': 'int',
+        'param1': 'int', 'param2': 'int', 'param3': 'int', 'param4': 'int', 'param5': 'int', 
+    }
 
     @cython.always_allow_keywords(True)
     def i64_ret_i32_i32_i32_i32_i32_param(
@@ -1607,6 +1773,11 @@ cdef class ParamService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_double_ret_setstruct_param = {
+        'return': 'float',
+        'param1': '_typing.AbstractSet[module.types.MyStruct]', 
+    }
+
     @cython.always_allow_keywords(True)
     def double_ret_setstruct_param(
             ParamService self,
@@ -1631,6 +1802,11 @@ cdef class ParamService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_string_ret_string_param = {
+        'return': 'str',
+        'param1': 'str', 
+    }
+
     @cython.always_allow_keywords(True)
     def string_ret_string_param(
             ParamService self,
@@ -1652,6 +1828,11 @@ cdef class ParamService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_binary_ret_binary_param = {
+        'return': 'bytes',
+        'param1': 'bytes', 
+    }
 
     @cython.always_allow_keywords(True)
     def binary_ret_binary_param(
@@ -1675,6 +1856,11 @@ cdef class ParamService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_map_ret_bool_param = {
+        'return': '_typing.Mapping[str, int]',
+        'param1': 'bool', 
+    }
+
     @cython.always_allow_keywords(True)
     def map_ret_bool_param(
             ParamService self,
@@ -1697,6 +1883,11 @@ cdef class ParamService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_list_ret_map_setlist_param = {
+        'return': '_typing.Sequence[bool]',
+        'param1': '_typing.Mapping[int, _typing.Sequence[str]]', 'param2': '_typing.Sequence[str]', 
+    }
+
     @cython.always_allow_keywords(True)
     def list_ret_map_setlist_param(
             ParamService self,
@@ -1717,13 +1908,18 @@ cdef class ParamService(thrift.py3.client.Client):
         bridgeFutureWith[vector[cbool]](
             self._executor,
             down_cast_ptr[cParamServiceClientWrapper, cClientWrapper](self._client.get()).list_ret_map_setlist_param(rpc_options._cpp_obj, 
-                deref((<_module_types.Map__i32_List__string>param1)._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE),
+                _module_types.Map__i32_List__string__make_instance(param1),
                 _module_types.List__string__make_instance(param2),
             ),
             ParamService_list_ret_map_setlist_param_callback,
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_mapsetlistmapliststring_ret_listlistlist_param = {
+        'return': '_typing.Mapping[_typing.AbstractSet[_typing.Sequence[int]], _typing.Mapping[_typing.Sequence[_typing.AbstractSet[str]], str]]',
+        'param1': '_typing.Sequence[_typing.Sequence[_typing.Sequence[_typing.Sequence[int]]]]', 
+    }
 
     @cython.always_allow_keywords(True)
     def mapsetlistmapliststring_ret_listlistlist_param(
@@ -1748,6 +1944,11 @@ cdef class ParamService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_typedef_ret_i32_param = {
+        'return': 'int',
+        'param1': 'int', 
+    }
 
     @cython.always_allow_keywords(True)
     def typedef_ret_i32_param(
@@ -1775,6 +1976,11 @@ cdef class ParamService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_listtypedef_ret_typedef_param = {
+        'return': '_typing.Sequence[int]',
+        'param1': '_typing.Sequence[_typing.Mapping[module.types.Empty, module.types.MyStruct]]', 
+    }
+
     @cython.always_allow_keywords(True)
     def listtypedef_ret_typedef_param(
             ParamService self,
@@ -1799,6 +2005,11 @@ cdef class ParamService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_enum_ret_double_param = {
+        'return': 'module.types.MyEnumA',
+        'param1': 'float', 
+    }
+
     @cython.always_allow_keywords(True)
     def enum_ret_double_param(
             ParamService self,
@@ -1820,6 +2031,11 @@ cdef class ParamService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_enum_ret_double_enum_param = {
+        'return': 'module.types.MyEnumA',
+        'param1': 'float', 'param2': 'module.types.MyEnumA', 
+    }
 
     @cython.always_allow_keywords(True)
     def enum_ret_double_enum_param(
@@ -1845,6 +2061,11 @@ cdef class ParamService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_listenum_ret_map_param = {
+        'return': '_typing.Sequence[module.types.MyEnumA]',
+        'param1': '_typing.Mapping[str, int]', 
+    }
+
     @cython.always_allow_keywords(True)
     def listenum_ret_map_param(
             ParamService self,
@@ -1862,12 +2083,17 @@ cdef class ParamService(thrift.py3.client.Client):
         bridgeFutureWith[vector[_module_cbindings.cMyEnumA]](
             self._executor,
             down_cast_ptr[cParamServiceClientWrapper, cClientWrapper](self._client.get()).listenum_ret_map_param(rpc_options._cpp_obj, 
-                deref((<_module_types.Map__string_i64>param1)._cpp_obj_FBTHRIFT_ONLY_DO_NOT_USE),
+                _module_types.Map__string_i64__make_instance(param1),
             ),
             ParamService_listenum_ret_map_param_callback,
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_struct_ret_i16_param = {
+        'return': 'module.types.MyStruct',
+        'param1': 'int', 
+    }
 
     @cython.always_allow_keywords(True)
     def struct_ret_i16_param(
@@ -1895,6 +2121,11 @@ cdef class ParamService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_setstruct_ret_set_param = {
+        'return': '_typing.AbstractSet[module.types.MyStruct]',
+        'param1': '_typing.AbstractSet[str]', 
+    }
+
     @cython.always_allow_keywords(True)
     def setstruct_ret_set_param(
             ParamService self,
@@ -1918,6 +2149,11 @@ cdef class ParamService(thrift.py3.client.Client):
             <PyObject *> __userdata
         )
         return asyncio_shield(__future)
+
+    _fbthrift_annotations_DO_NOT_USE_union_ret_i32_i32_param = {
+        'return': 'module.types.ComplexUnion',
+        'param1': 'int', 'param2': 'int', 
+    }
 
     @cython.always_allow_keywords(True)
     def union_ret_i32_i32_param(
@@ -1951,6 +2187,11 @@ cdef class ParamService(thrift.py3.client.Client):
         )
         return asyncio_shield(__future)
 
+    _fbthrift_annotations_DO_NOT_USE_listunion_string_param = {
+        'return': '_typing.Sequence[module.types.ComplexUnion]',
+        'param1': 'str', 
+    }
+
     @cython.always_allow_keywords(True)
     def listunion_string_param(
             ParamService self,
@@ -1974,14 +2215,10 @@ cdef class ParamService(thrift.py3.client.Client):
         return asyncio_shield(__future)
 
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__ParamService(for_clients=True)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cParamServiceSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cParamServiceSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod

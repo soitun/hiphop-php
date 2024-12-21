@@ -23,79 +23,77 @@ import (
 	"github.com/rsocket/rsocket-go/payload"
 )
 
-type serverMetadataPayload struct {
-	zstd  bool
-	drain bool
-}
-
-func decodeServerMetadataPushVersion8(msg payload.Payload) (*serverMetadataPayload, error) {
+func decodeServerMetadataPush(msg payload.Payload) (*rpcmetadata.ServerPushMetadata, error) {
 	msg = payload.Clone(msg)
-	minVersion := int32(8)
-	maxVersion := int32(8)
-	res := &serverMetadataPayload{}
 	// For documentation/reference see the CPP implementation
 	// https://www.internalfb.com/code/fbsource/[ec968d3ea0ab]/fbcode/thrift/lib/cpp2/transport/rocket/client/RocketClient.cpp?lines=181
 	metadataBytes, ok := msg.Metadata()
 	if !ok {
 		return nil, fmt.Errorf("no metadata in server metadata push")
 	}
-	// Use ServerPushMetadata{} and do not use &ServerPushMetadata{} to ensure stack and avoid heap allocation.
-	metadata := rpcmetadata.ServerPushMetadata{}
-	if err := deserializeCompact(metadataBytes, &metadata); err != nil {
-		panic(fmt.Errorf("unable to deserialize metadata push into ServerPushMetadata %w", err))
+	result := &rpcmetadata.ServerPushMetadata{}
+	if err := DecodeCompact(metadataBytes, result); err != nil {
+		return nil, fmt.Errorf("unable to deserialize ServerPushMetadata: %w", err)
 	}
-	if metadata.SetupResponse != nil {
-		// If zstdSupported is not set (or if false) client SHOULD not use ZSTD compression.
-		res.zstd = metadata.SetupResponse.ZstdSupported != nil && *metadata.SetupResponse.ZstdSupported
-		if metadata.SetupResponse.Version != nil {
-			version := *metadata.SetupResponse.Version
-			if version < minVersion || version > maxVersion {
-				return nil, fmt.Errorf("unsupported protocol version received in metadata push: %d, we only support versions in range: [%d, %d]", version, minVersion, maxVersion)
-			}
-		}
-	} else if metadata.StreamHeadersPush != nil {
-		panic("server metadata push: StreamHeadersPush not implemented")
-	} else if metadata.DrainCompletePush != nil {
-		res.drain = true
+	if err := validateServerPushMetadata(result); err != nil {
+		return nil, err
 	}
-	return res, nil
+	return result, nil
 }
 
-func encodeServerMetadataPushVersion8(zstdSupported bool) (payload.Payload, error) {
+func encodeServerMetadataPush(zstdSupported bool) (payload.Payload, error) {
 	version := int32(8)
 	res := rpcmetadata.NewServerPushMetadata().
-		SetSetupResponse(rpcmetadata.NewSetupResponse().
-			SetVersion(&version).
-			SetZstdSupported(&zstdSupported))
-	metadataBytes, err := serializeCompact(res)
+		SetSetupResponse(
+			rpcmetadata.NewSetupResponse().
+				SetVersion(&version).
+				SetZstdSupported(&zstdSupported),
+		)
+	metadataBytes, err := EncodeCompact(res)
 	if err != nil {
 		return nil, fmt.Errorf("unable to serialize metadata push %w", err)
 	}
 	return payload.New(nil, metadataBytes), nil
 }
 
-type clientMetadataPayload struct {
-	transportMetadata map[string]string
+func validateServerPushMetadata(metadata *rpcmetadata.ServerPushMetadata) error {
+	minVersion := int32(8)
+	maxVersion := int32(8)
+
+	if metadata.SetupResponse != nil {
+		if metadata.SetupResponse.Version != nil {
+			version := *metadata.SetupResponse.Version
+			if version < minVersion || version > maxVersion {
+				return fmt.Errorf("unsupported rocket protocol version: %d", version)
+			}
+		}
+	} else if metadata.StreamHeadersPush != nil {
+		return fmt.Errorf("unsupported StreamHeadersPush metadata type")
+	}
+	return nil
 }
 
-func decodeClientMetadataPush(msg payload.Payload) *clientMetadataPayload {
+func decodeClientMetadataPush(msg payload.Payload) (*rpcmetadata.ClientPushMetadata, error) {
 	msg = payload.Clone(msg)
 	metadataBytes, ok := msg.Metadata()
 	if !ok {
 		panic("no metadata in client metadata push")
 	}
-	// Use ClientPushMetadata{} and do not use &ClientPushMetadata{} to ensure stack and avoid heap allocation.
-	metadata := rpcmetadata.ClientPushMetadata{}
-	if err := deserializeCompact(metadataBytes, &metadata); err != nil {
-		panic(fmt.Errorf("unable to deserialize metadata push into ClientPushMetadata %w", err))
+	result := &rpcmetadata.ClientPushMetadata{}
+	if err := DecodeCompact(metadataBytes, result); err != nil {
+		return nil, fmt.Errorf("unable to deserialize ClientPushMetadata: %w", err)
 	}
-	res := &clientMetadataPayload{}
+	if err := validateClientPushMetadata(result); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func validateClientPushMetadata(metadata *rpcmetadata.ClientPushMetadata) error {
 	if metadata.InteractionTerminate != nil {
-		panic("client metadata push: InteractionTerminate not implemented")
+		return fmt.Errorf("unsupported InteractionTerminate metadata type")
 	} else if metadata.StreamHeadersPush != nil {
-		panic("client metadata push: StreamHeadersPush not implemented")
-	} else if metadata.TransportMetadataPush != nil {
-		res.transportMetadata = metadata.GetTransportMetadataPush().GetTransportMetadata()
+		return fmt.Errorf("unsupported StreamHeadersPush metadata type")
 	}
-	return res
+	return nil
 }

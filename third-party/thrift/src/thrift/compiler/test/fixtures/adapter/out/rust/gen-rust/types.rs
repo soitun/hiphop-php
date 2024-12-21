@@ -2555,6 +2555,15 @@ impl ::fbthrift::metadata::ThriftAnnotations for StructWithFieldAdapter {
                     let r: &mut ::std::option::Option<T> = r.downcast_mut().unwrap();
                     return r.take();
                 }
+
+                if type_id == ::std::any::TypeId::of::<cpp__types::AllowLegacyNonOptionalRef>() {
+                    let mut tmp = ::std::option::Option::Some(cpp__types::AllowLegacyNonOptionalRef {
+                        ..::std::default::Default::default()
+                    });
+                    let r: &mut dyn ::std::any::Any = &mut tmp;
+                    let r: &mut ::std::option::Option<T> = r.downcast_mut().unwrap();
+                    return r.take();
+                }
             },
             3 => {
 
@@ -3686,7 +3695,13 @@ impl ::std::default::Default for self::AdaptTemplatedTestStruct {
                 }, 20),
             adaptedMapDefault: <::fbthrift_adapters::test::TestAdapter as ::fbthrift::adapter::ThriftAdapter>::from_thrift_default::<AdaptTemplatedTestStruct>({
                     let mut map = ::std::collections::BTreeMap::new();
-                    map.insert(1, 1);
+                    {
+                        #[inline(never)]
+                        fn __do_insert(map: &mut ::std::collections::BTreeMap<::std::primitive::i64, ::std::primitive::i64>) {
+                            map.insert(1, 1);
+                        }
+                        __do_insert(&mut map);
+                    }
                     map
                 }, 21),
             doubleTypedefBool: ::std::default::Default::default(),
@@ -3938,7 +3953,13 @@ where
                 }, 20)),
             adaptedMapDefault: field_adaptedMapDefault.unwrap_or_else(|| <::fbthrift_adapters::test::TestAdapter as ::fbthrift::adapter::ThriftAdapter>::from_thrift_default::<AdaptTemplatedTestStruct>({
                     let mut map = ::std::collections::BTreeMap::new();
-                    map.insert(1, 1);
+                    {
+                        #[inline(never)]
+                        fn __do_insert(map: &mut ::std::collections::BTreeMap<::std::primitive::i64, ::std::primitive::i64>) {
+                            map.insert(1, 1);
+                        }
+                        __do_insert(&mut map);
+                    }
                     map
                 }, 21)),
             doubleTypedefBool: field_doubleTypedefBool.unwrap_or_default(),
@@ -5143,6 +5164,15 @@ impl ::fbthrift::metadata::ThriftAnnotations for ReorderedStruct {
                 if type_id == ::std::any::TypeId::of::<cpp__types::Ref>() {
                     let mut tmp = ::std::option::Option::Some(cpp__types::Ref {
                         r#type: cpp__types::RefType::Unique,
+                        ..::std::default::Default::default()
+                    });
+                    let r: &mut dyn ::std::any::Any = &mut tmp;
+                    let r: &mut ::std::option::Option<T> = r.downcast_mut().unwrap();
+                    return r.take();
+                }
+
+                if type_id == ::std::any::TypeId::of::<cpp__types::AllowLegacyNonOptionalRef>() {
+                    let mut tmp = ::std::option::Option::Some(cpp__types::AllowLegacyNonOptionalRef {
                         ..::std::default::Default::default()
                     });
                     let r: &mut dyn ::std::any::Any = &mut tmp;

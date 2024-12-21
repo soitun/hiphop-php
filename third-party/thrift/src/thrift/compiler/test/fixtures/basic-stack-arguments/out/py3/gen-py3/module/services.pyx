@@ -57,8 +57,7 @@ cimport module.types as _module_types
 cimport module.cbindings as _module_cbindings
 import module.types as _module_types
 
-import module.services_reflection as _services_reflection
-cimport module.services_reflection as _services_reflection
+cimport module.services_interface as _fbthrift_services_interface
 
 import asyncio
 import functools
@@ -168,15 +167,30 @@ cdef class MyServiceInterface(
             get_executor()
         )
 
+    _fbthrift_annotations_DO_NOT_USE_hasDataById = {
+        'return': 'bool',
+        'id': 'int', 
+    }
+
     async def hasDataById(
             self,
             id):
         raise NotImplementedError("async def hasDataById is not implemented")
 
+    _fbthrift_annotations_DO_NOT_USE_getDataById = {
+        'return': 'str',
+        'id': 'int', 
+    }
+
     async def getDataById(
             self,
             id):
         raise NotImplementedError("async def getDataById is not implemented")
+
+    _fbthrift_annotations_DO_NOT_USE_putDataById = {
+        'return': 'None',
+        'id': 'int', 'data': 'str', 
+    }
 
     async def putDataById(
             self,
@@ -184,20 +198,21 @@ cdef class MyServiceInterface(
             data):
         raise NotImplementedError("async def putDataById is not implemented")
 
+    _fbthrift_annotations_DO_NOT_USE_lobDataById = {
+        'return': 'None',
+        'id': 'int', 'data': 'str', 
+    }
+
     async def lobDataById(
             self,
             id,
             data):
         raise NotImplementedError("async def lobDataById is not implemented")
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__MyService(for_clients=False)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cMyServiceSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cMyServiceSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod
@@ -220,15 +235,30 @@ cdef class MyServiceFastInterface(
             get_executor()
         )
 
+    _fbthrift_annotations_DO_NOT_USE_hasDataById = {
+        'return': 'bool',
+        'id': 'int', 
+    }
+
     async def hasDataById(
             self,
             id):
         raise NotImplementedError("async def hasDataById is not implemented")
 
+    _fbthrift_annotations_DO_NOT_USE_getDataById = {
+        'return': 'str',
+        'id': 'int', 
+    }
+
     async def getDataById(
             self,
             id):
         raise NotImplementedError("async def getDataById is not implemented")
+
+    _fbthrift_annotations_DO_NOT_USE_putDataById = {
+        'return': 'None',
+        'id': 'int', 'data': 'str', 
+    }
 
     async def putDataById(
             self,
@@ -236,20 +266,21 @@ cdef class MyServiceFastInterface(
             data):
         raise NotImplementedError("async def putDataById is not implemented")
 
+    _fbthrift_annotations_DO_NOT_USE_lobDataById = {
+        'return': 'None',
+        'id': 'int', 'data': 'str', 
+    }
+
     async def lobDataById(
             self,
             id,
             data):
         raise NotImplementedError("async def lobDataById is not implemented")
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__MyServiceFast(for_clients=False)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cMyServiceFastSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cMyServiceFastSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod
@@ -272,24 +303,30 @@ cdef class DbMixedStackArgumentsInterface(
             get_executor()
         )
 
+    _fbthrift_annotations_DO_NOT_USE_getDataByKey0 = {
+        'return': 'bytes',
+        'key': 'str', 
+    }
+
     async def getDataByKey0(
             self,
             key):
         raise NotImplementedError("async def getDataByKey0 is not implemented")
+
+    _fbthrift_annotations_DO_NOT_USE_getDataByKey1 = {
+        'return': 'bytes',
+        'key': 'str', 
+    }
 
     async def getDataByKey1(
             self,
             key):
         raise NotImplementedError("async def getDataByKey1 is not implemented")
 
-    @classmethod
-    def __get_reflection__(cls):
-        return _services_reflection.get_reflection__DbMixedStackArguments(for_clients=False)
-
     @staticmethod
     def __get_metadata__():
         cdef __fbthrift_cThriftServiceMetadataResponse response
-        ServiceMetadata[_services_reflection.cDbMixedStackArgumentsSvIf].gen(response)
+        ServiceMetadata[_fbthrift_services_interface.cDbMixedStackArgumentsSvIf].gen(response)
         return __MetadataBox.box(cmove(deref(response.metadata_ref())))
 
     @staticmethod

@@ -25,6 +25,7 @@ from cpython.object cimport Py_LT, Py_EQ, PyCallable_Check
 from cpython.tuple cimport PyTuple_New, PyTuple_SET_ITEM, PyTuple_GET_ITEM, PyTuple_Check
 from cpython.set cimport PyFrozenSet_New, PySet_Add
 from cpython.ref cimport Py_INCREF, Py_DECREF
+from cpython.long cimport PyLong_AsLong
 from cpython.unicode cimport PyUnicode_AsUTF8String, PyUnicode_FromEncodedObject
 from cython.operator cimport dereference as deref
 
@@ -1113,8 +1114,8 @@ cdef class Struct(StructOrUnion):
             set_struct_field(new_inst._fbthrift_data, field_index, value_to_copy)
         if kwargs:
             raise TypeError(
-                f"{type(self)}: error updating copy with unknown field: "
-                f"'{kwargs.keys()[0]}'"
+                f"'{type(self).__name__}' object does not have attribute(s): "
+                f"'{', '.join(kwargs.keys())}'"
             )
         new_inst._fbthrift_populate_primitive_fields()
         return new_inst
@@ -1397,6 +1398,7 @@ cdef class Union(StructOrUnion):
     """
     def __cinit__(self):
         self._fbthrift_data = createUnionTuple()
+        self.py_type = None
 
     def __init__(self, **kwargs):
         self_type = type(self)
@@ -1473,10 +1475,11 @@ cdef class Union(StructOrUnion):
 
     cdef void _fbthrift_update_current_field_attributes(self) except *:
         """
-        Updates the `type` and `value` attributes from the internal data tuple
+        Updates the `value` attribute from the internal data tuple
         of this union (`self._fbthrift_data`).
+        Resets `py_type` to None
         """
-        self.type = type(self).Type(self._fbthrift_data[0])
+        self.py_type = None
         val = self._fbthrift_data[1]
         if val is None:
             self.value = None
@@ -1503,22 +1506,37 @@ cdef class Union(StructOrUnion):
         Returns the value of the field with the given `field_id` if it is indeed the
         field that is (currently) set for this union. Otherwise, raises AttributeError.
         """
-        if self.type.value != field_id:
+        if _fbthrift_get_Union_type_int(self) != field_id:
             # TODO in python 3.10 update this to use name and obj fields
             raise AttributeError(
-                f'Union contains a value of type {self.type.name}, not '
+                f'Union contains a value of type {self.get_type().name}, not '
                 f'{type(self).Type(field_id).name}')
         return self.value
 
-    def get_type(self):
-        return self.type
+
+    cdef object _fbthrift_py_type_enum(self):
+        '''
+        Initializes self.py_type enum if None.
+        '''
+        if self.py_type is None:
+            self.py_type = type(self).Type(
+                _fbthrift_get_Union_type_int(self)
+            )
+        return self.py_type
 
     @property
-    def fbthrift_current_field(self):
-        return self.type
+    def type(Union self not None):
+        return self._fbthrift_py_type_enum()
+
+    def get_type(Union self not None):
+        return self._fbthrift_py_type_enum()
 
     @property
-    def fbthrift_current_value(self):
+    def fbthrift_current_field(Union self not None):
+        return self._fbthrift_py_type_enum()
+
+    @property
+    def fbthrift_current_value(Union self not None):
         return self.value
 
     @classmethod
@@ -1554,35 +1572,49 @@ cdef class Union(StructOrUnion):
     def __deepcopy__(Union self, _memo):
         return self
 
-    def __eq__(Union self, other):
+    def __eq__(Union self not None, other):
         if type(other) != type(self):
             return False
-        return self.type == other.type and self.value == other.value
+        cdef Union other_u = other
+        cdef int self_type_int = _fbthrift_get_Union_type_int(self)
+        cdef int other_type_int = _fbthrift_get_Union_type_int(other_u)
+        return  self_type_int == other_type_int and self.value == other_u.value
 
-    def __lt__(self, other):
+    def __lt__(Union self not None, other):
         if type(self) != type(other):
             return NotImplemented
-        return (self.type.value, self.value) < (other.type.value, other.value)
+        cdef Union other_u = other
+        cdef int self_type_int = _fbthrift_get_Union_type_int(self)
+        cdef int other_type_int = _fbthrift_get_Union_type_int(other_u)
+        return (self_type_int, self.value) < (other_type_int, other_u.value)
 
-    def __le__(self, other):
+    def __le__(Union self not None, other):
         if type(self) != type(other):
             return NotImplemented
-        return (self.type.value, self.value) <= (other.type.value, other.value)
+        cdef Union other_u = other
+        cdef int self_type_int = _fbthrift_get_Union_type_int(self)
+        cdef int other_type_int = _fbthrift_get_Union_type_int(other_u)
+        return (self_type_int, self.value) <= (other_type_int, other_u.value)
 
-    def __hash__(self):
-        return hash((self.type, self.value))
+    def __hash__(Union self not None):
+        cdef int self_type_int = _fbthrift_get_Union_type_int(self)
+        return hash((self_type_int, self.value))
 
     def __repr__(self):
         return f"{type(self).__name__}({self.type.name}={self.value!r})"
 
-    def __bool__(self):
-        return self.type.value != 0
+    def __bool__(self not None):
+        return _fbthrift_get_Union_type_int(self) != 0
 
     def __dir__(self):
         return dir(type(self))
 
     def __reduce__(self):
         return (_unpickle_union, (type(self), b''.join(self._serialize(Protocol.COMPACT))))
+
+
+cdef inline int _fbthrift_get_Union_type_int(Union u):
+    return u._fbthrift_data[0]
 
 cdef _make_fget_struct(i):
     """
@@ -2001,6 +2033,10 @@ cdef class List(Container):
     def count(self, item):
         return self._fbthrift_elements.count(item)
 
+    def _fbthrift_same_type(self, other_elem_type):
+        return self._fbthrift_val_info.same_as(other_elem_type)
+
+tag_object_as_sequence(<PyTypeObject*>List)
 Sequence.register(List)
 
 
@@ -2112,6 +2148,9 @@ cdef class Set(Container):
     def issuperset(self, other):
         return self >= other
 
+    def _fbthrift_same_type(self, other_elem_type):
+        return self._fbthrift_val_info.same_as(other_elem_type)
+
 pySet.register(Set)
 
 
@@ -2191,7 +2230,13 @@ cdef class Map(Container):
         except KeyError:
             return default
 
+    def _fbthrift_same_type(self, other_key_type, other_val_type):
+        return (
+            self._fbthrift_key_info.same_as(other_key_type) and
+            self._fbthrift_val_info.same_as(other_val_type)
+        )
 
+tag_object_as_mapping(<PyTypeObject*>Map)
 Mapping.register(Map)
 
 
@@ -2290,12 +2335,16 @@ class EnumMeta(type):
         for name, value in dct.items():
             if not isinstance(value, int):
                 attrs[name] = value
+
         klass = super().__new__(
             metacls,
             classname,
             bases,
             attrs,
         )
+        if int in bases:
+            type.__setattr__(klass, "__eq__", Enum.__int__eq__)
+
         for name, value in dct.items():
             if not isinstance(value, int):
                 continue
@@ -2359,6 +2408,23 @@ cdef inline _fbthrift_enum_equivalent(a, b):
     cdef int b_types = b_module.rfind(".")
     return a_module[:a_types] == b_module[:b_types]
 
+cdef inline bint _enum_eq_(self, other):
+    if isinstance(other, Enum):
+        if self is other:
+            return True
+        # handle py3 vs python comparison
+        return (
+            self._fbthrift_value_ == other._fbthrift_value_ and
+            _fbthrift_enum_equivalent(self, other)
+        )
+    if cFollyIsDebug and isinstance(other, (bool, float)):
+        warnings.warn(
+            f"Did you really mean to compare {type(self)} and {type(other)}?",
+            RuntimeWarning,
+            stacklevel=1
+        )
+    return self._fbthrift_value_ == other
+
 class Enum(metaclass=EnumMeta):
     def __init__(self, _):
         # pass on purpose to keep the __init__ interface consistent with the other base class (i.e. int)
@@ -2389,21 +2455,7 @@ class Enum(metaclass=EnumMeta):
         return type(self), (self.value,)
 
     def __eq__(self, other):
-        if isinstance(other, Enum):
-            if self is other:
-                return True
-            # handle py3 vs python comparison
-            return (
-                self._fbthrift_value_ == other._fbthrift_value_ and
-                _fbthrift_enum_equivalent(self, other)
-            )
-        if cFollyIsDebug and isinstance(other, (bool, float)):
-            warnings.warn(
-                f"Did you really mean to compare {type(self)} and {type(other)}?",
-                RuntimeWarning,
-                stacklevel=1
-            )
-        return self._fbthrift_value_ == other
+        return _enum_eq_(self, other)
 
     # thrift-python enums have int base, so have to define
     # __ne__ to avoid __ne__ based on int value alone
@@ -2427,6 +2479,11 @@ class Enum(metaclass=EnumMeta):
 
     def __bool__(self):
         return True
+
+    def __int__eq__(self, other):
+        if type(self) is type(other):
+            return PyLong_AsLong(self) == PyLong_AsLong(other)
+        return _enum_eq_(self, other)
 
 
 class Flag(Enum):

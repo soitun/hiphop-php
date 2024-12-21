@@ -290,6 +290,7 @@ impl<'a, R: Reason> ToOxidized<'a> for FunType<R, Ty<R>> {
             ret: self.ret.to_oxidized(arena),
             flags: self.flags,
             cross_package: self.cross_package.to_oxidized(arena),
+            instantiated: self.instantiated,
         })
     }
 }
@@ -498,6 +499,7 @@ impl<'a, R: Reason> ToOxidized<'a> for folded::FoldedClass<R> {
             req_ancestors,
             req_ancestors_extends,
             req_class_ancestors,
+            req_this_as_ancestors,
             extends,
             sealed_whitelist,
             xhp_attr_deps,
@@ -541,6 +543,7 @@ impl<'a, R: Reason> ToOxidized<'a> for folded::FoldedClass<R> {
             req_ancestors: req_ancestors.to_oxidized(arena),
             req_ancestors_extends: req_ancestors_extends.to_oxidized(arena),
             req_class_ancestors: req_class_ancestors.to_oxidized(arena),
+            req_this_as_ancestors: req_this_as_ancestors.to_oxidized(arena),
             extends: extends.to_oxidized(arena),
             sealed_whitelist: sealed_whitelist.to_oxidized(arena),
             xhp_attr_deps: xhp_attr_deps.to_oxidized(arena),
@@ -549,7 +552,7 @@ impl<'a, R: Reason> ToOxidized<'a> for folded::FoldedClass<R> {
             docs_url: docs_url.as_deref().to_oxidized(arena),
             allow_multiple_instantiations: *allow_multiple_instantiations,
             sort_text: sort_text.as_deref().to_oxidized(arena),
-            package: package.as_deref().to_oxidized(arena),
+            package: package.as_ref().map(|p| p.to_arena_allocated(arena)),
         })
     }
 }
@@ -728,6 +731,7 @@ impl<'a, R: Reason> ToOxidized<'a> for shallow::ClassDecl<R> {
             req_extends,
             req_implements,
             req_class,
+            req_this_as,
             implements,
             support_dynamic_type,
             consts,
@@ -765,6 +769,7 @@ impl<'a, R: Reason> ToOxidized<'a> for shallow::ClassDecl<R> {
             req_extends: req_extends.to_oxidized(arena),
             req_implements: req_implements.to_oxidized(arena),
             req_class: req_class.to_oxidized(arena),
+            req_this_as: req_this_as.to_oxidized(arena),
             implements: implements.to_oxidized(arena),
             support_dynamic_type: *support_dynamic_type,
             consts: consts.to_oxidized(arena),
@@ -779,9 +784,7 @@ impl<'a, R: Reason> ToOxidized<'a> for shallow::ClassDecl<R> {
             docs_url: docs_url
                 .as_ref()
                 .map(|s| bumpalo::collections::String::from_str_in(s, arena).into_bump_str()),
-            package: package
-                .as_ref()
-                .map(|s| bumpalo::collections::String::from_str_in(s, arena).into_bump_str()),
+            package: package.as_ref().map(|p| p.to_arena_allocated(arena)),
         })
     }
 }
@@ -818,7 +821,7 @@ impl<'a, R: Reason> ToOxidized<'a> for shallow::FunDecl<R> {
                 let (pos, id) = m.to_oxidized(arena);
                 obr::ast_defs::Id(pos, id)
             }),
-            package: package.as_deref().to_oxidized(arena),
+            package: package.as_ref().map(|p| p.to_arena_allocated(arena)),
         })
     }
 }
@@ -854,7 +857,7 @@ impl<'a, R: Reason> ToOxidized<'a> for shallow::TypedefDecl<R> {
             attributes: attributes.to_oxidized(arena),
             internal: *internal,
             docs_url: docs_url.as_deref().to_oxidized(arena),
-            package: package.as_deref().to_oxidized(arena),
+            package: package.as_ref().map(|p| p.to_arena_allocated(arena)),
         })
     }
 }

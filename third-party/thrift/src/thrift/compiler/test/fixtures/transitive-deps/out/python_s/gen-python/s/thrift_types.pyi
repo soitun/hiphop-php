@@ -10,12 +10,14 @@ from __future__ import annotations
 import typing as _typing
 
 import folly.iobuf as _fbthrift_iobuf
+import s.thrift_abstract_types as _fbthrift_python_abstract_types
 import thrift.python.types as _fbthrift_python_types
 import thrift.python.exceptions as _fbthrift_python_exceptions
 
 import b.thrift_types as _fbthrift__b__thrift_types
 
 import c.thrift_types as _fbthrift__c__thrift_types
+
 
 
 class _fbthrift_TestService_test_args(_fbthrift_python_types.Struct):

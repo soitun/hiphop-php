@@ -26,11 +26,7 @@ namespace w = whisker::make;
 namespace whisker {
 
 namespace {
-class empty_native_object : public native_object {
-  const object* lookup_property(std::string_view) const override {
-    return nullptr;
-  }
-};
+class empty_native_object : public native_object {};
 } // namespace
 
 TEST_F(RenderTest, basic) {
@@ -171,17 +167,14 @@ TEST_F(RenderTest, section_block_array_asymmetric_nested_scopes) {
 TEST_F(RenderTest, section_block_array_iterable_native_object) {
   class array_like_native_object
       : public native_object,
-        public native_object::sequence,
+        public native_object::array_like,
         public std::enable_shared_from_this<array_like_native_object> {
    public:
     explicit array_like_native_object(array values)
         : values_(std::move(values)) {}
 
-    const object* lookup_property(std::string_view) const override {
-      return nullptr;
-    }
-
-    std::shared_ptr<const sequence> as_sequence() const override {
+    std::shared_ptr<const native_object::array_like> as_array_like()
+        const override {
       return shared_from_this();
     }
     std::size_t size() const override { return values_.size(); }
@@ -263,9 +256,17 @@ TEST_F(RenderTest, section_block_map) {
 }
 
 TEST_F(RenderTest, section_block_map_like_native_object) {
-  class map_like_native_object : public native_object {
+  class map_like_native_object
+      : public native_object,
+        public native_object::map_like,
+        public std::enable_shared_from_this<map_like_native_object> {
    public:
     explicit map_like_native_object(map values) : values_(std::move(values)) {}
+
+    std::shared_ptr<const native_object::map_like> as_map_like()
+        const override {
+      return shared_from_this();
+    }
 
     const object* lookup_property(std::string_view id) const override {
       if (auto value = values_.find(id); value != values_.end()) {
@@ -310,6 +311,37 @@ TEST_F(RenderTest, section_block_map_like_native_object) {
         "{{/factorials}}",
         factorials);
     EXPECT_EQ(*result, "The factorial function looks like:\n");
+  }
+}
+
+TEST_F(RenderTest, section_block_pointless_native_object) {
+  auto context =
+      w::map({{"pointless", w::make_native_object<empty_native_object>()}});
+  {
+    strict_boolean_conditional = diagnostic_level::info;
+    auto result = render(
+        "{{#pointless}}\n"
+        "Should not be rendered\n"
+        "{{/pointless}}",
+        context);
+    EXPECT_EQ(*result, "");
+  }
+  {
+    strict_boolean_conditional = diagnostic_level::error;
+    auto result = render(
+        "{{#pointless}}\n"
+        "Should not be rendered\n"
+        "{{/pointless}}",
+        context);
+    EXPECT_FALSE(result.has_value());
+    EXPECT_THAT(
+        diagnostics(),
+        testing::ElementsAre(diagnostic(
+            diagnostic_level::error,
+            "Condition 'pointless' is not a boolean. The encountered value is:\n"
+            "<native_object>\n",
+            path_to_file,
+            1)));
   }
 }
 
@@ -458,7 +490,7 @@ TEST_F(RenderTest, if_block) {
     auto result = render(
         "{{#if news.has-update?}}\n"
         "Stuff is {{foo}} happening!\n"
-        "{{/if}}\n",
+        "{{/if news.has-update?}}\n",
         w::map(
             {{"news", w::map({{"has-update?", w::boolean(true)}})},
              {"foo", w::string("now")}}));
@@ -466,7 +498,7 @@ TEST_F(RenderTest, if_block) {
   }
   {
     auto result = render(
-        "{{#if news.has-update?}}Stuff is {{foo}} happening!{{/if}}",
+        "{{#if news.has-update?}}Stuff is {{foo}} happening!{{/if news.has-update?}}",
         w::map({{"news", w::map({{"has-update?", w::boolean(false)}})}}));
     EXPECT_EQ(*result, "");
   }
@@ -475,9 +507,9 @@ TEST_F(RenderTest, if_block) {
 TEST_F(RenderTest, unless_block) {
   {
     auto result = render(
-        "{{#unless news.has-update?}}\n"
+        "{{#if (not news.has-update?)}}\n"
         "Stuff is {{foo}} happening!\n"
-        "{{/unless}}\n",
+        "{{/if (not news.has-update?)}}\n",
         w::map(
             {{"news", w::map({{"has-update?", w::boolean(false)}})},
              {"foo", w::string("now")}}));
@@ -485,7 +517,7 @@ TEST_F(RenderTest, unless_block) {
   }
   {
     auto result = render(
-        "{{#unless news.has-update?}}Stuff is {{foo}} happening!{{/unless}}",
+        "{{#if (not news.has-update?)}}Stuff is {{foo}} happening!{{/if (not news.has-update?)}}",
         w::map({{"news", w::map({{"has-update?", w::boolean(true)}})}}));
     EXPECT_EQ(*result, "");
   }
@@ -496,9 +528,9 @@ TEST_F(RenderTest, if_else_block) {
     auto result = render(
         "{{#if news.has-update?}}\n"
         "Stuff is {{foo}} happening!\n"
-        "{{else}}\n"
+        "{{#else}}\n"
         "Nothing is happening!\n"
-        "{{/if}}\n",
+        "{{/if news.has-update?}}\n",
         w::map(
             {{"news", w::map({{"has-update?", w::boolean(true)}})},
              {"foo", w::string("now")}}));
@@ -508,9 +540,9 @@ TEST_F(RenderTest, if_else_block) {
     auto result = render(
         "{{#if news.has-update?}}\n"
         "Stuff is {{foo}} happening!\n"
-        "{{else}}\n"
+        "{{#else}}\n"
         "Nothing is happening!\n"
-        "{{/if}}\n",
+        "{{/if news.has-update?}}\n",
         w::map({{"news", w::map({{"has-update?", w::boolean(false)}})}}));
     EXPECT_EQ(*result, "Nothing is happening!\n");
   }
@@ -519,26 +551,136 @@ TEST_F(RenderTest, if_else_block) {
 TEST_F(RenderTest, unless_else_block) {
   {
     auto result = render(
-        "{{#unless news.has-update?}}\n"
+        "{{#if (not news.has-update?)}}\n"
         "Nothing is happening!\n"
-        "{{else}}\n"
+        "{{#else}}\n"
         "Stuff is {{foo}} happening!\n"
-        "{{/unless}}\n",
+        "{{/if (not news.has-update?)}}\n",
         w::map({{"news", w::map({{"has-update?", w::boolean(false)}})}}));
     EXPECT_EQ(*result, "Nothing is happening!\n");
   }
   {
     auto result = render(
-        "{{#unless news.has-update?}}\n"
+        "{{#if (not news.has-update?)}}\n"
         "Nothing is happening!\n"
-        "{{else}}\n"
+        "{{#else}}\n"
         "Stuff is {{foo}} happening!\n"
-        "{{/unless}}\n",
+        "{{/if (not news.has-update?)}}\n",
         w::map(
             {{"news", w::map({{"has-update?", w::boolean(true)}})},
              {"foo", w::string("now")}}));
     EXPECT_EQ(*result, "Stuff is now happening!\n");
   }
+}
+
+TEST_F(RenderTest, if_not_else_block) {
+  {
+    auto result = render(
+        "{{#if (not news.has-update?)}}\n"
+        "Nothing is happening!\n"
+        "{{#else}}\n"
+        "Stuff is {{foo}} happening!\n"
+        "{{/if (not news.has-update?)}}\n",
+        w::map({{"news", w::map({{"has-update?", w::boolean(false)}})}}));
+    EXPECT_THAT(diagnostics(), testing::IsEmpty());
+    EXPECT_EQ(*result, "Nothing is happening!\n");
+  }
+  {
+    auto result = render(
+        "{{#if (not news.has-update?)}}\n"
+        "Nothing is happening!\n"
+        "{{#else}}\n"
+        "Stuff is {{foo}} happening!\n"
+        "{{/if (not news.has-update?)}}\n",
+        w::map(
+            {{"news", w::map({{"has-update?", w::boolean(true)}})},
+             {"foo", w::string("now")}}));
+    EXPECT_THAT(diagnostics(), testing::IsEmpty());
+    EXPECT_EQ(*result, "Stuff is now happening!\n");
+  }
+}
+
+TEST_F(RenderTest, and_or) {
+  {
+    auto result = render(
+        "{{#if (and (or no yes) yes)}}\n"
+        "Yes!\n"
+        "{{/if (and (or no yes) yes)}}\n",
+        w::map({{"yes", w::boolean(true)}, {"no", w::boolean(false)}}));
+    EXPECT_THAT(diagnostics(), testing::IsEmpty());
+    EXPECT_EQ(*result, "Yes!\n");
+  }
+}
+
+TEST_F(RenderTest, and_or_short_circuit) {
+  {
+    auto result = render(
+        "{{#if (and news.has-update? intentionally_undefined)}}\n"
+        "Oops!\n"
+        "{{/if (and news.has-update? intentionally_undefined)}}\n"
+        "{{#if (or (not news.has-update?) intentionally_undefined)}}\n"
+        "Nothing is happening!\n"
+        "{{/if (or (not news.has-update?) intentionally_undefined)}}\n",
+        w::map({{"news", w::map({{"has-update?", w::boolean(false)}})}}));
+    EXPECT_THAT(diagnostics(), testing::IsEmpty());
+    EXPECT_EQ(*result, "Nothing is happening!\n");
+  }
+}
+
+TEST_F(RenderTest, let_statement) {
+  auto result = render(
+      "{{#let cond = (not false_value)}}\n"
+      "{{#if cond}}\n"
+      "  {{#let cond = some_text}}\n"
+      "  {{cond}}\n"
+      "{{/if cond}}\n"
+      "{{#if cond}}\n"
+      "  Outer scope was not overwritten!\n"
+      "{{/if cond}}\n",
+      w::map(
+          {{"false_value", w::boolean(false)},
+           {"some_text", w::string("some text")}}));
+  EXPECT_THAT(diagnostics(), testing::IsEmpty());
+  EXPECT_EQ(
+      *result,
+      "  some text\n"
+      "  Outer scope was not overwritten!\n");
+}
+
+TEST_F(RenderTest, let_statement_loop) {
+  auto result = render(
+      "{{#array}}\n"
+      "  {{#let element = .}}\n"
+      "  {{element.value}}\n"
+      "{{/array}}\n",
+      w::map(
+          {{"array",
+            w::array({
+                w::map({{"value", w::i64(2)}}),
+                w::map({{"value", w::string("foo")}}),
+                w::map({{"value", w::string("bar")}}),
+            })}}));
+  EXPECT_THAT(diagnostics(), testing::IsEmpty());
+  EXPECT_EQ(
+      *result,
+      "  2\n"
+      "  foo\n"
+      "  bar\n");
+}
+
+TEST_F(RenderTest, let_statement_rebinding_error) {
+  auto result = render(
+      "{{#let cond = (not false_value)}}\n"
+      "{{#let cond = false_value}}\n",
+      w::map({{"false_value", w::boolean(false)}}));
+  EXPECT_FALSE(result.has_value());
+  EXPECT_THAT(
+      diagnostics(),
+      testing::ElementsAre(diagnostic(
+          diagnostic_level::error,
+          "Name 'cond' is already bound in the current scope.",
+          path_to_file,
+          2)));
 }
 
 TEST_F(RenderTest, printable_types_strict_failure) {
@@ -1034,7 +1176,7 @@ TEST_F(
   auto result = render(
       "| This Is\n"
       "  {{#boolean\n"
-      "       .condition}} {{ > ineligible}} \n"
+      "       .condition}} {{> ineligible}} \n"
       "|\n"
       "  {{/boolean.condition}}\n"
       "| A Line\n",
