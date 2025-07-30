@@ -53,9 +53,8 @@ class codegen_data {
   // Req/Resp structs are internal and must be unexported (i.e. lowercase)
   // This set will help us track these srtucts by name.
   std::set<std::string> req_resp_struct_names;
-  // Mapping of service name to a vector of req/resp structs for that service.
-  std::map<std::string, std::vector<const t_struct*>>
-      service_to_req_resp_structs = {};
+  // Req/resp structs in the program.
+  std::vector<const t_struct*> req_resp_structs = {};
   // A vector of types for which we need to generate metadata.
   // Order matters here - items later in the list may have a dependency
   // on items earlier in the list. This ensures that the Go code can
@@ -66,7 +65,7 @@ class codegen_data {
 
   void compute_go_package_aliases();
   void compute_struct_to_field_names();
-  void compute_service_to_req_resp_structs();
+  void compute_req_resp_structs();
   void compute_thrift_metadata_types();
 
   bool is_current_program(const t_program* program);
@@ -157,8 +156,10 @@ std::string get_go_func_name(const t_function* func);
 
 std::set<std::string> get_struct_go_field_names(const t_structured* tstruct);
 
-std::vector<const t_struct*> get_service_req_resp_structs(
-    const t_service* service);
+void make_func_req_resp_structs(
+    const t_function* func,
+    const std::string& prefix,
+    std::vector<const t_struct*>& req_resp_structs);
 
 const std::string* get_go_name_annotation(const t_named* node);
 const std::string* get_go_tag_annotation(const t_named* node);
