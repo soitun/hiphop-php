@@ -554,8 +554,9 @@ class python_mstch_program : public mstch_program {
   mstch::node module_path_array(
       const std::unordered_set<std::string_view>& modules) {
     mstch::array a;
+    a.reserve(modules.size());
     for (const auto& m : modules) {
-      a.emplace_back(mstch::map{{"module_path", m}});
+      a.emplace_back(m);
     }
     return a;
   }
@@ -1130,7 +1131,8 @@ class t_mstch_python_prototypes_generator : public t_mstch_generator {
 
   void initialize_context(context_visitor& visitor) override {
     // Fix fields with mismatched empty const containers
-    visitor.add_field_visitor([](const t_field& node) {
+    visitor.add_field_visitor([](const whisker_generator_visitor_context&,
+                                 const t_field& node) {
       const t_const_value* value = node.default_value();
       if (value != nullptr && value->is_empty()) {
         const t_type& true_type = *node.type()->get_true_type();
