@@ -1394,6 +1394,18 @@ fn fail_if_invalid_reified_generic<'a>(node: S<'a>, env: &mut Env<'a>, id: impl 
     }
 }
 
+fn expr_to_class_id_<'a>(env: &mut Env<'a>, e: ast::Expr) -> Result<ast::ClassId_> {
+    let Expr(ex, epos, expr_) = e;
+    match expr_ {
+        Expr_::Id(name) => match env.get_reification(&name.1) {
+            Some(true) => Ok(ast::ClassId_::CIexpr(Expr(ex, epos, Expr_::Id(name)))),
+            Some(false) => parsing_error(syntax_error::erased_generic_as_class_id, epos),
+            None => Ok(ast::ClassId_::CIexpr(Expr(ex, epos, Expr_::Id(name)))),
+        },
+        expr_ => Ok(ast::ClassId_::CIexpr(Expr(ex, epos, expr_))),
+    }
+}
+
 fn rfind(s: &[u8], mut i: usize, c: u8) -> Option<usize> {
     if i >= s.len() {
         return None;
@@ -2100,18 +2112,17 @@ fn p_function_pointer_expr<'a>(
             targs,
             aast::FunctionPointerSource::Code,
         )),
-        Expr_::ClassConst(c) => {
-            if let aast::ClassId_::CIexpr(Expr(_, _, Expr_::Id(_))) = (c.0).2 {
-                Ok(Expr_::mk_function_pointer(
-                    aast::FunctionPtrId::FPClassConst(c.0.to_owned(), c.1.to_owned()),
-                    targs,
-                    aast::FunctionPointerSource::Code,
-                ))
-            } else {
+        Expr_::ClassConst(c) => match &(c.0).2 {
+            aast::ClassId_::CIexpr(Expr(_, _, Expr_::Id(_))) => Ok(Expr_::mk_function_pointer(
+                aast::FunctionPtrId::FPClassConst(c.0.to_owned(), c.1.to_owned()),
+                targs,
+                aast::FunctionPointerSource::Code,
+            )),
+            _ => {
                 raise_parsing_error(node, env, &syntax_error::function_pointer_bad_recv);
                 missing_syntax("function or static method", node, env)
             }
-        }
+        },
         _ => {
             raise_parsing_error(node, env, &syntax_error::function_pointer_bad_recv);
             missing_syntax("function or static method", node, env)
@@ -2303,6 +2314,7 @@ fn p_scope_resolution_expr<'a>(
     if let Expr_::Id(id) = &qual.2 {
         fail_if_invalid_reified_generic(node, env, &id.1);
     }
+    let class_id_ = expr_to_class_id_(env, qual)?;
     match &c.name.children {
         Token(token) if token.kind() == TK::Variable => {
             if location == ExprLocation::CallReceiver {
@@ -2313,7 +2325,7 @@ fn p_scope_resolution_expr<'a>(
             } else {
                 let ast::Id(p, name) = pos_name(&c.name, env)?;
                 Ok(Expr_::mk_class_get(
-                    ast::ClassId((), pos, ast::ClassId_::CIexpr(qual)),
+                    ast::ClassId((), pos, class_id_),
                     (p, name),
                     ast::PropOrMethod::IsProp,
                 ))
@@ -2323,7 +2335,7 @@ fn p_scope_resolution_expr<'a>(
             let Expr(_, p, expr_) = p_expr(&c.name, env)?;
             match expr_ {
                 Expr_::String(id) => Ok(Expr_::mk_class_const(
-                    ast::ClassId((), pos, ast::ClassId_::CIexpr(qual)),
+                    ast::ClassId((), pos, class_id_),
                     (
                         p.clone(),
                         String::from_utf8(id.into()).map_err(|e| Error::ParsingError {
@@ -2335,14 +2347,14 @@ fn p_scope_resolution_expr<'a>(
                 Expr_::Id(id) => {
                     let ast::Id(p, n) = *id;
                     Ok(Expr_::mk_class_const(
-                        ast::ClassId((), pos, ast::ClassId_::CIexpr(qual)),
+                        ast::ClassId((), pos, class_id_),
                         (p, n),
                     ))
                 }
                 Expr_::Lvar(id) if location != ExprLocation::CallReceiver => {
                     let ast::Lid(p, (_, n)) = *id;
                     Ok(Expr_::mk_class_get(
-                        ast::ClassId((), pos, ast::ClassId_::CIexpr(qual)),
+                        ast::ClassId((), pos, class_id_),
                         (p, n),
                         ast::PropOrMethod::IsProp,
                     ))
@@ -2577,8 +2589,9 @@ fn p_constructor_call<'a>(
         fail_if_invalid_reified_generic(node, env, &name.1);
         fail_if_invalid_class_creation(node, env, &name.1);
     }
+    let class_id_ = expr_to_class_id_(env, e)?;
     Ok(Expr_::mk_new(
-        ast::ClassId((), pos, ast::ClassId_::CIexpr(e)),
+        ast::ClassId((), pos, class_id_),
         hl,
         args,
         unpacked_arg,

@@ -428,8 +428,8 @@ fn print_expr(
         }
         Expr_::New(x) => {
             let (cid, _, es, unpacked_element, _) = &**x;
-            match cid.2.as_ciexpr() {
-                Some(ci_expr) => {
+            match &cid.2 {
+                ast::ClassId_::CIexpr(ci_expr) => {
                     w.write_all(b"new ")?;
                     match ci_expr.2.as_id() {
                         Some(ast_defs::Id(_, cname)) => w.write_all(
@@ -466,25 +466,21 @@ fn print_expr(
                         }
                     })
                 }
-                None => {
-                    match cid.2.as_ci() {
-                        Some(id) => {
-                            // Xml exprs rewritten as New exprs come
-                            // through here.
-                            // TODO(named_params): Losing named argument information for XML expressions
-                            let exprs: Vec<ast::Expr> = es
-                                .iter()
-                                .map(|arg| match arg {
-                                    ast::Argument::Anormal(e) => e.clone(),
-                                    ast::Argument::Anamed(_, e) => e.clone(),
-                                    ast::Argument::Ainout(_, e) => e.clone(),
-                                })
-                                .collect();
-                            print_xml(ctx, w, env, &id.1, &exprs[..])
-                        }
-                        None => Err(Error::NotImpl(format!("{}:{}", file!(), line!())).into()),
-                    }
+                ast::ClassId_::CI(id) => {
+                    // Xml exprs rewritten as New exprs come
+                    // through here.
+                    // TODO(named_params): Losing named argument information for XML expressions
+                    let exprs: Vec<ast::Expr> = es
+                        .iter()
+                        .map(|arg| match arg {
+                            ast::Argument::Anormal(e) => e.clone(),
+                            ast::Argument::Anamed(_, e) => e.clone(),
+                            ast::Argument::Ainout(_, e) => e.clone(),
+                        })
+                        .collect();
+                    print_xml(ctx, w, env, &id.1, &exprs[..])
                 }
+                _ => Err(Error::NotImpl(format!("{}:{}", file!(), line!())).into()),
             }
         }
         Expr_::ClassGet(cg) => {
@@ -500,7 +496,11 @@ fn print_expr(
                     )?,
                     _ => print_expr(ctx, w, env, e)?,
                 },
-                _ => return Err(Error::fail("TODO Unimplemented unexpected non-CIexpr").into()),
+                _ => {
+                    return Err(
+                        Error::fail("TODO Unimplemented unexpected class_id in ClassGet").into(),
+                    );
+                }
             }
             w.write_all(b"::")?;
             let (_, litstr) = &cg.1;
@@ -508,17 +508,20 @@ fn print_expr(
         }
         Expr_::Nameof(box cid) => {
             w.write_all(b"nameof ")?;
-            if let Some(e1) = cid.as_ciexpr() {
-                if let Some(ast_defs::Id(_, s1)) = e1.2.as_id() {
-                    let s1 = get_class_name_from_id(ctx, env, true, false, s1);
-                    return w.write_all(s1.as_ref().as_bytes());
-                }
+            match &cid.2 {
+                ast::ClassId_::CIexpr(e) => match e.2.as_id() {
+                    Some(ast_defs::Id(_, s1)) => {
+                        let s1 = get_class_name_from_id(ctx, env, true, false, s1);
+                        w.write_all(s1.as_ref().as_bytes())
+                    }
+                    _ => Err(Error::fail("TODO: expected Id in Nameof CIexpr").into()),
+                },
+                _ => Err(Error::fail("TODO: unexpected class_id in Nameof").into()),
             }
-            Err(Error::fail("TODO: Only expected CIexpr of Id in Nid").into())
         }
-        Expr_::ClassConst(cc) => {
-            if let Some(e1) = (cc.0).2.as_ciexpr() {
-                handle_possible_colon_colon_class_expr(ctx, w, env, expr)?.map_or_else(
+        Expr_::ClassConst(cc) => match &(cc.0).2 {
+            ast::ClassId_::CIexpr(e1) => handle_possible_colon_colon_class_expr(ctx, w, env, expr)?
+                .map_or_else(
                     || {
                         let s2 = &(cc.1).1;
                         match e1.2.as_id() {
@@ -534,11 +537,9 @@ fn print_expr(
                         }
                     },
                     Ok,
-                )
-            } else {
-                Err(Error::fail("TODO: Only expected CIexpr in class_const").into())
-            }
-        }
+                ),
+            _ => Err(Error::fail("TODO: unexpected class_id in ClassConst").into()),
+        },
         Expr_::Unop(u) => match u.0 {
             ast::Uop::Upincr => {
                 print_expr(ctx, w, env, &u.1)?;
@@ -660,7 +661,7 @@ fn print_expr(
                         },
                         _ => {
                             return Err(Error::fail(
-                                "TODO Unimplemented unexpected non-CIexpr in function pointer",
+                                "TODO Unimplemented unexpected class_id in function pointer",
                             )
                             .into());
                         }

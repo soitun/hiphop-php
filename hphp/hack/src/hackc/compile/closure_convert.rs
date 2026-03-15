@@ -2,7 +2,7 @@
 //
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
-
+#![feature(box_patterns)]
 use std::borrow::Cow;
 use std::sync::Arc;
 
@@ -31,6 +31,7 @@ use oxidized::ast::CallExpr;
 use oxidized::ast::CaptureLid;
 use oxidized::ast::Class_;
 use oxidized::ast::ClassHint;
+use oxidized::ast::ClassId_;
 use oxidized::ast::ClassName;
 use oxidized::ast::ClassVar;
 use oxidized::ast::ClassishKind;
@@ -988,6 +989,10 @@ impl<'ast, 'a: 'b, 'b> VisitorMut<'ast> for ClosureVisitor<'a, 'b> {
         }
     }
 
+    fn visit_class_id_(&mut self, scope: &mut Scope<'b>, cid: &mut ClassId_) -> Result<()> {
+        cid.recurse(scope, self)
+    }
+
     fn visit_hint_(&mut self, scope: &mut Scope<'b>, hint: &mut Hint_) -> Result<()> {
         if let Hint_::Happly(id, _) = hint {
             self.state_mut().add_generic(scope, id.name())
@@ -1091,18 +1096,7 @@ impl<'ast, 'a: 'b, 'b> VisitorMut<'ast> for ClosureVisitor<'a, 'b> {
                     self.visit_dyn_meth_caller(scope, x, &*pos)?
                 }
                 Expr_::Call(x) if is_meth_caller(&x) => self.visit_meth_caller(scope, x)?,
-                Expr_::Call(x)
-                    if (x.func)
-                        .as_class_get()
-                        .and_then(|(id, _, _)| id.as_ciexpr())
-                        .and_then(|x| x.as_id())
-                        .is_some_and(string_utils::is_parent)
-                        || (x.func)
-                            .as_class_const()
-                            .and_then(|(id, _)| id.as_ciexpr())
-                            .and_then(|x| x.as_id())
-                            .is_some_and(string_utils::is_parent) =>
-                {
+                Expr_::Call(x) if is_parent_call(&x) => {
                     self.state_mut().add_var(scope, "$this");
                     let mut res = Expr_::Call(x);
                     res.recurse(scope, self)?;
@@ -1213,16 +1207,13 @@ impl<'a: 'b, 'b> ClosureVisitor<'a, 'b> {
                         None => unreachable!(),
                         Some((ref mut cid, (_, _))) => cid,
                     };
-                    if cid
-                        .as_ciexpr()
-                        .and_then(Expr::as_id)
-                        .is_some_and(|id| !is_selflike_keyword(id))
-                    {
-                        let mut res = Expr_::Call(x);
-                        res.recurse(scope, self)?;
-                        Ok(res)
-                    } else {
-                        Err(Error::fatal_parse(pc, "Invalid class"))
+                    match &cid.2 {
+                        ClassId_::CIexpr(Expr(_, _, Expr_::Id(id))) if !is_selflike_keyword(id) => {
+                            let mut res = Expr_::Call(x);
+                            res.recurse(scope, self)?;
+                            Ok(res)
+                        }
+                        _ => Err(Error::fatal_parse(pc, "Invalid class")),
                     }
                 }
                 (_, Some(_)) => Err(Error::fatal_parse(pc, "Class must be a Class type")),
@@ -1486,6 +1477,16 @@ fn is_meth_caller(x: &CallExpr) -> bool {
         }
     } else {
         false
+    }
+}
+
+fn is_parent_call(x: &CallExpr) -> bool {
+    match &x.func.2 {
+        Expr_::ClassGet(box (ci, _, _)) | Expr_::ClassConst(box (ci, _)) => match &ci.2 {
+            ClassId_::CIexpr(Expr(_, _, Expr_::Id(id))) => string_utils::is_parent(&id.1),
+            _ => false,
+        },
+        _ => false,
     }
 }
 

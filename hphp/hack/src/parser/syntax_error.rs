@@ -520,6 +520,9 @@ pub const static_method_reified_obj_creation: Error = Cow::Borrowed(
 );
 pub const non_invariant_reified_generic: Error =
     Cow::Borrowed("Reified generics cannot be covariant or contravariant");
+pub const erased_generic_as_class_id: Error = Cow::Borrowed(
+    "Erased generics can only be used in type hints because they do not exist at runtime",
+);
 pub const no_generics_on_constructors: Error = Cow::Borrowed(
     "Generic type parameters are not allowed on constructors. Consider adding a type parameter to the class",
 );
