@@ -1391,7 +1391,7 @@ struct Index {
   lookup_class_type_constant(const php::Class&, SString, ConstIndex) const;
 
   /*
-   * Retrive all type constants on the given class, whether declared
+   * Retrieve all type constants on the given class, whether declared
    * on the class or inherited.
    */
   std::vector<std::pair<SString, HHBBC::ConstIndex>>
