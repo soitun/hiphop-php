@@ -158,7 +158,7 @@ let rec is_enforced hint_ty =
     TShapeMap.for_all (fun _name ty -> is_enforced ty.sft_ty) expected_fdm
   | _ -> false
 
-(** [refine_and_simplify_intersection ~hint_first env p reason ivar_pos ty hint_ty]
+(** [refine_and_simplify_intersection env p reason ivar_pos ty hint_ty]
   intersects [ty] and [hint_ty], possibly making [hint_ty] support dynamic
   first if [ty] also supports dynamic.
   Then if the result has some like types in which prevent simplification
@@ -174,19 +174,15 @@ let rec is_enforced hint_ty =
   * [ty_is_supportdyn] Assume that ty is supportdyn when intersecting with the hint type
   *)
 let refine_and_simplify_intersection
-    ~hint_first env ~is_class ?(ty_is_supportdyn = false) reason ty hint_ty =
-  let intersect ~hint_first ~is_class env r ty hint_ty =
+    env ~is_class ?(ty_is_supportdyn = false) reason ty hint_ty =
+  let intersect ~is_class env r ty hint_ty =
     let (env, hint_ty) =
       if is_class && (ty_is_supportdyn || Utils.is_supportdyn env ty) then
         Utils.make_supportdyn reason env hint_ty
       else
         (env, hint_ty)
     in
-    (* Sometimes the type checker is sensitive to the ordering of intersections *)
-    if hint_first then
-      Inter.intersect env ~r hint_ty ty
-    else
-      Inter.intersect env ~r ty hint_ty
+    Inter.intersect env ~r ty hint_ty
   in
   let like_type_simplify env ty hint_ty ~is_class =
     (* This basically distributes the intersection over the union.
@@ -206,9 +202,7 @@ let refine_and_simplify_intersection
 
          ~X & ~H = ~(X & H)
     *)
-    let (env, intersection_ty) =
-      intersect ~hint_first:false ~is_class env reason ty hint_ty
-    in
+    let (env, intersection_ty) = intersect ~is_class env reason ty hint_ty in
     if is_enforced hint_ty then
       let (env, dyn_ty) =
         Inter.intersect env ~r:reason (Typing_make_type.dynamic reason) hint_ty
@@ -219,7 +213,7 @@ let refine_and_simplify_intersection
   in
   match Typing_dynamic_utils.try_strip_dynamic env ty with
   | (env, Some ty) -> like_type_simplify env ty hint_ty ~is_class
-  | (env, _) -> intersect ~hint_first ~is_class env reason ty hint_ty
+  | (env, _) -> intersect ~is_class env reason ty hint_ty
 
 let make_simplify_typed_expr env p ty te =
   let (env, ty) = Typing_dynamic_utils.recompose_like_type env ty in

@@ -134,7 +134,6 @@ let refine_key_exists field_name pos env shape =
   in
   Option.iter ~f:(Typing_error_utils.add_typing_error ~env) e1;
   Typing_helpers.refine_and_simplify_intersection
-    ~hint_first:false
     env
     ~is_class:false
     (Reason.witness pos)
@@ -170,7 +169,6 @@ let refine_not_key_exists field_name pos env shape_ty =
   Option.iter ~f:(Typing_error_utils.add_typing_error ~env) e1;
   let r = Reason.witness pos in
   Typing_helpers.refine_and_simplify_intersection
-    ~hint_first:false
     env
     ~is_class:false
     r

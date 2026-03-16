@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<189c8d97acd4642924a1b3cf2cabd8f1>>
+// @generated SignedSource<<62ad3965e3c2979dd13f79405bed2492>>
 //
 // To regenerate this file, run:
 //   buck run @fbcode//mode/dev-nosan-lg fbcode//hphp/hack/src:oxidized_regen
@@ -94,7 +94,7 @@ pub enum PattLoclTy {
 pub enum Params {
     /// Matches the empty parameter list
     Nil,
-    /// Matches any paramter list
+    /// Matches any parameter list
     Wildcard,
     /// Mathes a parameter list where the first element matches [patt_hd] and
     /// the remaining parameters match [patt_tl]

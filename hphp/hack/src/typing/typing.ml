@@ -2353,7 +2353,7 @@ let rec class_for_refinement env p reason ivar_pos ivar_ty hint_ty =
     (env, (MakeType.tuple reason (List.map ~f:fst tyl), List.exists ~f:snd tyl))
   | _ -> (env, (hint_ty, false))
 
-(** [refine_and_simplify_intersection ~hint_first env p reason ivar_pos ty hint_ty]
+(** [refine_and_simplify_intersection env p reason ivar_pos ty hint_ty]
   intersects [ty] and [hint_ty], possibly making [hint_ty] support dynamic
   first if [ty] also supports dynamic.
   Then if the result has some like types in which prevent simplification
@@ -2367,8 +2367,7 @@ let rec class_for_refinement env p reason ivar_pos ivar_ty hint_ty =
   * [reason]          The reason for the result types and other intermediate types.
   * [p], [ivar_pos]   Only used if hint_ty is a class
   *)
-let refine_and_simplify_intersection
-    ~hint_first env p reason ivar_pos ty hint_ty =
+let refine_and_simplify_intersection env p reason ivar_pos ty hint_ty =
   let (env, (hint_ty, is_class)) =
     let (env, stripped_ty_opt) =
       Typing_dynamic_utils.try_strip_dynamic env ty
@@ -2381,15 +2380,13 @@ let refine_and_simplify_intersection
     class_for_refinement env p reason ivar_pos stripped_ty hint_ty
   in
   Typing_helpers.refine_and_simplify_intersection
-    ~hint_first
     env
     ~is_class
     reason
     ty
     hint_ty
 
-let refine_for_hint
-    ~hint_first ~expr_pos ~refinement_reason env tparamet ty hint =
+let refine_for_hint ~expr_pos ~refinement_reason env tparamet ty hint =
   let ((env, ty_err_opt), hint_ty) =
     Phase.localize_hint_for_refinement env hint
   in
@@ -2402,7 +2399,6 @@ let refine_for_hint
       (env, hint_ty)
   in
   refine_and_simplify_intersection
-    ~hint_first
     env
     (fst hint)
     refinement_reason
@@ -2410,7 +2406,7 @@ let refine_for_hint
     ty
     hint_ty
 
-let refine_for_is ~hint_first env tparamet ivar refinement_reason hint =
+let refine_for_is env tparamet ivar refinement_reason hint =
   let (env, locl) =
     make_a_local_of ~include_this:true env (Tast.to_nast_expr ivar)
   in
@@ -2418,7 +2414,6 @@ let refine_for_is ~hint_first env tparamet ivar refinement_reason hint =
   | Some locl_ivar ->
     let (env, refined_ty) =
       refine_for_hint
-        ~hint_first
         ~expr_pos:(fst locl_ivar)
         ~refinement_reason
         env
@@ -2442,7 +2437,6 @@ let refine_for_pattern ~expr_pos env tparamet ty = function
   | Aast.PRefinement { pr_pos = p; pr_id = _; pr_hint = h } ->
     let (env, refined_ty) =
       refine_for_hint
-        ~hint_first:false
         ~expr_pos
         ~refinement_reason:(Reason.pattern p)
         env
@@ -2460,7 +2454,6 @@ let refine_for_equality pos env te ty =
   | Some locl_ivar ->
     let (env, refined_ty) =
       refine_and_simplify_intersection
-        ~hint_first:false
         env
         pos
         (Reason.equal pos)
@@ -4757,14 +4750,7 @@ end = struct
       let refine_type env lpos lty rty =
         let reason = Reason.as_refinement lpos in
         let (env, rty) = Env.expand_type env rty in
-        refine_and_simplify_intersection
-          ~hint_first:false
-          env
-          p
-          reason
-          lpos
-          lty
-          rty
+        refine_and_simplify_intersection env p reason lpos lty rty
       in
       let (env, te, expr_ty) =
         expr
@@ -8130,7 +8116,6 @@ end = struct
         let (env, ty_refine) = ty_refine_f env in
         let (env, ty) =
           Typing_helpers.refine_and_simplify_intersection
-            ~hint_first:false
             env
             ~is_class:ty_refine_is_class
               (* The normal call to is_supportdyn tends not to work on a tyvars
@@ -8222,7 +8207,6 @@ end = struct
                 | _ -> Typing_utils.is_class ty
               in
               Typing_helpers.refine_and_simplify_intersection
-                ~hint_first:false
                 env
                 ~is_class:(is_class_or_tuple_of_class refine)
                 reason
@@ -8622,7 +8606,7 @@ end = struct
       env
     | Aast.Is (ivar, h) ->
       let reason = Reason.is_refinement p in
-      let env = refine_for_is ~hint_first:false env tparamet ivar reason h in
+      let env = refine_for_is env tparamet ivar reason h in
       env
     | Aast.Package (pos, pkg) ->
       let status =
