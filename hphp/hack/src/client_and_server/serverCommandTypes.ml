@@ -197,6 +197,8 @@ module Find_my_tests = struct
     root_provenance: bool; [@default false]
     time_limit_secs: int option; [@default None]
     max_method_parent_steps: int option; [@default None]
+    enclosing_class_all_methods: bool; [@default true]
+        (** Should we go from any method to the enclosing class, or just for root methods? *)
   }
   [@@deriving yojson]
 
@@ -207,6 +209,7 @@ module Find_my_tests = struct
       root_provenance = false;
       time_limit_secs = None;
       max_method_parent_steps = None;
+      enclosing_class_all_methods = true;
     }
 
   type json_input = {
