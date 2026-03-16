@@ -35,7 +35,7 @@ type t =
 (** Defines pattern matches over list of Hack types appearing as type parameters *)
 and params =
   | Nil  (** Matches the empty parameter list *)
-  | Wildcard  (** Matches any paramter list *)
+  | Wildcard  (** Matches any parameter list *)
   | Cons of {
       patt_hd: t;
       patt_tl: params;
