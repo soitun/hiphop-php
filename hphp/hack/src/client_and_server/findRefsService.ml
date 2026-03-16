@@ -390,14 +390,33 @@ let find_refs
     entry |> Provider_context.get_file_contents_if_present |> Option.is_some
   in
 
-  (* Helper: given a path, obtains its tast *)
-  let tast_of_file path =
+  (* Helper: given a path, obtains its tast.
+     When a deadline is set, wraps the computation in a timeout so that
+     large files (e.g. generated thrift types) don't cause unbounded overshoot. *)
+  let tast_of_file ~t_now path =
     let (_ctx, entry) = Provider_context.add_entry_if_missing ~ctx ~path in
-    try
+    let compute () =
       let { Tast_provider.Compute_tast.tast; _ } =
         Tast_provider.compute_tast_unquarantined ~ctx ~entry
       in
       Some tast.Tast_with_dynamic.under_normal_assumptions
+    in
+    try
+      match deadline with
+      | Some d ->
+        let grace_period = 5.0 in
+        let remaining = d -. t_now +. grace_period in
+        let timeout = max (Float.to_int (Float.round_up remaining)) 1 in
+        Timeout.with_timeout
+          ~timeout
+          ~on_timeout:(fun _ ->
+            Hh_logger.log
+              "find_refs: per-file timeout after %ds for %s"
+              timeout
+              (Relative_path.suffix path);
+            raise Iter.Cancelled)
+          ~do_:(fun _ -> compute ())
+      | None -> compute ()
     with
     | _ when not (is_entry_valid entry) -> None
   in
@@ -418,7 +437,7 @@ let find_refs
               let acc =
                 Iter.raise_if_should_cancel ~stream_file ~deadline ~t_now acc
               in
-              let per_file = results_from_tast (tast_of_file path) in
+              let per_file = results_from_tast (tast_of_file ~t_now path) in
               let acc = Iter.{ acc with results = per_file :: acc.results } in
               Iter.stream_file ~per_file ~stream_fd ~t_now ~t_start acc)
         in

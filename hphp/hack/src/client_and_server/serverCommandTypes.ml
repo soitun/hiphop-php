@@ -201,7 +201,7 @@ module Find_my_tests = struct
     enclosing_class_all_methods: bool; [@default true]
         (** Should we go from any method to the enclosing class, or just for root methods? *)
   }
-  [@@deriving yojson]
+  [@@deriving yojson, show]
 
   let default_config =
     {
