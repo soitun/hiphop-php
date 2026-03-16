@@ -4444,7 +4444,7 @@ end = struct
           let ty_mismatch =
             mk_ty_mismatch_opt ty1 (MakeType.nothing Reason.none) ty_err_opt
           in
-          (* For the false case, if the reciever was nullable then the
+          (* For the false case, if the receiver was nullable then the
              member type should be made nullable. We do this by taking the
              intersection of the receiver type with `null` and then
              taking the union with the member type *)
