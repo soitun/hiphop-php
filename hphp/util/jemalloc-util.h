@@ -29,7 +29,7 @@ namespace HPHP {
 ////////////////////////////////////////////////////////////////////////////////
 
 /*
- * Note: Some of the the functions in this file depend on the internal
+ * Note: Some of the functions in this file depend on the internal
  * implementation details of jemalloc, which are subject to change in new
  * jemalloc major versions.
  */
