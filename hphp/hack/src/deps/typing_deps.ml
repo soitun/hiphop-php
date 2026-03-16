@@ -439,6 +439,14 @@ module DepSet = struct
     let l = elements s in
     List.fold l ~init ~f:(fun x acc -> f acc x)
 
+  let fold_result :
+        'a 'e.
+        t -> init:'a -> f:(elt -> 'a -> ('a, 'e) Result.t) -> ('a, 'e) Result.t
+      =
+   fun s ~init ~f ->
+    let l = elements s in
+    List.fold_result l ~init ~f:(fun x acc -> f acc x)
+
   let pp fmt s =
     let open Format in
     pp_print_string fmt "{ ";

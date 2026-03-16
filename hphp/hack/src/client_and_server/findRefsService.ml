@@ -175,31 +175,44 @@ let get_deps_set ctx classes =
     ~init:Relative_path.Set.empty
 
 let get_files_for_descendants_and_dependents_of_members_in_descendants
-    ctx ~class_name members =
+    ctx ~class_name ~max_deps members =
+  let open Result.Let_syntax in
+  let check dep_set =
+    match max_deps with
+    | Some n when Typing_deps.DepSet.cardinal dep_set > n -> Error ()
+    | _ -> Ok dep_set
+  in
   let mode = Provider_context.get_deps_mode ctx in
   let class_dep =
     Typing_deps.DepSet.singleton
       (Typing_deps.Dep.make (Typing_deps.Dep.Type class_name))
   in
-  let class_and_descendants_dep = Typing_deps.add_extend_deps mode class_dep in
-  let dependents =
-    Typing_deps.DepSet.fold
+
+  let* class_and_descendants_dep =
+    check (Typing_deps.add_extend_deps mode class_dep)
+  in
+  let* dependents =
+    Typing_deps.DepSet.fold_result
       class_and_descendants_dep
       ~init:(Typing_deps.DepSet.make ())
       ~f:(fun descendant_dep result ->
-        List.fold members ~init:result ~f:(fun result member ->
-            let member_dep =
-              Typing_deps.Dep.make_member_dep_from_type_dep
-                descendant_dep
-                member
-            in
-            let member_fanout =
-              Typing_deps.get_ideps_from_hash mode member_dep
-            in
-            Typing_deps.DepSet.union result member_fanout))
+        let result =
+          List.fold members ~init:result ~f:(fun result member ->
+              let member_dep =
+                Typing_deps.Dep.make_member_dep_from_type_dep
+                  descendant_dep
+                  member
+              in
+              let member_fanout =
+                Typing_deps.get_ideps_from_hash mode member_dep
+              in
+              Typing_deps.DepSet.union result member_fanout)
+        in
+        check result)
   in
-  ( Naming_provider.get_files ctx class_and_descendants_dep,
-    Naming_provider.get_files ctx dependents )
+  Ok
+    ( Naming_provider.get_files ctx class_and_descendants_dep,
+      Naming_provider.get_files ctx dependents )
 
 let get_deps_set_function ctx f_name =
   match Naming_provider.get_fun_path ctx f_name with

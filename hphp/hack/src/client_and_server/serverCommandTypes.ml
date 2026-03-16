@@ -198,6 +198,12 @@ module Find_my_tests = struct
     time_limit_secs: int option; [@default None]
     max_method_parent_steps: int option; [@default None]
     max_class_parent_steps: int option; [@default None]
+    parent_max_fanout_files: int option; [@default None]
+        (** If a symbol is obtained from parent walking and its fanout is larger than this number
+        of files, we skip searching  those files for references entirely. *)
+    non_parent_max_fanout_files: int option; [@default None]
+        (** If a symbol is NOT obtained from parent walking and its fanout is larger than this number
+        of files, we skip searching those files for references entirely. *)
     enclosing_class_all_methods: bool; [@default true]
         (** Should we go from any method to the enclosing class, or just for root methods? *)
   }
@@ -211,6 +217,8 @@ module Find_my_tests = struct
       time_limit_secs = None;
       max_method_parent_steps = None;
       max_class_parent_steps = None;
+      parent_max_fanout_files = None;
+      non_parent_max_fanout_files = None;
       enclosing_class_all_methods = true;
     }
 

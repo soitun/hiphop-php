@@ -138,7 +138,9 @@ let search_member
     .get_files_for_descendants_and_dependents_of_members_in_descendants
       ctx
       ~class_name
+      ~max_deps:None
       (dep_member_of member)
+    |> Stdlib.Result.get_ok (* ~max_deps:None guarantees Ok *)
   in
   let descendant_classes =
     FindRefsService.find_child_classes_in_files

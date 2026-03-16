@@ -186,6 +186,9 @@ module DepSet : sig
 
   val fold : t -> init:'a -> f:(elt -> 'a -> 'a) -> 'a
 
+  val fold_result :
+    t -> init:'a -> f:(elt -> 'a -> ('a, 'e) Result.t) -> ('a, 'e) Result.t
+
   val mem : t -> elt -> bool
 
   val elements : t -> elt list
