@@ -196,6 +196,7 @@ module Find_my_tests = struct
     max_test_files: int option; [@default None]
     root_provenance: bool; [@default false]
     time_limit_secs: int option; [@default None]
+    max_method_parent_steps: int option; [@default None]
   }
   [@@deriving yojson]
 
@@ -205,6 +206,7 @@ module Find_my_tests = struct
       max_test_files = None;
       root_provenance = false;
       time_limit_secs = None;
+      max_method_parent_steps = None;
     }
 
   type json_input = {
