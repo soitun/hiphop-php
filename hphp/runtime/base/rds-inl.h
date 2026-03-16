@@ -32,17 +32,21 @@ namespace HPHP::rds {
 namespace detail {
 
 Handle alloc(Mode mode, size_t numBytes, size_t align,
-             type_scan::Index tyIndex, const Symbol* symbol);
+             type_scan::Index tyIndex, const Symbol* symbol,
+             folly::StringPiece typeName = {});
 Handle allocUnlocked(Mode mode, size_t numBytes, size_t align,
                      type_scan::Index tyIndex,
-                     const Symbol* symbol);
+                     const Symbol* symbol,
+                     folly::StringPiece typeName = {});
 Handle bindImpl(Symbol key, Mode mode, size_t sizeBytes,
-                size_t align, type_scan::Index tyIndex);
+                size_t align, type_scan::Index tyIndex,
+                folly::StringPiece typeName = {});
 Handle attachImpl(Symbol key);
 
 void bindOnLinkImpl(std::atomic<Handle>& handle,
                     Symbol key, Mode mode, size_t size, size_t align,
-                    type_scan::Index tsi, const void* init_val);
+                    type_scan::Index tsi, const void* init_val,
+                    folly::StringPiece typeName = {});
 
 extern std::atomic_size_t s_normal_frontier;
 extern size_t s_local_base;
@@ -289,7 +293,8 @@ void Link<T,M>::bind(Mode mode, Symbol sym, const T* init_val) {
 
   detail::bindOnLinkImpl(
     m_handle, sym, mode, sizeof(T), Align,
-    type_scan::getIndexForScan<T>(), init_val
+    type_scan::getIndexForScan<T>(), init_val,
+    typeid(T).name()
   );
   checkSanity();
 }
@@ -314,7 +319,8 @@ Link<T,M> bind(Symbol key, size_t extraSize) {
   return Link<T,M>(
     detail::bindImpl(
       key, M, sizeof(T) + extraSize,
-      Align, type_scan::getIndexForScan<T>()
+      Align, type_scan::getIndexForScan<T>(),
+      typeid(T).name()
     )
   );
 }
@@ -331,7 +337,8 @@ Link<T,M> alloc() {
     detail::allocUnlocked(
       M, sizeof(T), Align,
       type_scan::getIndexForScan<T>(),
-      nullptr
+      nullptr,
+      typeid(T).name()
     )
   );
 }

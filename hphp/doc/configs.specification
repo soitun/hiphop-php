@@ -916,6 +916,12 @@ The format can be found in hphp/tools/configs/generate_configs.rs
   OOM. Iterates the RDS symbol table under lock, so should not be enabled in
   production unless actively debugging RDS exhaustion.
 
+- uint32_t Eval.RDSAllocSampleRate = 0, paulbiss
+
+  Sample rate for structured logging of individual RDS allocations to the
+  hhvm_rds_allocations table. 0 disables logging. When enabled, each call to
+  alloc() is logged with probability 1/rate.
+
 - uint32_t Eval.ProfileGlobalsLimit = 200, UNKNOWN
 
 - double Eval.ProfileGlobalsSlowExitThreshold = 0.98, UNKNOWN

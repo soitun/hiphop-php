@@ -33,6 +33,7 @@
 #include "hphp/util/configs/eval.h"
 #include "hphp/util/configs/jit.h"
 #include "hphp/util/logger.h"
+#include "hphp/util/struct-log.h"
 #include "hphp/util/maphuge.h"
 #include "hphp/util/numa.h"
 #include "hphp/util/rds-local.h"
@@ -305,7 +306,7 @@ NEVER_INLINE void addNewPersistentChunk(size_t size) {
 #endif
 }
 
-Handle alloc(Mode mode, size_t numBytes,
+Handle allocImpl(Mode mode, size_t numBytes,
              size_t align, type_scan::Index tyIndex,
              const Symbol* symbol) {
   // If the symbol has been pre-assigned an offset, use it. Once
@@ -415,7 +416,7 @@ Handle alloc(Mode mode, size_t numBytes,
       // Allocate on demand, add kPersistentChunkSize each time.
       assertx(numBytes <= kPersistentChunkSize);
       addNewPersistentChunk(kPersistentChunkSize);
-      return alloc(mode, numBytes, align, tyIndex, symbol); // retry after a new chunk
+      return allocImpl(mode, numBytes, align, tyIndex, symbol); // retry after a new chunk
 #else
       // We reserved plenty of space in s_persistent_free_lists in the beginning
       // of the process, but maybe it is time to increase the size in the
@@ -466,11 +467,51 @@ Handle alloc(Mode mode, size_t numBytes,
   }
 }
 
+Handle alloc(Mode mode, size_t numBytes,
+             size_t align, type_scan::Index tyIndex,
+             const Symbol* symbol,
+             folly::StringPiece typeName) {
+  auto const handle = allocImpl(mode, numBytes, align, tyIndex, symbol);
+
+  if (StructuredLog::coinflip(Cfg::Eval::RDSAllocSampleRate)) {
+    StructuredLogEntry entry;
+    entry.setInt("sample_rate", Cfg::Eval::RDSAllocSampleRate);
+    entry.setInt("handle", handle);
+    entry.setInt("num_bytes", numBytes);
+    entry.setInt("align", align);
+
+    auto const modeName = [&] {
+      switch (mode) {
+        case Mode::Normal:     return "Normal";
+        case Mode::Local:      return "Local";
+        case Mode::Persistent: return "Persistent";
+        default:               return "Unknown";
+      }
+    }();
+    entry.setStr("mode", modeName);
+    entry.setStr("type_scan_name", type_scan::getName(tyIndex));
+
+    if (!typeName.empty()) {
+      entry.setStr("type_name", typeName);
+    }
+
+    if (symbol) {
+      entry.setStr("symbol_kind", symbol_kind(*symbol));
+      entry.setStr("symbol_rep", symbol_rep(*symbol));
+    }
+
+    StructuredLog::log("hhvm_rds_allocations", entry);
+  }
+
+  return handle;
+}
+
 Handle allocUnlocked(Mode mode, size_t numBytes,
                      size_t align, type_scan::Index tyIndex,
-                     const Symbol* symbol) {
+                     const Symbol* symbol,
+                     folly::StringPiece typeName) {
   Guard g(s_allocMutex);
-  auto const handle = alloc(mode, numBytes, align, tyIndex, symbol);
+  auto const handle = alloc(mode, numBytes, align, tyIndex, symbol, typeName);
   if (!symbol) {
     s_anonymousCounter->addValue(numBytes);
   }
@@ -478,14 +519,15 @@ Handle allocUnlocked(Mode mode, size_t numBytes,
 }
 
 Handle bindImpl(Symbol key, Mode mode, size_t sizeBytes,
-                size_t align, type_scan::Index tyIndex) {
+                size_t align, type_scan::Index tyIndex,
+                folly::StringPiece typeName) {
   LinkTable::const_accessor acc;
   if (s_linkTable.find(acc, key)) return acc->second.handle;
 
   Guard g(s_allocMutex);
   if (s_linkTable.find(acc, key)) return acc->second.handle;
 
-  auto const handle = alloc(mode, sizeBytes, align, tyIndex, &key);
+  auto const handle = alloc(mode, sizeBytes, align, tyIndex, &key, typeName);
   recordRds(handle, sizeBytes, key);
   getCategoryCounter(symbol_kind(key))->addValue(sizeBytes);
 
@@ -529,12 +571,13 @@ Handle attachImpl(Symbol key) {
 NEVER_INLINE
 void bindOnLinkImpl(std::atomic<Handle>& handle,
                     Symbol sym, Mode mode, size_t size, size_t align,
-                    type_scan::Index tsi, const void* init_val) {
+                    type_scan::Index tsi, const void* init_val,
+                    folly::StringPiece typeName) {
   Handle c = kUninitHandle;
   if (handle.compare_exchange_strong(c, kBeingBound,
                                      std::memory_order_acq_rel)) {
     // we flipped it from kUninitHandle, so we get to fill in the value.
-    auto const h = allocUnlocked(mode, size, align, tsi, &sym);
+    auto const h = allocUnlocked(mode, size, align, tsi, &sym, typeName);
     recordRds(h, size, sym);
     getCategoryCounter(symbol_kind(sym))->addValue(size);
 
@@ -884,7 +927,8 @@ size_t allocBit() {
       kAllocBitNumBytes,
       kAllocBitNumBytes,
       type_scan::getIndexForScan<unsigned char[kAllocBitNumBytes]>(),
-      nullptr
+      nullptr,
+      typeid(unsigned char[kAllocBitNumBytes]).name()
     );
     s_next_bit = handle * CHAR_BIT;
     s_bits_to_go = kAllocBitNumBytes * CHAR_BIT;
