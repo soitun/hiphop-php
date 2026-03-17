@@ -167,7 +167,7 @@ struct TypeConstraint {
   /// stored as an array of ClassConstraints.
   struct UnionConstraint {
     // TypeConstaints are global objects (they're used and cached by the JIT) so
-    // thye must only point at persistant global objects. Use allocObjects() to
+    // they must only point at persistent global objects. Use allocObjects() to
     // uniquify/allocate.
     PackedPtr<const UnionClassList> m_classes;
     PackedStringPtr m_typeName;
