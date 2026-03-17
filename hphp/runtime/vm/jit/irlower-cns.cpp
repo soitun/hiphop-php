@@ -238,7 +238,7 @@ void cgCheckSubClsCns(IRLS& env, const IRInstruction* inst) {
   auto const constOffset = slot * sizeof(Class::Const);
 
   emitCmpPackedPtr<StringData>(
-    v, sf, v.cns(extra->cnsName),
+    v, sf, extra->cnsName,
     tmp[constOffset + offsetof(Class::Const, name)]
   );
   fwdJcc(v, env, CC_NE, sf, inst->taken());

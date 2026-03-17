@@ -509,7 +509,8 @@ void cmpLowPtrImpl(Vout& v, Vreg sf, const void* ptr, Vreg reg, size_t size) {
     v << cmpq{v.cns(ptr), reg, sf};
   } else if (size == 32) {
     auto const ptrImm = safe_cast<uint32_t>(reinterpret_cast<intptr_t>(ptr));
-    v << cmpl{v.cns(ptrImm), reg, sf};
+    auto low = emitMovtql(v, reg);
+    v << cmpl{v.cns(ptrImm), low, sf};
   } else {
     not_implemented();
   }

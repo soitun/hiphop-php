@@ -209,7 +209,7 @@ void cgExtendsClass(IRLS& env, const IRInstruction* inst) {
   // Test if it is the exact same class.
   // TODO(#2044801): We should be doing this control flow at the IR level.
   auto const sf = v.makeReg();
-  emitCmpPackedPtr<Class>(v, sf, v.cns(rhsCls), lhs);
+  emitCmpPackedPtr<Class>(v, sf, rhsCls, lhs);
 
   if (rhsCls->attrs() & AttrNoOverride) {
     // If the test class cannot be extended, we only need to do the same-class
