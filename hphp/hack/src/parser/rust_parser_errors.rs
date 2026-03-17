@@ -2408,11 +2408,13 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
     }
 
     fn lval_errors(&mut self, syntax_node: S<'a>) {
-        if let LvalTypeNonFinal = node_lval_type(syntax_node, &self.parents) {
-            self.errors.push(make_error_from_node(
-                syntax_node,
-                errors::lval_as_expression,
-            ))
+        if self.env.parser_options.disable_lval_as_an_expression {
+            if let LvalTypeNonFinal = node_lval_type(syntax_node, &self.parents) {
+                self.errors.push(make_error_from_node(
+                    syntax_node,
+                    errors::lval_as_expression,
+                ))
+            }
         }
     }
 

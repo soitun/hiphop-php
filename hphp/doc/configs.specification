@@ -1564,6 +1564,7 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 
 # Hack.Lang
 
+- bool Hack.Lang.DisableLvalAsAnExpression = false, UNKNOWN, repooptionsflag(Parser)|hackc(parser)
 - bool Hack.Lang.ConstDefaultFuncArgs = false, UNKNOWN, repooptionsflag(Parser)|hackc(parser)
 - bool Hack.Lang.ConstStaticProps = false, UNKNOWN, repooptionsflag(Parser)|hackc(parser)
 - bool Hack.Lang.AbstractStaticProps = false, UNKNOWN, repooptionsflag(Parser)|hackc(parser)

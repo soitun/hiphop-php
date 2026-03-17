@@ -7,6 +7,8 @@
  *)
 type t = {
   (* These options are set in both hhvm and hh config *)
+  disable_lval_as_an_expression: bool;
+      (** Flag to disable using lvals as expressions. *)
   const_static_props: bool;  (** Enable const static properties *)
   const_default_func_args: bool;
       (** Statically check default function arguments *)
@@ -88,6 +90,7 @@ val default : t
 (* Changes here need to be synchronized with rust_parser_errors_ffi.rs *)
 type ffi_t =
   bool
+  * bool
   * bool
   * bool
   * bool

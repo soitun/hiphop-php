@@ -8,6 +8,7 @@
  *)
 type t = {
   (* These options are set in both hhvm and hh config *)
+  disable_lval_as_an_expression: bool;
   const_static_props: bool;
   const_default_func_args: bool;
   abstract_static_props: bool;
@@ -51,6 +52,7 @@ type t = {
 
 let default =
   {
+    disable_lval_as_an_expression = true;
     const_static_props = false;
     const_default_func_args = false;
     abstract_static_props = false;
@@ -108,6 +110,7 @@ type ffi_t =
   * bool
   * bool
   * bool
+  * bool
   * Experimental_features.feature_status SMap.t
   * bool
   * bool
@@ -119,6 +122,7 @@ let to_rust_ffi_t po =
   ( po.hhvm_compat_mode,
     po.hhi_mode,
     po.codegen,
+    po.disable_lval_as_an_expression,
     po.const_static_props,
     po.const_default_func_args,
     po.abstract_static_props,
