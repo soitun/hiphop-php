@@ -54,7 +54,7 @@ impl<'a> DeclvarVisitor<'a> {
         }
     }
 
-    fn on_class_get(&mut self, cid: &ClassId, pstr: &(Pos, String)) -> Result<(), String> {
+    fn on_class_get(&mut self, cid: &ClassId) -> Result<(), String> {
         use aast::ClassId_;
         match &cid.2 {
             ClassId_::CIparent | ClassId_::CIself | ClassId_::CIstatic | ClassId_::CI(_) => {
@@ -62,10 +62,6 @@ impl<'a> DeclvarVisitor<'a> {
             }
             ClassId_::CIexpr(e) => {
                 self.visit_expr(&mut (), e)?;
-                // TODO(thomasjiang): For this to match correctly, we need to adjust
-                // ast_to_nast because it does not make a distinction between ID and Lvar,
-                // which is needed here
-                self.add_local(&pstr.1);
                 Ok(())
             }
         }
@@ -170,8 +166,8 @@ impl<'ast, 'a> Visitor<'ast> for DeclvarVisitor<'a> {
                             self.add_local("$86productAttributionData");
                         }
                     }
-                    Expr_::ClassGet(box (id, prop, pom)) if *pom == PropOrMethod::IsMethod => {
-                        self.on_class_get(id, prop)?
+                    Expr_::ClassGet(box (id, _prop, pom)) if *pom == PropOrMethod::IsMethod => {
+                        self.on_class_get(id)?
                     }
                     _ => self.visit_expr(env, func)?,
                 }
