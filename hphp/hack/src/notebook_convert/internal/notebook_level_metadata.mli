@@ -7,7 +7,7 @@
  *)
 type t = {
   notebook_number: string;  (** example: "N12345" *)
-  kernelspec: Hh_json.json;
+  kernelspec: Yojson.Safe.t;
       (** corresponds to 'kernelspec' in ipynb format but we don't bother interpreting it *)
 }
 

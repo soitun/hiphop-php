@@ -10,19 +10,22 @@ Code action title: Add stubs for missing interface methods
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Add stubs for missing interface methods",
+  "kind": "quickfix",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"\n  public static function i(): int {}\n",
-          "range":{"end":{"character":0,"line":17},"start":{"character":0,"line":17}}
+          "range": {
+            "start": { "line": 17, "character": 0 },
+            "end": { "line": 17, "character": 0 }
+          },
+          "newText": "\n  public static function i(): int {}\n"
         }
       ]
     }
-  },
-  "kind":"quickfix",
-  "title":"Add stubs for missing interface methods"
+  }
 }
 
 Applied edit for code action:
@@ -65,19 +68,22 @@ Code action title: Add stubs for missing inherited methods
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Add stubs for missing inherited methods",
+  "kind": "quickfix",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"\n  <<__Override>>\n  public function baf(): void {}\n\n  <<__Override>>\n  public function bar(): void {}\n\n  <<__Override>>\n  public function baz(): void {}\n",
-          "range":{"end":{"character":0,"line":17},"start":{"character":0,"line":17}}
+          "range": {
+            "start": { "line": 17, "character": 0 },
+            "end": { "line": 17, "character": 0 }
+          },
+          "newText": "\n  <<__Override>>\n  public function baf(): void {}\n\n  <<__Override>>\n  public function bar(): void {}\n\n  <<__Override>>\n  public function baz(): void {}\n"
         }
       ]
     }
-  },
-  "kind":"quickfix",
-  "title":"Add stubs for missing inherited methods"
+  }
 }
 
 Applied edit for code action:

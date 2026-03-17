@@ -15,8 +15,8 @@ FilesToIgnore.watchman_server_expression_terms.
 
 let main () =
   let pretty =
-    Hh_json.json_to_multiline
-      (Hh_json.JSON_Array FilesToIgnore.watchman_server_expression_terms)
+    Yojson.Safe.pretty_to_string
+      (`List FilesToIgnore.watchman_server_expression_terms)
   in
   Printf.printf "%s" pretty
 

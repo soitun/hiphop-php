@@ -7,19 +7,22 @@ Devmate Agent Fix - This interface is not properly implemented (CodeActionKind: 
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Add stubs for missing interface methods",
+  "kind": "quickfix",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"\n  public function bar(): void {}\n",
-          "range":{"end":{"character":27,"line":8},"start":{"character":27,"line":8}}
+          "range": {
+            "start": { "line": 8, "character": 27 },
+            "end": { "line": 8, "character": 27 }
+          },
+          "newText": "\n  public function bar(): void {}\n"
         }
       ]
     }
-  },
-  "kind":"quickfix",
-  "title":"Add stubs for missing interface methods"
+  }
 }
 
 Applied edit for code action:

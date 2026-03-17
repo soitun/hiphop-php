@@ -9,7 +9,7 @@
   (flags
    (:standard
     (:include config/build-timestamp-opt))))
- (libraries base core_kernel.caml_unix string hh_json str unix measure_ffi)
+ (libraries base collections core_kernel.caml_unix string hh_json str unix measure_ffi yojson)
  (preprocess
   (pps lwt_ppx ppx_deriving.std ppx_deriving.enum ppx_hash)))
 

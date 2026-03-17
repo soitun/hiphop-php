@@ -6,23 +6,29 @@ Extract into method (CodeActionKind: "refactor") SELECTED
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Extract into method",
+  "kind": "refactor",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"  private function ${0:method0}(): int {\n    $return = $this->one();\n    return $return;\n  }\n\n",
-          "range":{"end":{"character":0,"line":6},"start":{"character":0,"line":6}}
+          "range": {
+            "start": { "line": 6, "character": 0 },
+            "end": { "line": 6, "character": 0 }
+          },
+          "newText": "  private function ${0:method0}(): int {\n    $return = $this->one();\n    return $return;\n  }\n\n"
         },
         {
-          "newText":"$return = $this->${0:method0}();",
-          "range":{"end":{"character":27,"line":9},"start":{"character":4,"line":9}}
+          "range": {
+            "start": { "line": 9, "character": 4 },
+            "end": { "line": 9, "character": 27 }
+          },
+          "newText": "$return = $this->${0:method0}();"
         }
       ]
     }
-  },
-  "kind":"refactor",
-  "title":"Extract into method"
+  }
 }
 
 Applied edit for code action:

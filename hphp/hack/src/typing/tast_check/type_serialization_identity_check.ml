@@ -145,9 +145,10 @@ let handler =
                            "unequal types: %s vs %s (%s vs %s)"
                            (Tast_env.print_ty env ty)
                            (Tast_env.print_ty env deserialized_ty)
-                           (Tast_env.ty_to_json env ty |> Hh_json.json_to_string)
+                           (Tast_env.ty_to_json env ty
+                           |> Hh_json_helpers.Out.to_string)
                            (Tast_env.ty_to_json env deserialized_ty
-                           |> Hh_json.json_to_string);
+                           |> Hh_json_helpers.Out.to_string);
                      })
         | Error (Not_supported _) -> ()
         | Error (Wrong_phase message) ->
@@ -164,7 +165,8 @@ let handler =
                          "type %s (%s) was not in the locl phase: %s"
                          message
                          (Tast_env.print_ty env ty)
-                         (Tast_env.ty_to_json env ty |> Hh_json.json_to_string);
+                         (Tast_env.ty_to_json env ty
+                         |> Hh_json_helpers.Out.to_string);
                    })
         | Error (Deserialization_error message) ->
           let Equal = Tast_env.eq_typing_env in
@@ -180,7 +182,8 @@ let handler =
                          "type %s (%s) could not be deserialized to a locl type: %s"
                          message
                          (Tast_env.print_ty env ty)
-                         (Tast_env.ty_to_json env ty |> Hh_json.json_to_string);
+                         (Tast_env.ty_to_json env ty
+                         |> Hh_json_helpers.Out.to_string);
                    })
       with
       | e ->

@@ -137,7 +137,7 @@ let get_types
           Some
             {
               ty_json =
-                Hh_json.json_to_string
+                Hh_json_helpers.Out.to_string
                 @@ Tast_env.ty_to_json
                      normal_info.tast_env
                      ~show_like_ty:true
@@ -171,7 +171,7 @@ let get_types
               None
             else
               Some
-                (Hh_json.json_to_string
+                (Hh_json_helpers.Out.to_string
                 @@ Tast_env.ty_to_json
                      dynamic_info.tast_env
                      ~show_like_ty:true
@@ -180,7 +180,7 @@ let get_types
           Some
             {
               ty_json =
-                Hh_json.json_to_string
+                Hh_json_helpers.Out.to_string
                 @@ Tast_env.ty_to_json
                      normal_info.tast_env
                      ~show_like_ty:true

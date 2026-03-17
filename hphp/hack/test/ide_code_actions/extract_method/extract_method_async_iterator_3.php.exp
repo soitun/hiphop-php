@@ -6,23 +6,29 @@ Extract into method (CodeActionKind: "refactor") SELECTED
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Extract into method",
+  "kind": "refactor",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"    private static async function ${0:method0}(int $x): AsyncKeyedIterator<_, _, _> {\n    foreach (async_keyed_it() await as $k => $v) {\n              $x++\n            }\n            await gen_void();\n    }\n\n",
-          "range":{"end":{"character":0,"line":10},"start":{"character":0,"line":10}}
+          "range": {
+            "start": { "line": 10, "character": 0 },
+            "end": { "line": 10, "character": 0 }
+          },
+          "newText": "    private static async function ${0:method0}(int $x): AsyncKeyedIterator<_, _, _> {\n    foreach (async_keyed_it() await as $k => $v) {\n              $x++\n            }\n            await gen_void();\n    }\n\n"
         },
         {
-          "newText":"foreach (self::${0:method0}($x) await as $key__ => $value__) {\n            \n        }",
-          "range":{"end":{"character":25,"line":16},"start":{"character":8,"line":13}}
+          "range": {
+            "start": { "line": 13, "character": 8 },
+            "end": { "line": 16, "character": 25 }
+          },
+          "newText": "foreach (self::${0:method0}($x) await as $key__ => $value__) {\n            \n        }"
         }
       ]
     }
-  },
-  "kind":"refactor",
-  "title":"Extract into method"
+  }
 }
 
 Applied edit for code action:

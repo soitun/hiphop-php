@@ -14,13 +14,12 @@ type pos = Relative_path.t * int * int
 type spos = string * int * int [@@deriving eq, ord]
 
 let pos_to_json fn line char =
-  Hh_json.(
-    JSON_Object
-      [
-        ("file", JSON_String (Relative_path.to_absolute fn));
-        ("line", int_ line);
-        ("character", int_ char);
-      ])
+  `Assoc
+    [
+      ("file", `String (Relative_path.to_absolute fn));
+      ("line", `Int line);
+      ("character", `Int char);
+    ]
 
 let compute_tasts ctx (pos_list : pos list) :
     (Relative_path.t * Tast.program Tast_with_dynamic.t) list =

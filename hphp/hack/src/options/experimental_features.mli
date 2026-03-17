@@ -98,4 +98,4 @@ val feature_name_from_string : string -> feature_name option
 
 (** Convert string/json pair to feature name/status. Fail if the name/status aren't valid. *)
 val parse_experimental_feature :
-  string * Hh_json.json -> string * feature_status
+  string * Yojson.Safe.t -> string * feature_status

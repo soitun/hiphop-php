@@ -10,17 +10,17 @@
 
 open Lsp
 open Lsp_fmt
-open Hh_json
 
 let assert_equals (exp : 'a) (actual : 'a) (failure_msg : string) =
   if exp <> actual then failwith failure_msg
 
 (* TODO: write a generic "dump" routine *)
 
-let assert_json_equals (exp : string) (actual : json) (failure_msg : string) =
-  let exp = exp |> json_of_string |> json_to_string in
+let assert_json_equals
+    (exp : string) (actual : Yojson.Safe.t) (failure_msg : string) =
+  let exp = exp |> Yojson.Safe.from_string |> Yojson.Safe.to_string in
   (* canonical *)
-  let actual = actual |> json_to_string in
+  let actual = actual |> Yojson.Safe.to_string in
   if exp <> actual then
     failwith (failure_msg ^ " - expected " ^ exp ^ ", got " ^ actual)
 

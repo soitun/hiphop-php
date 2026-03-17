@@ -9,7 +9,7 @@
 open Hh_prelude
 open Asserter
 open Hh_json
-open Hh_json.Access
+open Hh_json_helpers.Access
 open Hh_json_helpers
 open OUnit2
 open Write_symbol_info
@@ -17,7 +17,7 @@ open Hack
 module Fact_acc = Predicate.Fact_acc
 
 let extract_facts_from_obj (pred_name : string) = function
-  | JSON_Object [("predicate", JSON_String p); ("facts", JSON_Array l)]
+  | `Assoc [("predicate", `String p); ("facts", `List l)]
     when String.equal p pred_name ->
     Some l
   | _ -> None
@@ -153,7 +153,11 @@ let test_build_xrefs _test_ctxt =
   let xrefs = Xrefs.add xrefs target_id next_ref_pos target in
   let xrefs = Xrefs.add xrefs target_id ref_pos target in
   let Xrefs.{ fact_map; _ } = Xrefs.add xrefs target_id dup_ref_pos target in
-  let result = List.nth_exn (Build_fact.xrefs fact_map) 0 |> XRef.to_json in
+  let result =
+    List.nth_exn (Build_fact.xrefs fact_map) 0
+    |> XRef.to_json
+    |> Hh_json.to_yojson
+  in
   let target_decl =
     return result
     >>= get_obj "target"

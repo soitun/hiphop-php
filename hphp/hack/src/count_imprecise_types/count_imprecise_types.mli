@@ -12,4 +12,4 @@ type result
     methods. *)
 val count : Provider_context.t -> Tast.program -> result SMap.t
 
-val json_of_results : result SMap.t -> Hh_json.json
+val json_of_results : result SMap.t -> Yojson.Safe.t

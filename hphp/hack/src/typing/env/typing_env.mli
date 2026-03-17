@@ -659,7 +659,7 @@ module Log : sig
     (internal_type -> string) ->
     env ->
     Tvid.t ->
-    Hh_json.json
+    Yojson.Safe.t
 
   val expand_env : Typing_env_types.env -> expand_env -> (string * string) list
 end

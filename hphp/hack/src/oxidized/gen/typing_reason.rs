@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<ec6c91fe7cd166016ae0462965a64e1a>>
+// @generated SignedSource<<e42855a58a7de615cdacdb5bd6621101>>
 //
 // To regenerate this file, run:
 //   buck run @fbcode//mode/dev-nosan-lg fbcode//hphp/hack/src:oxidized_regen
@@ -200,7 +200,7 @@ arena_deserializer::impl_deserialize_in_arena!(VarianceDir);
 
 /// When recording the decomposition of a type during inference we want to keep
 /// track of variance so we can give intuition about the direction of 'flow'.
-/// In the case of invariant type paramters, we record both the fact that it was
+/// In the case of invariant type parameters, we record both the fact that it was
 /// invariant and the direction in which the error occurred
 #[derive(
     Clone,

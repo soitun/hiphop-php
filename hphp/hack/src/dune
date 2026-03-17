@@ -54,7 +54,8 @@
   typing
   utils_core
   utils_multifile
-  write_symbol_info))
+  write_symbol_info
+  yojson))
 
 (executable
  (name hh_single_ai)
@@ -192,7 +193,8 @@
   global_config
   hackfmt
   parser
-  utils_core))
+  utils_core
+  yojson))
 
 (executable
  (name hh_single_decl)
@@ -240,7 +242,7 @@
  (link_flags
   (:standard
    (:include dune_config/ld-opts.sexp)))
- (libraries core_kernel str parser_schema collections utils_core))
+ (libraries core_kernel str parser_schema collections utils_core yojson))
 
  (executable
   (name hh_single_fanout)

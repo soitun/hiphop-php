@@ -104,9 +104,8 @@ let from_positioned_list source_text ts offset =
   List.rev (aux [] ts offset)
 
 let to_json trivia =
-  Hh_json.(
-    JSON_Object
-      [
-        ("kind", JSON_String (TriviaKind.to_string trivia.kind));
-        ("text", JSON_String trivia.text);
-      ])
+  `Assoc
+    [
+      ("kind", `String (TriviaKind.to_string trivia.kind));
+      ("text", `String trivia.text);
+    ]

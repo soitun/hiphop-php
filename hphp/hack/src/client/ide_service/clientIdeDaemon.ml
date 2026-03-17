@@ -1316,7 +1316,7 @@ let handle_one_message_exn
           {
             Lsp.Error.code = Lsp.Error.RequestCancelled;
             message = Exception.get_ctor_string e;
-            data = Some (Hh_json.JSON_Object [("stack", Hh_json.string_ stack)]);
+            data = Some (`Assoc [("stack", `String stack)]);
           }
         in
         (state, Error lsp_error)
@@ -1570,7 +1570,10 @@ module Test = struct
           "handle_request %s: %s %s"
           (Lsp.Error.show_code code)
           message
-          (Option.value_map data ~default:"" ~f:Hh_json.json_to_multiline)
+          (Option.value_map
+             data
+             ~default:""
+             ~f:Hh_json_helpers.Out.pretty_to_string)
       in
       failwith msg
     | (_, Ok _) ->

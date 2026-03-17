@@ -29,5 +29,5 @@ let go
   in
   let%lwt (result, _telemetry) = ClientConnect.rpc conn ~desc command in
   let result_json = ServerCommandTypes.Symbol_info_service.to_json result in
-  print_endline (Hh_json.json_to_string result_json);
+  print_endline (Hh_json_helpers.Out.to_string result_json);
   Lwt.return_unit

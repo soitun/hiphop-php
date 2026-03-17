@@ -7,23 +7,29 @@ Devmate Agent Fix - Hack does not support top level statements. Use the `__Entry
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Inline variable $the_variable",
+  "kind": "refactor",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"",
-          "range":{"end":{"character":0,"line":3},"start":{"character":0,"line":2}}
+          "range": {
+            "start": { "line": 2, "character": 0 },
+            "end": { "line": 3, "character": 0 }
+          },
+          "newText": ""
         },
         {
-          "newText":"(300 * 400)",
-          "range":{"end":{"character":33,"line":3},"start":{"character":20,"line":3}}
+          "range": {
+            "start": { "line": 3, "character": 20 },
+            "end": { "line": 3, "character": 33 }
+          },
+          "newText": "(300 * 400)"
         }
       ]
     }
-  },
-  "kind":"refactor",
-  "title":"Inline variable $the_variable"
+  }
 }
 
 Applied edit for code action:

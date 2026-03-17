@@ -489,28 +489,25 @@ let log_fanout_information to_recheck_deps files_to_recheck =
   let max = 1000 in
   Hh_logger.log_lazy ~category:"fanout_tests"
   @@ lazy
-       Hh_json.(
-         json_to_string
-         @@ JSON_Object
-              [
-                ("tag", string_ "saved_state_init_fanout");
-                ( "hashes",
-                  array_
-                    string_
-                    Typing_deps.(
-                      List.map ~f:Dep.to_hex_string
-                      @@ List.take (DepSet.elements to_recheck_deps) max) );
-                ( "hashes_was_truncated",
-                  bool_ (Typing_deps.DepSet.cardinal to_recheck_deps > max) );
-                ( "files",
-                  array_
-                    string_
-                    Relative_path.(
-                      List.map ~f:suffix
-                      @@ List.take (Set.elements files_to_recheck) max) );
-                ( "files_was_truncated",
-                  bool_ (Relative_path.Set.cardinal files_to_recheck > max) );
-              ])
+       (Hh_json_helpers.Out.to_string
+          (`Assoc
+            [
+              ("tag", `String "saved_state_init_fanout");
+              ( "hashes",
+                `List
+                  Typing_deps.(
+                    List.map ~f:(fun d -> `String (Dep.to_hex_string d))
+                    @@ List.take (DepSet.elements to_recheck_deps) max) );
+              ( "hashes_was_truncated",
+                `Bool (Typing_deps.DepSet.cardinal to_recheck_deps > max) );
+              ( "files",
+                `List
+                  Relative_path.(
+                    List.map ~f:(fun p -> `String (suffix p))
+                    @@ List.take (Set.elements files_to_recheck) max) );
+              ( "files_was_truncated",
+                `Bool (Relative_path.Set.cardinal files_to_recheck > max) );
+            ]))
 
 (** Compute fanout for saved state init *)
 let get_files_to_recheck
@@ -726,16 +723,17 @@ let calculate_fanout_and_defer_or_do_type_check
      we no longer worry about `hh_fanout` regressing vs. `hh_server`. Deletion
      is tracked at T65464119. *)
   if ServerArgs.dump_fanout genv.options then (
-    Hh_json.json_to_multiline_output
+    Hh_json_helpers.Out.pretty_to_channel
       stdout
-      (Hh_json.JSON_Object
-         [
-           ( "recheck_files",
-             Hh_json.JSON_Array
-               (Relative_path.Set.elements to_recheck
-               |> List.map ~f:Relative_path.to_absolute
-               |> List.map ~f:Hh_json.string_) );
-         ]);
+      (`Assoc
+        [
+          ( "recheck_files",
+            `List
+              (Relative_path.Set.elements to_recheck
+              |> List.map ~f:Relative_path.to_absolute
+              |> List.map ~f:(fun s -> `String s)) );
+        ]);
+    Out_channel.newline stdout;
     exit 0
   ) else
     let env = { env with changed_files = dirty_files_changed_decls } in

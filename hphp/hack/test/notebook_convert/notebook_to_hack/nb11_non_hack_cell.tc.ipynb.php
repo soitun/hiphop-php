@@ -1,12 +1,12 @@
 <?hh
 // copyright header here
 //@bento-notebook:{"notebook_number":"N1234","kernelspec":{"display_name":"hack","language":"hack","name":"bento_kernel_hack"}}
-//@bento-cell:{"cell_bento_metadata":{"collapsed":true,"output":{"id":1247934846418027,"loadingStatus":"loaded"}},"cell_type":"code","id":1}
+//@bento-cell:{"cell_bento_metadata":{"collapsed":true,"output":{"id":1247934846418027,"loadingStatus":"loaded"}},"id":1,"cell_type":"code"}
 /* Very classy */
 class N1234MyClass {}
 //@bento-cell-end
 
-//@bento-cell:{"cell_bento_metadata":{"language":"sql"},"cell_type":"code","id":3}
+//@bento-cell:{"cell_bento_metadata":{"language":"sql"},"id":3,"cell_type":"code"}
 /*@non_hack:
 SELECT
     col1,
@@ -20,7 +20,7 @@ LIMIT
 */
 //@bento-cell-end
 
-//@bento-cell:{"cell_type":"code","id":4}
+//@bento-cell:{"id":4,"cell_type":"code"}
 /*@non_hack:
 %%python
 print('hello from python', {'python': 'dictionary'})
@@ -29,14 +29,14 @@ print('no semicolons')
 //@bento-cell-end
 
 async function gen_n1234_notebook_main(): Awaitable<void> {
-  //@bento-cell:{"cell_bento_metadata":{"collapsed":true,"output":{"id":1247934846418027,"loadingStatus":"loaded"}},"cell_type":"code","id":1}
+  //@bento-cell:{"cell_bento_metadata":{"collapsed":true,"output":{"id":1247934846418027,"loadingStatus":"loaded"}},"id":1,"cell_type":"code"}
   echo "hi from cell 1";
   //@bento-cell-end
-  //@bento-cell:{"cell_bento_metadata":{"collapsed":true,"output":{"id":1247934846418027,"loadingStatus":"loaded"}},"cell_type":"code","id":1}
+  //@bento-cell:{"cell_bento_metadata":{"collapsed":true,"output":{"id":1247934846418027,"loadingStatus":"loaded"}},"id":1,"cell_type":"code"}
   // I am a comment
   echo "end of cell 1";
   //@bento-cell-end
-  //@bento-cell:{"cell_bento_metadata":{},"cell_type":"code","id":2}
+  //@bento-cell:{"cell_bento_metadata":{},"id":2,"cell_type":"code"}
   echo "hi from cell 2";
   $x = 3;
   echo $x + 1;

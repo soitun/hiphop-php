@@ -73,23 +73,23 @@ let is_fbid_or_igid_of_media_id env ty =
 
 let log_json env kind message arg_ty param_ty param_name pos =
   let json =
-    Hh_json.(
-      JSON_Object
-        [
-          ("message", JSON_String message);
-          ("kind", JSON_String kind);
-          ("arg_type", Tast_env.ty_to_json env arg_ty);
-          ( "full_param_text",
-            JSON_String
-              (Printf.sprintf
-                 "%s %s"
-                 (name param_ty)
-                 (Option.value param_name ~default:"None")) );
-          ("param_type", Tast_env.ty_to_json env param_ty);
-          ("pos", Pos.json pos);
-        ])
+    `Assoc
+      [
+        ("message", `String message);
+        ("kind", `String kind);
+        ("arg_type", Tast_env.ty_to_json env arg_ty);
+        ( "full_param_text",
+          `String
+            (Printf.sprintf
+               "%s %s"
+               (name param_ty)
+               (Option.value param_name ~default:"None")) );
+        ("param_type", Tast_env.ty_to_json env param_ty);
+        ("pos", Pos.json pos);
+      ]
   in
-  Hh_logger.log "[FBID_IGID_type_logger] %s" (Hh_json.json_to_string json)
+  (* unsorted: telemetry/logging, not snapshot-tested *)
+  Hh_logger.log "[FBID_IGID_type_logger] %s" (Yojson.Safe.to_string json)
 
 let check_args (env : Tast_env.env) params args pos =
   let Equal = Tast_env.eq_typing_env in

@@ -372,7 +372,7 @@ let supports_connectionStatus (p : Lsp.Initialize.params) : bool =
 let telemetry
     (writer : Jsonrpc.writer)
     (type_ : MessageType.t)
-    (extras : (string * Hh_json.json) list)
+    (extras : (string * Yojson.Safe.t) list)
     (message : string) : unit =
   let params = { LogMessage.type_; message } in
   let notification = TelemetryNotification (params, extras) in
@@ -380,13 +380,13 @@ let telemetry
 
 let telemetry_error
     (writer : Jsonrpc.writer)
-    ?(extras : (string * Hh_json.json) list = [])
+    ?(extras : (string * Yojson.Safe.t) list = [])
     (message : string) : unit =
   telemetry writer MessageType.ErrorMessage extras message
 
 let telemetry_log
     (writer : Jsonrpc.writer)
-    ?(extras : (string * Hh_json.json) list = [])
+    ?(extras : (string * Yojson.Safe.t) list = [])
     (message : string) : unit =
   telemetry writer MessageType.LogMessage extras message
 

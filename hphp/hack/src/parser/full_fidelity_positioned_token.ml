@@ -410,17 +410,16 @@ let trim_right ~n t =
   { t with trailing_width = t.trailing_width + n; width = t.width - n }
 
 let to_json token =
-  Hh_json.(
-    let (line_number, _) = start_position token in
-    JSON_Object
-      [
-        ("kind", JSON_String (TokenKind.to_string token.kind));
-        ("text", JSON_String (text token));
-        ("offset", int_ token.offset);
-        ("leading_width", int_ token.leading_width);
-        ("width", int_ token.width);
-        ("trailing_width", int_ token.trailing_width);
-        ("leading", JSON_Array (List.map ~f:Trivia.to_json (leading token)));
-        ("trailing", JSON_Array (List.map ~f:Trivia.to_json (trailing token)));
-        ("line_number", int_ line_number);
-      ])
+  let (line_number, _) = start_position token in
+  `Assoc
+    [
+      ("kind", `String (TokenKind.to_string token.kind));
+      ("text", `String (text token));
+      ("offset", `Int token.offset);
+      ("leading_width", `Int token.leading_width);
+      ("width", `Int token.width);
+      ("trailing_width", `Int token.trailing_width);
+      ("leading", `List (List.map ~f:Trivia.to_json (leading token)));
+      ("trailing", `List (List.map ~f:Trivia.to_json (trailing token)));
+      ("line_number", `Int line_number);
+    ]

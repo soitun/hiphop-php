@@ -10,7 +10,7 @@
 (** for when we encountered an internal bugs and we want to write to
 the logfile, and optionally also record telemetry. *)
 val log_bug :
-  ?data:Hh_json.json option ->
+  ?data:Yojson.Safe.t option ->
   ?e:Exception.t ->
   telemetry:bool ->
   string ->
@@ -18,7 +18,7 @@ val log_bug :
 
 (** for when we encountered an internal bug and want a user-facing problem report. *)
 val make_rich_error :
-  ?data:Hh_json.json option ->
+  ?data:Yojson.Safe.t option ->
   ?e:Exception.t ->
   string ->
   ClientIdeMessage.rich_error

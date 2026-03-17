@@ -8,19 +8,22 @@ Devmate Agent Fix - Unexpected parameter name. Only `named` parameters can have 
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Add `named` keyword",
+  "kind": "quickfix",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"named ",
-          "range":{"end":{"character":27,"line":3},"start":{"character":27,"line":3}}
+          "range": {
+            "start": { "line": 3, "character": 27 },
+            "end": { "line": 3, "character": 27 }
+          },
+          "newText": "named "
         }
       ]
     }
-  },
-  "kind":"quickfix",
-  "title":"Add `named` keyword"
+  }
 }
 
 Applied edit for code action:

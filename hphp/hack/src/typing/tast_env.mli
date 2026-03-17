@@ -58,13 +58,13 @@ val print_decl_ty_with_identity :
 
 (** Return a JSON representation of the given type. *)
 val ty_to_json :
-  env -> ?show_like_ty:bool -> Typing_defs.locl_ty -> Hh_json.json
+  env -> ?show_like_ty:bool -> Typing_defs.locl_ty -> Yojson.Safe.t
 
 (** Convert a JSON representation of a type back into a locl-phase type. *)
 val json_to_locl_ty :
-  ?keytrace:Hh_json.Access.keytrace ->
+  ?keytrace:Hh_json_helpers.Access.keytrace ->
   Provider_context.t ->
-  Hh_json.json ->
+  Yojson.Safe.t ->
   (Typing_defs.locl_ty, Typing_defs.deserialization_error) result
 
 (** Return the type of the enclosing class definition.

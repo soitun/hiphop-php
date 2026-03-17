@@ -77,11 +77,10 @@ let from_rust_trivium source_text rust_trivium =
 let from_rust_trivia source_text = List.map (from_rust_trivium source_text)
 
 let to_json trivia =
-  Hh_json.(
-    JSON_Object
-      [
-        ("kind", JSON_String (TriviaKind.to_string trivia.kind));
-        ("text", JSON_String (text trivia));
-        ("offset", int_ trivia.offset);
-        ("width", int_ trivia.width);
-      ])
+  `Assoc
+    [
+      ("kind", `String (TriviaKind.to_string trivia.kind));
+      ("text", `String (text trivia));
+      ("offset", `Int trivia.offset);
+      ("width", `Int trivia.width);
+    ]

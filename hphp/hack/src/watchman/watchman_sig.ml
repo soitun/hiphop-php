@@ -18,6 +18,10 @@ module Types = struct
 
   exception Watchman_restarted
 
+  (* unsorted: ppx printer, not snapshot-tested *)
+  let pp_yojson fmt json =
+    Format.pp_print_string fmt (Yojson.Safe.to_string json)
+
   type subscribe_mode =
     | All_changes
     | Defer_changes
@@ -33,7 +37,7 @@ module Types = struct
         (** None for query mode, otherwise specify subscriptions mode. *)
     init_timeout: timeout;
         (** Seconds used for init timeout - will be reused for reinitialization.*)
-    expression_terms: Hh_json.json list;  (** See watchman expression terms. *)
+    expression_terms: Yojson.Safe.t list;  (** See watchman expression terms. *)
     debug_logging: bool;
     roots: Path.t list;
     sockname: string option;
@@ -59,8 +63,8 @@ module Types = struct
      *
      * Note: The distance is HG Revision distance, not SVN revision distance.
      *)
-    | State_enter of string * Hh_json.json option
-    | State_leave of string * Hh_json.json option
+    | State_enter of string * (Yojson.Safe.t[@printer pp_yojson]) option
+    | State_leave of string * (Yojson.Safe.t[@printer pp_yojson]) option
     | Changed_merge_base of Hg.Rev.t * SSet.t * clock
     | Files_changed of SSet.t
   [@@deriving show]
@@ -143,7 +147,7 @@ module type S = sig
     val test_settings : init_settings
 
     val transform_asynchronous_get_changes_response :
-      env -> Hh_json.json option -> env * pushed_changes
+      env -> Yojson.Safe.t option -> env * pushed_changes
   end
 
   module Mocking : sig

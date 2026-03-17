@@ -5,31 +5,37 @@ Add override for TheParent::foo (CodeActionKind: "refactor") SELECTED
 JSON for selected code action:
 ------------------------------------------
 {
-  "command":{
-    "arguments":[
-      {"end":{"character":4,"line":12},"start":{"character":4,"line":12}},
-      {
-        "arguments":[],
-        "command":"editor.action.inlineSuggest.trigger",
-        "title":"Trigger Inline Suggest"
-      }
-    ],
-    "command":"hack.setSelection",
-    "title":"Set Cursor Selection"
-  },
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Add override for TheParent::foo",
+  "kind": "refactor",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"\n\n  <<__Override>>\n  public function foo(): void {\n    \n  }",
-          "range":{"end":{"character":32,"line":8},"start":{"character":32,"line":8}}
+          "range": {
+            "start": { "line": 8, "character": 32 },
+            "end": { "line": 8, "character": 32 }
+          },
+          "newText": "\n\n  <<__Override>>\n  public function foo(): void {\n    \n  }"
         }
       ]
     }
   },
-  "kind":"refactor",
-  "title":"Add override for TheParent::foo"
+  "command": {
+    "title": "Set Cursor Selection",
+    "command": "hack.setSelection",
+    "arguments": [
+      {
+        "start": { "line": 12, "character": 4 },
+        "end": { "line": 12, "character": 4 }
+      },
+      {
+        "title": "Trigger Inline Suggest",
+        "command": "editor.action.inlineSuggest.trigger",
+        "arguments": []
+      }
+    ]
+  }
 }
 
 Applied edit for code action:

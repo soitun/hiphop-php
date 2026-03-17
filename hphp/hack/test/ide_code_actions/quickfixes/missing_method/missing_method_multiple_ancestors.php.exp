@@ -10,31 +10,37 @@ Code action title: Add override for MyParent::methodInGrandParent
 JSON for selected code action:
 ------------------------------------------
 {
-  "command":{
-    "arguments":[
-      {"end":{"character":4,"line":17},"start":{"character":4,"line":17}},
-      {
-        "arguments":[],
-        "command":"editor.action.inlineSuggest.trigger",
-        "title":"Trigger Inline Suggest"
-      }
-    ],
-    "command":"hack.setSelection",
-    "title":"Set Cursor Selection"
-  },
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Add override for MyParent::methodInGrandParent",
+  "kind": "refactor",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"\n  <<__Override>>\n  public function methodInGrandParent(): void {\n    \n  }\n\n",
-          "range":{"end":{"character":32,"line":14},"start":{"character":32,"line":14}}
+          "range": {
+            "start": { "line": 14, "character": 32 },
+            "end": { "line": 14, "character": 32 }
+          },
+          "newText": "\n  <<__Override>>\n  public function methodInGrandParent(): void {\n    \n  }\n\n"
         }
       ]
     }
   },
-  "kind":"refactor",
-  "title":"Add override for MyParent::methodInGrandParent"
+  "command": {
+    "title": "Set Cursor Selection",
+    "command": "hack.setSelection",
+    "arguments": [
+      {
+        "start": { "line": 17, "character": 4 },
+        "end": { "line": 17, "character": 4 }
+      },
+      {
+        "title": "Trigger Inline Suggest",
+        "command": "editor.action.inlineSuggest.trigger",
+        "arguments": []
+      }
+    ]
+  }
 }
 
 Applied edit for code action:
@@ -70,31 +76,37 @@ Code action title: Add override for MyParent::methodInParent
 JSON for selected code action:
 ------------------------------------------
 {
-  "command":{
-    "arguments":[
-      {"end":{"character":4,"line":17},"start":{"character":4,"line":17}},
-      {
-        "arguments":[],
-        "command":"editor.action.inlineSuggest.trigger",
-        "title":"Trigger Inline Suggest"
-      }
-    ],
-    "command":"hack.setSelection",
-    "title":"Set Cursor Selection"
-  },
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Add override for MyParent::methodInParent",
+  "kind": "refactor",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"\n  <<__Override>>\n  public function methodInParent(): void {\n    \n  }\n\n",
-          "range":{"end":{"character":32,"line":14},"start":{"character":32,"line":14}}
+          "range": {
+            "start": { "line": 14, "character": 32 },
+            "end": { "line": 14, "character": 32 }
+          },
+          "newText": "\n  <<__Override>>\n  public function methodInParent(): void {\n    \n  }\n\n"
         }
       ]
     }
   },
-  "kind":"refactor",
-  "title":"Add override for MyParent::methodInParent"
+  "command": {
+    "title": "Set Cursor Selection",
+    "command": "hack.setSelection",
+    "arguments": [
+      {
+        "start": { "line": 17, "character": 4 },
+        "end": { "line": 17, "character": 4 }
+      },
+      {
+        "title": "Trigger Inline Suggest",
+        "command": "editor.action.inlineSuggest.trigger",
+        "arguments": []
+      }
+    ]
+  }
 }
 
 Applied edit for code action:

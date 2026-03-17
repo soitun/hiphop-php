@@ -131,7 +131,6 @@ module Log = struct
       (p_locl_ty : locl_ty -> string)
       (p_internal_type : internal_type -> string)
       solving_info =
-    let open Hh_json in
     let constraints_to_json
         {
           appears_covariantly;
@@ -141,40 +140,37 @@ module Log = struct
           type_constants = _;
         } =
       let bounds_to_json bs =
-        ITySet.elements bs
-        |> List.map ~f:(fun b -> JSON_String (p_internal_type b))
+        ITySet.elements bs |> List.map ~f:(fun b -> `String (p_internal_type b))
       in
-      JSON_Object
+      `Assoc
         [
-          ("appears_covariantly", JSON_Bool appears_covariantly);
-          ("appears_contravariantly", JSON_Bool appears_contravariantly);
-          ("lower_bounds", JSON_Array (bounds_to_json lower_bounds));
-          ("upper_bounds", JSON_Array (bounds_to_json upper_bounds));
+          ("appears_covariantly", `Bool appears_covariantly);
+          ("appears_contravariantly", `Bool appears_contravariantly);
+          ("lower_bounds", `List (bounds_to_json lower_bounds));
+          ("upper_bounds", `List (bounds_to_json upper_bounds));
         ]
     in
-    let locl_ty_to_json x = JSON_String (p_locl_ty x) in
+    let locl_ty_to_json x = `String (p_locl_ty x) in
     match solving_info with
-    | TVIType locl_ty -> JSON_Object [("type", locl_ty_to_json locl_ty)]
-    | TVIConstraints cstr ->
-      JSON_Object [("constraints", constraints_to_json cstr)]
+    | TVIType locl_ty -> `Assoc [("type", locl_ty_to_json locl_ty)]
+    | TVIConstraints cstr -> `Assoc [("constraints", constraints_to_json cstr)]
 
   let tyvar_to_json
       (p_locl_ty : locl_ty -> string)
       (p_internal_type : internal_type -> string)
       (env : t)
       (v : Tvid.t) =
-    let open Hh_json in
     match Tvid.Map.find_opt v env.tvenv with
-    | None -> JSON_Null
+    | None -> `Null
     | Some { tyvar_pos; eager_solve_failed; solving_info; is_error; rank } ->
-      JSON_Object
+      `Assoc
         [
-          ("tyvar_pos", string_ @@ Pos.string (Pos.to_absolute tyvar_pos));
-          ("eager_solve_failed", JSON_Bool eager_solve_failed);
+          ("tyvar_pos", `String (Pos.string (Pos.to_absolute tyvar_pos)));
+          ("eager_solve_failed", `Bool eager_solve_failed);
           ( "solving_info",
             solving_info_to_json p_locl_ty p_internal_type solving_info );
-          ("is_error", JSON_Bool is_error);
-          ("rank", JSON_Number (Int.to_string rank));
+          ("is_error", `Bool is_error);
+          ("rank", `Intlit (Int.to_string rank));
         ]
 end
 

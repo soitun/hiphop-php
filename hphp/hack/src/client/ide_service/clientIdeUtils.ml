@@ -11,13 +11,13 @@ open Hh_prelude
 
 type error = {
   category: string;
-  data: Hh_json.json;
+  data: Yojson.Safe.t;
 }
 
 let make_error_internal
-    ~(category : string) ~(data : Hh_json.json option) ~(e : Exception.t option)
-    : error =
-  let open Hh_json in
+    ~(category : string)
+    ~(data : Yojson.Safe.t option)
+    ~(e : Exception.t option) : error =
   let (category, stack, desc) =
     match e with
     | None -> (category, Exception.get_current_callstack_string 99, "")
@@ -31,33 +31,33 @@ let make_error_internal
       | _ -> (category ^ ": " ^ Exception.get_ctor_string e, backtrace, "")
     end
   in
-  let stack = ("stack", stack |> Exception.clean_stack |> string_) in
-  let desc = ("desc", string_ desc) in
+  let stack = ("stack", `String (stack |> Exception.clean_stack)) in
+  let desc = ("desc", `String desc) in
   let elems =
     match data with
     | None -> [stack]
-    | Some (JSON_Object elems) ->
+    | Some (`Assoc elems) ->
       if List.Assoc.mem ~equal:String.equal elems "stack" then
         elems
       else
         stack :: elems
     | Some data -> [("data", data); stack; desc]
   in
-  let data = Hh_json.JSON_Object elems in
+  let data = `Assoc elems in
   { category; data }
 
 let log_bug
-    ?(data : Hh_json.json option = None)
+    ?(data : Yojson.Safe.t option = None)
     ?(e : Exception.t option)
     ~(telemetry : bool)
     (category : string) : unit =
   let { category; data } = make_error_internal ~category ~e ~data in
-  Hh_logger.error "%s\n%s" category (Hh_json.json_to_string data);
+  Hh_logger.error "%s\n%s" category (Hh_json_helpers.Out.to_string data);
   if telemetry then HackEventLogger.serverless_ide_bug ~message:category ~data;
   ()
 
 let make_rich_error
-    ?(data : Hh_json.json option = None)
+    ?(data : Yojson.Safe.t option = None)
     ?(e : Exception.t option)
     (category : string) : ClientIdeMessage.rich_error =
   let { category; data } = make_error_internal ~category ~e ~data in

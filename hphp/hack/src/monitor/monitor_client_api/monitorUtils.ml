@@ -149,35 +149,39 @@ module VersionPayload = struct
   let serialize
       ~(tracker : Connection_tracker.t)
       ~(terminate_monitor_on_version_mismatch : bool) : serialized =
-    Hh_json.JSON_Object
+    `Assoc
       [
-        ("client_version", Hh_json.string_ Build_id.build_revision);
-        ("tracker_id", Hh_json.string_ (Connection_tracker.log_id tracker));
+        ("client_version", `String Build_id.build_revision);
+        ("tracker_id", `String (Connection_tracker.log_id tracker));
         ( "terminate_monitor_on_version_mismatch",
-          Hh_json.bool_ terminate_monitor_on_version_mismatch );
+          `Bool terminate_monitor_on_version_mismatch );
       ]
-    |> Hh_json.json_to_string
+    |> Hh_json_helpers.Out.to_string
 
   let deserialize (s : serialized) : (t, string) result =
     let open Hh_prelude.Result.Monad_infix in
     (* Newer clients send version in a json object; older clients sent just a client_version string *)
     (if String.is_prefix s ~prefix:"{" then
-      try Ok (Hh_json.json_of_string s) with
+      try Ok (Yojson.Safe.from_string s) with
       | exn -> Error (Exn.to_string exn)
     else
-      Ok (Hh_json.JSON_Object [("client_version", Hh_json.string_ s)]))
+      Ok (`Assoc [("client_version", `String s)]))
     >>= fun json ->
-    Hh_json_helpers.Jget.string_opt (Some json) "client_version"
-    |> Result.of_option ~error:"Missing client_version"
+    let open Yojson.Safe.Util in
+    (match json |> member "client_version" |> to_string_option with
+    | Some s -> Ok s
+    | None -> Error "Missing client_version")
     >>= fun client_version ->
     let tracker_id =
-      Hh_json_helpers.Jget.string_opt (Some json) "tracker_id"
+      json
+      |> member "tracker_id"
+      |> to_string_option
       |> Option.value ~default:"t#?"
     in
     let terminate_monitor_on_version_mismatch =
-      Hh_json_helpers.Jget.bool_opt
-        (Some json)
-        "terminate_monitor_on_version_mismatch"
+      json
+      |> member "terminate_monitor_on_version_mismatch"
+      |> to_bool_option
       |> Option.value ~default:true
     in
     Ok { client_version; tracker_id; terminate_monitor_on_version_mismatch }
@@ -196,17 +200,17 @@ module MismatchPayload = struct
   type t = { monitor_will_terminate: bool }
 
   let serialize ~(monitor_will_terminate : bool) : serialized =
-    Hh_json.JSON_Object
-      [("monitor_will_terminate", Hh_json.bool_ monitor_will_terminate)]
-    |> Hh_json.json_to_string
+    `Assoc [("monitor_will_terminate", `Bool monitor_will_terminate)]
+    |> Hh_json_helpers.Out.to_string
 
   let deserialize (s : serialized) : (t, string) result =
     let open Hh_prelude.Result.Monad_infix in
-    (try Ok (Hh_json.json_of_string s) with
+    (try Ok (Yojson.Safe.from_string s) with
     | exn -> Error (Exn.to_string exn))
     >>= fun json ->
     let monitor_will_terminate =
-      Hh_json_helpers.Jget.bool_opt (Some json) "monitor_will_terminate"
+      Yojson.Safe.Util.(
+        json |> member "monitor_will_terminate" |> to_bool_option)
       |> Option.value ~default:true
     in
     Ok { monitor_will_terminate }

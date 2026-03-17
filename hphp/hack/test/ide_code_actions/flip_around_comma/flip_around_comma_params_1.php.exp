@@ -5,19 +5,22 @@ Flip around comma (CodeActionKind: "refactor") SELECTED
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Flip around comma",
+  "kind": "refactor",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"int $b, Box<int> $a",
-          "range":{"end":{"character":69,"line":7},"start":{"character":22,"line":7}}
+          "range": {
+            "start": { "line": 7, "character": 22 },
+            "end": { "line": 7, "character": 69 }
+          },
+          "newText": "int $b, Box<int> $a"
         }
       ]
     }
-  },
-  "kind":"refactor",
-  "title":"Flip around comma"
+  }
 }
 
 Applied edit for code action:

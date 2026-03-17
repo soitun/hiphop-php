@@ -30,30 +30,30 @@ let test_escape_unescape_data =
 
 let test_escape_unescape () =
   List.for_all test_escape_unescape_data ~f:(fun s ->
-      let json = Hh_json.JSON_String s in
-      let encoded = Hh_json.json_to_string json in
-      let decoded = Hh_json.json_of_string encoded in
-      let result = Hh_json.get_string_exn decoded in
+      let json = `String s in
+      let encoded = Yojson.Safe.to_string json in
+      let decoded = Yojson.Safe.from_string encoded in
+      let result = Hh_json_helpers.get_string_exn decoded in
       String.equal result s)
 
 let test_empty_string () =
   try
-    ignore (Hh_json.json_of_string "");
+    ignore (Yojson.Safe.from_string "");
     false
   with
-  | Hh_json.Syntax_error _ -> true
+  | Yojson.Json_error _ -> true
 
 let test_whitespace_string () =
-  match Hh_json.json_of_string "\" \"" with
-  | Hh_json.JSON_String " " -> true
+  match Yojson.Safe.from_string "\" \"" with
+  | `String " " -> true
   | _ -> false
 
 let test_access_string () =
-  let json_string = Hh_json.json_of_string "{ \"foo\": \"hello\" }" in
-  let json_number = Hh_json.json_of_string "{ \"foo\": 1 }" in
-  let json_null = Hh_json.json_of_string "{ \"foo\": null }" in
-  let json_absent = Hh_json.json_of_string "{ }" in
-  Hh_json.Access.(
+  let json_string = Yojson.Safe.from_string "{ \"foo\": \"hello\" }" in
+  let json_number = Yojson.Safe.from_string "{ \"foo\": 1 }" in
+  let json_null = Yojson.Safe.from_string "{ \"foo\": null }" in
+  let json_absent = Yojson.Safe.from_string "{ }" in
+  Hh_json_helpers.Access.(
     let r1 =
       match return json_string >>= get_string "foo" with
       | Ok ("hello", _) -> true
@@ -61,12 +61,12 @@ let test_access_string () =
     in
     let r2 =
       match return json_number >>= get_string "foo" with
-      | Error (Wrong_type_error (["foo"], Hh_json.String_t)) -> true
+      | Error (Wrong_type_error (["foo"], Hh_json_helpers.String_t)) -> true
       | _ -> false
     in
     let r3 =
       match return json_null >>= get_string "foo" with
-      | Error (Wrong_type_error (["foo"], Hh_json.String_t)) -> true
+      | Error (Wrong_type_error (["foo"], Hh_json_helpers.String_t)) -> true
       | _ -> false
     in
     let r4 =
@@ -77,10 +77,10 @@ let test_access_string () =
     r1 && r2 && r3 && r4)
 
 let test_jget_string () =
-  let json_string = Some (Hh_json.json_of_string "{ \"foo\": \"hello\" }") in
-  let json_number = Some (Hh_json.json_of_string "{ \"foo\": 1 }") in
-  let json_null = Some (Hh_json.json_of_string "{ \"foo\": null }") in
-  let json_absent = Some (Hh_json.json_of_string "{ }") in
+  let json_string = Some (Yojson.Safe.from_string "{ \"foo\": \"hello\" }") in
+  let json_number = Some (Yojson.Safe.from_string "{ \"foo\": 1 }") in
+  let json_null = Some (Yojson.Safe.from_string "{ \"foo\": null }") in
+  let json_absent = Some (Yojson.Safe.from_string "{ }") in
   let json_none = None in
   Hh_json_helpers.(
     let results = "" in
@@ -141,13 +141,13 @@ let test_jget_string () =
     not failed)
 
 let test_jget_number () =
-  let json_int = Some (Hh_json.json_of_string "{ \"foo\": 1 }") in
-  let json_float = Some (Hh_json.json_of_string "{ \"foo\": 1.0 }") in
-  let json_string = Some (Hh_json.json_of_string "{ \"foo\": \"hello\" }") in
+  let json_int = Some (Yojson.Safe.from_string "{ \"foo\": 1 }") in
+  let json_float = Some (Yojson.Safe.from_string "{ \"foo\": 1.0 }") in
+  let json_string = Some (Yojson.Safe.from_string "{ \"foo\": \"hello\" }") in
   Hh_json_helpers.(
     let results = "" in
     let iint = Option.equal Int.equal (Jget.int_opt json_int "foo") (Some 1) in
-    let ifloat = throws (fun () -> Jget.int_opt json_float "foo") in
+    let ifloat = Jget.int_opt json_float "foo" |> Option.is_none in
     let istring = Jget.int_opt json_string "foo" |> Option.is_none in
     let results =
       results
@@ -178,9 +178,9 @@ let test_jget_number () =
 
 let test_access_object_string () =
   let json =
-    Hh_json.json_of_string "{ \"foo\": { \"bar\": { \"baz\": \"hello\" } } }"
+    Yojson.Safe.from_string "{ \"foo\": { \"bar\": { \"baz\": \"hello\" } } }"
   in
-  Hh_json.Access.(
+  Hh_json_helpers.Access.(
     let result =
       return json >>= get_obj "foo" >>= get_obj "bar" >>= get_string "baz"
     in
@@ -190,9 +190,9 @@ let test_access_object_string () =
 
 let test_access_object_bool () =
   let json =
-    Hh_json.json_of_string "{ \"foo\": { \"bar\": { \"baz\": true } } }"
+    Yojson.Safe.from_string "{ \"foo\": { \"bar\": { \"baz\": true } } }"
   in
-  Hh_json.Access.(
+  Hh_json_helpers.Access.(
     let result =
       return json >>= get_obj "foo" >>= get_obj "bar" >>= get_bool "baz"
     in
@@ -202,9 +202,9 @@ let test_access_object_bool () =
 
 let test_access_object_number () =
   let json =
-    Hh_json.json_of_string "{ \"foo\": { \"bar\": { \"baz\": 5 } } }"
+    Yojson.Safe.from_string "{ \"foo\": { \"bar\": { \"baz\": 5 } } }"
   in
-  Hh_json.Access.(
+  Hh_json_helpers.Access.(
     let result =
       return json >>= get_obj "foo" >>= get_obj "bar" >>= get_number "baz"
     in
@@ -214,21 +214,21 @@ let test_access_object_number () =
 
 let test_access_object_val () =
   let json =
-    Hh_json.json_of_string "{ \"foo\": { \"bar\": { \"baz\": 5 } } }"
+    Yojson.Safe.from_string "{ \"foo\": { \"bar\": { \"baz\": 5 } } }"
   in
-  Hh_json.Access.(
+  Hh_json_helpers.Access.(
     let result =
       return json >>= get_obj "foo" >>= get_obj "bar" >>= get_val "baz"
     in
     match result with
-    | Ok (Hh_json.JSON_Number "5", _) -> true
+    | Ok (`Int 5, _) -> true
     | _ -> false)
 
 let test_access_object_key_doesnt_exist () =
   let json =
-    Hh_json.json_of_string "{ \"foo\": { \"bar\": { \"baz\": 5 } } }"
+    Yojson.Safe.from_string "{ \"foo\": { \"bar\": { \"baz\": 5 } } }"
   in
-  Hh_json.Access.(
+  Hh_json_helpers.Access.(
     let result =
       return json >>= get_obj "foo" >>= get_obj "bar" >>= get_number "oops"
     in
@@ -238,24 +238,26 @@ let test_access_object_key_doesnt_exist () =
 
 let test_access_object_type_invalid () =
   let json =
-    Hh_json.json_of_string "{ \"foo\": { \"bar\": { \"baz\": 5 } } }"
+    Yojson.Safe.from_string "{ \"foo\": { \"bar\": { \"baz\": 5 } } }"
   in
-  Hh_json.Access.(
+  Hh_json_helpers.Access.(
     let result =
       return json >>= get_obj "foo" >>= get_obj "bar" >>= get_string "baz"
     in
     match result with
-    | Error (Wrong_type_error (["baz"; "bar"; "foo"], Hh_json.String_t)) -> true
+    | Error (Wrong_type_error (["baz"; "bar"; "foo"], Hh_json_helpers.String_t))
+      ->
+      true
     | _ -> false)
 
 (** Hit an error when accessing the third key, in this JSON object
   * of depth 4. *)
 let test_access_object_error_in_middle () =
   let json =
-    Hh_json.json_of_string
+    Yojson.Safe.from_string
       "{ \"foo\": { \"bar\": { \"baz\": { \"qux\" : 5 } } } }"
   in
-  Hh_json.Access.(
+  Hh_json_helpers.Access.(
     let result =
       return json
       >>= get_obj "foo"
@@ -276,14 +278,14 @@ type fbz_record = {
 
 let test_access_3_keys_one_object () =
   let json =
-    Hh_json.json_of_string
+    Yojson.Safe.from_string
       ("{\n"
       ^ "  \"foo\" : true,\n"
       ^ "  \"bar\" : \"hello\",\n"
       ^ "  \"baz\" : 5\n"
       ^ "}")
   in
-  Hh_json.Access.(
+  Hh_json_helpers.Access.(
     let accessor = return json in
     let result =
       accessor >>= get_bool "foo" >>= fun (foo, _) ->
@@ -307,14 +309,14 @@ let test_access_3_keys_one_object () =
  * of a string, so we should expect to get a Error. *)
 let test_access_3_keys_one_object_wrong_type_middle () =
   let json =
-    Hh_json.json_of_string
+    Yojson.Safe.from_string
       ("{\n"
       ^ "  \"foo\" : true,\n"
       ^ "  \"bar\" : [],\n"
       ^ "  \"baz\" : 5\n"
       ^ "}")
   in
-  Hh_json.Access.(
+  Hh_json_helpers.Access.(
     let accessor = return json in
     let result =
       accessor >>= get_bool "foo" >>= fun (foo, _) ->
@@ -335,28 +337,53 @@ let test_access_3_keys_one_object_wrong_type_middle () =
 
 let test_truncate () =
   let s = {|{ "a":{"a1":{"a1x":"hello","a1y":42},"a2":true},"b":null}|} in
-  let actual = Hh_json.json_truncate_string s in
+  let actual = Hh_json_helpers.json_truncate_string s in
   let exp = s in
   (* we expect it to preserve the leading space! *)
   Asserter.String_asserter.assert_equals exp actual "unchanged truncate";
 
-  let actual = Hh_json.json_truncate_string s ~max_string_length:1 in
+  let actual =
+    Hh_json_helpers.json_truncate_string
+      s
+      ~max_string_length:1
+      ~if_reformat_multiline:false
+  in
   let exp = {|{"a":{"a1":{"a1x":"h...","a1y":42},"a2":true},"b":null}|} in
   Asserter.String_asserter.assert_equals exp actual "max_string_length truncate";
 
-  let actual = Hh_json.json_truncate_string s ~max_child_count:1 in
+  let actual =
+    Hh_json_helpers.json_truncate_string
+      s
+      ~max_child_count:1
+      ~if_reformat_multiline:false
+  in
   let exp = {|{"a":{"a1":{"a1x":"hello"}}}|} in
   Asserter.String_asserter.assert_equals exp actual "max_child_count truncate";
 
-  let actual = Hh_json.json_truncate_string s ~max_depth:1 in
+  let actual =
+    Hh_json_helpers.json_truncate_string
+      s
+      ~max_depth:1
+      ~if_reformat_multiline:false
+  in
   let exp = {|{"a":{},"b":null}|} in
   Asserter.String_asserter.assert_equals exp actual "max_depth truncate";
 
-  let actual = Hh_json.json_truncate_string s ~max_total_count:1 in
+  let actual =
+    Hh_json_helpers.json_truncate_string
+      s
+      ~max_total_count:1
+      ~if_reformat_multiline:false
+  in
   let exp = {|{"a":{}}|} in
   Asserter.String_asserter.assert_equals exp actual "max_total_count truncate 1";
 
-  let actual = Hh_json.json_truncate_string s ~max_total_count:2 in
+  let actual =
+    Hh_json_helpers.json_truncate_string
+      s
+      ~max_total_count:2
+      ~if_reformat_multiline:false
+  in
   let exp = {|{"a":{"a1":{}}}|} in
   Asserter.String_asserter.assert_equals exp actual "max_total_count truncate 2";
   true
@@ -365,43 +392,53 @@ let test_hex_escape () =
   let input = "\"\\u003C\"" in
   let exp = "<" in
   Asserter.Hh_json_json_asserter.assert_equals
-    (Hh_json.JSON_String exp)
-    (Hh_json.json_of_string input)
+    (`String exp)
+    (Yojson.Safe.from_string input)
     "unicode escape with caps";
   true
 
 let test_nan () =
+  Asserter.Hh_json_json_asserter.assert_equals (`Int 1) (`Int 1) "int";
   Asserter.Hh_json_json_asserter.assert_equals
-    (Hh_json.JSON_Number "1")
-    (Hh_json.int_ 1)
-    "int";
-  Asserter.Hh_json_json_asserter.assert_equals
-    (Hh_json.JSON_Number "1")
-    (Hh_json.float_ 1.)
+    (`Float 1.)
+    (`Float 1.)
     "float trailing dot";
+  Asserter.Hh_json_json_asserter.assert_equals (`Float 0.1) (`Float 0.1) "float";
+  (* NaN and infinity are not valid JSON, they map to null *)
   Asserter.Hh_json_json_asserter.assert_equals
-    (Hh_json.JSON_Number "0.1")
-    (Hh_json.float_ 0.1)
-    "float";
-  Asserter.Hh_json_json_asserter.assert_equals
-    Hh_json.JSON_Null
-    (Hh_json.float_ Float.nan)
+    `Null
+    (if Float.is_nan Float.nan then
+      `Null
+    else
+      `Float Float.nan)
     "nan";
   Asserter.Hh_json_json_asserter.assert_equals
-    Hh_json.JSON_Null
-    (Hh_json.float_ (1.0 /. 0.0))
+    `Null
+    (if Float.is_nan (1.0 /. 0.0) || Float.is_inf (1.0 /. 0.0) then
+      `Null
+    else
+      `Float (1.0 /. 0.0))
     "+nan";
   Asserter.Hh_json_json_asserter.assert_equals
-    Hh_json.JSON_Null
-    (Hh_json.float_ (-1.0 /. 0.0))
+    `Null
+    (if Float.is_nan (-1.0 /. 0.0) || Float.is_inf (-1.0 /. 0.0) then
+      `Null
+    else
+      `Float (-1.0 /. 0.0))
     "-nan";
   Asserter.Hh_json_json_asserter.assert_equals
-    Hh_json.JSON_Null
-    (Hh_json.float_ Float.infinity)
+    `Null
+    (if Float.is_inf Float.infinity then
+      `Null
+    else
+      `Float Float.infinity)
     "infinity";
   Asserter.Hh_json_json_asserter.assert_equals
-    Hh_json.JSON_Null
-    (Hh_json.float_ Float.neg_infinity)
+    `Null
+    (if Float.is_inf Float.neg_infinity then
+      `Null
+    else
+      `Float Float.neg_infinity)
     "-infinity";
   true
 

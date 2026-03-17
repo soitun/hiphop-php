@@ -26,21 +26,20 @@ type 'additional_info replay_info = {
 [@@deriving yojson]
 
 let changed_files_to_absolute_paths_json
-    (changed_files : Saved_state_loader.changed_files) : Hh_json.json =
-  changed_files
-  |> List.map ~f:Relative_path.to_absolute
-  |> Hh_json_helpers.Jprint.string_array
+    (changed_files : Saved_state_loader.changed_files) : Yojson.Safe.t =
+  `List
+    (List.map changed_files ~f:(fun p -> `String (Relative_path.to_absolute p)))
 
 let print_load_error (load_error : Saved_state_loader.LoadError.t) : unit =
   let json =
-    Hh_json.JSON_Object
+    `Assoc
       [
         ( "error",
-          Hh_json.string_
+          `String
             (Saved_state_loader.LoadError.debug_details_of_error load_error) );
       ]
   in
-  Hh_json.json_to_multiline_output stdout json
+  Hh_json_helpers.Out.pretty_to_channel stdout json
 
 let get_replay_info (replay_token : string) :
     Saved_state_loader.Naming_and_dep_table_info.additional_info replay_info
@@ -95,7 +94,7 @@ let make_replay_token
     in
     let%lwt clowder_result =
       Clowder_paste.clowder_upload_and_get_handle
-        (Yojson.Safe.pretty_to_string json)
+        (Hh_json_helpers.Out.pretty_to_string json)
     in
     (match clowder_result with
     | Ok handle -> Lwt.return_some handle
@@ -199,28 +198,25 @@ let main (env : env) (local_config : ServerLocalConfig.t) : Exit_status.t Lwt.t
         ~additional_info
     in
     let json =
-      Hh_json.JSON_Object
+      `Assoc
         [
           ( "changed_files",
             changed_files_to_absolute_paths_json
               changed_files_according_to_watchman );
-          ( "naming_table_path",
-            naming_table_path |> Path.to_string |> Hh_json.string_ );
+          ("naming_table_path", `String (naming_table_path |> Path.to_string));
           ( "naming_sqlite_table_path",
-            naming_sqlite_table_path |> Path.to_string |> Hh_json.string_ );
-          ("dep_table_path", dep_table_path |> Path.to_string |> Hh_json.string_);
+            `String (naming_sqlite_table_path |> Path.to_string) );
+          ("dep_table_path", `String (dep_table_path |> Path.to_string));
           ( "compressed_dep_table_path",
-            compressed_dep_table_path |> Path.to_string |> Hh_json.string_ );
-          ("errors_path", errors_path |> Path.to_string |> Hh_json.string_);
+            `String (compressed_dep_table_path |> Path.to_string) );
+          ("errors_path", `String (errors_path |> Path.to_string));
           ( "warning_hashes_path",
-            warning_hashes_path |> Path.to_string |> Hh_json.string_ );
+            `String (warning_hashes_path |> Path.to_string) );
           ( "replay_token",
-            Option.value_map
-              replay_token
-              ~f:Hh_json.string_
-              ~default:Hh_json.JSON_Null );
+            Option.value_map replay_token ~f:(fun s -> `String s) ~default:`Null
+          );
         ]
     in
-    Hh_json.json_to_multiline_output stdout json;
+    Hh_json_helpers.Out.pretty_to_channel stdout json;
     Out_channel.output_char stdout '\n';
     Lwt.return Exit_status.No_error

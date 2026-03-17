@@ -25,7 +25,7 @@ let from_absolute (pos : Pos.absolute) : half_open_one_based =
 let pos_to_one_based_json
     ?(timestamp : float option)
     ~(half_open_interval : bool)
-    SearchTypes.Find_refs.{ name; pos } : Hh_json.json =
+    SearchTypes.Find_refs.{ name; pos } : Yojson.Safe.t =
   let { filename; line; char_start; char_end } =
     if half_open_interval then
       from_absolute pos
@@ -36,27 +36,26 @@ let pos_to_one_based_json
   let timestamp =
     match timestamp with
     | None -> []
-    | Some t -> [("timestamp", Hh_json.float_ t)]
+    | Some t -> [("timestamp", `Float t)]
   in
-  Hh_json.JSON_Object
+  `Assoc
     (timestamp
     @ [
-        ("name", Hh_json.JSON_String name);
-        ("filename", Hh_json.JSON_String filename);
-        ("line", Hh_json.int_ line);
-        ("char_start", Hh_json.int_ char_start);
-        ("char_end", Hh_json.int_ char_end);
+        ("name", `String name);
+        ("filename", `String filename);
+        ("line", `Int line);
+        ("char_start", `Int char_start);
+        ("char_end", `Int char_end);
       ])
 
-let half_open_one_based_json_to_pos_exn (json : Hh_json.json) :
+let half_open_one_based_json_to_pos_exn (json : Yojson.Safe.t) :
     half_open_one_based =
-  let open Hh_json_helpers in
-  let json = Some json in
+  let open Yojson.Safe.Util in
   {
-    filename = Jget.string_exn json "filename";
-    line = Jget.int_exn json "line";
-    char_start = Jget.int_exn json "char_start";
-    char_end = Jget.int_exn json "char_end";
+    filename = json |> member "filename" |> to_string;
+    line = json |> member "line" |> to_int;
+    char_start = json |> member "char_start" |> to_int;
+    char_end = json |> member "char_end" |> to_int;
   }
 
 (** Produced by "hh --ide-find-refs-by-symbol" and parsed by clientLsp *)
@@ -65,11 +64,12 @@ module IdeShellout = struct
     let entries =
       List.map results ~f:(pos_to_one_based_json ~half_open_interval:true)
     in
-    Hh_json.JSON_Array entries |> Hh_json.json_to_string
+    (* unsorted: IPC wire format, parsed programmatically *)
+    `List entries |> Yojson.Safe.to_string
 
   let from_string_exn (s : string) : half_open_one_based list =
-    let json = Hh_json.json_of_string s in
-    let entries = Hh_json.get_array_exn json in
+    let json = Yojson.Safe.from_string s in
+    let entries = Yojson.Safe.Util.to_list json in
     List.map entries ~f:half_open_one_based_json_to_pos_exn
 end
 
@@ -89,7 +89,8 @@ module Ide_stream = struct
                  { name; pos }
                  ~half_open_interval:true
                  ~timestamp:(Unix.gettimeofday ())
-              |> Hh_json.json_to_string))
+              (* unsorted: IPC wire format, parsed programmatically *)
+              |> Yojson.Safe.to_string))
         |> String.concat ~sep:""
         |> Bytes.of_string
       in
@@ -112,7 +113,7 @@ module Ide_stream = struct
       let jsons =
         Bytes.to_string bytes
         |> String_utils.split_on_newlines
-        |> List.map ~f:Hh_json.json_of_string
+        |> List.map ~f:Yojson.Safe.from_string
       in
       (List.map jsons ~f:half_open_one_based_json_to_pos_exn, end_pos)
 end
@@ -123,7 +124,7 @@ module HackAst = struct
     let entries =
       List.map results ~f:(pos_to_one_based_json ~half_open_interval:false)
     in
-    Hh_json.JSON_Array entries
+    `List entries
 end
 
 (** Used by "hh --find-refs" *)

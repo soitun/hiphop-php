@@ -5,19 +5,22 @@ Add doc comment (CodeActionKind: "refactor") SELECTED
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Add doc comment",
+  "kind": "refactor",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"/**\n * ${0:}\n */\n",
-          "range":{"end":{"character":0,"line":2},"start":{"character":0,"line":2}}
+          "range": {
+            "start": { "line": 2, "character": 0 },
+            "end": { "line": 2, "character": 0 }
+          },
+          "newText": "/**\n * ${0:}\n */\n"
         }
       ]
     }
-  },
-  "kind":"refactor",
-  "title":"Add doc comment"
+  }
 }
 
 Applied edit for code action:

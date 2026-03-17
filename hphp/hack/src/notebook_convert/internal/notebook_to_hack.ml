@@ -171,7 +171,7 @@ let hack_of_ipynb_exn
 let notebook_to_hack
     ~notebook_number:(raw_notebook_number : string)
     ~(header : string)
-    (ipynb_json : Hh_json.json) : (string, string) Result.t =
+    (ipynb_json : Yojson.Safe.t) : (string, string) Result.t =
   Notebook_convert_rewrite.create_notebook_number raw_notebook_number
   |> Result.bind ~f:(fun notebook_number ->
          try

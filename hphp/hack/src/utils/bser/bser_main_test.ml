@@ -18,10 +18,11 @@ type mode =
 let run_test mode path : unit =
   match mode with
   | To_json ->
-    path |> Bser.json_of_bser_file |> Hh_json.json_to_output stdout;
+    (* unsorted: bser format test helper, not snapshot-tested *)
+    path |> Bser.json_of_bser_file |> Yojson.Safe.to_channel stdout;
     output_string stdout "\n"
   | To_bser ->
-    path |> Hh_json.json_of_file ~strict:false |> Bser.json_to_channel stdout;
+    path |> Yojson.Safe.from_file |> Bser.json_to_channel stdout;
     output_string stdout "\n"
   | Roundtrip -> failwith "Not implemented yet"
 

@@ -46,18 +46,17 @@ module Value = struct
     | Token.Synthetic _ -> Synthetic
 
   let to_json value =
-    Hh_json.(
-      SourceData.(
-        match value with
-        | Positioned { offset; leading_width; width; trailing_width; _ } ->
-          JSON_Object
-            [
-              ("offset", int_ offset);
-              ("leading_width", int_ leading_width);
-              ("width", int_ width);
-              ("trailing_width", int_ trailing_width);
-            ]
-        | Synthetic -> JSON_String "synthetic"))
+    SourceData.(
+      match value with
+      | Positioned { offset; leading_width; width; trailing_width; _ } ->
+        `Assoc
+          [
+            ("offset", `Int offset);
+            ("leading_width", `Int leading_width);
+            ("width", `Int width);
+            ("trailing_width", `Int trailing_width);
+          ]
+      | Synthetic -> `String "synthetic")
 end
 
 module SyntaxWithToken = Full_fidelity_syntax.WithToken (Token)

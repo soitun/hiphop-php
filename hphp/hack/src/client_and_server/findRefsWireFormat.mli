@@ -36,7 +36,7 @@ end
 
 (** Used "hh --find-refs --json" and read by HackAst and other tools *)
 module HackAst : sig
-  val to_json : SearchTypes.Find_refs.absolute list -> Hh_json.json
+  val to_json : SearchTypes.Find_refs.absolute list -> Yojson.Safe.t
 end
 
 (** Used by "hh --find-refs" *)

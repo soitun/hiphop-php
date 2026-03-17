@@ -6,4 +6,5 @@
   tast_env
   provider_context
   tast_provider
+  yojson
   ))

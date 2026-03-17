@@ -113,7 +113,7 @@ module Command : sig
   type t = {
     title: string;  (** title of the command, like `save` *)
     command: string;  (** the identifier of the actual command handler *)
-    arguments: Hh_json.json list;  (** wire: it can be omitted *)
+    arguments: Yojson.Safe.t list;  (** wire: it can be omitted *)
   }
 end
 
@@ -183,7 +183,7 @@ module CodeLens : sig
   type t = {
     range: range;
     command: Command.t;
-    data: Hh_json.json option;
+    data: Yojson.Safe.t option;
   }
 end
 
@@ -603,7 +603,7 @@ module Error : sig
   type t = {
     code: code;
     message: string;
-    data: Hh_json.json option;
+    data: Yojson.Safe.t option;
   }
 
   (** For methods which want to return exceptions, and they also want to decide
@@ -672,7 +672,7 @@ module PublishDiagnostics : sig
     message: string;  (** the diagnostic's message *)
     relatedInformation: diagnosticRelatedInformation list;
     relatedLocations: relatedLocation list;  (** legacy FB extension *)
-    data: Hh_json.json option;
+    data: Yojson.Safe.t option;
   }
   [@@deriving eq]
 
@@ -956,7 +956,7 @@ module Completion : sig
 
   and completionDocumentation =
     | MarkedStringsDocumentation of markedString list
-    | UnparsedDocumentation of Hh_json.json
+    | UnparsedDocumentation of Yojson.Safe.t
 
   and completionItem = {
     label: string;  (** the label in the UI *)
@@ -971,7 +971,7 @@ module Completion : sig
     textEdit: TextEdit.t option;
     additionalTextEdits: TextEdit.t list;  (** wire: split into hd and tl *)
     command: Command.t option;  (** if present, is executed after completion *)
-    data: Hh_json.json option;
+    data: Yojson.Safe.t option;
   }
 end
 
@@ -1212,7 +1212,7 @@ module ShowStatusFB : sig
     progress: int option;
     total: int option;
     shortMessage: string option;
-    telemetry: Hh_json.json option;
+    telemetry: Yojson.Safe.t option;
   }
 
   and showStatusRequestParams = {
@@ -1282,7 +1282,7 @@ type lsp_request =
   | HackTestShutdownServerlessRequestFB
   | WillSaveWaitUntilRequest of WillSaveWaitUntil.params
   | TopLevelDefNameAtPosRequest of TopLevelDefNameAtPos.params
-  | UnknownRequest of string * Hh_json.json option
+  | UnknownRequest of string * Yojson.Safe.t option
 
 type lsp_result =
   | InitializeResult of Initialize.result
@@ -1331,7 +1331,7 @@ type lsp_notification =
   | DidChangeNotification of DidChange.params
   | DidChangeWatchedFilesNotification of DidChangeWatchedFiles.params
   | LogMessageNotification of LogMessage.params
-  | TelemetryNotification of LogMessage.params * (string * Hh_json.json) list
+  | TelemetryNotification of LogMessage.params * (string * Yojson.Safe.t) list
       (** For telemetry, LSP allows 'any', but we're going to send these *)
   | ShowMessageNotification of ShowMessage.params
   | ConnectionStatusNotificationFB of ConnectionStatusFB.params
@@ -1341,7 +1341,7 @@ type lsp_notification =
   | SetTraceNotification of SetTraceNotification.params
   | SetTrace of SetTraceNotification.params
   | LogTraceNotification (* $/logTraceNotification *)
-  | UnknownNotification of string * Hh_json.json option
+  | UnknownNotification of string * Yojson.Safe.t option
 
 type lsp_message =
   | RequestMessage of lsp_id * lsp_request

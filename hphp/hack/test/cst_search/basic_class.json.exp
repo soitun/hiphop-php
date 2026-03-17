@@ -1,5 +1,10 @@
 {
-  "matched_nodes":[
-    {"match_name":"function name","kind":"token","start_offset":36,"end_offset":38}
+  "matched_nodes": [
+    {
+      "match_name": "function name",
+      "kind": "token",
+      "start_offset": 36,
+      "end_offset": 38
+    }
   ]
 }

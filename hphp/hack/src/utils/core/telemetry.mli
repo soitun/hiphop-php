@@ -12,11 +12,7 @@ val create : unit -> t
 
 val to_string : ?pretty:bool -> t -> string
 
-val to_json : t -> Hh_json.json
-
 val to_yojson : t -> Yojson.Safe.t
-
-val of_json_opt : Hh_json.json -> t option
 
 val of_yojson_opt : Yojson.Safe.t -> t option
 
@@ -69,8 +65,6 @@ val int_ : key:string -> value:int -> t -> t
 val int_opt : key:string -> value:int option -> t -> t
 
 val int_list : ?truncate_list:int -> key:string -> value:int list -> t -> t
-
-val json_ : key:string -> value:Hh_json.json -> t -> t
 
 val json : key:string -> value:Yojson.Safe.t -> t -> t
 

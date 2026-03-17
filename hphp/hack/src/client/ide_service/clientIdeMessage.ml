@@ -303,7 +303,7 @@ type rich_error = {
   long_user_message: string;
       (** max 5 lines, for window/logMessage, i.e. Output>Hack window. Will be postpended by "\nDetails: <url>" *)
   category: string;  (** used in LSP Error message and telemetry *)
-  data: Hh_json.json option;  (** used in LSP Error message and telemetry *)
+  data: Yojson.Safe.t option;  (** used in LSP Error message and telemetry *)
 }
 
 type notification = Done_init of (unit, rich_error) result

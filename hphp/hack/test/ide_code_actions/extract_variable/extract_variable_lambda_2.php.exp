@@ -7,19 +7,22 @@ Devmate Agent Fix - Typing error (CodeActionKind: "quickfix")
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Extract into variable",
+  "kind": "refactor",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"$${0:placeholder0} = 300\n      //\n      +\n      2;\n    return /*range-start*/$${0:placeholder0}/*range-end*/;",
-          "range":{"end":{"character":21,"line":11},"start":{"character":4,"line":8}}
+          "range": {
+            "start": { "line": 8, "character": 4 },
+            "end": { "line": 11, "character": 21 }
+          },
+          "newText": "$${0:placeholder0} = 300\n      //\n      +\n      2;\n    return /*range-start*/$${0:placeholder0}/*range-end*/;"
         }
       ]
     }
-  },
-  "kind":"refactor",
-  "title":"Extract into variable"
+  }
 }
 
 Applied edit for code action:

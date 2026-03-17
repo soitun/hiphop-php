@@ -13,6 +13,7 @@
   string
   base
   core
+  yojson
   (select
    filesToIgnore.ml
    from

@@ -16,4 +16,4 @@ let go filename =
   let source_text = Full_fidelity_source_text.from_file file in
   let syntax_tree = SyntaxTree.make source_text in
   let json = SyntaxTree.to_json syntax_tree in
-  Hh_json.json_to_string json
+  Hh_json_helpers.Out.to_string json

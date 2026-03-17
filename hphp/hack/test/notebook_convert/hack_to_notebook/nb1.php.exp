@@ -1,60 +1,62 @@
 {
-  "cells":[
+  "cells": [
     {
-      "cell_type":"code",
-      "execution_count":null,
-      "metadata":{"collapsed":true,"output":{"id":1247934846418027,"loadingStatus":"loaded"}},
-      "outputs":[],
-      "source":[
-        "$m = new MyClass();\n",
-        "echo \"hi1\";\n",
-        "class MyClass {\n",
-        "  public function hello(): void {\n",
-        "    echo \"hello\";\n",
-        "  }\n",
-        "}\n",
-        "function foo(): void {}\n",
+      "cell_type": "code",
+      "source": [
+        "$m = new MyClass();\n", "echo \"hi1\";\n", "class MyClass {\n",
+        "  public function hello(): void {\n", "    echo \"hello\";\n",
+        "  }\n", "}\n", "function foo(): void {}\n",
         "function bar(): void {}"
-      ]
+      ],
+      "outputs": [],
+      "execution_count": null,
+      "metadata": {
+        "output": { "id": 1247934846418027, "loadingStatus": "loaded" },
+        "collapsed": true
+      }
     },
     {
-      "cell_type":"markdown",
-      "execution_count":null,
-      "metadata":{},
-      "outputs":[],
-      "source":[
+      "cell_type": "markdown",
+      "source": [
         "# Check it out\n",
         "I am a *markdown* **cell** using the legacy non-hack cell format"
-      ]
+      ],
+      "outputs": [],
+      "execution_count": null,
+      "metadata": {}
     },
     {
-      "cell_type":"code",
-      "execution_count":null,
-      "metadata":{},
-      "outputs":[],
-      "source":["echo \"hi2\";\n","$m->hello();"]
+      "cell_type": "code",
+      "source": [ "echo \"hi2\";\n", "$m->hello();" ],
+      "outputs": [],
+      "execution_count": null,
+      "metadata": {}
     },
     {
-      "cell_type":"code",
-      "execution_count":null,
-      "metadata":{"language":"python"},
-      "outputs":[],
-      "source":["%%python\n","print('Hello from python')"]
+      "cell_type": "code",
+      "source": [ "%%python\n", "print('Hello from python')" ],
+      "outputs": [],
+      "execution_count": null,
+      "metadata": { "language": "python" }
     },
     {
-      "cell_type":"markdown",
-      "execution_count":null,
-      "metadata":{},
-      "outputs":[],
-      "source":[
+      "cell_type": "markdown",
+      "source": [
         "# Check it out\n",
         "I am a *markdown* **cell** using the new non-hack cell format"
-      ]
+      ],
+      "outputs": [],
+      "execution_count": null,
+      "metadata": {}
     }
   ],
-  "metadata":{
-    "kernelspec":{"display_name":"hack","language":"hack","name":"bento_kernel_hack"},
-    "orig_nbformat":4
+  "metadata": {
+    "kernelspec": {
+      "display_name": "hack",
+      "language": "hack",
+      "name": "bento_kernel_hack"
+    },
+    "orig_nbformat": 4
   },
-  "nbformat":4
+  "nbformat": 4
 }

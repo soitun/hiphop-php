@@ -63,7 +63,7 @@ val unsafe_to_raw_pos : t -> Pos.t
     Undefined for multi-line spans. *)
 val line_start_end_columns : t -> int * int * int
 
-val json : t -> Hh_json.json
+val json : t -> Yojson.Safe.t
 
 val show_as_absolute_file_line_characters : t -> string
 

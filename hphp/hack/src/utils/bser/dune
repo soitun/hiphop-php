@@ -2,7 +2,7 @@
  (name bser)
  (modules bser)
  (wrapped false)
- (libraries hh_json sys_utils))
+ (libraries hh_json sys_utils yojson))
 
 (executable
  (name bser_main_test)
@@ -11,4 +11,4 @@
  (link_flags
   (:standard
    (:include ../../dune_config/ld-opts.sexp)))
- (libraries bser default_injector_config))
+ (libraries bser default_injector_config yojson))

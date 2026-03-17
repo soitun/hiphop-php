@@ -11,23 +11,29 @@ Devmate Agent Fix - Unbound name: `=` (a global constant) (CodeActionKind: "quic
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "convert to 'debugger_dump'",
+  "kind": "quickfix",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"debugger_dump(",
-          "range":{"end":{"character":5,"line":5},"start":{"character":4,"line":5}}
+          "range": {
+            "start": { "line": 5, "character": 4 },
+            "end": { "line": 5, "character": 5 }
+          },
+          "newText": "debugger_dump("
         },
         {
-          "newText":")",
-          "range":{"end":{"character":20,"line":5},"start":{"character":20,"line":5}}
+          "range": {
+            "start": { "line": 5, "character": 20 },
+            "end": { "line": 5, "character": 20 }
+          },
+          "newText": ")"
         }
       ]
     }
-  },
-  "kind":"quickfix",
-  "title":"convert to 'debugger_dump'"
+  }
 }
 
 Applied edit for code action:

@@ -65,7 +65,7 @@ module type TokenType = sig
 
   val kind : t -> Full_fidelity_token_kind.t
 
-  val to_json : t -> Hh_json.json
+  val to_json : t -> Yojson.Safe.t
 
   val leading : t -> Trivia.t list
 end
@@ -73,7 +73,7 @@ end
 module type SyntaxValueType = sig
   type t [@@deriving show, eq, sexp_of]
 
-  val to_json : t -> Hh_json.json
+  val to_json : t -> Yojson.Safe.t
 end
 
 (* This functor describe the shape of a parse tree that has a particular kind of

@@ -139,12 +139,12 @@ module WithSyntax (Syntax : Syntax_sig.Syntax_S) = struct
     let to_json ?with_value ?ignore_missing tree =
       let version = Full_fidelity_schema.full_fidelity_schema_version_number in
       let root = parse_tree_to_json ?with_value ?ignore_missing tree in
-      let text = Hh_json.JSON_String (SourceText.text tree.text) in
-      Hh_json.JSON_Object
+      let text = `String (SourceText.text tree.text) in
+      `Assoc
         [
           ("parse_tree", root);
           ("program_text", text);
-          ("version", Hh_json.JSON_String version);
+          ("version", `String version);
         ]
   end
 

@@ -7,4 +7,4 @@
  *)
 
 val build_json :
-  Provider_context.t -> File_info.t list -> ownership:bool -> Hh_json.json list
+  Provider_context.t -> File_info.t list -> ownership:bool -> Yojson.Safe.t list

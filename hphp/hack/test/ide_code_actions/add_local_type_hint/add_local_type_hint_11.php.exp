@@ -5,19 +5,22 @@ Add local type hint for $the_variable (CodeActionKind: "refactor") SELECTED
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Add local type hint for $the_variable",
+  "kind": "refactor",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"let $the_variable : vec<int> ",
-          "range":{"end":{"character":30,"line":5},"start":{"character":17,"line":5}}
+          "range": {
+            "start": { "line": 5, "character": 17 },
+            "end": { "line": 5, "character": 30 }
+          },
+          "newText": "let $the_variable : vec<int> "
         }
       ]
     }
-  },
-  "kind":"refactor",
-  "title":"Add local type hint for $the_variable"
+  }
 }
 
 Applied edit for code action:

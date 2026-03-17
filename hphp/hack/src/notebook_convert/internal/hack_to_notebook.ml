@@ -103,7 +103,7 @@ let format_chunk (chunk : Notebook_chunk.t) : Notebook_chunk.t =
   Notebook_chunk.{ chunk with contents }
 
 let hack_to_notebook (hack : string) :
-    (Hh_json.json, Notebook_convert_error.t) result =
+    (Yojson.Safe.t, Notebook_convert_error.t) result =
   let open Result.Let_syntax in
   let* Notebook_level_metadata.
          { notebook_number = raw_notebook_number; kernelspec } =

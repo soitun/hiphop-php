@@ -25,9 +25,9 @@ let output_json ?(from_test = false) ?(pretty = false) oc el =
   in
   let json_str =
     if pretty then
-      Yojson.Safe.pretty_to_string res ^ "\n"
+      Hh_json_helpers.Out.pretty_to_string res ^ "\n"
     else
-      Yojson.Safe.to_string res
+      Hh_json_helpers.Out.to_string res
   in
   Out_channel.output_string oc json_str;
   Out_channel.flush stderr

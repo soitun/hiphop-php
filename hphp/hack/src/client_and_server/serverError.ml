@@ -40,25 +40,25 @@ let get_error_list_json
                | Warning -> false))
       in
       ( List.map
-          ~f:
-            (User_diagnostic.to_json ~human_formatter ~filename_to_string:Fn.id)
+          ~f:(fun e ->
+            User_diagnostic.to_json ~human_formatter ~filename_to_string:Fn.id e)
           error_list,
         passed )
   in
-  let (properties : (string * Hh_json.json) list) =
+  let properties =
     [
-      ("passed", Hh_json.JSON_Bool did_pass);
-      ("errors", Hh_json.JSON_Array error_list);
-      ("version", Hh_json.of_yojson Hh_version.version_json);
+      ("passed", `Bool did_pass);
+      ("errors", `List error_list);
+      ("version", Hh_version.version_json);
     ]
   in
   let properties =
     match recheck_stats with
     | None -> properties
     | Some telemetry ->
-      ("last_recheck", Telemetry.to_json telemetry) :: properties
+      ("last_recheck", Telemetry.to_yojson telemetry) :: properties
   in
-  Hh_json.JSON_Object properties
+  `Assoc properties
 
 let print_error_list_json
     (oc : Out_channel.t)
@@ -66,7 +66,7 @@ let print_error_list_json
     (error_list : Diagnostics.finalized_diagnostic list)
     (recheck_stats : Telemetry.t option) =
   let res = get_error_list_json error_format error_list ~recheck_stats in
-  Hh_json.json_to_output oc res;
+  Hh_json_helpers.Out.to_channel oc res;
   Out_channel.flush oc
 
 let print_error_list

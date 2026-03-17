@@ -1,3 +1,10 @@
 {
-  "matched_nodes":[{"match_name":"subtype","kind":"token","start_offset":105,"end_offset":112}]
+  "matched_nodes": [
+    {
+      "match_name": "subtype",
+      "kind": "token",
+      "start_offset": 105,
+      "end_offset": 112
+    }
+  ]
 }

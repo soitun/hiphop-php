@@ -7,19 +7,22 @@ Devmate Agent Fix - Dangerous access of abstract member `A::m2`; it may be abstr
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Add __NeedsConcrete attribute",
+  "kind": "quickfix",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"<<__NeedsConcrete>>\n  ",
-          "range":{"end":{"character":2,"line":3},"start":{"character":2,"line":3}}
+          "range": {
+            "start": { "line": 3, "character": 2 },
+            "end": { "line": 3, "character": 2 }
+          },
+          "newText": "<<__NeedsConcrete>>\n  "
         }
       ]
     }
-  },
-  "kind":"quickfix",
-  "title":"Add __NeedsConcrete attribute"
+  }
 }
 
 Applied edit for code action:

@@ -7,7 +7,6 @@
  *)
 
 open Hh_prelude
-module JSON = Hh_json
 
 type patch = {
   path: string;
@@ -91,10 +90,11 @@ let field_type_err field ty =
   usage_err ()
 
 let int_field_opt = function
-  | JSON.JSON_Number n -> begin
+  | `Intlit n -> begin
     try Some (Int.of_string n) with
     | _ -> None
   end
+  | `Int n -> Some n
   | _ -> None
 
 let int_field field json =
@@ -103,7 +103,7 @@ let int_field field json =
   | None -> field_type_err field "int"
 
 let string_field_opt = function
-  | JSON.JSON_String n -> Some n
+  | `String n -> Some n
   | _ -> None
 
 let string_field field json =
@@ -128,7 +128,7 @@ let find_field_value obj target =
 let patch_of_object json =
   let obj =
     match json with
-    | JSON.JSON_Object obj -> obj
+    | `Assoc obj -> obj
     | _ ->
       Printf.eprintf "Input JSON array has a non-object.\n\n";
       usage_err ()
@@ -154,16 +154,16 @@ let sanitise_and_extract_patches json =
   in
   let jsonl =
     match json with
-    | JSON.JSON_Object fields ->
+    | `Assoc fields ->
       let errors_opt =
         List.find fields ~f:(fun (field, _) -> String.equal field "errors")
       in
       begin
         match errors_opt with
-        | Some (_, JSON.JSON_Array jsonl) -> jsonl
+        | Some (_, `List jsonl) -> jsonl
         | _ -> err ()
       end
-    | JSON.JSON_Array jsonl -> jsonl
+    | `List jsonl -> jsonl
     | _ -> err ()
   in
   List.filter_map jsonl ~f:patch_of_object
@@ -243,7 +243,7 @@ let () =
     | Stdin -> input_all stdin
     | File json_path -> with_file json_path ~f:input_all
   in
-  let json = JSON.json_of_string json_str in
+  let json = Yojson.Safe.from_string json_str in
   let patches = sanitise_and_extract_patches json in
   let patch_groups =
     patches

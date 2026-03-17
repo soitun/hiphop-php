@@ -15,15 +15,15 @@ let result_to_json res =
   let p = res.SUtils.pos in
   let fn = Pos.filename p in
   let (line, start, end_) = Pos.info_pos p in
-  Hh_json.JSON_Object
+  `Assoc
     [
-      ("name", Hh_json.JSON_String (Utils.strip_ns res.SUtils.name));
-      ("filename", Hh_json.JSON_String fn);
-      ("desc", Hh_json.JSON_String desc_string);
-      ("line", Hh_json.int_ line);
-      ("char_start", Hh_json.int_ start);
-      ("char_end", Hh_json.int_ end_);
-      ("scope", Hh_json.JSON_String "");
+      ("name", `String (Utils.strip_ns res.SUtils.name));
+      ("filename", `String fn);
+      ("desc", `String desc_string);
+      ("line", `Int line);
+      ("char_start", `Int start);
+      ("char_end", `Int end_);
+      ("scope", `String "");
     ]
 
 let re_colon_colon = Str.regexp "::"

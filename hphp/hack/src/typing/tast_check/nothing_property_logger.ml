@@ -34,13 +34,11 @@ let create_handler _ctx =
             | _ -> "nothing"
           in
           let pos = cv_span |> Pos.to_relative_string in
-          let json =
-            Hh_json.(
-              JSON_Object [("pos", Pos.json pos); ("kind", JSON_String kind)])
-          in
+          let json = `Assoc [("pos", Pos.json pos); ("kind", `String kind)] in
+          (* unsorted: telemetry/logging, not snapshot-tested *)
           Hh_logger.log
             "[Nothing_property_logger] %s"
-            (Hh_json.json_to_string json)
+            (Yojson.Safe.to_string json)
       in
       List.iter ~f:print_if_nothing_hint c_vars
   end

@@ -6,19 +6,22 @@ Extract shape type (CodeActionKind: "refactor") SELECTED
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Extract shape type",
+  "kind": "refactor",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"type T${0:placeholder_} = shape('a' => int, 'b' => A);\n\n",
-          "range":{"end":{"character":0,"line":5},"start":{"character":0,"line":5}}
+          "range": {
+            "start": { "line": 5, "character": 0 },
+            "end": { "line": 5, "character": 0 }
+          },
+          "newText": "type T${0:placeholder_} = shape('a' => int, 'b' => A);\n\n"
         }
       ]
     }
-  },
-  "kind":"refactor",
-  "title":"Extract shape type"
+  }
 }
 
 Applied edit for code action:

@@ -26,7 +26,8 @@
   ide_top_level_def_name_at_pos
   state_loader
   naming_table_builder_ffi_externs
-  sys_utils)
+  sys_utils
+  yojson)
  (preprocess
   (pps lwt_ppx ppx_deriving.std)))
 
@@ -39,7 +40,7 @@
   file_content
   lwt_utils
   server_command_types
-  server_services sys_utils)
+  server_services sys_utils yojson)
  (preprocess
   (pps lwt_ppx ppx_deriving.std)))
 
@@ -47,7 +48,7 @@
  (name client_ide_utils)
  (wrapped false)
  (modules clientIdeUtils)
- (libraries client_ide_message)
+ (libraries client_ide_message yojson)
  (preprocess
   (pps lwt_ppx)))
 

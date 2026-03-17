@@ -24,7 +24,7 @@ module Log : sig
     (internal_type -> string) ->
     t ->
     Tvid.t ->
-    Hh_json.json
+    Yojson.Safe.t
 end
 
 val empty_inference_env : t

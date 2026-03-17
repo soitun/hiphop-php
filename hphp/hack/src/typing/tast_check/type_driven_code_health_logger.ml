@@ -38,13 +38,14 @@ let nPHPism_FIXME = "\\PHPism_FIXME"
 let log level pos kind =
   if find_level kind <= level then
     let json =
-      Hh_json.JSON_Object
+      `Assoc
         [
-          ("kind", Hh_json.JSON_String (show_kind kind));
+          ("kind", `String (show_kind kind));
           ("pos", Pos.multiline_json (Pos.to_relative_string pos));
         ]
     in
-    Hh_logger.log "[TDCH] %s" (Hh_json.json_to_string json)
+    (* unsorted: telemetry/logging, not snapshot-tested *)
+    Hh_logger.log "[TDCH] %s" (Yojson.Safe.to_string json)
 
 let nothing_ty = Typing_make_type.nothing Typing_reason.none
 

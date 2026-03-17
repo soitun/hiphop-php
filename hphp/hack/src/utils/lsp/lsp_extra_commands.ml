@@ -19,7 +19,7 @@ module Command = struct
 
   let from_lsp
       (t : t)
-      (f : Hh_json.json list -> ('a, string) Result.t)
+      (f : Yojson.Safe.t list -> ('a, string) Result.t)
       (lsp_cmd : Lsp.Command.t) : ('a option, string) Result.t =
     if String.equal t.command lsp_cmd.Lsp.Command.command then
       f lsp_cmd.Lsp.Command.arguments

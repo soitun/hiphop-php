@@ -7,10 +7,13 @@
  *
  *)
 open Hh_prelude
-open Hh_json
 
 let opt_field ~v_opt ~label ~f =
   Option.value_map v_opt ~f:(fun x -> [(label, f x)]) ~default:[]
+
+let string_opt = function
+  | Some s -> `String s
+  | None -> `Null
 
 (* There are fields that Nuclide doesn't use anymore, but the RPC framework
  * still requires them in responses. Stub them with some default values in the
@@ -18,11 +21,11 @@ let opt_field ~v_opt ~label ~f =
 let deprecated_pos_field = Pos.json (Pos.to_absolute Pos.none)
 
 let infer_type_response_to_json (type_string, type_json) =
-  Hh_json.JSON_Object
+  `Assoc
     ([("type", string_opt type_string); ("pos", deprecated_pos_field)]
     @
     match type_json with
-    | Some json -> [("full_type", json_of_string json)]
+    | Some json -> [("full_type", Yojson.Safe.from_string json)]
     | _ -> [])
 
 let infer_type_error_response_to_json
@@ -30,17 +33,17 @@ let infer_type_error_response_to_json
       actual_type_json,
       expected_type_string,
       expected_type_json ) =
-  Hh_json.JSON_Object
+  `Assoc
     (List.filter_map
        ~f:Fn.id
        [
          Some ("actual_type", string_opt actual_type_string);
          Option.map
-           ~f:(fun ty -> ("full_actual_type", json_of_string ty))
+           ~f:(fun ty -> ("full_actual_type", Yojson.Safe.from_string ty))
            actual_type_json;
          Some ("expected_type", string_opt expected_type_string);
          Option.map
-           ~f:(fun ty -> ("full_expected_type", json_of_string ty))
+           ~f:(fun ty -> ("full_expected_type", Yojson.Safe.from_string ty))
            expected_type_json;
        ])
 
@@ -57,16 +60,16 @@ let tast_holes_response_to_json ~print_file holes =
         expected_type_str,
         expected_type_json,
         pos ) =
-    Hh_json.JSON_Object
+    `Assoc
       [
-        ("actual_type", Hh_json.string_ actual_type_str);
-        ("full_actual_type", json_of_string actual_type_json);
-        ("expected_type", Hh_json.string_ expected_type_str);
-        ("full_expected_type", json_of_string expected_type_json);
+        ("actual_type", `String actual_type_str);
+        ("full_actual_type", Yojson.Safe.from_string actual_type_json);
+        ("expected_type", `String expected_type_str);
+        ("full_expected_type", Yojson.Safe.from_string expected_type_json);
         ("pos", printer pos);
       ]
   in
-  Hh_json.JSON_Array (List.map ~f holes)
+  `List (List.map ~f holes)
 
 let identify_symbol_response_to_json results =
   let get_definition_data = function
@@ -76,30 +79,30 @@ let identify_symbol_response_to_json results =
       let span = Pos.multiline_json span in
       let id = SymbolDefinition.identifier x |> string_opt in
       (pos, span, id)
-    | None -> (JSON_Null, JSON_Null, JSON_Null)
+    | None -> (`Null, `Null, `Null)
   in
   let symbol_to_json (occurrence, definition) =
     let (definition_pos, definition_span, definition_id) =
       get_definition_data definition
     in
     SymbolOccurrence.(
-      JSON_Object
+      `Assoc
         [
-          ("name", JSON_String occurrence.name);
-          ("result_type", JSON_String (kind_to_string occurrence.type_));
+          ("name", `String occurrence.name);
+          ("result_type", `String (kind_to_string occurrence.type_));
           ("pos", Pos.json occurrence.pos);
           ("definition_pos", definition_pos);
           ("definition_span", definition_span);
           ("definition_id", definition_id);
         ])
   in
-  JSON_Array (List.map results ~f:symbol_to_json)
+  `List (List.map results ~f:symbol_to_json)
 
 let rec definition_to_json def =
   SymbolDefinition.(
     let modifiers =
-      JSON_Array
-        (List.map def.modifiers ~f:(fun x -> JSON_String (string_of_modifier x)))
+      `List
+        (List.map def.modifiers ~f:(fun x -> `String (string_of_modifier x)))
     in
     let children =
       opt_field
@@ -114,13 +117,12 @@ let rec definition_to_json def =
       opt_field ~v_opt:def.params ~label:"params" ~f:outline_response_to_json
     in
     let docblock =
-      opt_field ~v_opt:def.docblock ~label:"docblock" ~f:(fun x ->
-          JSON_String x)
+      opt_field ~v_opt:def.docblock ~label:"docblock" ~f:(fun x -> `String x)
     in
-    JSON_Object
+    `Assoc
       ([
-         ("kind", JSON_String (string_of_kind def.kind));
-         ("name", JSON_String def.name);
+         ("kind", `String (string_of_kind def.kind));
+         ("name", `String def.name);
          ("id", SymbolDefinition.identifier def |> string_opt);
          ("position", Pos.json def.pos);
          ("span", Pos.multiline_json def.span);
@@ -130,21 +132,20 @@ let rec definition_to_json def =
       @ params
       @ docblock))
 
-and outline_response_to_json x =
-  Hh_json.JSON_Array (List.map x ~f:definition_to_json)
+and outline_response_to_json x = `List (List.map x ~f:definition_to_json)
 
 let highlight_references_response_to_json l =
-  JSON_Array
+  `List
     (List.map l ~f:(fun { Ide_api_types.st; ed } ->
          let (line, char_start) =
            File_content.Position.line_column_one_based st
          in
          let (_, char_end) = File_content.Position.line_column_one_based ed in
-         Hh_json.JSON_Object
+         `Assoc
            [
-             ("line", Hh_json.int_ line);
-             ("char_start", Hh_json.int_ char_start);
-             ("char_end", Hh_json.int_ char_end);
+             ("line", `Int line);
+             ("char_start", `Int char_start);
+             ("char_end", `Int char_end);
            ]))
 
-let print_json json = Hh_json.json_to_string json |> print_endline
+let print_json json = Hh_json_helpers.Out.to_string json |> print_endline

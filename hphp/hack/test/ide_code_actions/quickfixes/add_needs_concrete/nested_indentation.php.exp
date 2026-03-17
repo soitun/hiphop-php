@@ -7,19 +7,22 @@ Devmate Agent Fix - Dangerous access of abstract member `MyNamespace\A::m2`; it 
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Add __NeedsConcrete attribute",
+  "kind": "quickfix",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"<<__NeedsConcrete>>\n    ",
-          "range":{"end":{"character":4,"line":4},"start":{"character":4,"line":4}}
+          "range": {
+            "start": { "line": 4, "character": 4 },
+            "end": { "line": 4, "character": 4 }
+          },
+          "newText": "<<__NeedsConcrete>>\n    "
         }
       ]
     }
-  },
-  "kind":"quickfix",
-  "title":"Add __NeedsConcrete attribute"
+  }
 }
 
 Applied edit for code action:

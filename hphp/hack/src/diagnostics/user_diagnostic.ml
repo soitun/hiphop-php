@@ -286,44 +286,40 @@ let to_json ~(human_formatter : (_ -> string) option) ~filename_to_string error
   let elts =
     List.map msgl ~f:(fun (p, msg) ->
         let (line, scol, ecol) = Pos.info_pos p in
-        Hh_json.JSON_Object
+        `Assoc
           [
-            ("descr", Hh_json.JSON_String msg);
-            ("path", Hh_json.JSON_String (Pos.filename p |> filename_to_string));
-            ("line", Hh_json.int_ line);
-            ("start", Hh_json.int_ scol);
-            ("end", Hh_json.int_ ecol);
-            ("code", Hh_json.int_ code);
+            ("descr", `String msg);
+            ("path", `String (Pos.filename p |> filename_to_string));
+            ("line", `Int line);
+            ("start", `Int scol);
+            ("end", `Int ecol);
+            ("code", `Int code);
           ])
   in
-  let custom_msgs =
-    List.map ~f:(fun msg -> Hh_json.JSON_String msg) custom_msgs
-  in
+  let custom_msgs = List.map ~f:(fun msg -> `String msg) custom_msgs in
   let human_format = Option.map ~f:(fun f -> f error) human_formatter in
   let obj =
-    ("severity", Hh_json.JSON_String (Severity.to_string severity))
-    :: ("message", Hh_json.JSON_Array elts)
-    :: ("custom_messages", Hh_json.JSON_Array custom_msgs)
+    ("severity", `String (Severity.to_string severity))
+    :: ("message", `List elts)
+    :: ("custom_messages", `List custom_msgs)
     :: List.filter_opt
          [
            Option.map human_format ~f:(fun human_format ->
-               ("human_format", Hh_json.JSON_String human_format));
+               ("human_format", `String human_format));
            Option.map function_pos ~f:(fun pos ->
                let (line, scol, ecol) = Pos.info_pos pos in
                ( "function_pos",
-                 Hh_json.JSON_Object
+                 `Assoc
                    [
-                     ( "path",
-                       Hh_json.JSON_String
-                         (Pos.filename pos |> filename_to_string) );
-                     ("line", Hh_json.int_ line);
-                     ("start", Hh_json.int_ scol);
-                     ("end", Hh_json.int_ ecol);
-                     ("code", Hh_json.int_ code);
+                     ("path", `String (Pos.filename pos |> filename_to_string));
+                     ("line", `Int line);
+                     ("start", `Int scol);
+                     ("end", `Int ecol);
+                     ("code", `Int code);
                    ] ));
          ]
   in
-  Hh_json.JSON_Object obj
+  `Assoc obj
 
 let claim_message { claim; _ } = claim
 

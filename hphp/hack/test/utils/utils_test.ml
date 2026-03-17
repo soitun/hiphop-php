@@ -311,20 +311,20 @@ let test_telemetry_add () =
     |> Telemetry.string_list ~key:"sl" ~value:["a"; "b"]
     |> Telemetry.int_list ~key:"il" ~value:[1; 2]
     |> Telemetry.bool_ ~key:"b" ~value:true
-    |> Telemetry.json_ ~key:"j1" ~value:(Hh_json.JSON_Number "1.0")
-    |> Telemetry.json_ ~key:"j2" ~value:Hh_json.JSON_Null
+    |> Telemetry.json ~key:"j1" ~value:(`Float 1.0)
+    |> Telemetry.json ~key:"j2" ~value:`Null
   in
   let t = t |> Telemetry.object_ ~key:"o" ~value:t in
   String_asserter.assert_equals
-    {|{"f":1,"i":1,"j1":1.0,"o":{"j1":1.0,"i":1,"f":1}}|}
+    {|{"f":1.0,"i":1,"j1":1.0,"o":{"j1":1.0,"i":1,"f":1.0}}|}
     (Telemetry.add t (Telemetry.create ()) |> Telemetry.to_string)
     "add t blank";
   String_asserter.assert_equals
-    {|{"f":1,"i":1,"j1":1.0,"o":{"j1":1.0,"i":1,"f":1}}|}
+    {|{"f":1.0,"i":1,"j1":1.0,"o":{"j1":1.0,"i":1,"f":1.0}}|}
     (Telemetry.add (Telemetry.create ()) t |> Telemetry.to_string)
     "add blank t";
   String_asserter.assert_equals
-    {|{"f":2,"i":2,"j1":2,"o":{"j1":2,"i":2,"f":2}}|}
+    {|{"f":2.0,"i":2,"j1":2.0,"o":{"j1":2.0,"i":2,"f":2.0}}|}
     (Telemetry.add t t |> Telemetry.to_string)
     "add t t";
   true

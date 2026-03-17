@@ -30,7 +30,7 @@ val parse_local_config : string -> t
 (** Compute the hhconfig hash using the concatenation of hhconfig's and package config's content *)
 val hash : t -> hhconfig_contents:string -> pkgconfig_contents:string -> string
 
-val to_json : t -> Hh_json.json
+val to_json : t -> Yojson.Safe.t
 
 val of_list : (string * string) list -> t
 

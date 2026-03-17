@@ -37,7 +37,8 @@
   sqlite_utils
   typing_deps_rust
   worker_cancel
-  worker_utils)
+  worker_utils
+  yojson)
  (preprocess
   (pps ppx_deriving.std)))
 

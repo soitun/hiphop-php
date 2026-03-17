@@ -5,23 +5,29 @@ Extract shape type to alias (CodeActionKind: "refactor") SELECTED
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Extract shape type to alias",
+  "kind": "refactor",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"type T${0:placeholder_} = shape('a' => int, ...);\n\n",
-          "range":{"end":{"character":0,"line":2},"start":{"character":0,"line":2}}
+          "range": {
+            "start": { "line": 2, "character": 0 },
+            "end": { "line": 2, "character": 0 }
+          },
+          "newText": "type T${0:placeholder_} = shape('a' => int, ...);\n\n"
         },
         {
-          "newText":"T${0:placeholder_}",
-          "range":{"end":{"character":53,"line":2},"start":{"character":31,"line":2}}
+          "range": {
+            "start": { "line": 2, "character": 31 },
+            "end": { "line": 2, "character": 53 }
+          },
+          "newText": "T${0:placeholder_}"
         }
       ]
     }
-  },
-  "kind":"refactor",
-  "title":"Extract shape type to alias"
+  }
 }
 
 Applied edit for code action:

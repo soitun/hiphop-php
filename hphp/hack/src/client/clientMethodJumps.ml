@@ -12,27 +12,27 @@ module MethodJumps = ServerCommandTypes.Method_jumps
 
 let pos_to_json pos =
   let (line, start, end_) = Pos.info_pos pos in
-  Hh_json.JSON_Object
+  `Assoc
     [
-      ("file", Hh_json.JSON_String (Pos.filename pos));
+      ("file", `String (Pos.filename pos));
       (* we can't use Pos.json *)
-      ("line", Hh_json.int_ line);
-      ("char_start", Hh_json.int_ start);
-      ("char_end", Hh_json.int_ end_);
+      ("line", `Int line);
+      ("char_start", `Int start);
+      ("char_end", `Int end_);
     ]
 
 let cls_or_mthd_to_json name pos p_name =
-  Hh_json.JSON_Object
+  `Assoc
     [
-      ("name", Hh_json.JSON_String (Utils.strip_ns name));
+      ("name", `String (Utils.strip_ns name));
       ("pos", pos_to_json pos);
-      ("parent_name", Hh_json.JSON_String (Utils.strip_ns p_name));
+      ("parent_name", `String (Utils.strip_ns p_name));
     ]
 
 let to_json input =
   let entries =
     List.map input ~f:(fun res ->
-        Hh_json.JSON_Object
+        `Assoc
           [
             ( "origin",
               cls_or_mthd_to_json
@@ -46,10 +46,10 @@ let to_json input =
                 res.MethodJumps.dest_p_name );
           ])
   in
-  Hh_json.JSON_Array entries
+  `List entries
 
 let print_json res =
-  print_endline (Hh_json.json_to_string (to_json res));
+  print_endline (Hh_json_helpers.Out.to_string (to_json res));
   ()
 
 let go res find_children output_json =

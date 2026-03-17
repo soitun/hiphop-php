@@ -138,8 +138,7 @@ let run_exn ctx ~error_filter entry range ~title_prefix ~use_snippet_edits =
           ~resolve_title:selected_title
           ~use_snippet_edits
         |> Result.map_error ~f:(fun e ->
-               Hh_json.json_to_string ~sort_keys:true ~pretty:true
-               @@ Lsp_fmt.print_error e)
+               Hh_json_helpers.Out.pretty_to_string @@ Lsp_fmt.print_error e)
         |> Result.ok_or_failwith
       in
       let hermeticize_paths =
@@ -178,7 +177,7 @@ let run_exn ctx ~error_filter entry range ~title_prefix ~use_snippet_edits =
       resolved
       |> Result.return
       |> Lsp_fmt.print_codeActionResolveResult
-      |> Hh_json.json_to_string ~sort_keys:true ~pretty:true
+      |> Hh_json_helpers.Out.pretty_to_string
       |> hermeticize_paths
       |> Printf.printf "%s\n";
       Printf.printf "%s\n" text_of_selected

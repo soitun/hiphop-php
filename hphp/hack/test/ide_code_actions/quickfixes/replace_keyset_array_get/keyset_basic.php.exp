@@ -7,19 +7,22 @@ Devmate Agent Fix - Array access on type `keyset<string>` returns the key (if pr
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Replace with `C\\contains_key`",
+  "kind": "quickfix",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"C\\contains_key($ks, $key)",
-          "range":{"end":{"character":16,"line":3},"start":{"character":7,"line":3}}
+          "range": {
+            "start": { "line": 3, "character": 7 },
+            "end": { "line": 3, "character": 16 }
+          },
+          "newText": "C\\contains_key($ks, $key)"
         }
       ]
     }
-  },
-  "kind":"quickfix",
-  "title":"Replace with `C\\contains_key`"
+  }
 }
 
 Applied edit for code action:

@@ -46,7 +46,7 @@ let filename : t -> Relative_path.t = (fun p -> Pos.filename p)
 
 let line_start_end_columns : t -> int * int * int = Pos.info_pos
 
-let json : t -> Hh_json.json = (fun p -> p |> Pos.to_absolute |> Pos.json)
+let json : t -> Yojson.Safe.t = (fun p -> p |> Pos.to_absolute |> Pos.json)
 
 let show_as_absolute_file_line_characters : t -> string =
  (fun p -> p |> Pos.to_absolute |> Pos.string)

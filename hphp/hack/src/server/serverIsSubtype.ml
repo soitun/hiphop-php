@@ -13,12 +13,12 @@ type pos = Relative_path.t * File_content.Position.t
 
 type type_spec =
   | TSpos of pos
-  | TSjson of Hh_json.json
+  | TSjson of Yojson.Safe.t
 
 type query =
-  | PosJson of pos * Hh_json.json
-  | JsonPos of Hh_json.json * pos
-  | JsonJson of Hh_json.json * Hh_json.json
+  | PosJson of pos * Yojson.Safe.t
+  | JsonPos of Yojson.Safe.t * pos
+  | JsonJson of Yojson.Safe.t * Yojson.Safe.t
 
 let expand_path file =
   let path = Path.make file in
@@ -116,16 +116,19 @@ let get_type_from_json ctx json : (locl_ty, string list) result =
   | Error err -> Error [show_deserialization_error err]
 
 let get_type_spec_from_json json : (type_spec, string) result =
-  match Hh_json.Access.get_string "kind" (json, []) with
-  | Ok (value, _keytrace) ->
+  let open Yojson.Safe.Util in
+  match json |> member "kind" |> to_string_option with
+  | None -> Error "Missing or non-string 'kind' field"
+  | Some value ->
     (match value with
     | "type" ->
-      (match Hh_json.Access.get_obj "type" (json, []) with
-      | Ok (json, _keytrace) -> Ok (TSjson json)
-      | Error failure -> Error (Hh_json.Access.access_failure_to_string failure))
+      (match json |> member "type" with
+      | `Null -> Error "Missing 'type' field"
+      | type_json -> Ok (TSjson type_json))
     | "pos" ->
-      (match Hh_json.Access.get_string "pos" (json, []) with
-      | Ok ((pos_str : string), _keytrace) ->
+      (match json |> member "pos" |> to_string_option with
+      | None -> Error "Missing or non-string 'pos' field"
+      | Some pos_str ->
         (match String.split ~on:':' pos_str with
         | [file; line; col] ->
           (match expand_path file with
@@ -142,10 +145,8 @@ let get_type_spec_from_json json : (type_spec, string) result =
           Error
             (Printf.sprintf
                "Position %s is malformed. Expected file:line:column"
-               pos_str))
-      | Error failure -> Error (Hh_json.Access.access_failure_to_string failure))
+               pos_str)))
     | bad_kind -> Error ("Unexpected kind " ^ bad_kind))
-  | Error failure -> Error (Hh_json.Access.access_failure_to_string failure)
 
 type is_subtype_result = {
   is_subtype: bool;
@@ -241,13 +242,13 @@ let parallel_helper workers ctx query_with_path_alist :
 
 let check workers str env =
   let ctx = Provider_utils.ctx_from_server_env env in
-  match Hh_json.json_of_string str with
-  | Hh_json.JSON_Array json_l ->
+  match Yojson.Safe.from_string str with
+  | `List json_l ->
     let spec_pair_result_alist =
       List.mapi json_l ~f:(fun i json ->
           let pair =
             match json with
-            | Hh_json.JSON_Array [json_l; json_r] ->
+            | `List [json_l; json_r] ->
               let get_type_spec_from_json_with_el json =
                 Result.map_error (get_type_spec_from_json json) ~f:(fun e ->
                     [e])
@@ -301,16 +302,15 @@ let check workers str env =
             match res with
             | Ok is_subtype_result ->
               ( "ok",
-                Hh_json.JSON_Object
+                `Assoc
                   [
-                    ("is_subtype", Hh_json.bool_ is_subtype_result.is_subtype);
-                    ("left", Hh_json.string_ is_subtype_result.ty_left);
-                    ("right", Hh_json.string_ is_subtype_result.ty_right);
+                    ("is_subtype", `Bool is_subtype_result.is_subtype);
+                    ("left", `String is_subtype_result.ty_left);
+                    ("right", `String is_subtype_result.ty_right);
                   ] )
-            | Error l ->
-              ("errors", Hh_json.JSON_Array (List.map l ~f:Hh_json.string_))
+            | Error l -> ("errors", `List (List.map l ~f:(fun s -> `String s)))
           in
-          Hh_json.JSON_Object [(status, value)])
+          `Assoc [(status, value)])
     in
-    Ok (Hh_json.json_to_string (Hh_json.JSON_Array json_result_list))
+    Ok (Hh_json_helpers.Out.to_string (`List json_result_list))
   | _ -> Error "Expected JSON array"

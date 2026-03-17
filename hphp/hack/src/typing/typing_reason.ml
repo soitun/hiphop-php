@@ -21,9 +21,7 @@ type pos_id = (Pos_or_decl.t[@hash.ignore]) * Ast_defs.id_
 let positioned_id pos_or_decl (p, x) = (pos_or_decl p, x)
 
 let pos_id_to_json (pos_or_decl, str) =
-  Hh_json.(
-    JSON_Object
-      [("Tuple2", JSON_Array [Pos_or_decl.json pos_or_decl; JSON_String str])])
+  `Assoc [("Tuple2", `List [Pos_or_decl.json pos_or_decl; `String str])]
 
 (* ~~ arg_position ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ *)
 type arg_position =
@@ -39,9 +37,9 @@ let arg_pos_str ap =
   | Asecond -> "second"
 
 let arg_position_to_json = function
-  | Aonly -> Hh_json.(JSON_Object [("Aonly", JSON_Array [])])
-  | Afirst -> Hh_json.(JSON_Object [("Afirst", JSON_Array [])])
-  | Asecond -> Hh_json.(JSON_Object [("Asecond", JSON_Array [])])
+  | Aonly -> `Assoc [("Aonly", `List [])]
+  | Afirst -> `Assoc [("Afirst", `List [])]
+  | Asecond -> `Assoc [("Asecond", `List [])]
 
 (* ~~ expr_dep_type_reason ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ *)
 
@@ -74,18 +72,12 @@ type pessimise_reason =
 [@@deriving eq, hash, show]
 
 let expr_dep_type_reason_to_json = function
-  | ERexpr id ->
-    Hh_json.(
-      JSON_Object
-        [("ERexpr", JSON_Array [JSON_String (Expression_id.debug id)])])
-  | ERstatic -> Hh_json.(JSON_Object [("ERstatic", JSON_Array [])])
-  | ERclass str ->
-    Hh_json.(JSON_Object [("ERclass", JSON_Array [JSON_String str])])
-  | ERparent str ->
-    Hh_json.(JSON_Object [("ERparent", JSON_Array [JSON_String str])])
-  | ERself str ->
-    Hh_json.(JSON_Object [("ERself", JSON_Array [JSON_String str])])
-  | ERpu str -> Hh_json.(JSON_Object [("ERpu", JSON_Array [JSON_String str])])
+  | ERexpr id -> `Assoc [("ERexpr", `List [`String (Expression_id.debug id)])]
+  | ERstatic -> `Assoc [("ERstatic", `List [])]
+  | ERclass str -> `Assoc [("ERclass", `List [`String str])]
+  | ERparent str -> `Assoc [("ERparent", `List [`String str])]
+  | ERself str -> `Assoc [("ERself", `List [`String str])]
+  | ERpu str -> `Assoc [("ERpu", `List [`String str])]
 
 let expr_dep_type_reason_string e =
   match e with
@@ -122,10 +114,10 @@ type blame_source =
 [@@deriving eq, hash, show]
 
 let blame_source_to_json = function
-  | BScall -> Hh_json.(JSON_Object [("BScall", JSON_Array [])])
-  | BSlambda -> Hh_json.(JSON_Object [("BSlambda", JSON_Array [])])
-  | BSassignment -> Hh_json.(JSON_Object [("BSassignment", JSON_Array [])])
-  | BSout_of_scope -> Hh_json.(JSON_Object [("BSout_of_scope", JSON_Array [])])
+  | BScall -> `Assoc [("BScall", `List [])]
+  | BSlambda -> `Assoc [("BSlambda", `List [])]
+  | BSassignment -> `Assoc [("BSassignment", `List [])]
+  | BSout_of_scope -> `Assoc [("BSout_of_scope", `List [])]
 
 (* ~~ blame ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ *)
 
@@ -134,9 +126,7 @@ type blame = Blame of Pos.t * blame_source [@@deriving eq, hash, show]
 let pos_to_json pos = Pos.(json @@ to_absolute pos)
 
 let blame_to_json (Blame (pos, src)) =
-  Hh_json.(
-    JSON_Object
-      [("Blame", JSON_Array [pos_to_json pos; blame_source_to_json src])])
+  `Assoc [("Blame", `List [pos_to_json pos; blame_source_to_json src])]
 
 (* ~~ phase indices ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ *)
 
@@ -157,12 +147,12 @@ type variance_dir =
 [@@deriving hash]
 
 let variance_dir_to_json = function
-  | Co -> Hh_json.(JSON_Object [("Co", JSON_Array [])])
-  | Contra -> Hh_json.(JSON_Object [("Contr", JSON_Array [])])
+  | Co -> `Assoc [("Co", `List [])]
+  | Contra -> `Assoc [("Contr", `List [])]
 
 (** When recording the decomposition of a type during inference we want to keep
     track of variance so we can give intuition about the direction of 'flow'.
-    In the case of invariant type paramters, we record both the fact that it was
+    In the case of invariant type parameters, we record both the fact that it was
     invariant and the direction in which the error occurred *)
 type cstr_variance =
   | Dir of variance_dir
@@ -170,10 +160,8 @@ type cstr_variance =
 [@@deriving hash]
 
 let cstr_variance_to_json = function
-  | Dir dir ->
-    Hh_json.(JSON_Object [("Dir", JSON_Array [variance_dir_to_json dir])])
-  | Inv dir ->
-    Hh_json.(JSON_Object [("Inv", JSON_Array [variance_dir_to_json dir])])
+  | Dir dir -> `Assoc [("Dir", `List [variance_dir_to_json dir])]
+  | Inv dir -> `Assoc [("Inv", `List [variance_dir_to_json dir])]
 
 type field_kind =
   | Absent
@@ -182,9 +170,9 @@ type field_kind =
 [@@deriving eq, hash]
 
 let field_kind_to_json = function
-  | Absent -> Hh_json.(JSON_Object [("Absent", JSON_Array [])])
-  | Optional -> Hh_json.(JSON_Object [("Optional", JSON_Array [])])
-  | Required -> Hh_json.(JSON_Object [("Required", JSON_Array [])])
+  | Absent -> `Assoc [("Absent", `List [])]
+  | Optional -> `Assoc [("Optional", `List [])]
+  | Required -> `Assoc [("Required", `List [])]
 
 type ctor_kind =
   | Ctor_class
@@ -192,8 +180,8 @@ type ctor_kind =
 [@@deriving hash]
 
 let ctor_kind_to_json = function
-  | Ctor_class -> Hh_json.string_ "Ctor_class"
-  | Ctor_newtype -> Hh_json.string_ "Ctor_newtype"
+  | Ctor_class -> `String "Ctor_class"
+  | Ctor_newtype -> `String "Ctor_newtype"
 
 (** Symmetric projections are those in which the same decomposition is applied
     to both sub- and supertype during inference *)
@@ -210,60 +198,42 @@ type prj_symm =
 [@@deriving hash]
 
 let prj_symm_to_json = function
-  | Prj_symm_neg -> Hh_json.JSON_String "Prj_symm_neg"
-  | Prj_symm_nullable -> Hh_json.JSON_String "Prj_symm_nullable"
-  | Prj_symm_supportdyn -> Hh_json.JSON_String "Prj_symm_supportdyn"
+  | Prj_symm_neg -> `String "Prj_symm_neg"
+  | Prj_symm_nullable -> `String "Prj_symm_nullable"
+  | Prj_symm_supportdyn -> `String "Prj_symm_supportdyn"
   | Prj_symm_ctor (ctor_kind, nm, idx, variance) ->
-    Hh_json.(
-      JSON_Object
-        [
-          ( "Prj_symm_ctor",
-            JSON_Array
-              [
-                ctor_kind_to_json ctor_kind;
-                JSON_String nm;
-                int_ idx;
-                cstr_variance_to_json variance;
-              ] );
-        ])
-  | Prj_symm_tuple idx ->
-    Hh_json.(JSON_Object [("Prj_symm_tuple", JSON_Number (string_of_int idx))])
+    `Assoc
+      [
+        ( "Prj_symm_ctor",
+          `List
+            [
+              ctor_kind_to_json ctor_kind;
+              `String nm;
+              `Int idx;
+              cstr_variance_to_json variance;
+            ] );
+      ]
+  | Prj_symm_tuple idx -> `Assoc [("Prj_symm_tuple", `Int idx)]
   | Prj_symm_shape (fld_nm, fld_kind_sub, fld_kind_super) ->
-    Hh_json.(
-      JSON_Object
-        [
-          ( "Prj_symm_shape",
-            JSON_Array
-              [
-                JSON_String fld_nm;
-                field_kind_to_json fld_kind_sub;
-                field_kind_to_json fld_kind_super;
-              ] );
-        ])
+    `Assoc
+      [
+        ( "Prj_symm_shape",
+          `List
+            [
+              `String fld_nm;
+              field_kind_to_json fld_kind_sub;
+              field_kind_to_json fld_kind_super;
+            ] );
+      ]
   | Prj_symm_fn_param (idx_sub, idx_sup) ->
-    Hh_json.(
-      JSON_Object
-        [
-          ( "Prj_symm_fn_param",
-            JSON_Array
-              [
-                JSON_Number (string_of_int idx_sub);
-                JSON_Number (string_of_int idx_sup);
-              ] );
-        ])
+    `Assoc [("Prj_symm_fn_param", `List [`Int idx_sub; `Int idx_sup])]
   | Prj_symm_fn_param_inout (idx_sub, idx_sup, variance) ->
-    Hh_json.(
-      JSON_Object
-        [
-          ( "Prj_symm_fn_param_inout",
-            JSON_Array
-              [
-                JSON_Number (string_of_int idx_sub);
-                JSON_Number (string_of_int idx_sup);
-                variance_dir_to_json variance;
-              ] );
-        ])
-  | Prj_symm_fn_ret -> Hh_json.JSON_String "Prj_symm_fn_ret"
+    `Assoc
+      [
+        ( "Prj_symm_fn_param_inout",
+          `List [`Int idx_sub; `Int idx_sup; variance_dir_to_json variance] );
+      ]
+  | Prj_symm_fn_ret -> `String "Prj_symm_fn_ret"
 
 (** Asymmetric projections are those in which the same decomposition is applied
     to only one of the sub- or supertype during inference *)
@@ -278,13 +248,13 @@ type prj_asymm =
 [@@deriving hash]
 
 let prj_asymm_to_json = function
-  | Prj_asymm_union -> Hh_json.JSON_String "Prj_asymm_union"
-  | Prj_asymm_inter -> Hh_json.JSON_String "Prj_asymm_inter"
-  | Prj_asymm_neg -> Hh_json.JSON_String "Prj_asymm_neg"
-  | Prj_asymm_nullable -> Hh_json.JSON_String "Prj_asymm_nullable"
-  | Prj_asymm_arraykey -> Hh_json.JSON_String "Prj_asymm_arraykey"
-  | Prj_asymm_num -> Hh_json.JSON_String "Prj_asymm_num"
-  | Prj_asymm_contains -> Hh_json.JSON_String "Prj_asymm_contains"
+  | Prj_asymm_union -> `String "Prj_asymm_union"
+  | Prj_asymm_inter -> `String "Prj_asymm_inter"
+  | Prj_asymm_neg -> `String "Prj_asymm_neg"
+  | Prj_asymm_nullable -> `String "Prj_asymm_nullable"
+  | Prj_asymm_arraykey -> `String "Prj_asymm_arraykey"
+  | Prj_asymm_num -> `String "Prj_asymm_num"
+  | Prj_asymm_contains -> `String "Prj_asymm_contains"
 
 (* ~~ Flow kinds ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ *)
 
@@ -302,17 +272,16 @@ type flow_kind =
 [@@deriving hash]
 
 let flow_kind_to_json = function
-  | Flow_array_get -> Hh_json.string_ "Flow_array_get"
-  | Flow_assign -> Hh_json.string_ "Flow_assign"
-  | Flow_call -> Hh_json.string_ "Flow_call"
-  | Flow_prop_access -> Hh_json.string_ "Flow_prop_access"
-  | Flow_const_access -> Hh_json.string_ "Flow_const_access"
-  | Flow_local -> Hh_json.string_ "Flow_local"
-  | Flow_fun_return -> Hh_json.string_ "Flow_fun_return"
-  | Flow_param_hint -> Hh_json.string_ "Flow_param_hint"
-  | Flow_return_expr -> Hh_json.string_ "Flow_return_expr"
-  | Flow_instantiate str ->
-    Hh_json.(JSON_Object [("Flow_instantiate", string_ str)])
+  | Flow_array_get -> `String "Flow_array_get"
+  | Flow_assign -> `String "Flow_assign"
+  | Flow_call -> `String "Flow_call"
+  | Flow_prop_access -> `String "Flow_prop_access"
+  | Flow_const_access -> `String "Flow_const_access"
+  | Flow_local -> `String "Flow_local"
+  | Flow_fun_return -> `String "Flow_fun_return"
+  | Flow_param_hint -> `String "Flow_param_hint"
+  | Flow_return_expr -> `String "Flow_return_expr"
+  | Flow_instantiate str -> `Assoc [("Flow_instantiate", `String str)]
 (* ~~ Witnesses ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ *)
 
 (** Witness the reason for a type during typing using the position of a hint or
@@ -674,175 +643,107 @@ let pp_witness_locl fmt witness =
   Format.fprintf fmt "@])"
 
 let fun_kind_to_json = function
-  | Ast_defs.FSync -> Hh_json.JSON_String "FSync"
-  | Ast_defs.FAsync -> Hh_json.JSON_String "FAsync"
-  | Ast_defs.FGenerator -> Hh_json.JSON_String "FGenerator"
-  | Ast_defs.FAsyncGenerator -> Hh_json.JSON_String "FAsyncGenerator"
+  | Ast_defs.FSync -> `String "FSync"
+  | Ast_defs.FAsync -> `String "FAsync"
+  | Ast_defs.FGenerator -> `String "FGenerator"
+  | Ast_defs.FAsyncGenerator -> `String "FAsyncGenerator"
 
 let witness_locl_to_json witness =
   match witness with
-  | Witness pos ->
-    Hh_json.(JSON_Object [("Witness", JSON_Array [pos_to_json pos])])
-  | Idx_vector pos ->
-    Hh_json.(JSON_Object [("Idx_vector", JSON_Array [pos_to_json pos])])
-  | Idx_string pos ->
-    Hh_json.(JSON_Object [("Idx_string", JSON_Array [pos_to_json pos])])
-  | Foreach pos ->
-    Hh_json.(JSON_Object [("Foreach", JSON_Array [pos_to_json pos])])
-  | Asyncforeach pos ->
-    Hh_json.(JSON_Object [("Asyncforeach", JSON_Array [pos_to_json pos])])
-  | Arith pos -> Hh_json.(JSON_Object [("Arith", JSON_Array [pos_to_json pos])])
-  | Arith_ret pos ->
-    Hh_json.(JSON_Object [("Arith_ret", JSON_Array [pos_to_json pos])])
-  | Arith_ret_int pos ->
-    Hh_json.(JSON_Object [("Arith_ret_int", JSON_Array [pos_to_json pos])])
-  | Arith_dynamic pos ->
-    Hh_json.(JSON_Object [("Arith_dynamic", JSON_Array [pos_to_json pos])])
-  | Bitwise_dynamic pos ->
-    Hh_json.(JSON_Object [("Bitwise_dynamic", JSON_Array [pos_to_json pos])])
-  | Incdec_dynamic pos ->
-    Hh_json.(JSON_Object [("Incdec_dynamic", JSON_Array [pos_to_json pos])])
-  | Comp pos -> Hh_json.(JSON_Object [("Comp", JSON_Array [pos_to_json pos])])
-  | Concat_ret pos ->
-    Hh_json.(JSON_Object [("Concat_ret", JSON_Array [pos_to_json pos])])
-  | Condition pos ->
-    Hh_json.(JSON_Object [("Condition", JSON_Array [pos_to_json pos])])
-  | Logic_ret pos ->
-    Hh_json.(JSON_Object [("Logic_ret", JSON_Array [pos_to_json pos])])
-  | Bitwise pos ->
-    Hh_json.(JSON_Object [("Bitwise", JSON_Array [pos_to_json pos])])
-  | Bitwise_ret pos ->
-    Hh_json.(JSON_Object [("Bitwise_ret", JSON_Array [pos_to_json pos])])
-  | No_return pos ->
-    Hh_json.(JSON_Object [("No_return", JSON_Array [pos_to_json pos])])
-  | No_return_async pos ->
-    Hh_json.(JSON_Object [("No_return_async", JSON_Array [pos_to_json pos])])
+  | Witness pos -> `Assoc [("Witness", `List [pos_to_json pos])]
+  | Idx_vector pos -> `Assoc [("Idx_vector", `List [pos_to_json pos])]
+  | Idx_string pos -> `Assoc [("Idx_string", `List [pos_to_json pos])]
+  | Foreach pos -> `Assoc [("Foreach", `List [pos_to_json pos])]
+  | Asyncforeach pos -> `Assoc [("Asyncforeach", `List [pos_to_json pos])]
+  | Arith pos -> `Assoc [("Arith", `List [pos_to_json pos])]
+  | Arith_ret pos -> `Assoc [("Arith_ret", `List [pos_to_json pos])]
+  | Arith_ret_int pos -> `Assoc [("Arith_ret_int", `List [pos_to_json pos])]
+  | Arith_dynamic pos -> `Assoc [("Arith_dynamic", `List [pos_to_json pos])]
+  | Bitwise_dynamic pos -> `Assoc [("Bitwise_dynamic", `List [pos_to_json pos])]
+  | Incdec_dynamic pos -> `Assoc [("Incdec_dynamic", `List [pos_to_json pos])]
+  | Comp pos -> `Assoc [("Comp", `List [pos_to_json pos])]
+  | Concat_ret pos -> `Assoc [("Concat_ret", `List [pos_to_json pos])]
+  | Condition pos -> `Assoc [("Condition", `List [pos_to_json pos])]
+  | Logic_ret pos -> `Assoc [("Logic_ret", `List [pos_to_json pos])]
+  | Bitwise pos -> `Assoc [("Bitwise", `List [pos_to_json pos])]
+  | Bitwise_ret pos -> `Assoc [("Bitwise_ret", `List [pos_to_json pos])]
+  | No_return pos -> `Assoc [("No_return", `List [pos_to_json pos])]
+  | No_return_async pos -> `Assoc [("No_return_async", `List [pos_to_json pos])]
   | Ret_fun_kind (pos, fun_kind) ->
-    Hh_json.(
-      JSON_Object
-        [
-          ( "Ret_fun_kind",
-            JSON_Array [pos_to_json pos; fun_kind_to_json fun_kind] );
-        ])
-  | Throw pos -> Hh_json.(JSON_Object [("Throw", JSON_Array [pos_to_json pos])])
-  | Placeholder pos ->
-    Hh_json.(JSON_Object [("Placeholder", JSON_Array [pos_to_json pos])])
-  | Ret_div pos ->
-    Hh_json.(JSON_Object [("Ret_div", JSON_Array [pos_to_json pos])])
-  | Yield_gen pos ->
-    Hh_json.(JSON_Object [("Yield_gen", JSON_Array [pos_to_json pos])])
-  | Yield_asyncgen pos ->
-    Hh_json.(JSON_Object [("Yield_asyncgen", JSON_Array [pos_to_json pos])])
-  | Yield_asyncnull pos ->
-    Hh_json.(JSON_Object [("Yield_asyncnull", JSON_Array [pos_to_json pos])])
-  | Yield_send pos ->
-    Hh_json.(JSON_Object [("Yield_send", JSON_Array [pos_to_json pos])])
-  | Unknown_class pos ->
-    Hh_json.(JSON_Object [("Unknown_class", JSON_Array [pos_to_json pos])])
-  | Var_param pos ->
-    Hh_json.(JSON_Object [("Var_param", JSON_Array [pos_to_json pos])])
+    `Assoc
+      [("Ret_fun_kind", `List [pos_to_json pos; fun_kind_to_json fun_kind])]
+  | Throw pos -> `Assoc [("Throw", `List [pos_to_json pos])]
+  | Placeholder pos -> `Assoc [("Placeholder", `List [pos_to_json pos])]
+  | Ret_div pos -> `Assoc [("Ret_div", `List [pos_to_json pos])]
+  | Yield_gen pos -> `Assoc [("Yield_gen", `List [pos_to_json pos])]
+  | Yield_asyncgen pos -> `Assoc [("Yield_asyncgen", `List [pos_to_json pos])]
+  | Yield_asyncnull pos -> `Assoc [("Yield_asyncnull", `List [pos_to_json pos])]
+  | Yield_send pos -> `Assoc [("Yield_send", `List [pos_to_json pos])]
+  | Unknown_class pos -> `Assoc [("Unknown_class", `List [pos_to_json pos])]
+  | Var_param pos -> `Assoc [("Var_param", `List [pos_to_json pos])]
   | Unpack_param (pos, pos_or_decl, n) ->
-    Hh_json.(
-      JSON_Object
-        [
-          ( "Unpack_param",
-            JSON_Array
-              [
-                pos_to_json pos;
-                Pos_or_decl.json pos_or_decl;
-                JSON_Number (string_of_int n);
-              ] );
-        ])
-  | Nullsafe_op pos ->
-    Hh_json.(JSON_Object [("Nullsafe_op", JSON_Array [pos_to_json pos])])
+    `Assoc
+      [
+        ( "Unpack_param",
+          `List [pos_to_json pos; Pos_or_decl.json pos_or_decl; `Int n] );
+      ]
+  | Nullsafe_op pos -> `Assoc [("Nullsafe_op", `List [pos_to_json pos])]
   | Nullsafe_pipe_op pos ->
-    Hh_json.(JSON_Object [("Nullsafe_pipe_op", JSON_Array [pos_to_json pos])])
+    `Assoc [("Nullsafe_pipe_op", `List [pos_to_json pos])]
   | Predicated (pos, str) ->
-    Hh_json.(
-      JSON_Object
-        [("Predicated", JSON_Array [pos_to_json pos; JSON_String str])])
-  | Is_refinement pos ->
-    Hh_json.(JSON_Object [("Is_refinement", JSON_Array [pos_to_json pos])])
-  | As_refinement pos ->
-    Hh_json.(JSON_Object [("As_refinement", JSON_Array [pos_to_json pos])])
-  | Equal pos -> Hh_json.(JSON_Object [("Equal", JSON_Array [pos_to_json pos])])
-  | Using pos -> Hh_json.(JSON_Object [("Using", JSON_Array [pos_to_json pos])])
-  | Dynamic_prop pos ->
-    Hh_json.(JSON_Object [("Dynamic_prop", JSON_Array [pos_to_json pos])])
-  | Dynamic_call pos ->
-    Hh_json.(JSON_Object [("Dynamic_call", JSON_Array [pos_to_json pos])])
+    `Assoc [("Predicated", `List [pos_to_json pos; `String str])]
+  | Is_refinement pos -> `Assoc [("Is_refinement", `List [pos_to_json pos])]
+  | As_refinement pos -> `Assoc [("As_refinement", `List [pos_to_json pos])]
+  | Equal pos -> `Assoc [("Equal", `List [pos_to_json pos])]
+  | Using pos -> `Assoc [("Using", `List [pos_to_json pos])]
+  | Dynamic_prop pos -> `Assoc [("Dynamic_prop", `List [pos_to_json pos])]
+  | Dynamic_call pos -> `Assoc [("Dynamic_call", `List [pos_to_json pos])]
   | Dynamic_construct pos ->
-    Hh_json.(JSON_Object [("Dynamic_construct", JSON_Array [pos_to_json pos])])
-  | Idx_dict pos ->
-    Hh_json.(JSON_Object [("Idx_dict", JSON_Array [pos_to_json pos])])
-  | Idx_set_element pos ->
-    Hh_json.(JSON_Object [("Idx_set_element", JSON_Array [pos_to_json pos])])
+    `Assoc [("Dynamic_construct", `List [pos_to_json pos])]
+  | Idx_dict pos -> `Assoc [("Idx_dict", `List [pos_to_json pos])]
+  | Idx_set_element pos -> `Assoc [("Idx_set_element", `List [pos_to_json pos])]
   | Unset_field (pos, str) ->
-    Hh_json.(
-      JSON_Object
-        [("Unset_field", JSON_Array [pos_to_json pos; JSON_String str])])
-  | Regex pos -> Hh_json.(JSON_Object [("Regex", JSON_Array [pos_to_json pos])])
+    `Assoc [("Unset_field", `List [pos_to_json pos; `String str])]
+  | Regex pos -> `Assoc [("Regex", `List [pos_to_json pos])]
   | Type_variable (pos, tvid) ->
-    Hh_json.(
-      JSON_Object
-        [
-          ( "Type_variable",
-            JSON_Array [pos_to_json pos; string_ (Tvid.show tvid)] );
-        ])
+    `Assoc
+      [("Type_variable", `List [pos_to_json pos; `String (Tvid.show tvid)])]
   | Type_variable_generics (pos, str1, str2, tvid) ->
-    Hh_json.(
-      JSON_Object
-        [
-          ( "Type_variable_generics",
-            JSON_Array
-              [
-                pos_to_json pos;
-                JSON_String str1;
-                JSON_String str2;
-                string_ (Tvid.show tvid);
-              ] );
-        ])
+    `Assoc
+      [
+        ( "Type_variable_generics",
+          `List
+            [
+              pos_to_json pos;
+              `String str1;
+              `String str2;
+              `String (Tvid.show tvid);
+            ] );
+      ]
   | Type_variable_error (pos, tvid) ->
-    Hh_json.(
-      JSON_Object
-        [
-          ( "Type_variable_error",
-            JSON_Array [pos_to_json pos; string_ (Tvid.show tvid)] );
-        ])
-  | Shape (pos, str) ->
-    Hh_json.(
-      JSON_Object [("Shape", JSON_Array [pos_to_json pos; JSON_String str])])
-  | Shape_literal pos ->
-    Hh_json.(JSON_Object [("Shape_literal", JSON_Array [pos_to_json pos])])
-  | Destructure pos ->
-    Hh_json.(JSON_Object [("Destructure", JSON_Array [pos_to_json pos])])
+    `Assoc
+      [
+        ( "Type_variable_error",
+          `List [pos_to_json pos; `String (Tvid.show tvid)] );
+      ]
+  | Shape (pos, str) -> `Assoc [("Shape", `List [pos_to_json pos; `String str])]
+  | Shape_literal pos -> `Assoc [("Shape_literal", `List [pos_to_json pos])]
+  | Destructure pos -> `Assoc [("Destructure", `List [pos_to_json pos])]
   | Key_value_collection_key pos ->
-    Hh_json.(
-      JSON_Object [("Key_value_collection_key", JSON_Array [pos_to_json pos])])
-  | Splice pos ->
-    Hh_json.(JSON_Object [("Splice", JSON_Array [pos_to_json pos])])
-  | Et_boolean pos ->
-    Hh_json.(JSON_Object [("Et_boolean", JSON_Array [pos_to_json pos])])
-  | Concat_operand pos ->
-    Hh_json.(JSON_Object [("Concat_operand", JSON_Array [pos_to_json pos])])
-  | Interp_operand pos ->
-    Hh_json.(JSON_Object [("Interp_operand", JSON_Array [pos_to_json pos])])
-  | Missing_class pos ->
-    Hh_json.(JSON_Object [("Missing_class", JSON_Array [pos_to_json pos])])
-  | Captured_like pos ->
-    Hh_json.(JSON_Object [("Captured_like", JSON_Array [pos_to_json pos])])
-  | Unsafe_cast pos ->
-    Hh_json.(JSON_Object [("Unsafe_cast", JSON_Array [pos_to_json pos])])
-  | Pattern pos ->
-    Hh_json.(JSON_Object [("Pattern", JSON_Array [pos_to_json pos])])
-  | Join_point pos ->
-    Hh_json.(JSON_Object [("Join_point", JSON_Array [pos_to_json pos])])
+    `Assoc [("Key_value_collection_key", `List [pos_to_json pos])]
+  | Splice pos -> `Assoc [("Splice", `List [pos_to_json pos])]
+  | Et_boolean pos -> `Assoc [("Et_boolean", `List [pos_to_json pos])]
+  | Concat_operand pos -> `Assoc [("Concat_operand", `List [pos_to_json pos])]
+  | Interp_operand pos -> `Assoc [("Interp_operand", `List [pos_to_json pos])]
+  | Missing_class pos -> `Assoc [("Missing_class", `List [pos_to_json pos])]
+  | Captured_like pos -> `Assoc [("Captured_like", `List [pos_to_json pos])]
+  | Unsafe_cast pos -> `Assoc [("Unsafe_cast", `List [pos_to_json pos])]
+  | Pattern pos -> `Assoc [("Pattern", `List [pos_to_json pos])]
+  | Join_point pos -> `Assoc [("Join_point", `List [pos_to_json pos])]
   | Static_property_access pos ->
-    Hh_json.(
-      JSON_Object [("Static_property_access", JSON_Array [pos_to_json pos])])
+    `Assoc [("Static_property_access", `List [pos_to_json pos])]
   | Class_constant_access pos ->
-    Hh_json.(
-      JSON_Object [("Class_constant_access", JSON_Array [pos_to_json pos])])
+    `Assoc [("Class_constant_access", `List [pos_to_json pos])]
 
 let witness_locl_to_string prefix witness =
   match witness with
@@ -1278,162 +1179,106 @@ let pp_witness_decl fmt witness =
   Format.fprintf fmt "@])"
 
 let fun_kind_to_json = function
-  | Ast_defs.FSync -> Hh_json.JSON_String "FSync"
-  | Ast_defs.FAsync -> Hh_json.JSON_String "FAsync"
-  | Ast_defs.FGenerator -> Hh_json.JSON_String "FGenerator"
-  | Ast_defs.FAsyncGenerator -> Hh_json.JSON_String "FAsyncGenerator"
+  | Ast_defs.FSync -> `String "FSync"
+  | Ast_defs.FAsync -> `String "FAsync"
+  | Ast_defs.FGenerator -> `String "FGenerator"
+  | Ast_defs.FAsyncGenerator -> `String "FAsyncGenerator"
 
 let witness_decl_to_json = function
   | Witness_from_decl pos_or_decl ->
-    Hh_json.(
-      JSON_Object
-        [("Witness_from_decl", JSON_Array [Pos_or_decl.json pos_or_decl])])
+    `Assoc [("Witness_from_decl", `List [Pos_or_decl.json pos_or_decl])]
   | Idx_vector_from_decl pos_or_decl ->
-    Hh_json.(
-      JSON_Object
-        [("Idx_vector_from_decl", JSON_Array [Pos_or_decl.json pos_or_decl])])
+    `Assoc [("Idx_vector_from_decl", `List [Pos_or_decl.json pos_or_decl])]
   | Idx_string_from_decl pos_or_decl ->
-    Hh_json.(
-      JSON_Object
-        [("Idx_string_from_decl", JSON_Array [Pos_or_decl.json pos_or_decl])])
+    `Assoc [("Idx_string_from_decl", `List [Pos_or_decl.json pos_or_decl])]
   | Ret_fun_kind_from_decl (pos_or_decl, fun_kind) ->
-    Hh_json.(
-      JSON_Object
-        [
-          ( "Ret_fun_kind_from_decl",
-            JSON_Array [Pos_or_decl.json pos_or_decl; fun_kind_to_json fun_kind]
-          );
-        ])
-  | Hint pos_or_decl ->
-    Hh_json.(JSON_Object [("Hint", JSON_Array [Pos_or_decl.json pos_or_decl])])
+    `Assoc
+      [
+        ( "Ret_fun_kind_from_decl",
+          `List [Pos_or_decl.json pos_or_decl; fun_kind_to_json fun_kind] );
+      ]
+  | Hint pos_or_decl -> `Assoc [("Hint", `List [Pos_or_decl.json pos_or_decl])]
   | Class_class (pos_or_decl, str) ->
-    Hh_json.(
-      JSON_Object
-        [
-          ( "Class_class",
-            JSON_Array [Pos_or_decl.json pos_or_decl; JSON_String str] );
-        ])
+    `Assoc [("Class_class", `List [Pos_or_decl.json pos_or_decl; `String str])]
   | Var_param_from_decl pos_or_decl ->
-    Hh_json.(
-      JSON_Object
-        [("Var_param_from_decl", JSON_Array [Pos_or_decl.json pos_or_decl])])
+    `Assoc [("Var_param_from_decl", `List [Pos_or_decl.json pos_or_decl])]
   | Tuple_from_splat pos_or_decl ->
-    Hh_json.(
-      JSON_Object
-        [("Tuple_from_splat", JSON_Array [Pos_or_decl.json pos_or_decl])])
+    `Assoc [("Tuple_from_splat", `List [Pos_or_decl.json pos_or_decl])]
   | Inout_param pos_or_decl ->
-    Hh_json.(
-      JSON_Object [("Inout_param", JSON_Array [Pos_or_decl.json pos_or_decl])])
+    `Assoc [("Inout_param", `List [Pos_or_decl.json pos_or_decl])]
   | Tconst_no_cstr pos_id ->
-    Hh_json.(
-      JSON_Object [("Tconst_no_cstr", JSON_Array [pos_id_to_json pos_id])])
+    `Assoc [("Tconst_no_cstr", `List [pos_id_to_json pos_id])]
   | Varray_or_darray_key pos_or_decl ->
-    Hh_json.(
-      JSON_Object
-        [("Varray_or_darray_key", JSON_Array [Pos_or_decl.json pos_or_decl])])
+    `Assoc [("Varray_or_darray_key", `List [Pos_or_decl.json pos_or_decl])]
   | Vec_or_dict_key pos_or_decl ->
-    Hh_json.(
-      JSON_Object
-        [("Vec_or_dict_key", JSON_Array [Pos_or_decl.json pos_or_decl])])
+    `Assoc [("Vec_or_dict_key", `List [Pos_or_decl.json pos_or_decl])]
   | Missing_optional_field (pos_or_decl, str) ->
-    Hh_json.(
-      JSON_Object
-        [
-          ( "Missing_optional_field",
-            JSON_Array [Pos_or_decl.json pos_or_decl; JSON_String str] );
-        ])
+    `Assoc
+      [
+        ( "Missing_optional_field",
+          `List [Pos_or_decl.json pos_or_decl; `String str] );
+      ]
   | Implicit_upper_bound (pos_or_decl, str) ->
-    Hh_json.(
-      JSON_Object
-        [
-          ( "Implicit_upper_bound",
-            JSON_Array [Pos_or_decl.json pos_or_decl; JSON_String str] );
-        ])
+    `Assoc
+      [
+        ( "Implicit_upper_bound",
+          `List [Pos_or_decl.json pos_or_decl; `String str] );
+      ]
   | Global_type_variable_generics (pos_or_decl, str1, str2) ->
-    Hh_json.(
-      JSON_Object
-        [
-          ( "Global_type_variable_generics",
-            JSON_Array
-              [Pos_or_decl.json pos_or_decl; JSON_String str1; JSON_String str2]
-          );
-        ])
+    `Assoc
+      [
+        ( "Global_type_variable_generics",
+          `List [Pos_or_decl.json pos_or_decl; `String str1; `String str2] );
+      ]
   | Solve_fail pos_or_decl ->
-    Hh_json.(
-      JSON_Object [("Solve_fail", JSON_Array [Pos_or_decl.json pos_or_decl])])
+    `Assoc [("Solve_fail", `List [Pos_or_decl.json pos_or_decl])]
   | Cstr_on_generics (pos_or_decl, pos_id) ->
-    Hh_json.(
-      JSON_Object
-        [
-          ( "Cstr_on_generics",
-            JSON_Array [Pos_or_decl.json pos_or_decl; pos_id_to_json pos_id] );
-        ])
+    `Assoc
+      [
+        ( "Cstr_on_generics",
+          `List [Pos_or_decl.json pos_or_decl; pos_id_to_json pos_id] );
+      ]
   | Enforceable pos_or_decl ->
-    Hh_json.(
-      JSON_Object [("Enforceable", JSON_Array [Pos_or_decl.json pos_or_decl])])
+    `Assoc [("Enforceable", `List [Pos_or_decl.json pos_or_decl])]
   | Global_class_prop pos_or_decl ->
-    Hh_json.(
-      JSON_Object
-        [("Global_class_prop", JSON_Array [Pos_or_decl.json pos_or_decl])])
+    `Assoc [("Global_class_prop", `List [Pos_or_decl.json pos_or_decl])]
   | Global_fun_param pos_or_decl ->
-    Hh_json.(
-      JSON_Object
-        [("Global_fun_param", JSON_Array [Pos_or_decl.json pos_or_decl])])
+    `Assoc [("Global_fun_param", `List [Pos_or_decl.json pos_or_decl])]
   | Global_fun_ret pos_or_decl ->
-    Hh_json.(
-      JSON_Object
-        [("Global_fun_ret", JSON_Array [Pos_or_decl.json pos_or_decl])])
+    `Assoc [("Global_fun_ret", `List [Pos_or_decl.json pos_or_decl])]
   | Default_capability pos_or_decl ->
-    Hh_json.(
-      JSON_Object
-        [("Default_capability", JSON_Array [Pos_or_decl.json pos_or_decl])])
+    `Assoc [("Default_capability", `List [Pos_or_decl.json pos_or_decl])]
   | Support_dynamic_type pos_or_decl ->
-    Hh_json.(
-      JSON_Object
-        [("Support_dynamic_type", JSON_Array [Pos_or_decl.json pos_or_decl])])
+    `Assoc [("Support_dynamic_type", `List [Pos_or_decl.json pos_or_decl])]
   | Support_dynamic_type_assume pos_or_decl ->
-    Hh_json.(
-      JSON_Object
-        [
-          ( "Support_dynamic_type_assume",
-            JSON_Array [Pos_or_decl.json pos_or_decl] );
-        ])
+    `Assoc
+      [("Support_dynamic_type_assume", `List [Pos_or_decl.json pos_or_decl])]
   | Polymorphic_type_param (pos_or_decl, new_name, orig_name, rank) ->
-    Hh_json.(
-      JSON_Object
-        [
-          ( "Polymorphic_type_param",
-            JSON_Array
-              [
-                Pos_or_decl.json pos_or_decl;
-                string_ new_name;
-                string_ orig_name;
-                int_ rank;
-              ] );
-        ])
+    `Assoc
+      [
+        ( "Polymorphic_type_param",
+          `List
+            [
+              Pos_or_decl.json pos_or_decl;
+              `String new_name;
+              `String orig_name;
+              `Int rank;
+            ] );
+      ]
   | Pessimised_inout pos_or_decl ->
-    Hh_json.(
-      JSON_Object
-        [("Pessimised_inout", JSON_Array [Pos_or_decl.json pos_or_decl])])
+    `Assoc [("Pessimised_inout", `List [Pos_or_decl.json pos_or_decl])]
   | Pessimised_return (pos_or_decl, _) ->
-    Hh_json.(
-      JSON_Object
-        [("Pessimised_return", JSON_Array [Pos_or_decl.json pos_or_decl])])
+    `Assoc [("Pessimised_return", `List [Pos_or_decl.json pos_or_decl])]
   | Pessimised_prop (pos_or_decl, _) ->
-    Hh_json.(
-      JSON_Object
-        [("Pessimised_prop", JSON_Array [Pos_or_decl.json pos_or_decl])])
+    `Assoc [("Pessimised_prop", `List [Pos_or_decl.json pos_or_decl])]
   | Pessimised_this pos_or_decl ->
-    Hh_json.(
-      JSON_Object
-        [("Pessimised_this", JSON_Array [Pos_or_decl.json pos_or_decl])])
+    `Assoc [("Pessimised_this", `List [Pos_or_decl.json pos_or_decl])]
   | Illegal_recursive_type (pos_or_decl, name) ->
-    Hh_json.(
-      JSON_Object
-        [
-          ( "Illegal_recursive_type",
-            JSON_Array [Pos_or_decl.json pos_or_decl; JSON_String name] );
-        ])
+    `Assoc
+      [
+        ( "Illegal_recursive_type",
+          `List [Pos_or_decl.json pos_or_decl; `String name] );
+      ]
 
 let pessimise_reason_to_string pr =
   match pr with
@@ -1592,9 +1437,9 @@ type axiom =
 [@@deriving hash]
 
 let axiom_to_json = function
-  | Extends -> Hh_json.string_ "Extends"
-  | Upper_bound _ -> Hh_json.string_ "Upper_bound"
-  | Lower_bound -> Hh_json.string_ "Lower_bound"
+  | Extends -> `String "Extends"
+  | Upper_bound _ -> `String "Upper_bound"
+  | Lower_bound -> `String "Lower_bound"
 
 (* ~~ Reasons ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ *)
 
@@ -2026,110 +1871,90 @@ let pos_or_decl_to_json pos_or_decl =
       | _ -> raw
     in
     if line_end = line_start then
-      Hh_json.JSON_Object
+      `Assoc
         [
-          ("filename", Hh_json.JSON_String fn);
-          ("line", Hh_json.int_ line_start);
-          ("char_start", Hh_json.int_ char_start);
-          ("char_end", Hh_json.int_ (char_end - 1));
+          ("filename", `String fn);
+          ("line", `Int line_start);
+          ("char_start", `Int char_start);
+          ("char_end", `Int (char_end - 1));
         ]
     else
-      Hh_json.JSON_Object
+      `Assoc
         [
-          ("filename", Hh_json.JSON_String fn);
-          ("line_start", Hh_json.int_ line_start);
-          ("char_start", Hh_json.int_ char_start);
-          ("line_end", Hh_json.int_ line_end);
-          ("char_end", Hh_json.int_ (char_end - 1));
+          ("filename", `String fn);
+          ("line_start", `Int line_start);
+          ("char_start", `Int char_start);
+          ("line_end", `Int line_end);
+          ("char_end", `Int (char_end - 1));
         ]
   else
     Pos_or_decl.json pos_or_decl
 
-let rec to_json_help : type a. a t_ -> int option -> Hh_json.json * int option =
+let rec to_json_help : type a. a t_ -> int option -> Yojson.Safe.t * int option
+    =
  fun t fuel_opt ->
   if Option.value_map fuel_opt ~default:false ~f:(fun fuel -> fuel <= 0) then
-    (Hh_json.JSON_Object [], fuel_opt)
+    (`Assoc [], fuel_opt)
   else begin
     let fuel_opt = Option.map fuel_opt ~f:(fun fuel -> fuel - 1) in
     match t with
-    | No_reason ->
-      (Hh_json.(JSON_Object [("No_reason", JSON_Array [])]), fuel_opt)
-    | Missing_field ->
-      (Hh_json.(JSON_Object [("Missing_field", JSON_Array [])]), fuel_opt)
-    | Invalid -> (Hh_json.(JSON_Object [("Invalid", JSON_Array [])]), fuel_opt)
+    | No_reason -> (`Assoc [("No_reason", `List [])], fuel_opt)
+    | Missing_field -> (`Assoc [("Missing_field", `List [])], fuel_opt)
+    | Invalid -> (`Assoc [("Invalid", `List [])], fuel_opt)
     | From_witness_locl witness ->
-      ( Hh_json.(
-          JSON_Object
-            [("From_witness_locl", JSON_Array [witness_locl_to_json witness])]),
+      ( `Assoc [("From_witness_locl", `List [witness_locl_to_json witness])],
         fuel_opt )
     | From_witness_decl witness ->
-      ( Hh_json.(
-          JSON_Object
-            [("From_witness_decl", JSON_Array [witness_decl_to_json witness])]),
+      ( `Assoc [("From_witness_decl", `List [witness_decl_to_json witness])],
         fuel_opt )
     | Idx (pos, r) ->
       let (r, fuel_opt) = to_json_help r fuel_opt in
-      ( Hh_json.(JSON_Object [("Idx", JSON_Array [pos_to_json pos; r])]),
-        fuel_opt )
+      (`Assoc [("Idx", `List [pos_to_json pos; r])], fuel_opt)
     | Arith_ret_float (pos, r, arg_pos) ->
       let (r, fuel_opt) = to_json_help r fuel_opt in
-      ( Hh_json.(
-          JSON_Object
-            [
-              ( "Arith_ret_float",
-                JSON_Array [pos_to_json pos; r; arg_position_to_json arg_pos] );
-            ]),
+      ( `Assoc
+          [
+            ( "Arith_ret_float",
+              `List [pos_to_json pos; r; arg_position_to_json arg_pos] );
+          ],
         fuel_opt )
     | Arith_ret_num (pos, r, arg_pos) ->
       let (r, fuel_opt) = to_json_help r fuel_opt in
-      ( Hh_json.(
-          JSON_Object
-            [
-              ( "Arith_ret_num",
-                JSON_Array [pos_to_json pos; r; arg_position_to_json arg_pos] );
-            ]),
+      ( `Assoc
+          [
+            ( "Arith_ret_num",
+              `List [pos_to_json pos; r; arg_position_to_json arg_pos] );
+          ],
         fuel_opt )
     | Lost_info (str, r, blame) ->
       let (r, fuel_opt) = to_json_help r fuel_opt in
-      ( Hh_json.(
-          JSON_Object
-            [
-              ("Lost_info", JSON_Array [JSON_String str; r; blame_to_json blame]);
-            ]),
+      ( `Assoc [("Lost_info", `List [`String str; r; blame_to_json blame])],
         fuel_opt )
     | Format (pos, str, r) ->
       let (r, fuel_opt) = to_json_help r fuel_opt in
-      ( Hh_json.(
-          JSON_Object
-            [("Format", JSON_Array [pos_to_json pos; JSON_String str; r])]),
-        fuel_opt )
+      (`Assoc [("Format", `List [pos_to_json pos; `String str; r])], fuel_opt)
     | Instantiate { type_; var_name; var } ->
       let (type_, fuel_opt) = to_json_help type_ fuel_opt in
       let (var, fuel_opt) = to_json_help var fuel_opt in
-      ( Hh_json.(
-          JSON_Object
-            [("Instantiate", JSON_Array [type_; JSON_String var_name; var])]),
-        fuel_opt )
+      (`Assoc [("Instantiate", `List [type_; `String var_name; var])], fuel_opt)
     | Typeconst (r1, (pos_or_decl, str), lazy_str, r2) ->
       let (r1, fuel_opt) = to_json_help r1 fuel_opt in
       let (r2, fuel_opt) = to_json_help r2 fuel_opt in
-      ( Hh_json.(
-          JSON_Object
-            [
-              ( "Typeconst",
-                JSON_Array
-                  [
-                    r1;
-                    JSON_Object
-                      [
-                        ( "Tuple2",
-                          JSON_Array
-                            [Pos_or_decl.json pos_or_decl; JSON_String str] );
-                      ];
-                    JSON_String (Lazy.force lazy_str);
-                    r2;
-                  ] );
-            ]),
+      ( `Assoc
+          [
+            ( "Typeconst",
+              `List
+                [
+                  r1;
+                  `Assoc
+                    [
+                      ( "Tuple2",
+                        `List [Pos_or_decl.json pos_or_decl; `String str] );
+                    ];
+                  `String (Lazy.force lazy_str);
+                  r2;
+                ] );
+          ],
         fuel_opt )
     | Type_access (r, xs) ->
       let (r, fuel_opt) = to_json_help r fuel_opt in
@@ -2140,173 +1965,143 @@ let rec to_json_help : type a. a t_ -> int option -> Hh_json.json * int option =
           ~f:(fun (acc, fuel_opt) (r, lazy_str) ->
             let (r, fuel_opt) = to_json_help r fuel_opt in
             let json =
-              Hh_json.(
-                JSON_Object
-                  [
-                    ("Tuple2", JSON_Array [r; JSON_String (Lazy.force lazy_str)]);
-                  ])
+              `Assoc [("Tuple2", `List [r; `String (Lazy.force lazy_str)])]
             in
             (json :: acc, fuel_opt))
       in
-      ( Hh_json.(
-          JSON_Object
-            [("Type_access", JSON_Array [r; JSON_Array (List.rev xs)])]),
-        fuel_opt )
+      (`Assoc [("Type_access", `List [r; `List (List.rev xs)])], fuel_opt)
     | Expr_dep_type (r, pos_or_decl, expr_dep_type_reason) ->
       let (r, fuel_opt) = to_json_help r fuel_opt in
-      ( Hh_json.(
-          JSON_Object
-            [
-              ( "Expr_dep_type",
-                JSON_Array
-                  [
-                    r;
-                    Pos_or_decl.json pos_or_decl;
-                    expr_dep_type_reason_to_json expr_dep_type_reason;
-                  ] );
-            ]),
+      ( `Assoc
+          [
+            ( "Expr_dep_type",
+              `List
+                [
+                  r;
+                  Pos_or_decl.json pos_or_decl;
+                  expr_dep_type_reason_to_json expr_dep_type_reason;
+                ] );
+          ],
         fuel_opt )
     | Lambda_param (pos, r) ->
       let (r, fuel_opt) = to_json_help r fuel_opt in
-      ( Hh_json.(JSON_Object [("Lambda_param", JSON_Array [pos_to_json pos; r])]),
-        fuel_opt )
+      (`Assoc [("Lambda_param", `List [pos_to_json pos; r])], fuel_opt)
     | Dynamic_coercion r ->
       let (r, fuel_opt) = to_json_help r fuel_opt in
-      (Hh_json.(JSON_Object [("Dynamic_coercion", JSON_Array [r])]), fuel_opt)
+      (`Assoc [("Dynamic_coercion", `List [r])], fuel_opt)
     | Dynamic_partial_enforcement (pos_or_decl, str, r) ->
       let (r, fuel_opt) = to_json_help r fuel_opt in
-      ( Hh_json.(
-          JSON_Object
-            [
-              ( "Dynamic_partial_enforcement",
-                JSON_Array [Pos_or_decl.json pos_or_decl; JSON_String str; r] );
-            ]),
+      ( `Assoc
+          [
+            ( "Dynamic_partial_enforcement",
+              `List [Pos_or_decl.json pos_or_decl; `String str; r] );
+          ],
         fuel_opt )
     | Rigid_tvar_escape (pos, str1, str2, r) ->
       let (r, fuel_opt) = to_json_help r fuel_opt in
-      ( Hh_json.(
-          JSON_Object
-            [
-              ( "Rigid_tvar_escape",
-                JSON_Array
-                  [pos_to_json pos; JSON_String str1; JSON_String str2; r] );
-            ]),
+      ( `Assoc
+          [
+            ( "Rigid_tvar_escape",
+              `List [pos_to_json pos; `String str1; `String str2; r] );
+          ],
         fuel_opt )
     | Opaque_type_from_module (pos_or_decl, str, r) ->
       let (r, fuel_opt) = to_json_help r fuel_opt in
-      ( Hh_json.(
-          JSON_Object
-            [
-              ( "Opaque_type_from_module",
-                JSON_Array [Pos_or_decl.json pos_or_decl; JSON_String str; r] );
-            ]),
+      ( `Assoc
+          [
+            ( "Opaque_type_from_module",
+              `List [Pos_or_decl.json pos_or_decl; `String str; r] );
+          ],
         fuel_opt )
     | SDT_call (pos_or_decl, r) ->
       let (r, fuel_opt) = to_json_help r fuel_opt in
-      ( Hh_json.(
-          JSON_Object
-            [("SDT_call", JSON_Array [Pos_or_decl.json pos_or_decl; r])]),
-        fuel_opt )
+      (`Assoc [("SDT_call", `List [Pos_or_decl.json pos_or_decl; r])], fuel_opt)
     | Like_call (pos_or_decl, r) ->
       let (r, fuel_opt) = to_json_help r fuel_opt in
-      ( Hh_json.(
-          JSON_Object
-            [("Like_call", JSON_Array [Pos_or_decl.json pos_or_decl; r])]),
-        fuel_opt )
+      (`Assoc [("Like_call", `List [Pos_or_decl.json pos_or_decl; r])], fuel_opt)
     | Flow { from; kind; into } ->
       let (from, fuel_opt) = to_json_help from fuel_opt in
       let (into, fuel_opt) = to_json_help into fuel_opt in
-      ( Hh_json.(
-          JSON_Object
-            [
-              ( "Flow",
-                JSON_Object
-                  [
-                    ("from", from);
-                    ("kind", flow_kind_to_json kind);
-                    ("into", into);
-                  ] );
-            ]),
+      ( `Assoc
+          [
+            ( "Flow",
+              `Assoc
+                [
+                  ("from", from);
+                  ("kind", flow_kind_to_json kind);
+                  ("into", into);
+                ] );
+          ],
         fuel_opt )
     | Lower_bound { bound; of_ } ->
       let (bound, fuel_opt) = to_json_help bound fuel_opt in
       let (of_, fuel_opt) = to_json_help of_ fuel_opt in
-      ( Hh_json.(
-          JSON_Object
-            [("Lower_bound", JSON_Object [("bound", bound); ("of", of_)])]),
+      ( `Assoc [("Lower_bound", `Assoc [("bound", bound); ("of", of_)])],
         fuel_opt )
     | Solved { solution; of_; in_ } ->
       let (in_, fuel_opt) = to_json_help in_ fuel_opt in
       let (solution, fuel_opt) = to_json_help solution fuel_opt in
-      ( Hh_json.(
-          JSON_Object
-            [
-              ( "Solved",
-                JSON_Object
-                  [
-                    ("solution", solution);
-                    ("of_", string_ (Tvid.show of_));
-                    ("in_", in_);
-                  ] );
-            ]),
+      ( `Assoc
+          [
+            ( "Solved",
+              `Assoc
+                [
+                  ("solution", solution);
+                  ("of_", `String (Tvid.show of_));
+                  ("in_", in_);
+                ] );
+          ],
         fuel_opt )
     | Axiom { prev; axiom; next } ->
       let (next, fuel_opt) = to_json_help next fuel_opt in
       let (prev, fuel_opt) = to_json_help prev fuel_opt in
-      ( Hh_json.(
-          JSON_Object
-            [
-              ( "Axiom",
-                JSON_Object
-                  [
-                    ("prev", prev);
-                    ("axiom", axiom_to_json axiom);
-                    ("next", next);
-                  ] );
-            ]),
+      ( `Assoc
+          [
+            ( "Axiom",
+              `Assoc
+                [("prev", prev); ("axiom", axiom_to_json axiom); ("next", next)]
+            );
+          ],
         fuel_opt )
     | Def (def, r) ->
       let (r, fuel_opt) = to_json_help r fuel_opt in
-      ( Hh_json.(JSON_Object [("Def", JSON_Array [pos_or_decl_to_json def; r])]),
-        fuel_opt )
+      (`Assoc [("Def", `List [pos_or_decl_to_json def; r])], fuel_opt)
     | Prj_both { sub_prj; prj; sub; super } ->
       let (sub_prj, fuel_opt) = to_json_help sub_prj fuel_opt in
       let (sub, fuel_opt) = to_json_help sub fuel_opt in
       let (super, fuel_opt) = to_json_help super fuel_opt in
-      ( Hh_json.(
-          JSON_Object
-            [
-              ( "Prj_both",
-                JSON_Object
-                  [
-                    ("sub_prj", sub_prj);
-                    ("prj", prj_symm_to_json prj);
-                    ("sub", sub);
-                    ("super", super);
-                  ] );
-            ]),
+      ( `Assoc
+          [
+            ( "Prj_both",
+              `Assoc
+                [
+                  ("sub_prj", sub_prj);
+                  ("prj", prj_symm_to_json prj);
+                  ("sub", sub);
+                  ("super", super);
+                ] );
+          ],
         fuel_opt )
     | Prj_one { part; prj; whole } ->
       let (part, fuel_opt) = to_json_help part fuel_opt in
       let (whole, fuel_opt) = to_json_help whole fuel_opt in
-      ( Hh_json.(
-          JSON_Object
-            [
-              ( "Prj_one",
-                JSON_Object
-                  [
-                    ("part", part);
-                    ("prj", prj_asymm_to_json prj);
-                    ("whole", whole);
-                  ] );
-            ]),
+      ( `Assoc
+          [
+            ( "Prj_one",
+              `Assoc
+                [
+                  ("part", part);
+                  ("prj", prj_asymm_to_json prj);
+                  ("whole", whole);
+                ] );
+          ],
         fuel_opt )
   end
 
-let to_json : type a. a t_ -> Hh_json.json =
+let to_json : type a. a t_ -> Yojson.Safe.t =
  (fun t -> fst (to_json_help t (Some 20)))
 
-let to_json_full : type a. a t_ -> Hh_json.json =
+let to_json_full : type a. a t_ -> Yojson.Safe.t =
  (fun t -> fst (to_json_help t None))
 
 let to_pos : type ph. ph t_ -> Pos_or_decl.t = (fun r -> to_raw_pos r)
@@ -3354,7 +3149,7 @@ module Derivation = struct
         user-declared axiom on about the supertype *)
     val using_axiom_super : axiom -> t
 
-    val to_json : t -> Hh_json.json
+    val to_json : t -> Yojson.Safe.t
 
     val explain : t -> string
 
@@ -3382,16 +3177,14 @@ module Derivation = struct
     let using_axiom_super axiom = Using_axiom_super axiom
 
     let to_json = function
-      | Using_prj prj ->
-        Hh_json.(JSON_Object [("Using_prj", prj_symm_to_json prj)])
-      | Using_prj_sub prj ->
-        Hh_json.(JSON_Object [("Using_prj_sub", prj_asymm_to_json prj)])
+      | Using_prj prj -> `Assoc [("Using_prj", prj_symm_to_json prj)]
+      | Using_prj_sub prj -> `Assoc [("Using_prj_sub", prj_asymm_to_json prj)]
       | Using_prj_super prj ->
-        Hh_json.(JSON_Object [("Using_prj_super", prj_asymm_to_json prj)])
+        `Assoc [("Using_prj_super", prj_asymm_to_json prj)]
       | Using_axiom_sub axiom ->
-        Hh_json.(JSON_Object [("Using axiom_sub", axiom_to_json axiom)])
+        `Assoc [("Using axiom_sub", axiom_to_json axiom)]
       | Using_axiom_super axiom ->
-        Hh_json.(JSON_Object [("Using axiom_super", axiom_to_json axiom)])
+        `Assoc [("Using axiom_super", axiom_to_json axiom)]
 
     let int_to_ordinal =
       let sfxs = [| "th"; "st"; "nd"; "rd"; "th" |] in
@@ -3593,7 +3386,7 @@ module Derivation = struct
     val step :
       Subtype_rule.t -> arg -> sub:locl_phase t_ -> super:locl_phase t_ -> t
 
-    val to_json : t -> Hh_json.json
+    val to_json : t -> Yojson.Safe.t
 
     val uses_supportdyn : t -> bool
   end = struct
@@ -3603,9 +3396,9 @@ module Derivation = struct
       | Both
 
     let arg_to_json = function
-      | Subtype -> Hh_json.string_ "Subtype"
-      | Supertype -> Hh_json.string_ "Supertype"
-      | Both -> Hh_json.string_ "Both"
+      | Subtype -> `String "Subtype"
+      | Supertype -> `String "Supertype"
+      | Both -> `String "Both"
 
     type t =
       | Begin of {
@@ -3629,25 +3422,20 @@ module Derivation = struct
 
     let to_json = function
       | Begin { sub; super } ->
-        Hh_json.(
-          JSON_Object
-            [
-              ( "Begin",
-                JSON_Object [("sub", to_json sub); ("super", to_json super)] );
-            ])
+        `Assoc
+          [("Begin", `Assoc [("sub", to_json sub); ("super", to_json super)])]
       | Step { sub; super; rule; on_ } ->
-        Hh_json.(
-          JSON_Object
-            [
-              ( "Step",
-                JSON_Object
-                  [
-                    ("rule", Subtype_rule.to_json rule);
-                    ("on_", arg_to_json on_);
-                    ("sub", to_json sub);
-                    ("super", to_json super);
-                  ] );
-            ])
+        `Assoc
+          [
+            ( "Step",
+              `Assoc
+                [
+                  ("rule", Subtype_rule.to_json rule);
+                  ("on_", arg_to_json on_);
+                  ("sub", to_json sub);
+                  ("super", to_json super);
+                ] );
+          ]
   end
 
   (** Represents a complete derivation for a single subtype proposition and
@@ -3674,25 +3462,21 @@ module Derivation = struct
   let to_json t =
     let rec aux = function
       | Derivation steps ->
-        Hh_json.(
-          JSON_Object [("Derivation", array_ Subtype_step.to_json steps)])
+        `Assoc [("Derivation", `List (List.map ~f:Subtype_step.to_json steps))]
       | Lower { bound; in_ } ->
-        Hh_json.(
-          JSON_Object
-            [("Lower", JSON_Object [("bound", aux bound); ("in_", aux in_)])])
+        `Assoc [("Lower", `Assoc [("bound", aux bound); ("in_", aux in_)])]
       | Transitive { lower; upper; on_; in_ } ->
-        Hh_json.(
-          JSON_Object
-            [
-              ( "Transitive",
-                JSON_Object
-                  [
-                    ("lower", aux lower);
-                    ("upper", aux upper);
-                    ("on_", to_json on_);
-                    ("in_", aux in_);
-                  ] );
-            ])
+        `Assoc
+          [
+            ( "Transitive",
+              `Assoc
+                [
+                  ("lower", aux lower);
+                  ("upper", aux upper);
+                  ("on_", to_json on_);
+                  ("in_", aux in_);
+                ] );
+          ]
     in
     aux t
 
@@ -3885,7 +3669,7 @@ module Derivation = struct
           }
     end
 
-  (** Reasons are constructed by keeping track of preceeding subtype propositions
+  (** Reasons are constructed by keeping track of preceding subtype propositions
       during subtype constraint simplification. We reach a child subtype proposition
       either through a projection into a type constructor or using some user-declared
       axiom.
@@ -4630,18 +4414,14 @@ let explain ~sub ~super ~complexity =
 
 let debug_reason ~sub ~super =
   let json =
-    Hh_json.(
-      JSON_Object
-        [
-          ( "Subtype",
-            JSON_Object [("sub", to_json sub); ("super", to_json super)] );
-        ])
+    `Assoc
+      [("Subtype", `Assoc [("sub", to_json sub); ("super", to_json super)])]
   in
-  Explanation.debug (Hh_json.json_to_string ~pretty:true json)
+  Explanation.debug (Hh_json_helpers.Out.pretty_to_string json)
 
 let debug_derivation ~sub ~super =
   let json = Derivation.(to_json @@ of_reason ~sub ~super) in
-  Explanation.debug (Hh_json.json_to_string ~pretty:true json)
+  Explanation.debug (Hh_json_helpers.Out.pretty_to_string json)
 
 let rec get_top_fun_param_prj_idx r =
   match r with

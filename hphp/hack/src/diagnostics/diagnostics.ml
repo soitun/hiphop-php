@@ -1115,7 +1115,7 @@ let as_telemetry
       |> Telemetry.string_
            ~key:"line_agnostic_hash"
            ~value:(Printf.sprintf "%x" (Error.hash_for_saved_state error))
-      |> Telemetry.json_
+      |> Telemetry.json
            ~key:"error_json"
            ~value:
              (User_diagnostic.to_json

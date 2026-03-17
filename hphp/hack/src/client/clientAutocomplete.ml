@@ -14,7 +14,7 @@ let go results output_json =
     let results =
       List.map results ~f:AutocompleteService.autocomplete_result_to_json
     in
-    print_endline (Hh_json.json_to_string (Hh_json.JSON_Array results))
+    print_endline (Hh_json_helpers.Out.to_string (`List results))
   else
     List.iter results ~f:(fun res ->
         let name = res.AutocompleteTypes.res_label in

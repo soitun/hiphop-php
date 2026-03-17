@@ -38,7 +38,8 @@ module Helpers : sig
   val max_array_elt_in_json_logging : int
 
   (** Verifies that a watchman response is valid JSON and free from common errors *)
-  val sanitize_watchman_response : debug_logging:bool -> T.clock -> Hh_json.json
+  val sanitize_watchman_response :
+    debug_logging:bool -> T.clock -> Yojson.Safe.t
 end = struct
   let timeout_to_secs = function
     | T.No_timeout -> None
@@ -76,13 +77,13 @@ end = struct
     if debug_logging then Hh_logger.info "Watchman response: %s" output;
     let response =
       try
-        let response = Hh_json.json_of_string output in
+        let response = Yojson.Safe.from_string output in
         (if not debug_logging then
           let has_changed = ref false in
           (* if debug_logging, we've already logged the full watchman response, so skip
            * logging truncated one. *)
           let json =
-            Hh_json.json_truncate
+            Hh_json_helpers.json_truncate
               ~max_array_elt_count:max_array_elt_in_json_logging
               ~has_changed
               response
@@ -93,7 +94,8 @@ end = struct
               Printf.sprintf "(truncated) "
             else
               "")
-            (Hh_json.json_to_string json));
+            (* unsorted: watchman query, consumed by external tool *)
+            (Yojson.Safe.to_string json));
         response
       with
       | exn ->
@@ -123,17 +125,17 @@ module Watchman_conn : sig
     ?conn:conn ->
     ?timeout:Watchman_sig.Types.timeout ->
     sockname:string option ->
-    Hh_json.json ->
-    Hh_json.json
+    Yojson.Safe.t ->
+    Yojson.Safe.t
 
   val send_request_and_do_not_wait_for_response :
-    debug_logging:bool -> conn:conn -> Hh_json.json -> unit
+    debug_logging:bool -> conn:conn -> Yojson.Safe.t -> unit
 
   val blocking_read :
     debug_logging:bool ->
     ?timeout:Watchman_sig.Types.timeout ->
     conn ->
-    Hh_json.json option
+    Yojson.Safe.t option
 
   val close_connection : conn -> unit
 
@@ -151,13 +153,14 @@ end = struct
 
   (** Send a request to the watchman process *)
   let send_request ~debug_logging oc json =
-    let json_str = Hh_json.(json_to_string json) in
+    (* unsorted: watchman query, consumed by external tool *)
+    let json_str = Yojson.Safe.to_string json in
     if debug_logging then
       Hh_logger.info "Watchman request: %s" json_str
     else
       let has_changed = ref false in
       let json =
-        Hh_json.json_truncate
+        Hh_json_helpers.json_truncate
           json
           ~max_array_elt_count:Helpers.max_array_elt_in_json_logging
           ~has_changed
@@ -168,7 +171,8 @@ end = struct
           "(truncated) "
         else
           "")
-        (json |> Hh_json.json_to_string);
+        (* unsorted: watchman query, consumed by external tool *)
+        (Yojson.Safe.to_string json);
       Out_channel.output_string oc json_str;
       Out_channel.output_string oc "\n";
       Out_channel.flush oc
@@ -230,7 +234,7 @@ end = struct
       match Timeout.close_process_in (ic, pid) with
       | Unix.WEXITED 0 -> true
       | _ -> false);
-    let json = Hh_json.json_of_string output in
+    let json = Yojson.Safe.from_string output in
     J.get_string_val "sockname" json
 
   (* Opens a connection to the watchman process through the socket *)
@@ -367,7 +371,7 @@ module Watchman_actual : Watchman_sig.S = struct
     settings: init_settings;
     subscription: string;
     watch_root: string;
-    watched_path_expression_terms: Hh_json.json option;
+    watched_path_expression_terms: Yojson.Safe.t option;
   }
 
   let dead_env_from_alive env =
@@ -410,50 +414,44 @@ module Watchman_actual : Watchman_sig.S = struct
   (** Conjunction of extra_expressions and env.settings.expression_terms. *)
   let request_json
       ?(extra_kv = []) ?(extra_expressions = []) watchman_command env =
-    Hh_json.(
-      let header =
-        let command =
-          match watchman_command with
-          | Subscribe -> "subscribe"
-          | Query -> "query"
-        in
-        [JSON_String command; JSON_String env.watch_root]
-        @
+    let header =
+      let command =
         match watchman_command with
-        | Subscribe -> [JSON_String env.subscription]
-        | _ -> []
+        | Subscribe -> "subscribe"
+        | Query -> "query"
       in
-      let directives =
-        let expressions = extra_expressions @ env.settings.expression_terms in
-        let expressions =
-          match env.watched_path_expression_terms with
-          | Some terms -> terms :: expressions
-          | None -> expressions
-        in
-        assert (not (List.is_empty expressions));
-        [
-          JSON_Object
-            (extra_kv
-            @ [
-                ("fields", J.strlist ["name"]);
-                (* Watchman doesn't allow an empty allof expression. But expressions is never empty *)
-                ("expression", J.pred "allof" expressions);
-              ]);
-        ]
+      [`String command; `String env.watch_root]
+      @
+      match watchman_command with
+      | Subscribe -> [`String env.subscription]
+      | _ -> []
+    in
+    let directives =
+      let expressions = extra_expressions @ env.settings.expression_terms in
+      let expressions =
+        match env.watched_path_expression_terms with
+        | Some terms -> terms :: expressions
+        | None -> expressions
       in
-      let request = JSON_Array (header @ directives) in
-      request)
+      assert (not (List.is_empty expressions));
+      [
+        `Assoc
+          (extra_kv
+          @ [
+              ("fields", J.strlist ["name"]);
+              (* Watchman doesn't allow an empty allof expression. But expressions is never empty *)
+              ("expression", J.pred "allof" expressions);
+            ]);
+      ]
+    in
+    let request = `List (header @ directives) in
+    request
 
   let get_changes_since_mergebase_query env =
     let extra_kv =
       [
         ( "since",
-          Hh_json.JSON_Object
-            [
-              ( "scm",
-                Hh_json.JSON_Object
-                  [("mergebase-with", Hh_json.JSON_String "master")] );
-            ] );
+          `Assoc [("scm", `Assoc [("mergebase-with", `String "master")])] );
       ]
     in
     request_json ~extra_kv Query env
@@ -462,8 +460,8 @@ module Watchman_actual : Watchman_sig.S = struct
     request_json
       ~extra_kv:
         [
-          ("since", Hh_json.JSON_String env.clockspec);
-          ("empty_on_fresh_instance", Hh_json.JSON_Bool true);
+          ("since", `String env.clockspec);
+          ("empty_on_fresh_instance", `Bool true);
         ]
       Query
       env
@@ -471,25 +469,22 @@ module Watchman_actual : Watchman_sig.S = struct
   let subscribe ~mode env =
     let (since, mode) =
       match mode with
-      | All_changes -> (Hh_json.JSON_String env.clockspec, [])
+      | All_changes -> (`String env.clockspec, [])
       | Defer_changes ->
-        ( Hh_json.JSON_String env.clockspec,
+        ( `String env.clockspec,
           [("defer", J.strlist ["hg.update"; "meerkat-build"])] )
       | Scm_aware ->
         Hh_logger.log "Making Scm_aware subscription";
-        let scm =
-          Hh_json.JSON_Object [("mergebase-with", Hh_json.JSON_String "master")]
-        in
+        let scm = `Assoc [("mergebase-with", `String "master")] in
         let since =
-          Hh_json.JSON_Object
+          `Assoc
             [("scm", scm); ("drop", J.strlist ["hg.update"; "meerkat-build"])]
         in
         (since, [])
     in
     request_json
       ~extra_kv:
-        (([("since", since)] @ mode)
-        @ [("empty_on_fresh_instance", Hh_json.JSON_Bool true)])
+        (([("since", since)] @ mode) @ [("empty_on_fresh_instance", `Bool true)])
       Subscribe
       env
 
@@ -497,23 +492,19 @@ module Watchman_actual : Watchman_sig.S = struct
 
   (** See https://facebook.github.io/watchman/docs/cmd/version.html *)
   let capability_check ?(optional = []) required =
-    Hh_json.(
-      JSON_Array
-        ([JSON_String "version"]
-        @ [
-            JSON_Object
-              [
-                ("optional", J.strlist optional);
-                ("required", J.strlist required);
-              ];
-          ]))
+    `List
+      ([`String "version"]
+      @ [
+          `Assoc
+            [("optional", J.strlist optional); ("required", J.strlist required)];
+        ])
 
   (** We filter all responses from `get_changes` through this. This is to detect
   Watchman server crashes.
 
   See also Watchman docs on "since" query parameter. *)
   let assert_no_fresh_instance obj =
-    Hh_json.Access.(
+    Hh_json_helpers.Access.(
       let _ =
         return obj >>= get_bool "is_fresh_instance" >>= fun (is_fresh, trace) ->
         if is_fresh then (
@@ -550,7 +541,7 @@ module Watchman_actual : Watchman_sig.S = struct
       | Ok (v, _) -> v
       | Error _ -> false
     in
-    Hh_json.Access.(
+    Hh_json_helpers.Access.(
       return capabilities
       >>= get_obj "capabilities"
       >>= get_bool name
@@ -569,20 +560,17 @@ module Watchman_actual : Watchman_sig.S = struct
       ~debug_logging ~conn ~sockname ~watch_root ~clockspec =
     let hard_to_match_name = "irrelevant.potato" in
     let query =
-      Hh_json.(
-        JSON_Array
-          [
-            JSON_String "query";
-            JSON_String watch_root;
-            JSON_Object
-              [
-                ("since", JSON_String clockspec);
-                ("empty_on_fresh_instance", JSON_Bool true);
-                ( "expression",
-                  JSON_Array
-                    [JSON_String "name"; JSON_String hard_to_match_name] );
-              ];
-          ])
+      `List
+        [
+          `String "query";
+          `String watch_root;
+          `Assoc
+            [
+              ("since", `String clockspec);
+              ("empty_on_fresh_instance", `Bool true);
+              ("expression", `List [`String "name"; `String hard_to_match_name]);
+            ];
+        ]
     in
     let response = Watchman_conn.request ~debug_logging ~conn ~sockname query in
     match Hh_json_helpers.Jget.bool_opt (Some response) "is_fresh_instance" with
@@ -597,7 +585,8 @@ module Watchman_actual : Watchman_sig.S = struct
        * prove that Watchman has not restarted, we must treat this as an error. *)
       Hh_logger.error
         "Invalid Watchman response to `empty_on_fresh_instance` query:\n%s"
-        (Hh_json.json_to_string ~pretty:true response);
+        (* unsorted: watchman query, consumed by external tool *)
+        (Yojson.Safe.pretty_to_string response);
       raise Exit_status.(Exit_with Watchman_failed)
 
   (** Given a list of terms [a;b;c], this constructs [ ["dirname","relative_path"]; a; b; c]
@@ -733,7 +722,8 @@ module Watchman_actual : Watchman_sig.S = struct
         |> J.get_string_val "clock"
     in
     let watched_path_expression_terms =
-      Option.map watched_path_expression_terms ~f:(J.pred "anyof")
+      Option.map watched_path_expression_terms ~f:(fun terms ->
+          J.pred "anyof" terms)
     in
     let env =
       {
@@ -758,7 +748,7 @@ module Watchman_actual : Watchman_sig.S = struct
     (match subscribe_mode with
     | None -> ()
     | Some mode ->
-      let _response : Hh_json.json =
+      let _response : Yojson.Safe.t =
         Watchman_conn.request
           ~debug_logging
           ~conn
@@ -781,7 +771,7 @@ module Watchman_actual : Watchman_sig.S = struct
     in
     let files =
       List.map files ~f:(fun json ->
-          let s = Hh_json.get_string_exn json in
+          let s = Yojson.Safe.Util.to_string json in
           let abs = Filename.concat env.watch_root s in
           abs)
     in
@@ -915,10 +905,7 @@ module Watchman_actual : Watchman_sig.S = struct
           ~debug_logging:env.settings.debug_logging
           ~timeout:Default_timeout
           ~sockname:env.settings.sockname
-          (request_json
-             ~extra_expressions:[Hh_json.JSON_String "exists"]
-             Query
-             env)
+          (request_json ~extra_expressions:[`String "exists"] Query env)
       in
       (* WARNING:
           Updating the clockspec to the one we got from the response above has the
@@ -984,7 +971,7 @@ module Watchman_actual : Watchman_sig.S = struct
   end
 
   let make_state_change_response
-      (state : [< `Enter | `Leave ]) (name : string) (data : Hh_json.json) :
+      (state : [< `Enter | `Leave ]) (name : string) (data : Yojson.Safe.t) :
       pushed_changes =
     let metadata = J.try_get_val "metadata" data in
     match state with
@@ -1004,7 +991,7 @@ module Watchman_actual : Watchman_sig.S = struct
   lacks the since property entirely, (2) the next thing we hear has an empty since.mergebase,
   (3) the next thing we hear has a full since.mergebase. *)
   let extract_mergebase data : (Hg.Rev.t * Hg.Rev.t option option) option =
-    let open Hh_json.Access in
+    let open Hh_json_helpers.Access in
     let accessor = return data in
     let ret =
       accessor >>= get_obj "clock" >>= get_obj "scm" >>= get_string "mergebase"
@@ -1025,7 +1012,7 @@ module Watchman_actual : Watchman_sig.S = struct
   (** watchman's data.clock property is either a slim-clock "string", or a fat-clock "{clock, scm}".
   This function extracts either. *)
   let extract_clock data =
-    let open Hh_json.Access in
+    let open Hh_json_helpers.Access in
     let fat = return data >>= get_obj "clock" >>= get_string "clock" in
     let slim = return data >>= get_string "clock" in
     match (fat, slim) with
@@ -1125,30 +1112,30 @@ module Watchman_actual : Watchman_sig.S = struct
     | None -> raise (Watchman_error "Failed to extract mergebase from response")
 
   let flush_request ~(timeout : int) watch_root =
-    Hh_json.(
-      let directive =
-        JSON_Object
-          [
-            (* Watchman expects timeout milliseconds. *)
-            ("sync_timeout", JSON_Number (string_of_int @@ (timeout * 1000)));
-          ]
-      in
-      JSON_Array
-        [JSON_String "flush-subscriptions"; JSON_String watch_root; directive])
+    let directive =
+      `Assoc
+        [
+          (* Watchman expects timeout milliseconds. *)
+          ("sync_timeout", `Intlit (string_of_int @@ (timeout * 1000)));
+        ]
+    in
+    `List [`String "flush-subscriptions"; `String watch_root; directive]
 
   let rec poll_until_sync ~deadline env acc =
     let is_finished_flush_response json =
       match json with
       | None -> false
       | Some json ->
-        Hh_json.Access.(
+        Hh_json_helpers.Access.(
           let is_synced =
             lazy
               (return json >>= get_array "synced" |> function
                | Error _ -> false
                | Ok (vs, _) ->
                  List.exists vs ~f:(fun str ->
-                     String.equal (Hh_json.get_string_exn str) env.subscription))
+                     String.equal
+                       (Hh_json_helpers.get_string_exn str)
+                       env.subscription))
           in
           let is_not_needed =
             lazy
@@ -1156,7 +1143,9 @@ module Watchman_actual : Watchman_sig.S = struct
                | Error _ -> false
                | Ok (vs, _) ->
                  List.exists vs ~f:(fun str ->
-                     String.equal (Hh_json.get_string_exn str) env.subscription))
+                     String.equal
+                       (Hh_json_helpers.get_string_exn str)
+                       env.subscription))
           in
           Lazy.force is_synced || Lazy.force is_not_needed)
     in

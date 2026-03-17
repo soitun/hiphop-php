@@ -5,31 +5,37 @@ Add override for FooParent::explicitCapabilityMethods (CodeActionKind: "refactor
 JSON for selected code action:
 ------------------------------------------
 {
-  "command":{
-    "arguments":[
-      {"end":{"character":4,"line":9},"start":{"character":4,"line":9}},
-      {
-        "arguments":[],
-        "command":"editor.action.inlineSuggest.trigger",
-        "title":"Trigger Inline Suggest"
-      }
-    ],
-    "command":"hack.setSelection",
-    "title":"Set Cursor Selection"
-  },
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Add override for FooParent::explicitCapabilityMethods",
+  "kind": "refactor",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"\n  <<__Override>>\n  public function explicitCapabilityMethods()[globals, write_props]: int {\n    \n  }\n\n",
-          "range":{"end":{"character":29,"line":6},"start":{"character":29,"line":6}}
+          "range": {
+            "start": { "line": 6, "character": 29 },
+            "end": { "line": 6, "character": 29 }
+          },
+          "newText": "\n  <<__Override>>\n  public function explicitCapabilityMethods()[globals, write_props]: int {\n    \n  }\n\n"
         }
       ]
     }
   },
-  "kind":"refactor",
-  "title":"Add override for FooParent::explicitCapabilityMethods"
+  "command": {
+    "title": "Set Cursor Selection",
+    "command": "hack.setSelection",
+    "arguments": [
+      {
+        "start": { "line": 9, "character": 4 },
+        "end": { "line": 9, "character": 4 }
+      },
+      {
+        "title": "Trigger Inline Suggest",
+        "command": "editor.action.inlineSuggest.trigger",
+        "arguments": []
+      }
+    ]
+  }
 }
 
 Applied edit for code action:

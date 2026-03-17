@@ -78,7 +78,7 @@ module Command = struct
   type t = {
     title: string;
     command: string;
-    arguments: Hh_json.json list;
+    arguments: Yojson.Safe.t list;
   }
 end
 
@@ -124,7 +124,7 @@ module CodeLens = struct
   type t = {
     range: range;
     command: Command.t;
-    data: Hh_json.json option;
+    data: Yojson.Safe.t option;
   }
 end
 
@@ -459,7 +459,7 @@ module Error = struct
   type t = {
     code: code;
     message: string;
-    data: Hh_json.json option;
+    data: Yojson.Safe.t option;
   }
 
   exception LspException of t
@@ -515,7 +515,7 @@ module PublishDiagnostics = struct
     message: string;
     relatedInformation: diagnosticRelatedInformation list;
     relatedLocations: relatedLocation list;
-    data: Hh_json.json option; [@equal (fun _ _ -> true)]
+    data: Yojson.Safe.t option; [@equal (fun _ _ -> true)]
   }
   [@@deriving eq]
 
@@ -750,7 +750,7 @@ module Completion = struct
 
   and completionDocumentation =
     | MarkedStringsDocumentation of markedString list
-    | UnparsedDocumentation of Hh_json.json
+    | UnparsedDocumentation of Yojson.Safe.t
 
   and completionItem = {
     label: string;
@@ -764,7 +764,7 @@ module Completion = struct
     textEdit: TextEdit.t option;
     additionalTextEdits: TextEdit.t list;
     command: Command.t option;
-    data: Hh_json.json option;
+    data: Yojson.Safe.t option;
   }
 end
 
@@ -998,7 +998,7 @@ module ShowStatusFB = struct
     progress: int option;
     total: int option;
     shortMessage: string option;
-    telemetry: Hh_json.json option;
+    telemetry: Yojson.Safe.t option;
   }
 
   and showStatusRequestParams = {
@@ -1075,7 +1075,7 @@ type lsp_request =
   | HackTestShutdownServerlessRequestFB
   | WillSaveWaitUntilRequest of WillSaveWaitUntil.params
   | TopLevelDefNameAtPosRequest of TopLevelDefNameAtPos.params
-  | UnknownRequest of string * Hh_json.json option
+  | UnknownRequest of string * Yojson.Safe.t option
 
 type lsp_result =
   | InitializeResult of Initialize.result
@@ -1124,7 +1124,7 @@ type lsp_notification =
   | DidChangeNotification of DidChange.params
   | DidChangeWatchedFilesNotification of DidChangeWatchedFiles.params
   | LogMessageNotification of LogMessage.params
-  | TelemetryNotification of LogMessage.params * (string * Hh_json.json) list
+  | TelemetryNotification of LogMessage.params * (string * Yojson.Safe.t) list
   | ShowMessageNotification of ShowMessage.params
   | ConnectionStatusNotificationFB of ConnectionStatusFB.params
   | InitializedNotification
@@ -1133,7 +1133,7 @@ type lsp_notification =
   | SetTraceNotification of SetTraceNotification.params
   | SetTrace of SetTraceNotification.params
   | LogTraceNotification
-  | UnknownNotification of string * Hh_json.json option
+  | UnknownNotification of string * Yojson.Safe.t option
 
 type lsp_message =
   | RequestMessage of lsp_id * lsp_request

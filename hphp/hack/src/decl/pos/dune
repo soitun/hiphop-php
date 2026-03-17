@@ -1,6 +1,6 @@
 (library
  (name pos_or_decl)
  (wrapped false)
- (libraries decl_reference pos)
+ (libraries decl_reference pos yojson)
  (preprocess
   (pps ppx_deriving.std ppx_hash)))

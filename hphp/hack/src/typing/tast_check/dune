@@ -13,6 +13,7 @@
   tast_env
   typing_deps
   typing_pessimisation_deps
-  utils_core)
+  utils_core
+  yojson)
  (preprocess
   (pps ppx_deriving.std ppx_sexp_conv ppx_hash)))

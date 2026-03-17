@@ -7,7 +7,6 @@
  *)
 
 open Hh_prelude
-module JSON = Hh_json
 
 type result = {
   mixed_count: int;
@@ -17,15 +16,15 @@ type result = {
 
 let json_of_results results =
   let json_of_result (id, result) =
-    JSON.JSON_Object
+    `Assoc
       [
-        ("id", JSON.string_ id);
-        ("mixed_count", JSON.int_ result.mixed_count);
-        ("dynamic_count", JSON.int_ result.dynamic_count);
-        ("nonnull_count", JSON.int_ result.nonnull_count);
+        ("id", `String id);
+        ("mixed_count", `Int result.mixed_count);
+        ("dynamic_count", `Int result.dynamic_count);
+        ("nonnull_count", `Int result.nonnull_count);
       ]
   in
-  SMap.bindings results |> JSON.array_ json_of_result
+  `List (SMap.bindings results |> List.map ~f:json_of_result)
 
 let bad_type_visitor_per_def =
   object (self)

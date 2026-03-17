@@ -106,15 +106,15 @@ val supports_connectionStatus : Lsp.Initialize.params -> bool
 val telemetry :
   Jsonrpc.writer ->
   Lsp.MessageType.t ->
-  (string * Hh_json.json) list ->
+  (string * Yojson.Safe.t) list ->
   string ->
   unit
 
 val telemetry_error :
-  Jsonrpc.writer -> ?extras:(string * Hh_json.json) list -> string -> unit
+  Jsonrpc.writer -> ?extras:(string * Yojson.Safe.t) list -> string -> unit
 
 val telemetry_log :
-  Jsonrpc.writer -> ?extras:(string * Hh_json.json) list -> string -> unit
+  Jsonrpc.writer -> ?extras:(string * Yojson.Safe.t) list -> string -> unit
 
 val log : Jsonrpc.writer -> Lsp.MessageType.t -> string -> unit
 

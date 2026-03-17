@@ -213,22 +213,18 @@ let string_no_file t =
 let json pos =
   let (line, start, end_) = info_pos pos in
   let fn = filename pos in
-  Hh_json.JSON_Object
+  `Assoc
     [
-      ("filename", Hh_json.JSON_String fn);
-      ("line", Hh_json.int_ line);
-      ("char_start", Hh_json.int_ start);
-      ("char_end", Hh_json.int_ end_);
+      ("filename", `String fn);
+      ("line", `Int line);
+      ("char_start", `Int start);
+      ("char_end", `Int end_);
     ]
 
 let json_no_filename pos =
   let (line, start, end_) = info_pos pos in
-  Hh_json.JSON_Object
-    [
-      ("line", Hh_json.int_ line);
-      ("char_start", Hh_json.int_ start);
-      ("char_end", Hh_json.int_ end_);
-    ]
+  `Assoc
+    [("line", `Int line); ("char_start", `Int start); ("char_end", `Int end_)]
 
 (*
  * !!! Be careful !!!
@@ -637,25 +633,25 @@ let multiline_json t =
     destruct_range_one_based t
   in
   let fn = filename t in
-  Hh_json.JSON_Object
+  `Assoc
     [
-      ("filename", Hh_json.JSON_String fn);
-      ("line_start", Hh_json.int_ line_start);
-      ("char_start", Hh_json.int_ char_start);
-      ("line_end", Hh_json.int_ line_end);
-      ("char_end", Hh_json.int_ (char_end - 1));
+      ("filename", `String fn);
+      ("line_start", `Int line_start);
+      ("char_start", `Int char_start);
+      ("line_end", `Int line_end);
+      ("char_end", `Int (char_end - 1));
     ]
 
 let multiline_json_no_filename t =
   let (line_start, char_start, line_end, char_end) =
     destruct_range_one_based t
   in
-  Hh_json.JSON_Object
+  `Assoc
     [
-      ("line_start", Hh_json.int_ line_start);
-      ("char_start", Hh_json.int_ char_start);
-      ("line_end", Hh_json.int_ line_end);
-      ("char_end", Hh_json.int_ (char_end - 1));
+      ("line_start", `Int line_start);
+      ("char_start", `Int char_start);
+      ("line_end", `Int line_end);
+      ("char_end", `Int (char_end - 1));
     ]
 
 let rec line_beg_offset p =
@@ -696,15 +692,15 @@ let make_from_lnum_bol_offset ~pos_file ~pos_start ~pos_end =
        }
 
 let advance_string (s : string) (p : 'a pos) : 'a pos =
-  let splitted = String.split_on_chars ~on:['\n'] s in
+  let split = String.split_on_chars ~on:['\n'] s in
   let rec add_bol_and_last c xs =
     match xs with
     | [] -> (c, "")
     | [s] -> (c, s)
     | hd :: tl -> add_bol_and_last (c + String.length hd + 1 (* newline *)) tl
   in
-  let (add_bol, last) = add_bol_and_last 0 splitted in
-  let num_lines = max 0 (List.length splitted - 1) in
+  let (add_bol, last) = add_bol_and_last 0 split in
+  let num_lines = max 0 (List.length split - 1) in
   let (end_line, end_bol, end_offset) = end_line_beg_offset p in
   let end_line = end_line + num_lines in
   let end_bol = end_bol + add_bol in

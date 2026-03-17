@@ -5,19 +5,22 @@ Extract into variable (CodeActionKind: "refactor") SELECTED
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Extract into variable",
+  "kind": "refactor",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"$${0:placeholder0} = $item + 1;\n    $y = /*range-start*/$${0:placeholder0}/*range-end*/;",
-          "range":{"end":{"character":47,"line":8},"start":{"character":4,"line":8}}
+          "range": {
+            "start": { "line": 8, "character": 4 },
+            "end": { "line": 8, "character": 47 }
+          },
+          "newText": "$${0:placeholder0} = $item + 1;\n    $y = /*range-start*/$${0:placeholder0}/*range-end*/;"
         }
       ]
     }
-  },
-  "kind":"refactor",
-  "title":"Extract into variable"
+  }
 }
 
 Applied edit for code action:

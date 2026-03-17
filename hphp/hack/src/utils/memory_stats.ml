@@ -127,14 +127,14 @@ let get_host_hw_telemetry () =
     match
       Sys_utils.cat_or_failed "/data/sandcastle/run/sandcastle.capabilities"
     with
-    | None -> Hh_json.JSON_Null
+    | None -> `Null
     | Some s ->
-      (try Hh_json.json_of_string s with
-      | _ -> Hh_json.string_ s)
+      (try Yojson.Safe.from_string s with
+      | _ -> `String s)
   in
   Telemetry.create ()
   |> Telemetry.object_ ~key:"meminfo" ~value:(file_to_telemetry "/proc/meminfo")
   |> Telemetry.object_ ~key:"cpuinfo" ~value:(file_to_telemetry "/proc/cpuinfo")
-  |> Telemetry.json_
+  |> Telemetry.json
        ~key:"sandcastle_capabilities"
        ~value:sandcastle_capabilities

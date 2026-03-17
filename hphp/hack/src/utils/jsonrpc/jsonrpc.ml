@@ -47,10 +47,10 @@ open Hh_prelude
   The only solution is to take care that Content-length is exact!
   ***************************************************************)
 
-type writer = Hh_json.json -> unit
+type writer = Yojson.Safe.t -> unit
 
 type timestamped_json = {
-  json: Hh_json.json;
+  json: Yojson.Safe.t;
   timestamp: float;
 }
 
@@ -94,7 +94,7 @@ type daemon_next_action =
    editor messages can be read from. May throw if the message is malformed. *)
 let internal_read_message (reader : Buffered_line_reader.t) : timestamped_json =
   let message = reader |> Http_lite.read_message_utf8 in
-  let json = Hh_json.json_of_string message in
+  let json = Yojson.Safe.from_string message in
   let timestamp = Unix.gettimeofday () in
   { json; timestamp }
 
@@ -149,7 +149,7 @@ let internal_run_daemon' (oc : queue_message Daemon.out_channel) : unit =
           let edata = Marshal_tools.of_exception e in
           let (allowed_to_read, message) =
             match exn with
-            | Hh_json.Syntax_error _ -> (true, Recoverable_exception edata)
+            | Yojson.Json_error _ -> (true, Recoverable_exception edata)
             | End_of_file
             | _ ->
               (false, Fatal_exception edata)

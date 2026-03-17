@@ -5,23 +5,29 @@ Extract interface (CodeActionKind: "refactor") SELECTED
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Extract interface",
+  "kind": "refactor",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"\n  implements Placeholder_",
-          "range":{"end":{"character":7,"line":4},"start":{"character":7,"line":4}}
+          "range": {
+            "start": { "line": 4, "character": 7 },
+            "end": { "line": 4, "character": 7 }
+          },
+          "newText": "\n  implements Placeholder_"
         },
         {
-          "newText":"interface Placeholder_ {\n  public function foo(): void;\n}\n\n",
-          "range":{"end":{"character":0,"line":4},"start":{"character":0,"line":4}}
+          "range": {
+            "start": { "line": 4, "character": 0 },
+            "end": { "line": 4, "character": 0 }
+          },
+          "newText": "interface Placeholder_ {\n  public function foo(): void;\n}\n\n"
         }
       ]
     }
-  },
-  "kind":"refactor",
-  "title":"Extract interface"
+  }
 }
 
 Applied edit for code action:

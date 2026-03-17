@@ -1,4 +1,4 @@
 (library
  (name telemetry_test_utils)
  (wrapped false)
- (libraries utils_core))
+ (libraries utils_core yojson))

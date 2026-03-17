@@ -22,14 +22,10 @@ module SaveNamingResultPrinter = ClientResultPrinter.Make (struct
       t.SaveStateServiceTypes.nt_symbols_added
 
   let to_json t =
-    Hh_json.JSON_Object
+    `Assoc
       [
-        ( "files_added",
-          Hh_json.JSON_Number
-            (string_of_int t.SaveStateServiceTypes.nt_files_added) );
-        ( "symbols_added",
-          Hh_json.JSON_Number
-            (string_of_int t.SaveStateServiceTypes.nt_symbols_added) );
+        ("files_added", `Int t.SaveStateServiceTypes.nt_files_added);
+        ("symbols_added", `Int t.SaveStateServiceTypes.nt_symbols_added);
       ]
 end)
 
@@ -37,7 +33,7 @@ let print_refs (results : SearchTypes.Find_refs.absolute list) ~(json : bool) :
     unit =
   if json then
     FindRefsWireFormat.HackAst.to_json results
-    |> Hh_json.json_to_string
+    |> Hh_json_helpers.Out.to_string
     |> print_endline
   else
     FindRefsWireFormat.CliHumanReadable.print_results results
@@ -48,7 +44,7 @@ let print_find_my_tests_result_v1 result ~(json : bool) : unit =
     let result_json =
       `List (List.map result ~f:FMT.yojson_of_selected_test_file)
     in
-    print_endline (Yojson.Safe.pretty_to_string result_json)
+    print_endline (Hh_json_helpers.Out.pretty_to_string result_json)
   else
     List.iter result ~f:(fun file -> print_endline file.FMT.file_path)
 
@@ -56,7 +52,7 @@ let print_find_my_tests_result result ~(json : bool) : unit =
   let module FMT = ServerCommandTypes.Find_my_tests in
   if json then
     let result_json = FMT.yojson_of_result_data result in
-    print_endline (Yojson.Safe.pretty_to_string result_json)
+    print_endline (Hh_json_helpers.Out.pretty_to_string result_json)
   else
     List.iter result.FMT.selected_test_files ~f:(fun file ->
         print_endline file.FMT.file_path)
@@ -361,7 +357,7 @@ let main_internal
       Relative_path.Map.map tasts ~f:Tast.program_by_names
       |> Tast_hashes.hash_tasts_by_file
       |> Relative_path.Map.yojson_of_t Tast_hashes.yojson_of_by_names
-      |> Yojson.Safe.pretty_to_channel Stdlib.stdout;
+      |> Hh_json_helpers.Out.pretty_to_channel Stdlib.stdout;
       Printf.printf
         "\n\n\nTASTs:\n\n%s\n%!"
         (Relative_path.Map.show (Tast_with_dynamic.pp Tast.pp_program) tasts);
@@ -534,19 +530,18 @@ let main_internal
     let%lwt (result, telemetry) =
       rpc args @@ ServerCommandTypes.IDENTIFY_SYMBOL arg
     in
-    let definition_to_json (d : string SymbolDefinition.t) : Hh_json.json =
-      Hh_json.JSON_Object
+    let definition_to_json (d : string SymbolDefinition.t) : Yojson.Safe.t =
+      `Assoc
         [
-          ("full_name", SymbolDefinition.full_name d |> Hh_json.string_);
+          ("full_name", `String (SymbolDefinition.full_name d));
           ("pos", d.SymbolDefinition.pos |> Pos.json);
           ( "kind",
-            d.SymbolDefinition.kind
-            |> SymbolDefinition.string_of_kind
-            |> Hh_json.string_ );
+            d.SymbolDefinition.kind |> SymbolDefinition.string_of_kind
+            |> fun s -> `String s );
         ]
     in
     let definitions = List.map result ~f:definition_to_json in
-    Hh_json.json_to_string (Hh_json.JSON_Array definitions) |> print_endline;
+    Hh_json_helpers.Out.to_string (`List definitions) |> print_endline;
     Lwt.return (Exit_status.No_error, telemetry)
   | ClientEnv.MODE_IDENTIFY_SYMBOL1 arg
   | ClientEnv.MODE_IDENTIFY_SYMBOL2 arg
@@ -848,17 +843,17 @@ let main_internal
     end
   | ClientEnv.MODE_SERVER_RAGE ->
     let open ServerRageTypes in
-    let open Hh_json in
     if not args.output_json then begin
       Printf.eprintf "Must use --json\n%!";
       raise Exit_status.(Exit_with Input_error)
     end;
     (* Our json output format is read by clientRage.ml *)
     let make_item { title; data } =
-      JSON_Object [("name", JSON_String title); ("contents", JSON_String data)]
+      `Assoc [("name", `String title); ("contents", `String data)]
     in
     let%lwt (items, telemetry) = rpc args ServerCommandTypes.RAGE in
-    json_to_string (JSON_Array (List.map items ~f:make_item)) |> print_endline;
+    Hh_json_helpers.Out.to_string (`List (List.map items ~f:make_item))
+    |> print_endline;
     Lwt.return (Exit_status.No_error, telemetry)
   | ClientEnv.MODE_LINT_STDIN filename -> begin
     match Sys_utils.realpath filename with
@@ -885,7 +880,7 @@ let main_internal
     Lwt.return (Exit_status.No_error, telemetry)
   | ClientEnv.MODE_STATS ->
     let%lwt (stats, telemetry) = rpc args @@ ServerCommandTypes.STATS in
-    print_string @@ Yojson.Safe.pretty_to_string (Stats.to_json stats);
+    print_string @@ Hh_json_helpers.Out.pretty_to_string (Stats.to_json stats);
     Lwt.return (Exit_status.No_error, telemetry)
   | ClientEnv.MODE_REMOVE_DEAD_FIXMES codes ->
     let%lwt conn = connect args in
@@ -972,7 +967,7 @@ let main_internal
         let source_text = Full_fidelity_source_text.from_file file in
         let syntax_tree = SyntaxTree.make source_text in
         let json = SyntaxTree.to_json syntax_tree in
-        Lwt.return (Hh_json.json_to_string json, Telemetry.create ())
+        Lwt.return (Hh_json_helpers.Out.to_string json, Telemetry.create ())
     in
     ClientFullFidelityParse.go results;
     Lwt.return (Exit_status.No_error, telemetry)
@@ -982,7 +977,7 @@ let main_internal
     Lwt.return (Exit_status.No_error, Telemetry.create ())
   | ClientEnv.MODE_CST_SEARCH files_to_search ->
     let sort_results = args.sort_results in
-    let input = Sys_utils.read_stdin_to_string () |> Hh_json.json_of_string in
+    let input = Sys_utils.read_stdin_to_string () |> Yojson.Safe.from_string in
     let%lwt (result, telemetry) =
       rpc args
       @@ ServerCommandTypes.CST_SEARCH
@@ -991,7 +986,7 @@ let main_internal
     begin
       match result with
       | Ok result ->
-        print_endline (Hh_json.json_to_string result);
+        print_endline (Hh_json_helpers.Out.to_string result);
         Lwt.return (Exit_status.No_error, telemetry)
       | Error error ->
         print_endline error;
@@ -1002,14 +997,11 @@ let main_internal
     let%lwt (responses, telemetry) =
       rpc args @@ ServerCommandTypes.FILE_DEPENDENTS paths
     in
-    if args.output_json then
-      Hh_json.(
-        let json_path_list =
-          List.map responses ~f:(fun path -> JSON_String path)
-        in
-        let output = JSON_Object [("dependents", JSON_Array json_path_list)] in
-        print_endline @@ json_to_string output)
-    else
+    if args.output_json then begin
+      let json_path_list = List.map responses ~f:(fun path -> `String path) in
+      let output = `Assoc [("dependents", `List json_path_list)] in
+      print_endline @@ Hh_json_helpers.Out.to_string output
+    end else
       List.iter responses ~f:(Printf.printf "%s\n");
     Lwt.return (Exit_status.No_error, telemetry)
   | ClientEnv.MODE_VERBOSE verbose ->
@@ -1130,11 +1122,10 @@ let main_internal
     let%lwt (results, telemetry) =
       rpc args @@ ServerCommandTypes.PACKAGE_LINT file
     in
-    Hh_json.(
-      array_
-        (Fn.compose string_ Relative_path.to_absolute)
-        (Relative_path.Set.elements results))
-    |> Hh_json.json_to_string
+    `List
+      (List.map (Relative_path.Set.elements results) ~f:(fun p ->
+           `String (Relative_path.to_absolute p)))
+    |> Hh_json_helpers.Out.to_string
     |> print_endline;
     Lwt.return (Exit_status.No_error, telemetry)
 

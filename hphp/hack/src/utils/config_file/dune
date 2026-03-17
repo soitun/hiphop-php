@@ -10,7 +10,8 @@
   relative_path
   sys_utils
   utils_core
-  utils_hash)
+  utils_hash
+  yojson)
  (preprocess
   (pps lwt_ppx)))
 
@@ -25,7 +26,8 @@
   utils_config_file_common
   utils_core
   utils_exit
-  utils_hash)
+  utils_hash
+  yojson)
  (preprocess
   (pps lwt_ppx)))
 

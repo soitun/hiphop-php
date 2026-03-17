@@ -64,7 +64,7 @@ let write_file (t : t) : unit =
   match server_progress_file () with
   | None -> ()
   | Some server_progress_file ->
-    let content = yojson_of_t t |> Yojson.Safe.pretty_to_string in
+    let content = yojson_of_t t |> Hh_json_helpers.Out.pretty_to_string in
     (try Sys_utils.protected_write_exn server_progress_file content with
     | exn ->
       let e = Exception.wrap exn in
@@ -249,7 +249,7 @@ module ErrorsFile = struct
     | VersionHeader of {
         version: string;
             (** from Build_id.build_revision, or empty if dev build or --ignore-hh-version *)
-        extra: Hh_json.json;
+        extra: Yojson.Safe.t;
             (** CARE! The hh_client binary might read the [VersionHeader] message that was written by either
             an older or a newer version of the hh_server binary. Therefore, it is impossible to
             change the datatype! Any new fields will have to be added to 'extra' if they're needed
@@ -424,7 +424,7 @@ module ErrorsWrite = struct
           Build_id.build_revision
       in
       let version_header =
-        ErrorsFile.VersionHeader { version; extra = Hh_json.JSON_Object [] }
+        ErrorsFile.VersionHeader { version; extra = `Assoc [] }
       in
       let header =
         ErrorsFile.Header
@@ -581,7 +581,7 @@ module ErrorsWrite = struct
     in
     ErrorsFile.write_message
       fd
-      (ErrorsFile.VersionHeader { version = ""; extra = Hh_json.JSON_Object [] });
+      (ErrorsFile.VersionHeader { version = ""; extra = `Assoc [] });
     ErrorsFile.write_message
       fd
       (ErrorsFile.Header { pid; cmdline; timestamp = 0.0; clock = None });

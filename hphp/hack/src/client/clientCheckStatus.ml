@@ -474,25 +474,25 @@ let watchman_get_raw_updates_since
   |> Lwt_result.map_error Watchman_lwt.error_to_string
   >>= fun { Watchman_sig.Types.watch; relative_path } ->
   let query =
-    Hh_json.(
-      JSON_Array
-        [
-          JSON_String "query";
-          JSON_String watch;
-          JSON_Object
-            ((match relative_path with
-             | None -> []
-             | Some p -> [("relative_path", JSON_String p)])
-            @ [
-                ("since", JSON_String clock);
-                ("fields", JSON_Array [JSON_String "name"]);
-                ( "expression",
-                  Hh_json_helpers.AdhocJsonHelpers.pred
-                    "allof"
-                    FilesToIgnore.watchman_server_expression_terms );
-              ]);
-        ])
-    |> Hh_json.json_to_string
+    `List
+      [
+        `String "query";
+        `String watch;
+        `Assoc
+          ((match relative_path with
+           | None -> []
+           | Some p -> [("relative_path", `String p)])
+          @ [
+              ("since", `String clock);
+              ("fields", `List [`String "name"]);
+              ( "expression",
+                Hh_json_helpers.AdhocJsonHelpers.pred
+                  "allof"
+                  FilesToIgnore.watchman_server_expression_terms );
+            ]);
+      ]
+    (* unsorted: watchman query, consumed by external tool *)
+    |> Yojson.Safe.to_string
   in
   let args =
     match watchman_sockname with
@@ -511,7 +511,7 @@ let watchman_get_raw_updates_since
   | Ok { Lwt_utils.Process_success.stdout; _ } -> begin
     let files =
       try
-        let json = Hh_json.json_of_string stdout in
+        let json = Yojson.Safe.from_string stdout in
         Ok (json, Hh_json_helpers.Jget.string_array_exn (Some json) "files")
       with
       | exn -> Error (Exception.wrap exn)
@@ -531,8 +531,9 @@ let watchman_get_raw_updates_since
     | Ok (json, files) ->
       let has_changed = ref false in
       let json_str =
-        Hh_json.json_truncate ~max_array_elt_count:10 ~has_changed json
-        |> Hh_json.json_to_string
+        (* unsorted: parsed programmatically, not snapshot-tested *)
+        Hh_json_helpers.json_truncate ~max_array_elt_count:10 ~has_changed json
+        |> Yojson.Safe.to_string
       in
       let has_changed =
         if !has_changed then

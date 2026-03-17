@@ -181,7 +181,7 @@ let parse_local_config (fn : string) : t =
 
 let to_json t =
   match Config_file_ffi_externs.to_json t with
-  | Ok json -> Hh_json.json_of_string json
+  | Ok json -> Yojson.Safe.from_string json
   | Error e -> failwith e
 
 let of_list = Config_file_ffi_externs.of_list

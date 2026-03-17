@@ -191,13 +191,13 @@ module type TokenType = sig
   module Trivia : Lexable_trivia_sig.LexableTrivia_S
   type t [@@deriving show, eq, sexp_of]
   val kind: t -> Full_fidelity_token_kind.t
-  val to_json: t -> Hh_json.json
+  val to_json: t -> Yojson.Safe.t
   val leading : t -> Trivia.t list
 end
 
 module type SyntaxValueType = sig
   type t [@@deriving show, eq, sexp_of]
-  val to_json: t -> Hh_json.json
+  val to_json: t -> Yojson.Safe.t
 end
 
 (* This functor describe the shape of a parse tree that has a particular kind of
@@ -959,7 +959,7 @@ SYNTAX
     ParserOptions.ffi_t ->
     Full_fidelity_syntax_error.t list
   val has_leading_trivia : TriviaKind.t -> Token.t -> bool
-  val to_json : ?with_value:bool -> ?ignore_missing:bool -> t -> Hh_json.json
+  val to_json : ?with_value:bool -> ?ignore_missing:bool -> t -> Yojson.Safe.t
   val extract_text : t -> string option
   val is_in_body : t -> int -> bool
   val syntax_node_to_list : t -> t list
@@ -2152,11 +2152,10 @@ CHILDREN
 CHILDREN_NAMES
 
     let rec to_json_ ?(with_value = false) ?(ignore_missing = false) node =
-      let open Hh_json in
       let ch = match node.syntax with
       | Token t -> [ \"token\", Token.to_json t ]
       | SyntaxList x -> [ (\"elements\",
-        JSON_Array (List.filter_map ~f:(to_json_ ~with_value ~ignore_missing) x)) ]
+        `List (List.filter_map ~f:(to_json_ ~with_value ~ignore_missing) x)) ]
       | _ ->
         let rec aux acc c n =
           match c, n with
@@ -2168,16 +2167,16 @@ CHILDREN_NAMES
             | None -> aux acc tc tn)
           | _ -> failwith \"mismatch between children and names\" in
         List.rev (aux [] (children node) (children_names node)) in
-      let k = (\"kind\", JSON_String (SyntaxKind.to_string (kind node))) in
+      let k = (\"kind\", `String (SyntaxKind.to_string (kind node))) in
       let v = if with_value then
         (\"value\", SyntaxValue.to_json node.value) :: ch
         else ch in
-      if ignore_missing && (List.is_empty ch) then None else Some(JSON_Object (k :: v))
+      if ignore_missing && (List.is_empty ch) then None else Some(`Assoc (k :: v))
 
     let to_json ?(with_value = false) ?(ignore_missing = false) node =
       match to_json_ ~with_value ~ignore_missing node with
       | Some x -> x
-      | None -> Hh_json.JSON_Object([])
+      | None -> `Assoc []
 
     let binary_operator_kind b =
       match syntax b with

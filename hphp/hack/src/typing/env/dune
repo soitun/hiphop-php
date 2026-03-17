@@ -5,6 +5,7 @@
   provider_context
   typing_env_types
   typing_log
-  typing_pessimisation_deps)
+  typing_pessimisation_deps
+  yojson)
  (preprocess
   (pps ppx_deriving.std)))

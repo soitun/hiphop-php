@@ -102,35 +102,34 @@ let collect_in_decl =
   end
 
 let result_to_string result (fn, line, char) =
-  Hh_json.(
-    let obj =
-      JSON_Object
-        [
-          ("position", ServerRxApiShared.pos_to_json fn line char);
-          (match result with
-          | Ok (Some refs) ->
-            ( "deps",
-              let l =
-                List.map refs ~f:(fun def_opt ->
-                    match def_opt with
-                    | None -> JSON_Null
-                    | Some def ->
-                      let module SD = SymbolDefinition in
-                      let props =
-                        [
-                          ("name", JSON_String (SD.full_name def));
-                          ("kind", JSON_String (SD.string_of_kind def.SD.kind));
-                          ("position", Pos.json (Pos.to_absolute def.SD.pos));
-                        ]
-                      in
-                      JSON_Object props)
-              in
-              JSON_Array l )
-          | Ok None -> ("error", JSON_String "Function/method not found")
-          | Error e -> ("error", JSON_String e));
-        ]
-    in
-    json_to_string obj)
+  let obj =
+    `Assoc
+      [
+        ("position", ServerRxApiShared.pos_to_json fn line char);
+        (match result with
+        | Ok (Some refs) ->
+          ( "deps",
+            let l =
+              List.map refs ~f:(fun def_opt ->
+                  match def_opt with
+                  | None -> `Null
+                  | Some def ->
+                    let module SD = SymbolDefinition in
+                    let props =
+                      [
+                        ("name", `String (SD.full_name def));
+                        ("kind", `String (SD.string_of_kind def.SD.kind));
+                        ("position", Pos.json (Pos.to_absolute def.SD.pos));
+                      ]
+                    in
+                    `Assoc props)
+            in
+            `List l )
+        | Ok None -> ("error", `String "Function/method not found")
+        | Error e -> ("error", `String e));
+      ]
+  in
+  Hh_json_helpers.Out.to_string obj
 
 let remove_duplicates_except_none ~compare l =
   let rec loop l accum =

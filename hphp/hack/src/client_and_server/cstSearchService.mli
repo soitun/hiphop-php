@@ -15,11 +15,11 @@ type result
 
 (** Compile JSON input into a pattern that can be searched for. *)
 val compile_pattern :
-  Provider_context.t -> Hh_json.json -> (pattern, string) Result.t
+  Provider_context.t -> Yojson.Safe.t -> (pattern, string) Result.t
 
 (** Convert the result of a search into JSON output that can be sent back to the
     user. *)
-val result_to_json : sort_results:bool -> result option -> Hh_json.json
+val result_to_json : sort_results:bool -> result option -> Yojson.Safe.t
 
 (** Search for the given pattern across the given set of files. *)
 val go :
@@ -27,8 +27,8 @@ val go :
   ServerEnv.env ->
   sort_results:bool ->
   files_to_search:string list option ->
-  Hh_json.json ->
-  (Hh_json.json, string) Result.t
+  Yojson.Safe.t ->
+  (Yojson.Safe.t, string) Result.t
 
 (** Execute a search on a single syntax tree. This is most useful in debugging
     utilities like `hh_single_type_check`. *)

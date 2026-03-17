@@ -9,47 +9,43 @@
 open Core
 include Cli_args_sig.Types
 
-let files_to_check_range_to_json (range : files_to_check_range) : Hh_json.json =
+let files_to_check_range_to_json (range : files_to_check_range) : Yojson.Safe.t
+    =
   let range_properties =
     match range.to_prefix_excl with
     | Some to_prefix_excl ->
-      [
-        ( "to_prefix_excl",
-          Hh_json.JSON_String (Relative_path.suffix to_prefix_excl) );
-      ]
+      [("to_prefix_excl", `String (Relative_path.suffix to_prefix_excl))]
     | None -> []
   in
   let range_properties =
     match range.from_prefix_incl with
     | Some from_prefix_incl ->
       let from_prefix_incl =
-        ( "from_prefix_incl",
-          Hh_json.JSON_String (Relative_path.suffix from_prefix_incl) )
+        ("from_prefix_incl", `String (Relative_path.suffix from_prefix_incl))
       in
       from_prefix_incl :: range_properties
     | None -> range_properties
   in
-  Hh_json.JSON_Object range_properties
+  `Assoc range_properties
 
 let files_to_check_spec_to_json (files_to_check_spec : files_to_check_spec) :
-    Hh_json.json =
+    Yojson.Safe.t =
   match files_to_check_spec with
   | Range (range : files_to_check_range) -> files_to_check_range_to_json range
-  | Prefix (prefix : Relative_path.t) ->
-    Hh_json.JSON_String (Relative_path.suffix prefix)
+  | Prefix (prefix : Relative_path.t) -> `String (Relative_path.suffix prefix)
 
 let get_save_state_spec_json (spec : save_state_spec_info) : string =
   let files_to_check_spec_list =
     List.map ~f:files_to_check_spec_to_json spec.files_to_check
   in
-  let (properties : (string * Hh_json.json) list) =
+  let (properties : (string * Yojson.Safe.t) list) =
     [
-      ("gen_with_errors", Hh_json.JSON_Bool spec.gen_with_errors);
-      ("files_to_check", Hh_json.JSON_Array files_to_check_spec_list);
-      ("filename", Hh_json.JSON_String spec.filename);
+      ("gen_with_errors", `Bool spec.gen_with_errors);
+      ("files_to_check", `List files_to_check_spec_list);
+      ("filename", `String spec.filename);
     ]
   in
-  Hh_json.json_to_string ~pretty:true (Hh_json.JSON_Object properties)
+  Hh_json_helpers.Out.pretty_to_string (`Assoc properties)
 
 let save_state_spec_json_example =
   {
@@ -134,27 +130,29 @@ Alternatively, you can pass this JSON as the argument, with the saved state JSON
 |}
 
 let get_path (key : string) json_obj : Relative_path.t option =
-  let value = Hh_json.Access.get_string key json_obj in
+  let value = Hh_json_helpers.Access.get_string key json_obj in
   match value with
   | Ok ((value : string), _keytrace) ->
     Some (Relative_path.from_root ~suffix:value)
   | Error _ -> None
 
-let get_spec (spec_json : Hh_json.json) : files_to_check_spec =
+let get_spec (spec_json : Yojson.Safe.t) : files_to_check_spec =
   try
-    Prefix (Relative_path.from_root ~suffix:(Hh_json.get_string_exn spec_json))
+    Prefix
+      (Relative_path.from_root
+         ~suffix:(Hh_json_helpers.get_string_exn spec_json))
   with
   | _ ->
     let from_prefix_incl = get_path "from_prefix_incl" (spec_json, []) in
     let to_prefix_excl = get_path "to_prefix_excl" (spec_json, []) in
     Range { from_prefix_incl; to_prefix_excl }
 
-let parse_save_state_json ((json : Hh_json.json), _keytrace) =
-  Hh_json.Access.(
+let parse_save_state_json ((json : Yojson.Safe.t), _keytrace) =
+  Hh_json_helpers.Access.(
     let files_to_check =
       Option.value
         ~default:[]
-        (Hh_json.(get_field_opt (get_array "files_to_check")) json)
+        (Hh_json_helpers.(get_field_opt (get_array "files_to_check")) json)
     in
     let files_to_check = List.map files_to_check ~f:get_spec in
     let json = return json in
@@ -168,8 +166,8 @@ let get_save_state_spec (v : string option) :
   match v with
   | None -> Ok None
   | Some blob ->
-    Hh_json.Access.(
-      let json = Hh_json.json_of_string blob in
+    Hh_json_helpers.Access.(
+      let json = Yojson.Safe.from_string blob in
       let json = return json in
       let parsed_spec_result = json >>= parse_save_state_json in
       (match parsed_spec_result with
@@ -188,27 +186,27 @@ let get_save_state_spec (v : string option) :
 let parse_saved_state_json (json, _keytrace) =
   let array_to_path_list =
     List.map ~f:(fun file ->
-        Relative_path.from_root ~suffix:(Hh_json.get_string_exn file))
+        Relative_path.from_root ~suffix:(Hh_json_helpers.get_string_exn file))
   in
   let prechecked_changes =
-    Hh_json.(get_field_opt (Access.get_array "prechecked_changes")) json
+    Hh_json_helpers.(get_field_opt (Access.get_array "prechecked_changes")) json
   in
   let prechecked_changes = Option.value ~default:[] prechecked_changes in
-  let json = Hh_json.Access.return json in
-  Hh_json.Access.(
+  let json = Hh_json_helpers.Access.return json in
+  Hh_json_helpers.Access.(
     json >>= get_string "state" >>= fun (state, _state_keytrace) ->
     json >>= get_string "corresponding_base_revision"
     >>= fun (for_base_rev, _for_base_rev_keytrace) ->
     json >>= get_string "deptable" >>= fun (deptable, _deptable_keytrace) ->
     let compressed_deptable =
       match json >>= get_val "compressed_deptable" |> to_option with
-      | Some (Hh_json.JSON_String path) -> Some path
+      | Some (`String path) -> Some path
       | _ -> None
     in
     json >>= get_array "changes" >>= fun (changes, _) ->
     let naming_changes =
       match json >>= get_val "naming_changes" with
-      | Ok (Hh_json.JSON_Array files, _) -> array_to_path_list files
+      | Ok (`List files, _) -> array_to_path_list files
       | _ -> []
     in
     let prechecked_changes = array_to_path_list prechecked_changes in
@@ -229,9 +227,9 @@ let get_saved_state_spec (v : string option) :
   match v with
   | None -> Ok None
   | Some blob ->
-    let json = Hh_json.json_of_string blob in
-    let json = Hh_json.Access.return json in
-    Hh_json.Access.(
+    let json = Yojson.Safe.from_string blob in
+    let json = Hh_json_helpers.Access.return json in
+    Hh_json_helpers.Access.(
       let data_dump_parse_result =
         json >>= get_obj "data_dump" >>= parse_saved_state_json
       in
@@ -239,8 +237,8 @@ let get_saved_state_spec (v : string option) :
         json >>= get_string "from_file"
         >>= fun (filename, _filename_keytrace) ->
         let contents = Sys_utils.cat filename in
-        let json = Hh_json.json_of_string contents in
-        Hh_json.Access.return json >>= parse_saved_state_json
+        let json = Yojson.Safe.from_string contents in
+        Hh_json_helpers.Access.return json >>= parse_saved_state_json
       in
       (match (data_dump_parse_result, from_file_parse_result) with
       | (Ok (parsed_data_dump, _), Ok (_parsed_from_file, _)) ->

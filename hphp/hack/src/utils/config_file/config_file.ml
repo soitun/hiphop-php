@@ -59,7 +59,7 @@ module Utils = struct
       parse_local_config
         (Path.to_string (Path.concat root file_path_relative_to_repo_root))
     in
-    Hh_json.JSON_Object
+    `Assoc
       [
         ("hh.conf", Config_file_common.to_json server_local_config);
         ("hhconfig", Config_file_common.to_json hh_config);

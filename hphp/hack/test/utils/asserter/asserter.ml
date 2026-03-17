@@ -53,14 +53,14 @@ struct
 end
 
 module Hh_json_json_comparator = struct
-  type t = Hh_json.json
+  type t = Yojson.Safe.t
 
-  let to_string v = Hh_json.json_to_string v
+  let to_string v = Yojson.Safe.to_string v
 
   let is_equal exp actual =
     (* Shortcut by comparing the canonical string representation. *)
-    let exp = Hh_json.json_to_string exp in
-    let actual = Hh_json.json_to_string actual in
+    let exp = Yojson.Safe.to_string exp in
+    let actual = Yojson.Safe.to_string actual in
     String.equal exp actual
 end
 

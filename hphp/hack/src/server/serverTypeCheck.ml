@@ -647,28 +647,25 @@ let type_check_core
   let max = 1000 in
   Hh_logger.log_lazy ~category:"fanout_tests"
   @@ lazy
-       Hh_json.(
-         json_to_string
-         @@ JSON_Object
-              [
-                ("tag", string_ "incremental_fanout");
-                ( "hashes",
-                  array_
-                    string_
-                    Typing_deps.(
-                      List.map ~f:Dep.to_hex_string
-                      @@ List.take (DepSet.elements to_recheck_deps) max) );
-                ( "hashes_was_truncated",
-                  bool_ (Typing_deps.DepSet.cardinal to_recheck_deps > max) );
-                ( "files",
-                  array_
-                    string_
-                    Relative_path.(
-                      List.map ~f:suffix
-                      @@ List.take (Set.elements to_recheck) max) );
-                ( "files_was_truncated",
-                  bool_ (Relative_path.Set.cardinal to_recheck > max) );
-              ]);
+       (Hh_json_helpers.Out.to_string
+          (`Assoc
+            [
+              ("tag", `String "incremental_fanout");
+              ( "hashes",
+                `List
+                  Typing_deps.(
+                    List.map ~f:(fun d -> `String (Dep.to_hex_string d))
+                    @@ List.take (DepSet.elements to_recheck_deps) max) );
+              ( "hashes_was_truncated",
+                `Bool (Typing_deps.DepSet.cardinal to_recheck_deps > max) );
+              ( "files",
+                `List
+                  Relative_path.(
+                    List.map ~f:(fun p -> `String (suffix p))
+                    @@ List.take (Set.elements to_recheck) max) );
+              ( "files_was_truncated",
+                `Bool (Relative_path.Set.cardinal to_recheck > max) );
+            ]));
 
   (* Here's where we update the forward-naming-table in [env] *)
   let env =

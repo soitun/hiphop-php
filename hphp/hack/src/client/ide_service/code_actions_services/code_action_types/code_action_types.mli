@@ -98,7 +98,7 @@ module Show_sidebar_chat_command_args : sig
     correlation_id: string option;
   }
 
-  val to_json : t -> Hh_json.json
+  val to_json : t -> Yojson.Safe.t
 end
 
 module Show_inline_chat_command_args : sig
@@ -125,10 +125,10 @@ module Show_inline_chat_command_args : sig
     predefined_prompt: predefined_prompt;
     override_selection: Pos.absolute;
     webview_start_line: int;
-    extras: Hh_json.json;
+    extras: Yojson.Safe.t;
   }
 
-  val to_json : t -> Hh_json.json
+  val to_json : t -> Yojson.Safe.t
 end
 
 type command_args =

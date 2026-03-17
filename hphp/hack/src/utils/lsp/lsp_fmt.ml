@@ -9,16 +9,16 @@
 
 open Hh_prelude
 open Lsp
-open Hh_json
 open Hh_json_helpers
 
 (************************************************************************)
 (* Miscellaneous LSP structures                                         *)
 (************************************************************************)
 
-let parse_id (json : json) : lsp_id =
+let parse_id (json : Yojson.Safe.t) : lsp_id =
   match json with
-  | JSON_Number s -> begin
+  | `Int n -> NumberId n
+  | `Intlit s -> begin
     try NumberId (int_of_string s) with
     | Failure _ ->
       raise
@@ -29,79 +29,90 @@ let parse_id (json : json) : lsp_id =
              data = None;
            })
   end
-  | JSON_String s -> StringId s
+  | `String s -> StringId s
+  | `Float f ->
+    raise
+      (Error.LspException
+         {
+           Error.code = Error.ParseError;
+           message = "float ids not allowed: " ^ string_of_float f;
+           data = None;
+         })
   | _ ->
     raise
       (Error.LspException
          {
            Error.code = Error.ParseError;
-           message = "not an id: " ^ Hh_json.json_to_string json;
+           message = "not an id: " ^ Hh_json_helpers.Out.to_string json;
            data = None;
          })
 
-let parse_id_opt (json : json option) : lsp_id option =
+let parse_id_opt (json : Yojson.Safe.t option) : lsp_id option =
   Option.map json ~f:parse_id
 
-let print_id (id : lsp_id) : json =
+let print_id (id : lsp_id) : Yojson.Safe.t =
   match id with
-  | NumberId n -> JSON_Number (string_of_int n)
-  | StringId s -> JSON_String s
+  | NumberId n -> `Intlit (string_of_int n)
+  | StringId s -> `String s
 
 let id_to_string (id : lsp_id) : string =
   match id with
   | NumberId n -> string_of_int n
   | StringId s -> Printf.sprintf "\"%s\"" s
 
-let parse_position (json : json option) : position =
+let parse_position (json : Yojson.Safe.t option) : position =
   { line = Jget.int_exn json "line"; character = Jget.int_exn json "character" }
 
-let print_position (position : position) : json =
-  JSON_Object
-    [("line", position.line |> int_); ("character", position.character |> int_)]
+let print_position (position : position) : Yojson.Safe.t =
+  `Assoc [("line", `Int position.line); ("character", `Int position.character)]
 
-let print_range (range : range) : json =
-  JSON_Object
+let print_range (range : range) : Yojson.Safe.t =
+  `Assoc
     [("start", print_position range.start); ("end", print_position range.end_)]
 
-let print_location (location : Location.t) : json =
+let print_location (location : Location.t) : Yojson.Safe.t =
   Location.(
-    JSON_Object
+    `Assoc
       [
-        ("uri", JSON_String (string_of_uri location.uri));
+        ("uri", `String (string_of_uri location.uri));
         ("range", print_range location.range);
       ])
 
-let print_locations (r : Location.t list) : json =
-  JSON_Array (List.map r ~f:print_location)
+let print_locations (r : Location.t list) : Yojson.Safe.t =
+  `List (List.map r ~f:print_location)
 
 let print_definition_location (definition_location : DefinitionLocation.t) :
-    json =
+    Yojson.Safe.t =
   DefinitionLocation.(
     let location = definition_location.location in
-    Jprint.object_opt
-      [
-        ("uri", Some (JSON_String (string_of_uri location.Location.uri)));
-        ("range", Some (print_range location.Location.range));
-        ("title", Option.map definition_location.title ~f:string_);
-      ])
+    let fields =
+      List.filter_opt
+        [
+          Some ("uri", `String (string_of_uri location.Location.uri));
+          Some ("range", print_range location.Location.range);
+          Option.map definition_location.title ~f:(fun t ->
+              ("title", `String t));
+        ]
+    in
+    `Assoc fields)
 
-let print_definition_locations (r : DefinitionLocation.t list) : json =
-  JSON_Array (List.map r ~f:print_definition_location)
+let print_definition_locations (r : DefinitionLocation.t list) : Yojson.Safe.t =
+  `List (List.map r ~f:print_definition_location)
 
-let parse_range_exn (json : json option) : range =
+let parse_range_exn (json : Yojson.Safe.t option) : range =
   {
     start = Jget.obj_exn json "start" |> parse_position;
     end_ = Jget.obj_exn json "end" |> parse_position;
   }
 
-let parse_location (j : json option) : Location.t =
+let parse_location (j : Yojson.Safe.t option) : Location.t =
   Location.
     {
       uri = Jget.string_exn j "uri" |> uri_of_string;
       range = Jget.obj_exn j "range" |> parse_range_exn;
     }
 
-let parse_range_opt (json : json option) : range option =
+let parse_range_opt (json : Yojson.Safe.t option) : range option =
   if Option.is_none json then
     None
   else
@@ -109,23 +120,25 @@ let parse_range_opt (json : json option) : range option =
 
 (************************************************************************)
 
-let print_error (e : Error.t) : json =
-  let open Hh_json in
+let print_error (e : Error.t) : Yojson.Safe.t =
   let data =
     match e.Error.data with
     | None -> []
     | Some data -> [("data", data)]
   in
   let entries =
-    ("code", int_ (Error.code_to_enum e.Error.code))
-    :: ("message", string_ e.Error.message)
+    ("code", `Int (Error.code_to_enum e.Error.code))
+    :: ("message", `String e.Error.message)
     :: data
   in
-  JSON_Object entries
+  `Assoc entries
 
 let error_to_log_string (e : Error.t) : string =
   let data =
-    Option.value_map e.Error.data ~f:Hh_json.json_to_multiline ~default:""
+    Option.value_map
+      e.Error.data
+      ~f:(fun d -> Hh_json_helpers.Out.pretty_to_string d)
+      ~default:""
   in
   Printf.sprintf
     "%s [%s]\n%s"
@@ -133,7 +146,7 @@ let error_to_log_string (e : Error.t) : string =
     (Error.show_code e.Error.code)
     data
 
-let parse_error (error : json) : Error.t =
+let parse_error (error : Yojson.Safe.t) : Error.t =
   let json = Some error in
   let code =
     Jget.int_exn json "code"
@@ -144,11 +157,11 @@ let parse_error (error : json) : Error.t =
   let data = Jget.val_opt json "data" in
   { Error.code; message; data }
 
-let parse_textDocumentIdentifier (json : json option) : TextDocumentIdentifier.t
-    =
+let parse_textDocumentIdentifier (json : Yojson.Safe.t option) :
+    TextDocumentIdentifier.t =
   TextDocumentIdentifier.{ uri = Jget.string_exn json "uri" |> uri_of_string }
 
-let parse_versionedTextDocumentIdentifier (json : json option) :
+let parse_versionedTextDocumentIdentifier (json : Yojson.Safe.t option) :
     VersionedTextDocumentIdentifier.t =
   VersionedTextDocumentIdentifier.
     {
@@ -156,7 +169,7 @@ let parse_versionedTextDocumentIdentifier (json : json option) :
       version = Jget.int_d json "version" ~default:0;
     }
 
-let parse_textDocumentItem (json : json option) : TextDocumentItem.t =
+let parse_textDocumentItem (json : Yojson.Safe.t option) : TextDocumentItem.t =
   TextDocumentItem.
     {
       uri = Jget.string_exn json "uri" |> uri_of_string;
@@ -165,24 +178,23 @@ let parse_textDocumentItem (json : json option) : TextDocumentItem.t =
       text = Jget.string_exn json "text";
     }
 
-let print_textDocumentItem (item : TextDocumentItem.t) : json =
+let print_textDocumentItem (item : TextDocumentItem.t) : Yojson.Safe.t =
   TextDocumentItem.(
-    JSON_Object
+    `Assoc
       [
-        ("uri", JSON_String (string_of_uri item.uri));
-        ("languageId", JSON_String item.languageId);
-        ("version", JSON_Number (string_of_int item.version));
-        ("text", JSON_String item.text);
+        ("uri", `String (string_of_uri item.uri));
+        ("languageId", `String item.languageId);
+        ("version", `Intlit (string_of_int item.version));
+        ("text", `String item.text);
       ])
 
-let print_markedItem (item : markedString) : json =
+let print_markedItem (item : markedString) : Yojson.Safe.t =
   match item with
-  | MarkedString s -> JSON_String s
+  | MarkedString s -> `String s
   | MarkedCode (language, value) ->
-    JSON_Object
-      [("language", JSON_String language); ("value", JSON_String value)]
+    `Assoc [("language", `String language); ("value", `String value)]
 
-let parse_textDocumentPositionParams (params : json option) :
+let parse_textDocumentPositionParams (params : Yojson.Safe.t option) :
     TextDocumentPositionParams.t =
   TextDocumentPositionParams.
     {
@@ -191,7 +203,7 @@ let parse_textDocumentPositionParams (params : json option) :
       position = Jget.obj_exn params "position" |> parse_position;
     }
 
-let parse_textEdit (params : json option) : TextEdit.t option =
+let parse_textEdit (params : Yojson.Safe.t option) : TextEdit.t option =
   match params with
   | None -> None
   | _ ->
@@ -202,38 +214,38 @@ let parse_textEdit (params : json option) : TextEdit.t option =
           newText = Jget.string_exn params "newText";
         })
 
-let print_textEdit (edit : TextEdit.t) : json =
+let print_textEdit (edit : TextEdit.t) : Yojson.Safe.t =
   TextEdit.(
-    JSON_Object
-      [("range", print_range edit.range); ("newText", JSON_String edit.newText)])
+    `Assoc
+      [("range", print_range edit.range); ("newText", `String edit.newText)])
 
-let print_textEdits (r : TextEdit.t list) : json =
-  JSON_Array (List.map r ~f:print_textEdit)
+let print_textEdits (r : TextEdit.t list) : Yojson.Safe.t =
+  `List (List.map r ~f:print_textEdit)
 
-let print_workspaceEdit (r : WorkspaceEdit.t) : json =
+let print_workspaceEdit (r : WorkspaceEdit.t) : Yojson.Safe.t =
   WorkspaceEdit.(
     let print_workspace_edit_changes (Lsp.DocumentUri.Uri uri, text_edits) =
       (uri, print_textEdits text_edits)
     in
-    JSON_Object
+    `Assoc
       [
         ( "changes",
-          JSON_Object
+          `Assoc
             (List.map
                (Lsp.DocumentUri.Map.elements r.changes)
                ~f:print_workspace_edit_changes) );
       ])
 
-let print_command (command : Command.t) : json =
+let print_command (command : Command.t) : Yojson.Safe.t =
   Command.(
-    JSON_Object
+    `Assoc
       [
-        ("title", JSON_String command.title);
-        ("command", JSON_String command.command);
-        ("arguments", JSON_Array command.arguments);
+        ("title", `String command.title);
+        ("command", `String command.command);
+        ("arguments", `List command.arguments);
       ])
 
-let parse_command (json : json option) : Command.t =
+let parse_command (json : Yojson.Safe.t option) : Command.t =
   Command.
     {
       title = Jget.string_d json "title" ~default:"";
@@ -241,26 +253,25 @@ let parse_command (json : json option) : Command.t =
       arguments = Jget.array_d json "arguments" ~default:[] |> List.filter_opt;
     }
 
-let parse_formattingOptions (json : json option) :
+let parse_formattingOptions (json : Yojson.Safe.t option) :
     DocumentFormatting.formattingOptions =
   {
     DocumentFormatting.tabSize = Jget.int_d json "tabSize" ~default:2;
     insertSpaces = Jget.bool_d json "insertSpaces" ~default:true;
   }
 
-let print_symbolInformation (info : SymbolInformation.t) : json =
+let print_symbolInformation (info : SymbolInformation.t) : Yojson.Safe.t =
   SymbolInformation.(
-    let print_symbol_kind k = int_ (SymbolInformation.symbolKind_to_enum k) in
     Jprint.object_opt
       [
-        ("name", Some (JSON_String info.name));
-        ("kind", Some (print_symbol_kind info.kind));
+        ("name", Some (`String info.name));
+        ("kind", Some (`Int (SymbolInformation.symbolKind_to_enum info.kind)));
         ("location", Some (print_location info.location));
-        ("detail", Option.map info.detail ~f:string_);
-        ("containerName", Option.map info.containerName ~f:string_);
+        ("detail", Option.map info.detail ~f:(fun d -> `String d));
+        ("containerName", Option.map info.containerName ~f:(fun d -> `String d));
       ])
 
-let parse_codeLens (json : json option) : CodeLens.t =
+let parse_codeLens (json : Yojson.Safe.t option) : CodeLens.t =
   CodeLens.
     {
       range = Jget.obj_exn json "range" |> parse_range_exn;
@@ -268,33 +279,33 @@ let parse_codeLens (json : json option) : CodeLens.t =
       data = Jget.obj_exn json "data";
     }
 
-let print_codeLens (codeLens : CodeLens.t) : json =
+let print_codeLens (codeLens : CodeLens.t) : Yojson.Safe.t =
   CodeLens.(
-    JSON_Object
+    `Assoc
       [
         ("range", print_range codeLens.range);
         ("command", print_command codeLens.command);
         ( "data",
           match codeLens.data with
-          | None -> JSON_Null
+          | None -> `Null
           | Some json -> json );
       ])
 
 (************************************************************************)
 
-let print_shutdown () : json = JSON_Null
+let print_shutdown () : Yojson.Safe.t = `Null
 
 (************************************************************************)
 
-let parse_cancelRequest (params : json option) : CancelRequest.params =
+let parse_cancelRequest (params : Yojson.Safe.t option) : CancelRequest.params =
   CancelRequest.{ id = Jget.val_exn params "id" |> parse_id }
 
-let print_cancelRequest (p : CancelRequest.params) : json =
-  CancelRequest.(JSON_Object [("id", print_id p.id)])
+let print_cancelRequest (p : CancelRequest.params) : Yojson.Safe.t =
+  CancelRequest.(`Assoc [("id", print_id p.id)])
 
 (************************************************************************)
 
-let parse_setTraceNotification (params : json option) :
+let parse_setTraceNotification (params : Yojson.Safe.t option) :
     SetTraceNotification.params =
   match Jget.string_opt params "value" with
   | Some "verbose" -> SetTraceNotification.Verbose
@@ -302,48 +313,48 @@ let parse_setTraceNotification (params : json option) :
 
 let parse_setTrace = parse_setTraceNotification
 
-let print_setTraceNotification (p : SetTraceNotification.params) : json =
+let print_setTraceNotification (p : SetTraceNotification.params) : Yojson.Safe.t
+    =
   let s =
     match p with
     | SetTraceNotification.Verbose -> "verbose"
     | SetTraceNotification.Off -> "off"
   in
-  JSON_Object [("value", JSON_String s)]
+  `Assoc [("value", `String s)]
 
 let print_setTrace = print_setTraceNotification
 
 (************************************************************************)
-let print_rage (r : RageFB.result) : json =
+let print_rage (r : RageFB.result) : Yojson.Safe.t =
   RageFB.(
-    let print_item (item : rageItem) : json =
-      JSON_Object
+    let print_item (item : rageItem) : Yojson.Safe.t =
+      `Assoc
         [
-          ("data", JSON_String item.data);
+          ("data", `String item.data);
           ( "title",
             match item.title with
-            | None -> JSON_Null
-            | Some s -> JSON_String s );
+            | None -> `Null
+            | Some s -> `String s );
         ]
     in
-    JSON_Array (List.map r ~f:print_item))
+    `List (List.map r ~f:print_item))
 
 (************************************************************************)
 
-let parse_didOpen (params : json option) : DidOpen.params =
+let parse_didOpen (params : Yojson.Safe.t option) : DidOpen.params =
   DidOpen.
     {
       textDocument =
         Jget.obj_exn params "textDocument" |> parse_textDocumentItem;
     }
 
-let print_didOpen (params : DidOpen.params) : json =
+let print_didOpen (params : DidOpen.params) : Yojson.Safe.t =
   DidOpen.(
-    JSON_Object
-      [("textDocument", params.textDocument |> print_textDocumentItem)])
+    `Assoc [("textDocument", params.textDocument |> print_textDocumentItem)])
 
 (************************************************************************)
 
-let parse_didClose (params : json option) : DidClose.params =
+let parse_didClose (params : Yojson.Safe.t option) : DidClose.params =
   DidClose.
     {
       textDocument =
@@ -352,7 +363,7 @@ let parse_didClose (params : json option) : DidClose.params =
 
 (************************************************************************)
 
-let parse_didSave (params : json option) : DidSave.params =
+let parse_didSave (params : Yojson.Safe.t option) : DidSave.params =
   DidSave.
     {
       textDocument =
@@ -362,7 +373,7 @@ let parse_didSave (params : json option) : DidSave.params =
 
 (************************************************************************)
 
-let parse_didChange (params : json option) : DidChange.params =
+let parse_didChange (params : Yojson.Safe.t option) : DidChange.params =
   DidChange.(
     let parse_textDocumentContentChangeEvent json =
       {
@@ -382,62 +393,64 @@ let parse_didChange (params : json option) : DidChange.params =
 
 (************************************************************************)
 
-let parse_signatureHelp (params : json option) : SignatureHelp.params =
+let parse_signatureHelp (params : Yojson.Safe.t option) : SignatureHelp.params =
   parse_textDocumentPositionParams params
 
-let print_signatureHelp (r : SignatureHelp.result) : json =
+let print_signatureHelp (r : SignatureHelp.result) : Yojson.Safe.t =
   SignatureHelp.(
     let print_parInfo parInfo =
-      Jprint.object_opt
-        [
-          ("label", Some (Hh_json.JSON_String parInfo.parinfo_label));
-          ( "documentation",
-            Option.map ~f:Hh_json.string_ parInfo.parinfo_documentation );
-        ]
+      `Assoc
+        (List.filter_opt
+           [
+             Some ("label", `String parInfo.parinfo_label);
+             Option.map parInfo.parinfo_documentation ~f:(fun d ->
+                 ("documentation", `String d));
+           ])
     in
     let print_sigInfo sigInfo =
-      Jprint.object_opt
-        [
-          ("label", Some (Hh_json.JSON_String sigInfo.siginfo_label));
-          ( "documentation",
-            Option.map ~f:Hh_json.string_ sigInfo.siginfo_documentation );
-          ( "parameters",
-            Some
-              (Hh_json.JSON_Array (List.map ~f:print_parInfo sigInfo.parameters))
-          );
-        ]
+      `Assoc
+        (List.filter_opt
+           [
+             Some ("label", `String sigInfo.siginfo_label);
+             Option.map sigInfo.siginfo_documentation ~f:(fun d ->
+                 ("documentation", `String d));
+             Some
+               ( "parameters",
+                 `List (List.map ~f:print_parInfo sigInfo.parameters) );
+           ])
     in
     match r with
-    | None -> Hh_json.JSON_Null
+    | None -> `Null
     | Some r ->
-      Hh_json.JSON_Object
+      `Assoc
         [
-          ( "signatures",
-            Hh_json.JSON_Array (List.map ~f:print_sigInfo r.signatures) );
-          ("activeSignature", Hh_json.int_ r.activeSignature);
-          ("activeParameter", Hh_json.int_ r.activeParameter);
+          ("signatures", `List (List.map ~f:print_sigInfo r.signatures));
+          ("activeSignature", `Int r.activeSignature);
+          ("activeParameter", `Int r.activeParameter);
         ])
 
 (************************************************************************)
 
-let parse_AutoClose (params : json option) : AutoCloseJsx.params =
+let parse_AutoClose (params : Yojson.Safe.t option) : AutoCloseJsx.params =
   parse_textDocumentPositionParams params
 
-let print_AutoClose (r : AutoCloseJsx.result) : json =
+let print_AutoClose (r : AutoCloseJsx.result) : Yojson.Safe.t =
   match r with
-  | None -> Hh_json.JSON_Null
-  | Some r -> Hh_json.JSON_String r
+  | None -> `Null
+  | Some r -> `String r
 
 (************************************************************************)
 
-let parse_codeLensResolve (params : json option) : CodeLensResolve.params =
+let parse_codeLensResolve (params : Yojson.Safe.t option) :
+    CodeLensResolve.params =
   parse_codeLens params
 
-let print_codeLensResolve (r : CodeLensResolve.result) : json = print_codeLens r
+let print_codeLensResolve (r : CodeLensResolve.result) : Yojson.Safe.t =
+  print_codeLens r
 
 (************************************************************************)
 
-let parse_documentRename (params : json option) : Rename.params =
+let parse_documentRename (params : Yojson.Safe.t option) : Rename.params =
   Rename.
     {
       textDocument =
@@ -448,73 +461,84 @@ let parse_documentRename (params : json option) : Rename.params =
 
 (************************************************************************)
 
-let parse_documentCodeLens (params : json option) : DocumentCodeLens.params =
+let parse_documentCodeLens (params : Yojson.Safe.t option) :
+    DocumentCodeLens.params =
   DocumentCodeLens.
     {
       textDocument =
         Jget.obj_exn params "textDocument" |> parse_textDocumentIdentifier;
     }
 
-let print_documentCodeLens (r : DocumentCodeLens.result) : json =
-  JSON_Array (List.map r ~f:print_codeLens)
+let print_documentCodeLens (r : DocumentCodeLens.result) : Yojson.Safe.t =
+  `List (List.map r ~f:print_codeLens)
 
 (************************************************************************)
 
-let print_diagnostic (diagnostic : PublishDiagnostics.diagnostic) : json =
+let print_diagnostic (diagnostic : PublishDiagnostics.diagnostic) :
+    Yojson.Safe.t =
   PublishDiagnostics.(
-    let print_diagnosticSeverity = Fn.compose int_ diagnosticSeverity_to_enum in
+    let print_diagnosticSeverity s = `Int (diagnosticSeverity_to_enum s) in
     let print_diagnosticCode = function
-      | IntCode i -> Some (int_ i)
-      | StringCode s -> Some (string_ s)
+      | IntCode i -> Some (`Int i)
+      | StringCode s -> Some (`String s)
       | NoCode -> None
     in
-    let print_related (related : relatedLocation) : json =
-      Hh_json.JSON_Object
+    let print_related (related : relatedLocation) : Yojson.Safe.t =
+      `Assoc
         [
           ("location", print_location related.relatedLocation);
-          ("message", string_ related.relatedMessage);
+          ("message", `String related.relatedMessage);
         ]
     in
-    Jprint.object_opt
-      [
-        ("range", Some (print_range diagnostic.range));
-        ("severity", Option.map diagnostic.severity ~f:print_diagnosticSeverity);
-        ("code", print_diagnosticCode diagnostic.code);
-        ("source", Option.map diagnostic.source ~f:string_);
-        ("message", Some (JSON_String diagnostic.message));
-        ( "relatedInformation",
+    let fields =
+      List.filter_opt
+        [
+          Some ("range", print_range diagnostic.range);
+          Option.map diagnostic.severity ~f:(fun s ->
+              ("severity", print_diagnosticSeverity s));
+          (match print_diagnosticCode diagnostic.code with
+          | Some v -> Some ("code", v)
+          | None -> None);
+          Option.map diagnostic.source ~f:(fun s -> ("source", `String s));
+          Some ("message", `String diagnostic.message);
           Some
-            (JSON_Array
-               (List.map diagnostic.relatedInformation ~f:print_related)) );
-        ( "relatedLocations",
+            ( "relatedInformation",
+              `List (List.map diagnostic.relatedInformation ~f:print_related) );
           Some
-            (JSON_Array (List.map diagnostic.relatedLocations ~f:print_related))
-        );
-        ("data", diagnostic.data);
-      ])
+            ( "relatedLocations",
+              `List (List.map diagnostic.relatedLocations ~f:print_related) );
+          Option.map diagnostic.data ~f:(fun d -> ("data", d));
+        ]
+    in
+    `Assoc fields)
 
-let print_diagnostic_list (ds : PublishDiagnostics.diagnostic list) : json =
-  JSON_Array (List.map ds ~f:print_diagnostic)
+let print_diagnostic_list (ds : PublishDiagnostics.diagnostic list) :
+    Yojson.Safe.t =
+  `List (List.map ds ~f:print_diagnostic)
 
-let print_diagnostics (r : PublishDiagnostics.params) : json =
+let print_diagnostics (r : PublishDiagnostics.params) : Yojson.Safe.t =
   PublishDiagnostics.(
-    Jprint.object_opt
-      [
-        ("uri", Some (JSON_String (string_of_uri r.uri)));
-        ("diagnostics", Some (print_diagnostic_list r.diagnostics));
-        ( "isStatusFB",
-          if r.isStatusFB then
-            Some (JSON_Bool true)
+    let fields =
+      List.filter_opt
+        [
+          Some ("uri", `String (string_of_uri r.uri));
+          Some ("diagnostics", print_diagnostic_list r.diagnostics);
+          (if r.isStatusFB then
+            Some ("isStatusFB", `Bool true)
           else
-            None );
-      ])
+            None);
+        ]
+    in
+    `Assoc fields)
 
-let parse_diagnostic (j : json option) : PublishDiagnostics.diagnostic =
+let parse_diagnostic (j : Yojson.Safe.t option) : PublishDiagnostics.diagnostic
+    =
   PublishDiagnostics.(
     let parse_code = function
       | None -> NoCode
-      | Some (JSON_String s) -> StringCode s
-      | Some (JSON_Number s) -> begin
+      | Some (`String s) -> StringCode s
+      | Some (`Int i) -> IntCode i
+      | Some (`Intlit s) -> begin
         try IntCode (int_of_string s) with
         | Failure _ ->
           raise
@@ -560,13 +584,14 @@ let parse_diagnostic (j : json option) : PublishDiagnostics.diagnostic =
 let parse_kind json : CodeActionKind.t option =
   CodeActionKind.(
     match json with
-    | Some (JSON_String s) -> Some (kind_of_string s)
+    | Some (`String s) -> Some (kind_of_string s)
     | _ -> None)
 
 let parse_kinds jsons : CodeActionKind.t list =
   List.map ~f:parse_kind jsons |> List.filter_opt
 
-let parse_codeActionRequest (j : json option) : CodeActionRequest.params =
+let parse_codeActionRequest (j : Yojson.Safe.t option) :
+    CodeActionRequest.params =
   let parse_context c : CodeActionRequest.codeActionContext =
     CodeActionRequest.
       {
@@ -583,7 +608,7 @@ let parse_codeActionRequest (j : json option) : CodeActionRequest.params =
       context = Jget.obj_exn j "context" |> parse_context;
     }
 
-let parse_codeActionResolveRequest (j : json option) :
+let parse_codeActionResolveRequest (j : Yojson.Safe.t option) :
     CodeActionResolveRequest.params =
   let data =
     let all = Jget.obj_exn j "data" in
@@ -597,8 +622,8 @@ let parse_codeActionResolveRequest (j : json option) :
 
 let print_codeAction
     (CodeAction.{ title; kind; diagnostics; action; isAI } : 'a CodeAction.t)
-    ~(unresolved_to_code_action_request : 'a -> CodeActionRequest.params) : json
-    =
+    ~(unresolved_to_code_action_request : 'a -> CodeActionRequest.params) :
+    Yojson.Safe.t =
   CodeAction.(
     let (edit, command, params_opt) =
       match action with
@@ -609,18 +634,18 @@ let print_codeAction
         (None, None, Some (unresolved_to_code_action_request e))
     in
     let print_params CodeActionRequest.{ textDocument; range; context } =
-      Hh_json.JSON_Object
+      `Assoc
         [
           ( "textDocument",
-            Hh_json.JSON_Object
+            `Assoc
               [
                 ( "uri",
-                  JSON_String
+                  `String
                     (string_of_uri textDocument.TextDocumentIdentifier.uri) );
               ] );
           ("range", print_range range);
           ( "context",
-            Hh_json.JSON_Object
+            `Assoc
               [
                 ( "diagnostics",
                   print_diagnostic_list context.CodeActionRequest.diagnostics );
@@ -633,34 +658,38 @@ let print_codeAction
         @@ [
              Option.map params_opt ~f:(fun params ->
                  ("originalRequest", print_params params));
-             Option.map isAI ~f:(fun isAI -> ("isAI", Hh_json.JSON_Bool isAI));
+             Option.map isAI ~f:(fun isAI -> ("isAI", `Bool isAI));
            ]
       in
       match fields with
       | [] -> None
-      | _ -> Some (Hh_json.JSON_Object fields)
+      | _ -> Some (`Assoc fields)
     in
-    Jprint.object_opt
-      [
-        ("title", Some (JSON_String title));
-        ("kind", Some (JSON_String (CodeActionKind.string_of_kind kind)));
-        ("diagnostics", Some (print_diagnostic_list diagnostics));
-        ("edit", Option.map edit ~f:print_workspaceEdit);
-        ("command", Option.map command ~f:print_command);
-        ("data", data_opt);
-      ])
+    let result_fields =
+      List.filter_opt
+        [
+          Some ("title", `String title);
+          Some ("kind", `String (CodeActionKind.string_of_kind kind));
+          Some ("diagnostics", print_diagnostic_list diagnostics);
+          Option.map edit ~f:(fun e -> ("edit", print_workspaceEdit e));
+          Option.map command ~f:(fun c -> ("command", print_command c));
+          Option.map data_opt ~f:(fun d -> ("data", d));
+        ]
+    in
+    `Assoc result_fields)
 
 let print_codeActionResult
-    (c : CodeAction.result) (p : CodeActionRequest.params) : json =
+    (c : CodeAction.result) (p : CodeActionRequest.params) : Yojson.Safe.t =
   CodeAction.(
     let print_command_or_action = function
       | Command c -> print_command c
       | Action c ->
         print_codeAction c ~unresolved_to_code_action_request:(Fn.const p)
     in
-    JSON_Array (List.map c ~f:print_command_or_action))
+    `List (List.map c ~f:print_command_or_action))
 
-let print_codeActionResolveResult (c : CodeActionResolve.result) : json =
+let print_codeActionResolveResult (c : CodeActionResolve.result) : Yojson.Safe.t
+    =
   let open CodeAction in
   let print_command_or_action = function
     | Command c -> print_command c
@@ -677,52 +706,55 @@ let print_codeActionResolveResult (c : CodeActionResolve.result) : json =
 
 (************************************************************************)
 
-let print_logMessage (type_ : MessageType.t) (message : string) : json =
-  JSON_Object
-    [
-      ("type", int_ (MessageType.to_enum type_));
-      ("message", JSON_String message);
-    ]
+let print_logMessage (type_ : MessageType.t) (message : string) : Yojson.Safe.t
+    =
+  `Assoc
+    [("type", `Int (MessageType.to_enum type_)); ("message", `String message)]
 
 (************************************************************************)
 
 let print_telemetryNotification
-    (r : LogMessage.params) (extras : (string * Hh_json.json) list) : json =
+    (r : LogMessage.params) (extras : (string * Yojson.Safe.t) list) :
+    Yojson.Safe.t =
   (* LSP allows "any" for the format of telemetry notifications. It's up to us! *)
-  JSON_Object
-    (("type", int_ (MessageType.to_enum r.LogMessage.type_))
-    :: ("message", JSON_String r.LogMessage.message)
+  `Assoc
+    (("type", `Int (MessageType.to_enum r.LogMessage.type_))
+    :: ("message", `String r.LogMessage.message)
     :: extras)
 
 (************************************************************************)
 
-let print_showMessage (type_ : MessageType.t) (message : string) : json =
+let print_showMessage (type_ : MessageType.t) (message : string) : Yojson.Safe.t
+    =
   ShowMessage.(
     let r = { type_; message } in
-    JSON_Object
+    `Assoc
       [
-        ("type", int_ (MessageType.to_enum r.type_));
-        ("message", JSON_String r.message);
+        ("type", `Int (MessageType.to_enum r.type_));
+        ("message", `String r.message);
       ])
 
 (************************************************************************)
 
 let print_showMessageRequest (r : ShowMessageRequest.showMessageRequestParams) :
-    json =
-  let print_action (action : ShowMessageRequest.messageActionItem) : json =
-    JSON_Object [("title", JSON_String action.ShowMessageRequest.title)]
+    Yojson.Safe.t =
+  let print_action (action : ShowMessageRequest.messageActionItem) :
+      Yojson.Safe.t =
+    `Assoc [("title", `String action.ShowMessageRequest.title)]
   in
-  Jprint.object_opt
-    [
-      ("type", Some (int_ (MessageType.to_enum r.ShowMessageRequest.type_)));
-      ("message", Some (JSON_String r.ShowMessageRequest.message));
-      ( "actions",
+  let fields =
+    List.filter_opt
+      [
+        Some ("type", `Int (MessageType.to_enum r.ShowMessageRequest.type_));
+        Some ("message", `String r.ShowMessageRequest.message);
         Some
-          (JSON_Array (List.map r.ShowMessageRequest.actions ~f:print_action))
-      );
-    ]
+          ( "actions",
+            `List (List.map r.ShowMessageRequest.actions ~f:print_action) );
+      ]
+  in
+  `Assoc fields
 
-let parse_result_showMessageRequest (result : json option) :
+let parse_result_showMessageRequest (result : Yojson.Safe.t option) :
     ShowMessageRequest.result =
   ShowMessageRequest.(
     let title = Jget.string_opt result "title" in
@@ -730,53 +762,64 @@ let parse_result_showMessageRequest (result : json option) :
 
 (************************************************************************)
 
-let print_showStatus (r : ShowStatusFB.showStatusParams) : json =
+let print_showStatus (r : ShowStatusFB.showStatusParams) : Yojson.Safe.t =
   let rr = r.ShowStatusFB.request in
-  Jprint.object_opt
-    [
-      ("type", Some (int_ (MessageType.to_enum rr.ShowStatusFB.type_)));
-      ("message", Some (JSON_String rr.ShowStatusFB.message));
-      ("shortMessage", Option.map r.ShowStatusFB.shortMessage ~f:string_);
-      ("telemetry", r.ShowStatusFB.telemetry);
-      ( "progress",
+  let fields =
+    List.filter_opt
+      [
+        Some ("type", `Int (MessageType.to_enum rr.ShowStatusFB.type_));
+        Some ("message", `String rr.ShowStatusFB.message);
+        Option.map r.ShowStatusFB.shortMessage ~f:(fun s ->
+            ("shortMessage", `String s));
+        Option.map r.ShowStatusFB.telemetry ~f:(fun t -> ("telemetry", t));
         Option.map r.ShowStatusFB.progress ~f:(fun progress ->
-            Jprint.object_opt
-              [
-                ("numerator", Some (int_ progress));
-                ("denominator", Option.map r.ShowStatusFB.total ~f:int_);
-              ]) );
-    ]
+            let progress_fields =
+              List.filter_opt
+                [
+                  Some ("numerator", `Int progress);
+                  Option.map r.ShowStatusFB.total ~f:(fun t ->
+                      ("denominator", `Int t));
+                ]
+            in
+            ("progress", `Assoc progress_fields));
+      ]
+  in
+  `Assoc fields
 
 (************************************************************************)
 
-let print_connectionStatus (p : ConnectionStatusFB.params) : json =
-  ConnectionStatusFB.(JSON_Object [("isConnected", JSON_Bool p.isConnected)])
+let print_connectionStatus (p : ConnectionStatusFB.params) : Yojson.Safe.t =
+  ConnectionStatusFB.(`Assoc [("isConnected", `Bool p.isConnected)])
 
 (************************************************************************)
 
-let parse_hover (params : json option) : Hover.params =
+let parse_hover (params : Yojson.Safe.t option) : Hover.params =
   parse_textDocumentPositionParams params
 
-let print_hover (r : Hover.result) : json =
+let print_hover (r : Hover.result) : Yojson.Safe.t =
   Hover.(
     match r with
-    | None -> JSON_Null
+    | None -> `Null
     | Some r ->
-      Jprint.object_opt
-        [
-          ( "contents",
-            Some (JSON_Array (List.map r.Hover.contents ~f:print_markedItem)) );
-          ("range", Option.map r.range ~f:print_range);
-        ])
+      let fields =
+        List.filter_opt
+          [
+            Some
+              ("contents", `List (List.map r.Hover.contents ~f:print_markedItem));
+            Option.map r.range ~f:(fun rng -> ("range", print_range rng));
+          ]
+      in
+      `Assoc fields)
 
 (************************************************************************)
 
-let parse_completionItem (params : json option) : CompletionItemResolve.params =
+let parse_completionItem (params : Yojson.Safe.t option) :
+    CompletionItemResolve.params =
   Completion.(
     let textEdit = Jget.obj_opt params "textEdit" |> parse_textEdit in
     let additionalTextEdits =
       Jget.array_d params "additionalTextEdits" ~default:[]
-      |> List.filter_map ~f:parse_textEdit
+      |> List.filter_map ~f:(fun e -> parse_textEdit e)
     in
     let command =
       match Jget.obj_opt params "command" with
@@ -812,45 +855,48 @@ let string_of_markedString (acc : string) (marked : markedString) : string =
   | MarkedCode (lang, code) -> acc ^ "```" ^ lang ^ "\n" ^ code ^ "\n" ^ "```\n"
   | MarkedString str -> acc ^ str ^ "\n"
 
-let print_completionItem (item : Completion.completionItem) : json =
+let print_completionItem (item : Completion.completionItem) : Yojson.Safe.t =
   Completion.(
-    Jprint.object_opt
-      [
-        ("label", Some (JSON_String item.label));
-        ( "kind",
+    let fields =
+      List.filter_opt
+        [
+          Some ("label", `String item.label);
           Option.map item.kind ~f:(fun x ->
-              int_ @@ completionItemKind_to_enum x) );
-        ("detail", Option.map item.detail ~f:string_);
-        ( "documentation",
-          match item.documentation with
+              ("kind", `Int (completionItemKind_to_enum x)));
+          Option.map item.detail ~f:(fun d -> ("detail", `String d));
+          (match item.documentation with
           | None -> None
-          | Some (UnparsedDocumentation json) -> Some json
+          | Some (UnparsedDocumentation json) -> Some ("documentation", json)
           | Some (MarkedStringsDocumentation doc) ->
             Some
-              (JSON_Object
-                 [
-                   ("kind", JSON_String "markdown");
-                   ( "value",
-                     JSON_String
-                       (String.strip
-                          (List.fold doc ~init:"" ~f:string_of_markedString)) );
-                 ]) );
-        ("sortText", Option.map item.sortText ~f:string_);
-        ("filterText", Option.map item.filterText ~f:string_);
-        ("insertText", Option.map item.insertText ~f:string_);
-        ( "insertTextFormat",
+              ( "documentation",
+                `Assoc
+                  [
+                    ("kind", `String "markdown");
+                    ( "value",
+                      `String
+                        (String.strip
+                           (List.fold doc ~init:"" ~f:string_of_markedString))
+                    );
+                  ] ));
+          Option.map item.sortText ~f:(fun s -> ("sortText", `String s));
+          Option.map item.filterText ~f:(fun s -> ("filterText", `String s));
+          Option.map item.insertText ~f:(fun s -> ("insertText", `String s));
           Option.map item.insertTextFormat ~f:(fun x ->
-              int_ @@ insertTextFormat_to_enum x) );
-        ("textEdit", Option.map item.textEdit ~f:print_textEdit);
-        ( "additionalTextEdits",
-          match item.additionalTextEdits with
+              ("insertTextFormat", `Int (insertTextFormat_to_enum x)));
+          Option.map item.textEdit ~f:(fun te ->
+              ("textEdit", print_textEdit te));
+          (match item.additionalTextEdits with
           | [] -> None
-          | text_edits -> Some (print_textEdits text_edits) );
-        ("command", Option.map item.command ~f:print_command);
-        ("data", item.data);
-      ])
+          | text_edits ->
+            Some ("additionalTextEdits", print_textEdits text_edits));
+          Option.map item.command ~f:(fun c -> ("command", print_command c));
+          Option.map item.data ~f:(fun d -> ("data", d));
+        ]
+    in
+    `Assoc fields)
 
-let parse_completion (params : json option) : Completion.params =
+let parse_completion (params : Yojson.Safe.t option) : Completion.params =
   Lsp.Completion.(
     let context = Jget.obj_opt params "context" in
     {
@@ -870,37 +916,40 @@ let parse_completion (params : json option) : Completion.params =
         | None -> None);
     })
 
-let print_completion (r : Completion.result) : json =
+let print_completion (r : Completion.result) : Yojson.Safe.t =
   Completion.(
-    JSON_Object
+    `Assoc
       [
-        ("isIncomplete", JSON_Bool r.isIncomplete);
-        ("items", JSON_Array (List.map r.items ~f:print_completionItem));
+        ("isIncomplete", `Bool r.isIncomplete);
+        ("items", `List (List.map r.items ~f:print_completionItem));
       ])
 
 (************************************************************************)
 
-let parse_workspaceSymbol (params : json option) : WorkspaceSymbol.params =
+let parse_workspaceSymbol (params : Yojson.Safe.t option) :
+    WorkspaceSymbol.params =
   WorkspaceSymbol.{ query = Jget.string_exn params "query" }
 
-let print_workspaceSymbol (r : WorkspaceSymbol.result) : json =
-  JSON_Array (List.map r ~f:print_symbolInformation)
+let print_workspaceSymbol (r : WorkspaceSymbol.result) : Yojson.Safe.t =
+  `List (List.map r ~f:print_symbolInformation)
 
 (************************************************************************)
 
-let parse_documentSymbol (params : json option) : DocumentSymbol.params =
+let parse_documentSymbol (params : Yojson.Safe.t option) : DocumentSymbol.params
+    =
   DocumentSymbol.
     {
       textDocument =
         Jget.obj_exn params "textDocument" |> parse_textDocumentIdentifier;
     }
 
-let print_documentSymbol (r : DocumentSymbol.result) : json =
-  JSON_Array (List.map r ~f:print_symbolInformation)
+let print_documentSymbol (r : DocumentSymbol.result) : Yojson.Safe.t =
+  `List (List.map r ~f:print_symbolInformation)
 
 (************************************************************************)
 
-let parse_findReferences (params : json option) : FindReferences.params =
+let parse_findReferences (params : Yojson.Safe.t option) : FindReferences.params
+    =
   let partialResultToken =
     Jget.string_opt params "partialResultToken"
     |> Option.map ~f:(fun t -> PartialResultToken t)
@@ -919,12 +968,11 @@ let parse_findReferences (params : json option) : FindReferences.params =
   }
 
 let print_findReferencesPartialResult (Lsp.PartialResultToken token) refs =
-  Hh_json.JSON_Object
-    [("token", Hh_json.string_ token); ("value", print_locations refs)]
+  `Assoc [("token", `String token); ("value", print_locations refs)]
 
 (************************************************************************)
 
-let parse_callItem (params : json option) : CallHierarchyItem.t =
+let parse_callItem (params : Yojson.Safe.t option) : CallHierarchyItem.t =
   let rangeObj = Jget.obj_exn params "range" in
   let selectionRangeObj = Jget.obj_exn params "selectionRange" in
   let open CallHierarchyItem in
@@ -943,22 +991,24 @@ let parse_callItem (params : json option) : CallHierarchyItem.t =
   }
 
 (************************************************************************)
-let print_callItem (item : CallHierarchyItem.t) : json =
+let print_callItem (item : CallHierarchyItem.t) : Yojson.Safe.t =
   let open CallHierarchyItem in
-  let kindJSON = SymbolInformation.symbolKind_to_enum item.kind |> int_ in
-  Jprint.object_opt
-    [
-      ("name", Some (JSON_String item.name));
-      ("kind", Some kindJSON);
-      ("detail", Option.map item.detail ~f:string_);
-      ("uri", Some (JSON_String (string_of_uri item.uri)));
-      ("range", Some (print_range item.range));
-      ("selectionRange", Some (print_range item.selectionRange));
-    ]
+  let fields =
+    List.filter_opt
+      [
+        Some ("name", `String item.name);
+        Some ("kind", `Int (SymbolInformation.symbolKind_to_enum item.kind));
+        Option.map item.detail ~f:(fun d -> ("detail", `String d));
+        Some ("uri", `String (string_of_uri item.uri));
+        Some ("range", print_range item.range);
+        Some ("selectionRange", print_range item.selectionRange);
+      ]
+  in
+  `Assoc fields
 
 (************************************************************************)
 
-let parse_callHierarchyCalls (params : json option) :
+let parse_callHierarchyCalls (params : Yojson.Safe.t option) :
     CallHierarchyCallsRequestParam.t =
   let json_item = Jget.obj_opt params "item" in
   let parsed_item = parse_callItem json_item in
@@ -967,75 +1017,82 @@ let parse_callHierarchyCalls (params : json option) :
 
 (************************************************************************)
 
-let print_PrepareCallHierarchyResult (r : PrepareCallHierarchy.result) : json =
+let print_PrepareCallHierarchyResult (r : PrepareCallHierarchy.result) :
+    Yojson.Safe.t =
   match r with
-  | None -> JSON_Null
-  | Some list -> array_ print_callItem list
+  | None -> `Null
+  | Some list -> `List (List.map list ~f:print_callItem)
 
 (************************************************************************)
 let print_CallHierarchyIncomingCallsResult
-    (r : CallHierarchyIncomingCalls.result) : json =
+    (r : CallHierarchyIncomingCalls.result) : Yojson.Safe.t =
   let open CallHierarchyIncomingCalls in
   let print_CallHierarchyIncomingCall
-      (call : CallHierarchyIncomingCalls.callHierarchyIncomingCall) : json =
-    JSON_Object
+      (call : CallHierarchyIncomingCalls.callHierarchyIncomingCall) :
+      Yojson.Safe.t =
+    `Assoc
       [
         ("from", print_callItem call.from);
-        ("fromRanges", array_ print_range call.fromRanges);
+        ("fromRanges", `List (List.map call.fromRanges ~f:print_range));
       ]
   in
   match r with
-  | None -> JSON_Null
-  | Some list -> array_ print_CallHierarchyIncomingCall list
+  | None -> `Null
+  | Some list -> `List (List.map list ~f:print_CallHierarchyIncomingCall)
 
 (************************************************************************)
 
 let print_CallHierarchyOutgoingCallsResult
-    (r : CallHierarchyOutgoingCalls.result) : json =
+    (r : CallHierarchyOutgoingCalls.result) : Yojson.Safe.t =
   let open CallHierarchyOutgoingCalls in
   let print_CallHierarchyOutgoingCall
-      (call : CallHierarchyOutgoingCalls.callHierarchyOutgoingCall) : json =
-    JSON_Object
+      (call : CallHierarchyOutgoingCalls.callHierarchyOutgoingCall) :
+      Yojson.Safe.t =
+    `Assoc
       [
         ("to", print_callItem call.call_to);
-        ("fromRanges", array_ print_range call.fromRanges);
+        ("fromRanges", `List (List.map call.fromRanges ~f:print_range));
       ]
   in
   match r with
-  | None -> JSON_Null
-  | Some list -> array_ print_CallHierarchyOutgoingCall list
+  | None -> `Null
+  | Some list -> `List (List.map list ~f:print_CallHierarchyOutgoingCall)
 
 (************************************************************************)
 
-let parse_documentHighlight (params : json option) : DocumentHighlight.params =
+let parse_documentHighlight (params : Yojson.Safe.t option) :
+    DocumentHighlight.params =
   parse_textDocumentPositionParams params
 
-let print_documentHighlight (r : DocumentHighlight.result) : json =
+let print_documentHighlight (r : DocumentHighlight.result) : Yojson.Safe.t =
   DocumentHighlight.(
-    let print_highlightKind kind = int_ (documentHighlightKind_to_enum kind) in
     let print_highlight highlight =
-      Jprint.object_opt
-        [
-          ("range", Some (print_range highlight.range));
-          ("kind", Option.map highlight.kind ~f:print_highlightKind);
-        ]
+      let fields =
+        List.filter_opt
+          [
+            Some ("range", print_range highlight.range);
+            Option.map highlight.kind ~f:(fun k ->
+                ("kind", `Int (documentHighlightKind_to_enum k)));
+          ]
+      in
+      `Assoc fields
     in
-    JSON_Array (List.map r ~f:print_highlight))
+    `List (List.map r ~f:print_highlight))
 
 (************************************************************************)
 
-let parse_documentFormatting (params : json option) : DocumentFormatting.params
-    =
+let parse_documentFormatting (params : Yojson.Safe.t option) :
+    DocumentFormatting.params =
   {
     DocumentFormatting.textDocument =
       Jget.obj_exn params "textDocument" |> parse_textDocumentIdentifier;
     options = Jget.obj_opt params "options" |> parse_formattingOptions;
   }
 
-let print_documentFormatting (r : DocumentFormatting.result) : json =
+let print_documentFormatting (r : DocumentFormatting.result) : Yojson.Safe.t =
   print_textEdits r
 
-let parse_documentRangeFormatting (params : json option) :
+let parse_documentRangeFormatting (params : Yojson.Safe.t option) :
     DocumentRangeFormatting.params =
   {
     DocumentRangeFormatting.textDocument =
@@ -1044,10 +1101,11 @@ let parse_documentRangeFormatting (params : json option) :
     options = Jget.obj_opt params "options" |> parse_formattingOptions;
   }
 
-let print_documentRangeFormatting (r : DocumentRangeFormatting.result) : json =
+let print_documentRangeFormatting (r : DocumentRangeFormatting.result) :
+    Yojson.Safe.t =
   print_textEdits r
 
-let parse_documentOnTypeFormatting (params : json option) :
+let parse_documentOnTypeFormatting (params : Yojson.Safe.t option) :
     DocumentOnTypeFormatting.params =
   {
     DocumentOnTypeFormatting.textDocument =
@@ -1057,11 +1115,12 @@ let parse_documentOnTypeFormatting (params : json option) :
     options = Jget.obj_opt params "options" |> parse_formattingOptions;
   }
 
-let print_documentOnTypeFormatting (r : DocumentOnTypeFormatting.result) : json
-    =
+let print_documentOnTypeFormatting (r : DocumentOnTypeFormatting.result) :
+    Yojson.Safe.t =
   print_textEdits r
 
-let parse_willSaveWaitUntil (params : json option) : WillSaveWaitUntil.params =
+let parse_willSaveWaitUntil (params : Yojson.Safe.t option) :
+    WillSaveWaitUntil.params =
   let open WillSaveWaitUntil in
   {
     textDocument =
@@ -1074,7 +1133,7 @@ let parse_willSaveWaitUntil (params : json option) : WillSaveWaitUntil.params =
 
 (************************************************************************)
 
-let parse_initialize (params : json option) : Initialize.params =
+let parse_initialize (params : Yojson.Safe.t option) : Initialize.params =
   Initialize.(
     let rec parse_initialize json =
       {
@@ -1150,9 +1209,9 @@ let parse_initialize (params : json option) : Initialize.params =
     and parse_completion json =
       {
         completionItem =
-          Jget.obj_opt json "completionItem" |> parse_completionItem;
+          Jget.obj_opt json "completionItem" |> parse_completionItem_;
       }
-    and parse_completionItem json =
+    and parse_completionItem_ json =
       { snippetSupport = Jget.bool_d json "snippetSupport" ~default:false }
     and parse_codeAction json =
       {
@@ -1196,164 +1255,169 @@ let parse_initialize (params : json option) : Initialize.params =
     in
     parse_initialize params)
 
-let print_initializeError (r : Initialize.errorData) : json =
-  Initialize.(JSON_Object [("retry", JSON_Bool r.retry)])
+let print_initializeError (r : Initialize.errorData) : Yojson.Safe.t =
+  Initialize.(`Assoc [("retry", `Bool r.retry)])
 
-let print_initialize (r : Initialize.result) : json =
+let print_initialize (r : Initialize.result) : Yojson.Safe.t =
   Initialize.(
-    let print_textDocumentSyncKind kind =
-      int_ (textDocumentSyncKind_to_enum kind)
-    in
     let cap = r.server_capabilities in
     let sync = cap.textDocumentSync in
-    JSON_Object
+    `Assoc
       [
         ( "capabilities",
-          Jprint.object_opt
-            [
-              ( "textDocumentSync",
+          let fields =
+            List.filter_opt
+              [
                 Some
-                  (Jprint.object_opt
-                     [
-                       ("openClose", Some (JSON_Bool sync.want_openClose));
-                       ( "change",
-                         Some (print_textDocumentSyncKind sync.want_change) );
-                       ("willSave", Some (JSON_Bool sync.want_willSave));
-                       ( "willSaveWaitUntil",
-                         Some (JSON_Bool sync.want_willSaveWaitUntil) );
-                       ( "save",
-                         Option.map sync.want_didSave ~f:(fun save ->
-                             JSON_Object
-                               [("includeText", JSON_Bool save.includeText)]) );
-                     ]) );
-              ("hoverProvider", Some (JSON_Bool cap.hoverProvider));
-              ( "completionProvider",
+                  ( "textDocumentSync",
+                    let sync_fields =
+                      List.filter_opt
+                        [
+                          Some ("openClose", `Bool sync.want_openClose);
+                          Some
+                            ( "change",
+                              `Int
+                                (textDocumentSyncKind_to_enum sync.want_change)
+                            );
+                          Some ("willSave", `Bool sync.want_willSave);
+                          Some
+                            ( "willSaveWaitUntil",
+                              `Bool sync.want_willSaveWaitUntil );
+                          Option.map sync.want_didSave ~f:(fun save ->
+                              ( "save",
+                                `Assoc [("includeText", `Bool save.includeText)]
+                              ));
+                        ]
+                    in
+                    `Assoc sync_fields );
+                Some ("hoverProvider", `Bool cap.hoverProvider);
                 Option.map cap.completionProvider ~f:(fun comp ->
-                    JSON_Object
-                      [
-                        ( "resolveProvider",
-                          JSON_Bool comp.CompletionOptions.resolveProvider );
-                        ( "triggerCharacters",
-                          Jprint.string_array
-                            comp.CompletionOptions.completion_triggerCharacters
-                        );
-                      ]) );
-              ( "signatureHelpProvider",
+                    ( "completionProvider",
+                      `Assoc
+                        [
+                          ( "resolveProvider",
+                            `Bool comp.CompletionOptions.resolveProvider );
+                          ( "triggerCharacters",
+                            Jprint.string_array
+                              comp
+                                .CompletionOptions.completion_triggerCharacters
+                          );
+                        ] ));
                 Option.map cap.signatureHelpProvider ~f:(fun shp ->
-                    JSON_Object
-                      [
-                        ( "triggerCharacters",
-                          Jprint.string_array shp.sighelp_triggerCharacters );
-                      ]) );
-              ("definitionProvider", Some (JSON_Bool cap.definitionProvider));
-              ( "typeDefinitionProvider",
-                Some (JSON_Bool cap.typeDefinitionProvider) );
-              ("referencesProvider", Some (JSON_Bool cap.referencesProvider));
-              ( "documentHighlightProvider",
-                Some (JSON_Bool cap.documentHighlightProvider) );
-              ( "documentSymbolProvider",
-                Some (JSON_Bool cap.documentSymbolProvider) );
-              ( "workspaceSymbolProvider",
-                Some (JSON_Bool cap.workspaceSymbolProvider) );
-              ( "codeActionProvider",
+                    ( "signatureHelpProvider",
+                      `Assoc
+                        [
+                          ( "triggerCharacters",
+                            Jprint.string_array shp.sighelp_triggerCharacters );
+                        ] ));
+                Some ("definitionProvider", `Bool cap.definitionProvider);
+                Some ("typeDefinitionProvider", `Bool cap.typeDefinitionProvider);
+                Some ("referencesProvider", `Bool cap.referencesProvider);
+                Some
+                  ( "documentHighlightProvider",
+                    `Bool cap.documentHighlightProvider );
+                Some ("documentSymbolProvider", `Bool cap.documentSymbolProvider);
+                Some
+                  ("workspaceSymbolProvider", `Bool cap.workspaceSymbolProvider);
                 Option.map cap.codeActionProvider ~f:(fun provider ->
-                    JSON_Object
-                      [
-                        ( "resolveProvider",
-                          JSON_Bool provider.CodeActionOptions.resolveProvider
-                        );
-                      ]) );
-              ( "codeLensProvider",
+                    ( "codeActionProvider",
+                      `Assoc
+                        [
+                          ( "resolveProvider",
+                            `Bool provider.CodeActionOptions.resolveProvider );
+                        ] ));
                 Option.map cap.codeLensProvider ~f:(fun codelens ->
-                    JSON_Object
-                      [
-                        ( "resolveProvider",
-                          JSON_Bool codelens.codelens_resolveProvider );
-                      ]) );
-              ( "documentFormattingProvider",
-                Some (JSON_Bool cap.documentFormattingProvider) );
-              ( "documentRangeFormattingProvider",
-                Some (JSON_Bool cap.documentRangeFormattingProvider) );
-              ( "documentOnTypeFormattingProvider",
+                    ( "codeLensProvider",
+                      `Assoc
+                        [
+                          ( "resolveProvider",
+                            `Bool codelens.codelens_resolveProvider );
+                        ] ));
+                Some
+                  ( "documentFormattingProvider",
+                    `Bool cap.documentFormattingProvider );
+                Some
+                  ( "documentRangeFormattingProvider",
+                    `Bool cap.documentRangeFormattingProvider );
                 Option.map cap.documentOnTypeFormattingProvider ~f:(fun o ->
-                    JSON_Object
-                      [
-                        ( "firstTriggerCharacter",
-                          JSON_String o.firstTriggerCharacter );
-                        ( "moreTriggerCharacter",
-                          Jprint.string_array o.moreTriggerCharacter );
-                      ]) );
-              ("renameProvider", Some (JSON_Bool cap.renameProvider));
-              ( "documentLinkProvider",
+                    ( "documentOnTypeFormattingProvider",
+                      `Assoc
+                        [
+                          ( "firstTriggerCharacter",
+                            `String o.firstTriggerCharacter );
+                          ( "moreTriggerCharacter",
+                            Jprint.string_array o.moreTriggerCharacter );
+                        ] ));
+                Some ("renameProvider", `Bool cap.renameProvider);
                 Option.map cap.documentLinkProvider ~f:(fun dlp ->
-                    JSON_Object
-                      [
-                        ( "resolveProvider",
-                          JSON_Bool dlp.doclink_resolveProvider );
-                      ]) );
-              ( "executeCommandProvider",
+                    ( "documentLinkProvider",
+                      `Assoc
+                        [("resolveProvider", `Bool dlp.doclink_resolveProvider)]
+                    ));
                 Option.map cap.executeCommandProvider ~f:(fun p ->
-                    JSON_Object [("commands", Jprint.string_array p.commands)])
-              );
-              ( "implementationProvider",
-                Some (JSON_Bool cap.implementationProvider) );
-              ("rageProvider", Some (JSON_Bool cap.rageProviderFB));
-              ( "experimental",
+                    ( "executeCommandProvider",
+                      `Assoc [("commands", Jprint.string_array p.commands)] ));
+                Some ("implementationProvider", `Bool cap.implementationProvider);
+                Some ("rageProvider", `Bool cap.rageProviderFB);
                 Option.map
                   cap.server_experimental
                   ~f:(fun experimental_capabilities ->
-                    JSON_Object
-                      [
-                        ( "snippetTextEdit",
-                          JSON_Bool
-                            experimental_capabilities
-                              .ServerExperimentalCapabilities.snippetTextEdit );
-                        ( "autoCloseJsx",
-                          JSON_Bool
-                            experimental_capabilities
-                              .ServerExperimentalCapabilities.autoCloseJsx );
-                      ]) );
-            ] );
+                    ( "experimental",
+                      `Assoc
+                        [
+                          ( "snippetTextEdit",
+                            `Bool
+                              experimental_capabilities
+                                .ServerExperimentalCapabilities.snippetTextEdit
+                          );
+                          ( "autoCloseJsx",
+                            `Bool
+                              experimental_capabilities
+                                .ServerExperimentalCapabilities.autoCloseJsx );
+                        ] ));
+              ]
+          in
+          `Assoc fields );
       ])
 
 (************************************************************************)
 
 let print_registrationOptions (registerOptions : Lsp.lsp_registration_options) :
-    Hh_json.json =
+    Yojson.Safe.t =
   match registerOptions with
   | Lsp.DidChangeWatchedFilesRegistrationOptions registerOptions ->
     Lsp.DidChangeWatchedFiles.(
-      JSON_Object
+      `Assoc
         [
           ( "watchers",
-            JSON_Array
+            `List
               (List.map registerOptions.watchers ~f:(fun watcher ->
-                   JSON_Object
+                   `Assoc
                      [
-                       ("globPattern", JSON_String watcher.globPattern);
-                       ("kind", int_ 7);
+                       ("globPattern", `String watcher.globPattern);
+                       ("kind", `Int 7);
                        (* all events: create, change, and delete *)
                      ])) );
         ])
 
 let print_registerCapability (params : Lsp.RegisterCapability.params) :
-    Hh_json.json =
+    Yojson.Safe.t =
   Lsp.RegisterCapability.(
-    JSON_Object
+    `Assoc
       [
         ( "registrations",
-          JSON_Array
+          `List
             (List.map params.registrations ~f:(fun registration ->
-                 JSON_Object
+                 `Assoc
                    [
-                     ("id", string_ registration.id);
-                     ("method", string_ registration.method_);
+                     ("id", `String registration.id);
+                     ("method", `String registration.method_);
                      ( "registerOptions",
                        print_registrationOptions registration.registerOptions );
                    ])) );
       ])
 
-let parse_didChangeWatchedFiles (json : Hh_json.json option) :
+let parse_didChangeWatchedFiles (json : Yojson.Safe.t option) :
     DidChangeWatchedFiles.params =
   let changes =
     Jget.array_exn json "changes"
@@ -1578,7 +1642,8 @@ let denorm_message_to_string (message : lsp_message) : string =
       (result_name_to_string r)
       uri
 
-let parse_lsp_request (method_ : string) (params : json option) : lsp_request =
+let parse_lsp_request (method_ : string) (params : Yojson.Safe.t option) :
+    lsp_request =
   match method_ with
   | "initialize" -> InitializeRequest (parse_initialize params)
   | "shutdown" -> ShutdownRequest
@@ -1630,15 +1695,13 @@ let parse_lsp_request (method_ : string) (params : json option) : lsp_request =
     WillSaveWaitUntilRequest (parse_willSaveWaitUntil params)
   | "custom/topLevelDefNameAtPos" ->
     TopLevelDefNameAtPosRequest
-      (TopLevelDefNameAtPos.params_of_yojson
-      @@ Hh_json.to_yojson
-      @@ Option.value_exn params)
+      (TopLevelDefNameAtPos.params_of_yojson @@ Option.value_exn params)
   | "window/showMessageRequest"
   | "window/showStatus"
   | _ ->
     UnknownRequest (method_, params)
 
-let parse_lsp_notification (method_ : string) (params : json option) :
+let parse_lsp_notification (method_ : string) (params : Yojson.Safe.t option) :
     lsp_notification =
   match method_ with
   | "$/cancelRequest" -> CancelRequestNotification (parse_cancelRequest params)
@@ -1663,7 +1726,8 @@ let parse_lsp_notification (method_ : string) (params : json option) :
   | _ ->
     UnknownNotification (method_, params)
 
-let parse_lsp_result (request : lsp_request) (result : json) : lsp_result =
+let parse_lsp_result (request : lsp_request) (result : Yojson.Safe.t) :
+    lsp_result =
   let method_ = request_name_to_string request in
   match request with
   | ShowMessageRequestRequest _ ->
@@ -1715,8 +1779,8 @@ let parse_lsp_result (request : lsp_request) (result : json) : lsp_result =
 (*   otherwise return Some                                                    *)
 (* responses - will raise an exception if they're malformed, will return None *)
 (*   if they're absent from the "outstanding" map, otherwise return Some.     *)
-let parse_lsp (json : json) (outstanding : lsp_id -> lsp_request) : lsp_message
-    =
+let parse_lsp (json : Yojson.Safe.t) (outstanding : lsp_id -> lsp_request) :
+    lsp_message =
   let json = Some json in
   let id = Jget.val_opt json "id" |> parse_id_opt in
   let method_opt = Jget.string_opt json "method" in
@@ -1738,7 +1802,7 @@ let parse_lsp (json : json) (outstanding : lsp_id -> lsp_request) : lsp_message
       (Error.LspException
          { Error.code = Error.ParseError; message = "Not JsonRPC"; data = None })
 
-let print_lsp_request (id : lsp_id) (request : lsp_request) : json =
+let print_lsp_request (id : lsp_id) (request : lsp_request) : Yojson.Safe.t =
   let method_ = request_name_to_string request in
   let params =
     match request with
@@ -1779,15 +1843,15 @@ let print_lsp_request (id : lsp_id) (request : lsp_request) : json =
     | UnknownRequest _ ->
       failwith ("Don't know how to print request " ^ method_)
   in
-  JSON_Object
+  `Assoc
     [
-      ("jsonrpc", JSON_String "2.0");
+      ("jsonrpc", `String "2.0");
       ("id", print_id id);
-      ("method", JSON_String method_);
+      ("method", `String method_);
       ("params", params);
     ]
 
-let print_lsp_response (id : lsp_id) (result : lsp_result) : json =
+let print_lsp_response (id : lsp_id) (result : lsp_result) : Yojson.Safe.t =
   let method_ = result_name_to_string result in
   let json =
     match result with
@@ -1819,27 +1883,24 @@ let print_lsp_response (id : lsp_id) (result : lsp_result) : json =
     | DocumentCodeLensResult r -> print_documentCodeLens r
     | SignatureHelpResult r -> print_signatureHelp r
     | AutoCloseResult r -> print_AutoClose r
-    | HackTestStartServerResultFB -> JSON_Null
-    | HackTestStopServerResultFB -> JSON_Null
-    | HackTestShutdownServerlessResultFB -> JSON_Null
+    | HackTestStartServerResultFB -> `Null
+    | HackTestStopServerResultFB -> `Null
+    | HackTestShutdownServerlessResultFB -> `Null
     | ShowMessageRequestResult _
     | ShowStatusResultFB _
     | RegisterCapabilityRequestResult ->
       failwith ("Don't know how to print result " ^ method_)
     | WillSaveWaitUntilResult r -> print_textEdits r
-    | TopLevelDefNameAtPosResult r ->
-      TopLevelDefNameAtPos.yojson_of_result r |> Hh_json.of_yojson
+    | TopLevelDefNameAtPosResult r -> TopLevelDefNameAtPos.yojson_of_result r
     | ErrorResult e -> print_error e
   in
   match result with
   | ErrorResult _ ->
-    JSON_Object
-      [("jsonrpc", JSON_String "2.0"); ("id", print_id id); ("error", json)]
+    `Assoc [("jsonrpc", `String "2.0"); ("id", print_id id); ("error", json)]
   | _ ->
-    JSON_Object
-      [("jsonrpc", JSON_String "2.0"); ("id", print_id id); ("result", json)]
+    `Assoc [("jsonrpc", `String "2.0"); ("id", print_id id); ("result", json)]
 
-let print_lsp_notification (notification : lsp_notification) : json =
+let print_lsp_notification (notification : lsp_notification) : Yojson.Safe.t =
   let method_ = notification_name_to_string notification in
   let params =
     match notification with
@@ -1864,14 +1925,12 @@ let print_lsp_notification (notification : lsp_notification) : json =
     | UnknownNotification _ ->
       failwith ("Don't know how to print notification " ^ method_)
   in
-  JSON_Object
+  `Assoc
     [
-      ("jsonrpc", JSON_String "2.0");
-      ("method", JSON_String method_);
-      ("params", params);
+      ("jsonrpc", `String "2.0"); ("method", `String method_); ("params", params);
     ]
 
-let print_lsp (message : lsp_message) : json =
+let print_lsp (message : lsp_message) : Yojson.Safe.t =
   match message with
   | RequestMessage (id, request) -> print_lsp_request id request
   | ResponseMessage (id, result) -> print_lsp_response id result

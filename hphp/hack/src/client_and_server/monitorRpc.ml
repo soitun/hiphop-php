@@ -48,8 +48,15 @@ type monitor_to_server_handoff_msg = {
 
 let (receipt_serialize, receipt_deserialize) =
   let key = "sequence_number_high_water_mark" in
-  let serialize i = Hh_json.JSON_Object [(key, Hh_json.int_ i)] in
-  let deserialize json = Hh_json_helpers.Jget.int_exn (Some json) key in
+  let serialize i = `Assoc [(key, `Int i)] in
+  let deserialize json =
+    match json with
+    | `Assoc pairs ->
+      (match List.assoc_opt key pairs with
+      | Some (`Int i) -> i
+      | _ -> failwith (key ^ " not found or not an int"))
+    | _ -> failwith "expected JSON object"
+  in
   (serialize, deserialize)
 
 (** This writes to the specified file. Invariants maintained by callers:
@@ -64,7 +71,7 @@ let write_server_receipt_to_monitor_file
     ~(sequence_number_high_water_mark : int) : unit =
   let json =
     receipt_serialize sequence_number_high_water_mark
-    |> Hh_json.json_to_multiline
+    |> Hh_json_helpers.Out.pretty_to_string
   in
   try Sys_utils.protected_write_exn server_receipt_to_monitor_file json with
   | exn ->
@@ -90,7 +97,7 @@ let read_server_receipt_to_monitor_file
   try
     content := Sys_utils.protected_read_exn server_receipt_to_monitor_file;
     let sequence_number_high_water_mark =
-      receipt_deserialize (Hh_json.json_of_string !content)
+      receipt_deserialize (Yojson.Safe.from_string !content)
     in
     Some sequence_number_high_water_mark
   with

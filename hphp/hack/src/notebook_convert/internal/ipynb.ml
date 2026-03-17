@@ -7,21 +7,25 @@
  *)
 open Hh_prelude
 
+(* pp for Yojson.Safe.t to support [@@deriving show] *)
+(* unsorted: ppx printer, not snapshot-tested *)
+let pp_yojson fmt json = Format.pp_print_string fmt (Yojson.Safe.to_string json)
+
 type cell =
   | Non_hack of {
       cell_type: string;
       contents: string;
-      cell_bento_metadata: Hh_json.json option;
+      cell_bento_metadata: (Yojson.Safe.t[@printer pp_yojson]) option;
     }
   | Hack of {
       contents: string;
-      cell_bento_metadata: Hh_json.json option;
+      cell_bento_metadata: (Yojson.Safe.t[@printer pp_yojson]) option;
     }
 [@@deriving show]
 
 type t = {
   cells: cell list;
-  kernelspec: Hh_json.json;
+  kernelspec: Yojson.Safe.t;
 }
 
 (* Normalize the "source" field (string list) into a single string.
@@ -40,7 +44,7 @@ let cell_contents_of_source_lines (source_lines : string list) : string =
   |> String.concat ~sep:"\n"
 
 let is_most_likely_hack
-    (cell_bento_metadata : Hh_json.json option)
+    (cell_bento_metadata : Yojson.Safe.t option)
     ~(contents : string)
     ~(cell_type : string) : bool =
   (* we try not to make hard assumptions about the metadata: assume it's hack *)
@@ -52,25 +56,27 @@ let is_most_likely_hack
   | None -> bad_or_missing_metadata_value
   | Some cell_bento_metadata -> begin
     try
-      let obj = Hh_json.get_object_exn cell_bento_metadata in
+      let obj = Yojson.Safe.Util.to_assoc cell_bento_metadata in
       let language =
         List.Assoc.find_exn obj "language" ~equal:String.equal
-        |> Hh_json.get_string_exn
+        |> Yojson.Safe.Util.to_string
       in
       String.equal language "hack"
     with
     | _ -> bad_or_missing_metadata_value
   end
 
-let ipynb_of_json (ipynb_json : Hh_json.json) : (t, string) Result.t =
-  let cell_of_json_exn (cell_json : Hh_json.json) : cell =
+let ipynb_of_json (ipynb_json : Yojson.Safe.t) : (t, string) Result.t =
+  let cell_of_json_exn (cell_json : Yojson.Safe.t) : cell =
     let find_exn = List.Assoc.find_exn ~equal:String.equal in
-    let obj = Hh_json.get_object_exn cell_json in
+    let obj = Yojson.Safe.Util.to_assoc cell_json in
     let type_json = find_exn obj "cell_type" in
     let contents =
       let source_json = find_exn obj "source" in
-      let source_lines_json = Hh_json.get_array_exn source_json in
-      let source_lines = List.map source_lines_json ~f:Hh_json.get_string_exn in
+      let source_lines_json = Yojson.Safe.Util.to_list source_json in
+      let source_lines =
+        List.map source_lines_json ~f:Yojson.Safe.Util.to_string
+      in
       cell_contents_of_source_lines source_lines
     in
     let cell_bento_metadata =
@@ -78,7 +84,7 @@ let ipynb_of_json (ipynb_json : Hh_json.json) : (t, string) Result.t =
     in
     let cell_type =
       match type_json with
-      | JSON_String s -> s
+      | `String s -> s
       | _ -> "unknown"
     in
     if is_most_likely_hack cell_bento_metadata ~contents ~cell_type then
@@ -89,11 +95,11 @@ let ipynb_of_json (ipynb_json : Hh_json.json) : (t, string) Result.t =
   in
   try
     let find_exn = List.Assoc.find_exn ~equal:String.equal in
-    let obj = Hh_json.get_object_exn ipynb_json in
+    let obj = Yojson.Safe.Util.to_assoc ipynb_json in
     let cells_json = find_exn obj "cells" in
-    let metadata = Hh_json.get_object_exn @@ find_exn obj "metadata" in
+    let metadata = Yojson.Safe.Util.to_assoc @@ find_exn obj "metadata" in
     let kernelspec = find_exn metadata "kernelspec" in
-    let cells_jsons = Hh_json.get_array_exn cells_json in
+    let cells_jsons = Yojson.Safe.Util.to_list cells_json in
     let cells = cells_jsons |> List.map ~f:cell_of_json_exn in
     Ok { cells; kernelspec }
   with
@@ -124,26 +130,25 @@ let normalize_output_lines_in_source_array (source : string list) : string list
 let make_ipynb_cell
     ~(cell_type : string)
     ~(source : string list)
-    ~(cell_bento_metadata : Hh_json.json option) =
+    ~(cell_bento_metadata : Yojson.Safe.t option) =
   let source =
     source
     |> normalize_output_lines_in_source_array
-    |> List.map ~f:Hh_json.string_
+    |> List.map ~f:(fun s -> `String s)
   in
-  Hh_json.(
-    JSON_Object
-      [
-        ("cell_type", JSON_String cell_type);
-        ("source", JSON_Array source);
-        ("outputs", JSON_Array []);
-        ("execution_count", JSON_Null);
-        ( "metadata",
-          match cell_bento_metadata with
-          | Some cell_bento_metadata -> cell_bento_metadata
-          | None -> JSON_Object [] );
-      ])
+  `Assoc
+    [
+      ("cell_type", `String cell_type);
+      ("source", `List source);
+      ("outputs", `List []);
+      ("execution_count", `Null);
+      ( "metadata",
+        match cell_bento_metadata with
+        | Some cell_bento_metadata -> cell_bento_metadata
+        | None -> `Assoc [] );
+    ]
 
-let ipynb_to_json ({ cells; kernelspec } : t) : Hh_json.json =
+let ipynb_to_json ({ cells; kernelspec } : t) : Yojson.Safe.t =
   let json_cells =
     List.map cells ~f:(function
         | Non_hack { cell_type; contents; cell_bento_metadata } ->
@@ -157,16 +162,14 @@ let ipynb_to_json ({ cells; kernelspec } : t) : Hh_json.json =
             ~source:(String.split_lines contents)
             ~cell_bento_metadata)
   in
-  Hh_json.(
-    let nb_format = JSON_Number "4" in
-    JSON_Object
-      [
-        ("cells", JSON_Array json_cells);
-        ( "metadata",
-          JSON_Object [("kernelspec", kernelspec); ("orig_nbformat", nb_format)]
-        );
-        ("nbformat", nb_format);
-      ])
+  let nb_format = `Int 4 in
+  `Assoc
+    [
+      ("cells", `List json_cells);
+      ( "metadata",
+        `Assoc [("kernelspec", kernelspec); ("orig_nbformat", nb_format)] );
+      ("nbformat", nb_format);
+    ]
 
 let cell_of_chunk
     Notebook_chunk.{ id = _; chunk_kind; contents; cell_bento_metadata } : cell
@@ -177,12 +180,12 @@ let cell_of_chunk
     Non_hack { cell_type; contents; cell_bento_metadata }
 
 let combine_bento_cell_metadata_exn
-    (md1 : Hh_json.json option) (md2 : Hh_json.json option) :
-    Hh_json.json option =
+    (md1 : Yojson.Safe.t option) (md2 : Yojson.Safe.t option) :
+    Yojson.Safe.t option =
   let json_equal a b =
     String.equal
-      (Hh_json.json_to_string ~sort_keys:true a)
-      (Hh_json.json_to_string ~sort_keys:true b)
+      (Hh_json_helpers.Out.to_string a)
+      (Hh_json_helpers.Out.to_string b)
   in
   match (md1, md2) with
   | (Some md1, Some md2) when not @@ json_equal md1 md2 ->
@@ -233,7 +236,7 @@ let combine_cells_exn (cell1 : cell) (cell2 : cell) : cell =
          (show_cell cell2))
 
 let ipynb_of_chunks
-    (chunks : Notebook_chunk.t list) ~(kernelspec : Hh_json.json) :
+    (chunks : Notebook_chunk.t list) ~(kernelspec : Yojson.Safe.t) :
     (t, Notebook_convert_error.t) result =
   try
     let chunks_grouped_by_id =

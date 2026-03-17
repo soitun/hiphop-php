@@ -6,27 +6,36 @@ Extract into variable (CodeActionKind: "refactor")
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "await expression",
+  "kind": "refactor",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"Awaitable<void>",
-          "range":{"end":{"character":20,"line":12},"start":{"character":16,"line":12}}
+          "range": {
+            "start": { "line": 12, "character": 16 },
+            "end": { "line": 12, "character": 20 }
+          },
+          "newText": "Awaitable<void>"
         },
         {
-          "newText":"async ",
-          "range":{"end":{"character":0,"line":12},"start":{"character":0,"line":12}}
+          "range": {
+            "start": { "line": 12, "character": 0 },
+            "end": { "line": 12, "character": 0 }
+          },
+          "newText": "async "
         },
         {
-          "newText":"(await gen_foo())/*range-end*/->meth();",
-          "range":{"end":{"character":48,"line":14},"start":{"character":17,"line":14}}
+          "range": {
+            "start": { "line": 14, "character": 17 },
+            "end": { "line": 14, "character": 48 }
+          },
+          "newText": "(await gen_foo())/*range-end*/->meth();"
         }
       ]
     }
-  },
-  "kind":"refactor",
-  "title":"await expression"
+  }
 }
 
 Applied edit for code action:

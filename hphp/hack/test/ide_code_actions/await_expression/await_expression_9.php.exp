@@ -11,23 +11,29 @@ Devmate Agent Fix - Invalid return type (CodeActionKind: "quickfix")
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "await expression",
+  "kind": "quickfix",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"async ",
-          "range":{"end":{"character":0,"line":7},"start":{"character":0,"line":7}}
+          "range": {
+            "start": { "line": 7, "character": 0 },
+            "end": { "line": 7, "character": 0 }
+          },
+          "newText": "async "
         },
         {
-          "newText":"return (int)await gen_int() + 3;",
-          "range":{"end":{"character":28,"line":8},"start":{"character":2,"line":8}}
+          "range": {
+            "start": { "line": 8, "character": 2 },
+            "end": { "line": 8, "character": 28 }
+          },
+          "newText": "return (int)await gen_int() + 3;"
         }
       ]
     }
-  },
-  "kind":"quickfix",
-  "title":"await expression"
+  }
 }
 
 Applied edit for code action:

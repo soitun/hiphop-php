@@ -351,17 +351,17 @@ and search_or ~(env : env) ~(patterns : (Syntax.t * pattern) list) :
         (env, result)
       | None -> search_node ~env ~pattern ~node)
 
-let compile_pattern (ctx : Provider_context.t) (json : Hh_json.json) :
+let compile_pattern (ctx : Provider_context.t) (json : Yojson.Safe.t) :
     (pattern, string) Result.t =
   let open Result in
   let open Result.Monad_infix in
   let wrap_json_accessor f x =
-    Result.map_error (f x) ~f:Hh_json.Access.access_failure_to_string
+    Result.map_error (f x) ~f:Hh_json_helpers.Access.access_failure_to_string
   in
-  let get_string x = wrap_json_accessor (Hh_json.Access.get_string x) in
-  let get_obj x = wrap_json_accessor (Hh_json.Access.get_obj x) in
-  let get_array x = wrap_json_accessor (Hh_json.Access.get_array x) in
-  let keytrace_to_string = Hh_json.Access.keytrace_to_string in
+  let get_string x = wrap_json_accessor (Hh_json_helpers.Access.get_string x) in
+  let get_obj x = wrap_json_accessor (Hh_json_helpers.Access.get_obj x) in
+  let get_array x = wrap_json_accessor (Hh_json_helpers.Access.get_array x) in
+  let keytrace_to_string = Hh_json_helpers.Access.keytrace_to_string in
   let error_at_keytrace ~keytrace error_message =
     Error (error_message ^ keytrace_to_string keytrace)
   in
@@ -400,10 +400,10 @@ let compile_pattern (ctx : Provider_context.t) (json : Hh_json.json) :
         get_obj "children" (json, keytrace)
         >>= fun (children_json, children_keytrace) ->
         (* This has already been verified to be an object above. *)
-        let children = Hh_json.get_object_exn children_json in
+        let children = Hh_json_helpers.get_object_exn children_json in
         let get_child_type
-            (child_keytrace : Hh_json.Access.keytrace) (child_name : string) :
-            (child_type, string) Result.t =
+            (child_keytrace : Hh_json_helpers.Access.keytrace)
+            (child_name : string) : (child_type, string) Result.t =
           (* We're given a field name like `binary_right_operand`, but the field
              names in the schema are things like `right_operand`, and you have to
              affix the prefix yourself. For consistency with other tooling, we want
@@ -452,12 +452,14 @@ let compile_pattern (ctx : Provider_context.t) (json : Hh_json.json) :
     DescendantPattern { pattern }
   and compile_list_pattern ~json ~keytrace =
     let max_length =
-      Hh_json.get_field_opt (Hh_json.Access.get_number_int "max_length") json
+      Hh_json_helpers.get_field_opt
+        (Hh_json_helpers.Access.get_number_int "max_length")
+        json
     in
     get_obj "children" (json, keytrace)
     >>= fun (children_json, children_keytrace) ->
     (* This has already been verified to be an object above. *)
-    let children = Hh_json.get_object_exn children_json in
+    let children = Hh_json_helpers.get_object_exn children_json in
     let children_patterns =
       List.map children ~f:(fun (index_str, pattern_json) ->
           let child_keytrace = index_str :: children_keytrace in
@@ -521,10 +523,9 @@ let compile_pattern (ctx : Provider_context.t) (json : Hh_json.json) :
   compile_pattern ~json ~keytrace:[]
 
 let result_to_json ~(sort_results : bool) (result : result option) :
-    Hh_json.json =
-  let open Hh_json in
+    Yojson.Safe.t =
   match result with
-  | None -> JSON_Null
+  | None -> `Null
   | Some result ->
     let matched_nodes = result.matched_nodes in
     let matched_nodes =
@@ -543,15 +544,15 @@ let result_to_json ~(sort_results : bool) (result : result option) :
             match matched_node.kind with
             | NodeKind kind -> kind
           in
-          JSON_Object
+          `Assoc
             [
-              ("match_name", JSON_String match_name);
-              ("kind", JSON_String kind);
-              ("start_offset", Hh_json.int_ matched_node.start_offset);
-              ("end_offset", Hh_json.int_ matched_node.end_offset);
+              ("match_name", `String match_name);
+              ("kind", `String kind);
+              ("start_offset", `Int matched_node.start_offset);
+              ("end_offset", `Int matched_node.end_offset);
             ])
     in
-    JSON_Object [("matched_nodes", JSON_Array matched_nodes)]
+    `Assoc [("matched_nodes", `List matched_nodes)]
 
 let search
     (ctx : Provider_context.t)
@@ -569,7 +570,7 @@ let go
     (env : ServerEnv.env)
     ~(sort_results : bool)
     ~(files_to_search : string list option)
-    (input : Hh_json.json) : (Hh_json.json, string) Result.t =
+    (input : Yojson.Safe.t) : (Yojson.Safe.t, string) Result.t =
   let open Result.Monad_infix in
   let ctx = Provider_utils.ctx_from_server_env env in
   compile_pattern ctx input >>| fun pattern ->
@@ -652,7 +653,7 @@ let go
     else
       results
   in
-  Hh_json.JSON_Object
+  `Assoc
     (List.map results ~f:(fun (path, result) ->
          ( Relative_path.to_absolute path,
            result_to_json ~sort_results (Some result) )))

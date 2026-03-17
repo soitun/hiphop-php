@@ -6,23 +6,29 @@ Extract into method (CodeActionKind: "refactor") SELECTED
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Extract into method",
+  "kind": "refactor",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"  private function ${0:method0}(Awaitable<void> $awaitable, int $n): int {\n    $x = $n * 2;\n    $y = $awaitable;\n    return $x;\n  }\n\n",
-          "range":{"end":{"character":0,"line":5},"start":{"character":0,"line":5}}
+          "range": {
+            "start": { "line": 5, "character": 0 },
+            "end": { "line": 5, "character": 0 }
+          },
+          "newText": "  private function ${0:method0}(Awaitable<void> $awaitable, int $n): int {\n    $x = $n * 2;\n    $y = $awaitable;\n    return $x;\n  }\n\n"
         },
         {
-          "newText":"$x = $this->${0:method0}($awaitable, $n);",
-          "range":{"end":{"character":20,"line":9},"start":{"character":4,"line":8}}
+          "range": {
+            "start": { "line": 8, "character": 4 },
+            "end": { "line": 9, "character": 20 }
+          },
+          "newText": "$x = $this->${0:method0}($awaitable, $n);"
         }
       ]
     }
-  },
-  "kind":"refactor",
-  "title":"Extract into method"
+  }
 }
 
 Applied edit for code action:

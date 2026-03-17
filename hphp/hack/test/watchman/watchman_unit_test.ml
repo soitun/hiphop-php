@@ -1,5 +1,5 @@
 let parse (json : string) =
-  let json = Hh_json.json_of_string ~strict:true json in
+  let json = Yojson.Safe.from_string json in
   let (_, response) =
     Watchman.Testing.transform_asynchronous_get_changes_response
       (Watchman.Testing.get_test_env ())

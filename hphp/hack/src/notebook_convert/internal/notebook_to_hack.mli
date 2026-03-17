@@ -8,5 +8,5 @@
 val notebook_to_hack :
   notebook_number:string ->
   header:string ->
-  Hh_json.json ->
+  Yojson.Safe.t ->
   (string, string) Result.t

@@ -128,12 +128,13 @@ type user_filter =
   | UserFilterExclude of Str.regexp list
   | UserFilterFiles of SSet.t
 
-let user_filter_of_json (json : Hh_json.json) : user_filter =
-  let open Hh_json_helpers in
-  let json = Some json in
-  let type_ = Jget.string_exn json "type" in
+let user_filter_of_json (json : Yojson.Safe.t) : user_filter =
+  let open Yojson.Safe.Util in
+  let type_ = json |> member "type" |> to_string in
   if String.equal type_ "include" then
-    let regexes = Jget.string_array_exn json "regexes" in
+    let regexes =
+      json |> member "regexes" |> to_list |> List.map ~f:to_string
+    in
     let regexes =
       List.map regexes ~f:(fun re ->
           try Str.regexp re with
@@ -147,7 +148,9 @@ let user_filter_of_json (json : Hh_json.json) : user_filter =
     in
     UserFilterInclude regexes
   else if String.equal type_ "exclude" then
-    let regexes = Jget.string_array_exn json "regexes" in
+    let regexes =
+      json |> member "regexes" |> to_list |> List.map ~f:to_string
+    in
     let regexes =
       List.map regexes ~f:(fun re ->
           try Str.regexp re with
@@ -161,7 +164,9 @@ let user_filter_of_json (json : Hh_json.json) : user_filter =
     in
     UserFilterExclude regexes
   else if String.equal type_ "specific_files" then
-    let file_list = Jget.string_array_exn json "files" in
+    let file_list =
+      json |> member "files" |> to_list |> List.map ~f:to_string
+    in
     UserFilterFiles (SSet.of_list file_list)
   else
     raise @@ Failure (Printf.sprintf "Unknown filter type: '%s'" type_)
@@ -190,8 +195,8 @@ let user_filter_type_check_files ~to_recheck ~reparsed =
   in
   let read_config_file_once () : user_filter list =
     let contents = Sys_utils.cat config_file_path in
-    let json = Hh_json.json_of_string contents in
-    let filters = Hh_json.get_array_exn json in
+    let json = Yojson.Safe.from_string contents in
+    let filters = Yojson.Safe.Util.to_list json in
     List.map filters ~f:user_filter_of_json
   in
   let rec read_config_file () : user_filter list =

@@ -8,27 +8,36 @@ Extract into method (CodeActionKind: "refactor")
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Inline method",
+  "kind": "refactor",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"",
-          "range":{"end":{"character":5,"line":9},"start":{"character":0,"line":3}}
+          "range": {
+            "start": { "line": 3, "character": 0 },
+            "end": { "line": 9, "character": 5 }
+          },
+          "newText": ""
         },
         {
-          "newText":"$param_a = \"hello \".\"world\";\n            $param_b = 2 + 2;\n            $z = $param_a;\n            if ($param_b > 1) {\n              $z = $param_a.$param_b;\n            }\n            $res = $z;\n            ",
-          "range":{"end":{"character":12,"line":13},"start":{"character":12,"line":13}}
+          "range": {
+            "start": { "line": 13, "character": 12 },
+            "end": { "line": 13, "character": 12 }
+          },
+          "newText": "$param_a = \"hello \".\"world\";\n            $param_b = 2 + 2;\n            $z = $param_a;\n            if ($param_b > 1) {\n              $z = $param_a.$param_b;\n            }\n            $res = $z;\n            "
         },
         {
-          "newText":"$res",
-          "range":{"end":{"character":88,"line":13},"start":{"character":17,"line":13}}
+          "range": {
+            "start": { "line": 13, "character": 17 },
+            "end": { "line": 13, "character": 88 }
+          },
+          "newText": "$res"
         }
       ]
     }
-  },
-  "kind":"refactor",
-  "title":"Inline method"
+  }
 }
 
 Applied edit for code action:

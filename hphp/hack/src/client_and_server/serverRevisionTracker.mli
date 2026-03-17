@@ -18,7 +18,7 @@ module Watchman : sig
     (* project root *)
     string ->
     (* state name *)
-    Hh_json.json option ->
+    Yojson.Safe.t option ->
     (* state metadata *)
     unit
 end

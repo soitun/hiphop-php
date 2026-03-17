@@ -56,13 +56,13 @@ val from_locl_ty :
   Typing_env_types.env ->
   ?show_like_ty:bool ->
   Typing_defs.locl_ty ->
-  Hh_json.json
+  Yojson.Safe.t
 
 (* Attempt to deserialize a previously-serialized type back into a type we can
    manipulate. Note that this function accesses the global state in
    `Decl_provider` to verify that certain type names exist. *)
 val to_locl_ty :
-  ?keytrace:Hh_json.Access.keytrace ->
+  ?keytrace:Hh_json_helpers.Access.keytrace ->
   Provider_context.t ->
-  Hh_json.json ->
+  Yojson.Safe.t ->
   (Typing_defs.locl_ty, Typing_defs.deserialization_error) result

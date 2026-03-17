@@ -32,7 +32,7 @@ module Show_sidebar_chat_command_args = struct
   }
 
   let message_attachment_to_json { title; value } =
-    Hh_json.(JSON_Object [("title", string_ title); ("value", string_ value)])
+    `Assoc [("title", `String title); ("value", `String value)]
 
   type message_model =
     | GPT4
@@ -42,11 +42,11 @@ module Show_sidebar_chat_command_args = struct
     | CLAUDE_37_SONNET
 
   let message_model_to_json = function
-    | GPT4 -> Hh_json.string_ "GPT4"
-    | ILLAMA -> Hh_json.string_ "ILLAMA"
-    | ICODELLAMA_TEST -> Hh_json.string_ "ICODELLAMA_TEST"
-    | ICODELLAMA_405B -> Hh_json.string_ "ICODELLAMA_405B"
-    | CLAUDE_37_SONNET -> Hh_json.string_ "CLAUDE_37_SONNET"
+    | GPT4 -> `String "GPT4"
+    | ILLAMA -> `String "ILLAMA"
+    | ICODELLAMA_TEST -> `String "ICODELLAMA_TEST"
+    | ICODELLAMA_405B -> `String "ICODELLAMA_405B"
+    | CLAUDE_37_SONNET -> `String "CLAUDE_37_SONNET"
 
   type action =
     | CHAT  (** Chat (user triggered) *)
@@ -55,10 +55,10 @@ module Show_sidebar_chat_command_args = struct
     | EXAMPLE  (** An example prompt *)
 
   let action_to_json = function
-    | CHAT -> Hh_json.string_ "CHAT"
-    | CODE -> Hh_json.string_ "CODE"
-    | DEVMATE -> Hh_json.string_ "DEVMATE"
-    | EXAMPLE -> Hh_json.string_ "EXAMPLE"
+    | CHAT -> `String "CHAT"
+    | CODE -> `String "CODE"
+    | DEVMATE -> `String "DEVMATE"
+    | EXAMPLE -> `String "EXAMPLE"
 
   type action_trigger_type =
     | Code_action
@@ -69,12 +69,12 @@ module Show_sidebar_chat_command_args = struct
     | Code_lens
 
   let action_trigger_type_to_json = function
-    | Code_action -> Hh_json.string_ "CodeAction"
-    | Context_menu -> Hh_json.string_ "ContextMenu"
-    | Example_prompt -> Hh_json.string_ "ExamplePrompt"
-    | Diagnostic_hover -> Hh_json.string_ "DiagnosticHover"
-    | Slash_command -> Hh_json.string_ "SlashCommand"
-    | Code_lens -> Hh_json.string_ "CodeLens"
+    | Code_action -> `String "CodeAction"
+    | Context_menu -> `String "ContextMenu"
+    | Example_prompt -> `String "ExamplePrompt"
+    | Diagnostic_hover -> `String "DiagnosticHover"
+    | Slash_command -> `String "SlashCommand"
+    | Code_lens -> `String "CodeLens"
 
   type llm_config_model =
     | G4
@@ -83,10 +83,10 @@ module Show_sidebar_chat_command_args = struct
     | CLAUDE_37_SONNET
 
   let llm_config_model_to_json = function
-    | G4 -> Hh_json.string_ "g4"
-    | ICODELLAMA_TEST -> Hh_json.string_ "icodellama-test"
-    | ICODELLAMA_405B -> Hh_json.string_ "icodellama-405b"
-    | CLAUDE_37_SONNET -> Hh_json.string_ "claude3.7-sonnet"
+    | G4 -> `String "g4"
+    | ICODELLAMA_TEST -> `String "icodellama-test"
+    | ICODELLAMA_405B -> `String "icodellama-405b"
+    | CLAUDE_37_SONNET -> `String "claude3.7-sonnet"
 
   type tool_call_results_type = {
     tool_call_id: string;
@@ -97,14 +97,13 @@ module Show_sidebar_chat_command_args = struct
 
   let tool_call_results_type_to_json
       { tool_call_id; tool_name; arguments; output } =
-    Hh_json.(
-      JSON_Object
-        [
-          ("tool_call_id", string_ tool_call_id);
-          ("tool_name", string_ tool_name);
-          ("arguments", string_ arguments);
-          ("output", string_ output);
-        ])
+    `Assoc
+      [
+        ("tool_call_id", `String tool_call_id);
+        ("tool_name", `String tool_name);
+        ("arguments", `String arguments);
+        ("output", `String output);
+      ]
 
   type model_params = {
     model: llm_config_model option;
@@ -117,21 +116,21 @@ module Show_sidebar_chat_command_args = struct
 
   let model_params_to_json
       { model; max_tokens; temperature; top_p; stop; repetition_penalty } =
-    Hh_json.(
-      JSON_Object
-        (List.filter_opt
-           [
-             Option.map model ~f:(fun model ->
-                 ("model", llm_config_model_to_json model));
-             Option.map max_tokens ~f:(fun max_tokens ->
-                 ("max_tokens", int_ max_tokens));
-             Option.map temperature ~f:(fun temperature ->
-                 ("temperature", float_ temperature));
-             Option.map top_p ~f:(fun top_p -> ("top_p", float_ top_p));
-             Option.map stop ~f:(fun stop -> ("stop", array_ string_ stop));
-             Option.map repetition_penalty ~f:(fun repetition_penalty ->
-                 ("repetition_penalty", float_ repetition_penalty));
-           ]))
+    `Assoc
+      (List.filter_opt
+         [
+           Option.map model ~f:(fun model ->
+               ("model", llm_config_model_to_json model));
+           Option.map max_tokens ~f:(fun max_tokens ->
+               ("max_tokens", `Int max_tokens));
+           Option.map temperature ~f:(fun temperature ->
+               ("temperature", `Float temperature));
+           Option.map top_p ~f:(fun top_p -> ("top_p", `Float top_p));
+           Option.map stop ~f:(fun stop ->
+               ("stop", `List (List.map stop ~f:(fun s -> `String s))));
+           Option.map repetition_penalty ~f:(fun repetition_penalty ->
+               ("repetition_penalty", `Float repetition_penalty));
+         ])
 
   type llm_config = {
     pipeline: string option;
@@ -141,18 +140,17 @@ module Show_sidebar_chat_command_args = struct
   }
 
   let llm_config_to_json { pipeline; label; model_params; max_input_token } =
-    Hh_json.(
-      JSON_Object
-        (List.filter_opt
-           [
-             Option.map pipeline ~f:(fun pipeline ->
-                 ("pipeline", string_ pipeline));
-             Option.map label ~f:(fun label -> ("label", string_ label));
-             Option.map model_params ~f:(fun model_params ->
-                 ("model_params", model_params_to_json model_params));
-             Option.map max_input_token ~f:(fun max_input_token ->
-                 ("max_input_token", int_ max_input_token));
-           ]))
+    `Assoc
+      (List.filter_opt
+         [
+           Option.map pipeline ~f:(fun pipeline ->
+               ("pipeline", `String pipeline));
+           Option.map label ~f:(fun label -> ("label", `String label));
+           Option.map model_params ~f:(fun model_params ->
+               ("model_params", model_params_to_json model_params));
+           Option.map max_input_token ~f:(fun max_input_token ->
+               ("max_input_token", `Int max_input_token));
+         ])
 
   type t = {
     display_prompt: string;
@@ -189,29 +187,29 @@ module Show_sidebar_chat_command_args = struct
         local_tool_results;
         correlation_id;
       } =
-    Hh_json.(
-      JSON_Object
-        (List.filter_opt
-           [
-             Some ("displayPrompt", string_ display_prompt);
-             Option.map model_prompt ~f:(fun model_prompt ->
-                 ("modelPrompt", string_ model_prompt));
-             Option.map llm_config ~f:(fun llm_config ->
-                 ("llmConfig", llm_config_to_json llm_config));
-             Option.map model ~f:(fun model ->
-                 ("model", message_model_to_json model));
-             Option.map attachments ~f:(fun attachments ->
-                 ("attachments", array_ message_attachment_to_json attachments));
-             Some ("action", action_to_json action);
-             Option.map trigger ~f:(fun trigger -> ("trigger", string_ trigger));
-             Option.map trigger_type ~f:(fun trigger_type ->
-                 ("triggerType", action_trigger_type_to_json trigger_type));
-             Option.map local_tool_results ~f:(fun local_tool_results ->
-                 ( "localToolResults",
-                   tool_call_results_type_to_json local_tool_results ));
-             Option.map correlation_id ~f:(fun correlation_id ->
-                 ("correlationId", string_ correlation_id));
-           ]))
+    `Assoc
+      (List.filter_opt
+         [
+           Some ("displayPrompt", `String display_prompt);
+           Option.map model_prompt ~f:(fun model_prompt ->
+               ("modelPrompt", `String model_prompt));
+           Option.map llm_config ~f:(fun llm_config ->
+               ("llmConfig", llm_config_to_json llm_config));
+           Option.map model ~f:(fun model ->
+               ("model", message_model_to_json model));
+           Option.map attachments ~f:(fun attachments ->
+               ( "attachments",
+                 `List (List.map attachments ~f:message_attachment_to_json) ));
+           Some ("action", action_to_json action);
+           Option.map trigger ~f:(fun trigger -> ("trigger", `String trigger));
+           Option.map trigger_type ~f:(fun trigger_type ->
+               ("triggerType", action_trigger_type_to_json trigger_type));
+           Option.map local_tool_results ~f:(fun local_tool_results ->
+               ( "localToolResults",
+                 tool_call_results_type_to_json local_tool_results ));
+           Option.map correlation_id ~f:(fun correlation_id ->
+               ("correlationId", `String correlation_id));
+         ])
 end
 
 module Show_inline_chat_command_args = struct
@@ -222,10 +220,10 @@ module Show_inline_chat_command_args = struct
     | LLAMA_405B
 
   let model_to_json = function
-    | GPT4o -> Hh_json.string_ "GPT-4o"
-    | SONNET_37 -> Hh_json.string_ "Claude 3.7 Sonnet"
-    | CODE_31 -> Hh_json.string_ "iCodeLlama 3.1 70B"
-    | LLAMA_405B -> Hh_json.string_ "iCodeLlama 3.1 405B"
+    | GPT4o -> `String "GPT-4o"
+    | SONNET_37 -> `String "Claude 3.7 Sonnet"
+    | CODE_31 -> `String "iCodeLlama 3.1 70B"
+    | LLAMA_405B -> `String "iCodeLlama 3.1 405B"
 
   type predefined_prompt = {
     command: string;
@@ -254,27 +252,26 @@ module Show_inline_chat_command_args = struct
         model;
         add_diagnostics;
       } =
-    Hh_json.(
-      JSON_Object
-        (("command", string_ command)
-        :: ("displayPrompt", string_ display_prompt)
-        :: ("userPrompt", string_ user_prompt)
-        :: List.filter_opt
-             [
-               field_opt "description" string_ description;
-               field_opt "rules" string_ rules;
-               field_opt "task" string_ task;
-               field_opt "promptTemplate" string_ prompt_template;
-               field_opt "model" model_to_json model;
-               field_opt "addDiagnostics" bool_ add_diagnostics;
-             ]))
+    `Assoc
+      (("command", `String command)
+      :: ("displayPrompt", `String display_prompt)
+      :: ("userPrompt", `String user_prompt)
+      :: List.filter_opt
+           [
+             field_opt "description" (fun s -> `String s) description;
+             field_opt "rules" (fun s -> `String s) rules;
+             field_opt "task" (fun s -> `String s) task;
+             field_opt "promptTemplate" (fun s -> `String s) prompt_template;
+             field_opt "model" model_to_json model;
+             field_opt "addDiagnostics" (fun b -> `Bool b) add_diagnostics;
+           ])
 
   type t = {
     entrypoint: string;
     predefined_prompt: predefined_prompt;
     override_selection: Pos.absolute;
     webview_start_line: int;
-    extras: Hh_json.json;
+    extras: Yojson.Safe.t;
   }
 
   let to_json
@@ -285,19 +282,18 @@ module Show_inline_chat_command_args = struct
         webview_start_line;
         extras;
       } =
-    Hh_json.(
-      JSON_Object
-        [
-          ("entrypoint", string_ entrypoint);
-          ("predefinedPrompt", predefined_prompt_to_json predefined_prompt);
-          ( "overrideSelection",
-            Lsp_fmt.print_range
-            @@ Lsp_helpers.hack_pos_to_lsp_range
-                 ~equal:String.equal
-                 override_selection );
-          ("webviewStartLine", int_ webview_start_line);
-          ("extras", extras);
-        ])
+    `Assoc
+      [
+        ("entrypoint", `String entrypoint);
+        ("predefinedPrompt", predefined_prompt_to_json predefined_prompt);
+        ( "overrideSelection",
+          Lsp_fmt.print_range
+          @@ Lsp_helpers.hack_pos_to_lsp_range
+               ~equal:String.equal
+               override_selection );
+        ("webviewStartLine", `Int webview_start_line);
+        ("extras", extras);
+      ]
 end
 
 type command_args =

@@ -5,23 +5,29 @@ Extract into method (CodeActionKind: "refactor") SELECTED
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Extract into method",
+  "kind": "refactor",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"  private async function ${0:method0}(): Awaitable<(int, int)> {\n    concurrent {\n      $x = await gen_int();\n      $y = await gen_int();\n    }\n    return tuple($x, $y);\n  }\n\n",
-          "range":{"end":{"character":0,"line":7},"start":{"character":0,"line":7}}
+          "range": {
+            "start": { "line": 7, "character": 0 },
+            "end": { "line": 7, "character": 0 }
+          },
+          "newText": "  private async function ${0:method0}(): Awaitable<(int, int)> {\n    concurrent {\n      $x = await gen_int();\n      $y = await gen_int();\n    }\n    return tuple($x, $y);\n  }\n\n"
         },
         {
-          "newText":"list($x, $y) = await $this->${0:method0}();",
-          "range":{"end":{"character":5,"line":12},"start":{"character":4,"line":9}}
+          "range": {
+            "start": { "line": 9, "character": 4 },
+            "end": { "line": 12, "character": 5 }
+          },
+          "newText": "list($x, $y) = await $this->${0:method0}();"
         }
       ]
     }
-  },
-  "kind":"refactor",
-  "title":"Extract into method"
+  }
 }
 
 Applied edit for code action:

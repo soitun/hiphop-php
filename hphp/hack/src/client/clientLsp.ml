@@ -345,8 +345,9 @@ let log_debug s = Hh_logger.debug ("[client-lsp] " ^^ s)
 
 let log_error s = Hh_logger.error ("[client-lsp] " ^^ s)
 
-let to_stdout (json : Hh_json.json) : unit =
-  let s = Hh_json.json_to_string json ^ "\r\n\r\n" in
+let to_stdout (json : Yojson.Safe.t) : unit =
+  (* unsorted: LSP output, parsed by editor, not snapshot-tested *)
+  let s = Yojson.Safe.to_string json ^ "\r\n\r\n" in
   Http_lite.write_message stdout s
 
 let get_editor_open_files (state : state) :
@@ -504,7 +505,7 @@ current stack. A typical scenario is that we got an error marshalled
 from a remote server with its remote stack where the error was generated,
 and we also want to record the stack where we received it. *)
 let make_lsp_error
-    ?(data : Hh_json.json option = None)
+    ?(data : Yojson.Safe.t option = None)
     ?(stack : string option)
     ?(current_stack : bool = true)
     ?(code : Lsp.Error.code = Lsp.Error.UnknownErrorCode)
@@ -512,13 +513,13 @@ let make_lsp_error
   let elems =
     match data with
     | None -> []
-    | Some (Hh_json.JSON_Object elems) -> elems
+    | Some (`Assoc elems) -> elems
     | Some json -> [("data", json)]
   in
   let elems =
     match stack with
     | Some stack when not (List.Assoc.mem ~equal:String.equal elems "stack") ->
-      ("stack", stack |> Exception.clean_stack |> Hh_json.string_) :: elems
+      ("stack", `String (stack |> Exception.clean_stack)) :: elems
     | _ -> elems
   in
   let elems =
@@ -526,13 +527,13 @@ let make_lsp_error
     | true when not (List.Assoc.mem ~equal:String.equal elems "current_stack")
       ->
       ( "current_stack",
-        Exception.get_current_callstack_string 99
-        |> Exception.clean_stack
-        |> Hh_json.string_ )
+        `String
+          (Exception.get_current_callstack_string 99 |> Exception.clean_stack)
+      )
       :: elems
     | _ -> elems
   in
-  { Lsp.Error.code; message; data = Some (Hh_json.JSON_Object elems) }
+  { Lsp.Error.code; message; data = Some (`Assoc elems) }
 
 (** Use ignore_promise_but_handle_failure when you want don't care about awaiting
 results of an async piece of work, but still want any exceptions to be logged.
@@ -555,18 +556,17 @@ let ignore_promise_but_handle_failure
         Lwt.return_unit
       with
       | exn ->
-        let open Hh_json in
         let exn = Exception.wrap exn in
         let message = "Unhandled exception: " ^ Exception.get_ctor_string exn in
         let stack =
           Exception.get_backtrace_string exn |> Exception.clean_stack
         in
         let data =
-          JSON_Object
+          `Assoc
             [
-              ("description", string_ desc);
-              ("message", string_ message);
-              ("stack", string_ stack);
+              ("description", `String desc);
+              ("message", `String message);
+              ("stack", `String stack);
             ]
         in
         let code = Lsp.Error.InternalError in
@@ -921,12 +921,11 @@ type powered_by =
   | Language_server
   | Serverless_ide
 
-let add_powered_by ~(powered_by : powered_by) (json : Hh_json.json) :
-    Hh_json.json =
-  let open Hh_json in
+let add_powered_by ~(powered_by : powered_by) (json : Yojson.Safe.t) :
+    Yojson.Safe.t =
   match (json, powered_by) with
-  | (JSON_Object props, Serverless_ide) ->
-    JSON_Object (("powered_by", JSON_String "serverless_ide") :: props)
+  | (`Assoc props, Serverless_ide) ->
+    `Assoc (("powered_by", `String "serverless_ide") :: props)
   | (_, _) -> json
 
 let respond_jsonrpc
@@ -951,7 +950,7 @@ let respond_to_error (event : event option) (e : Lsp.Error.t) : unit =
        roll our own, using ad-hoc json fields to emit all the data out of 'e' *)
     let open Lsp.Error in
     let extras =
-      ("code", e.code |> Error.show_code |> Hh_json.string_)
+      ("code", `String (e.code |> Error.show_code))
       :: Option.value_map e.data ~default:[] ~f:(fun data -> [("data", data)])
     in
     Lsp_helpers.telemetry_error to_stdout e.message ~extras
@@ -1213,11 +1212,8 @@ let ide_diagnostics_to_lsp_diagnostics
     in
     let data =
       Some
-        Hh_json.(
-          JSON_Object
-            [
-              ("lineAgnosticHash", string_ (Printf.sprintf "%x" diagnostic_hash));
-            ])
+        (`Assoc
+          [("lineAgnosticHash", `String (Printf.sprintf "%x" diagnostic_hash))])
     in
     let relatedInformation =
       additional_messages
@@ -1459,7 +1455,8 @@ let announce_ide_failure (error_data : ClientIdeMessage.rich_error) : unit Lwt.t
     Printf.sprintf
       "%s - %s"
       error_data.category
-      (Option.value_map error_data.data ~default:"" ~f:Hh_json.json_to_string)
+      (* unsorted: parsed programmatically, not snapshot-tested *)
+      (Option.value_map error_data.data ~default:"" ~f:Yojson.Safe.to_string)
   in
   log
     "IDE services could not be initialized.\n%s\n%s"
@@ -2037,13 +2034,12 @@ let kickoff_shell_out_and_maybe_cancel
             "Cancelled (displaced by another request)"
             ~data:
               (Some
-                 (Hh_json.JSON_Object
-                    [
-                      ( "new_request_id",
-                        Hh_json.string_
-                          (Lsp_fmt.id_to_string triggering_request.Run_env.id)
-                      );
-                    ]))
+                 (`Assoc
+                   [
+                     ( "new_request_id",
+                       `String
+                         (Lsp_fmt.id_to_string triggering_request.Run_env.id) );
+                   ]))
         in
         respond_jsonrpc
           ~powered_by:Language_server
@@ -2362,32 +2358,31 @@ let make_ide_completion_response
       let filename = Pos.filename pos in
       let base_class =
         match completion.res_base_class with
-        | Some base_class -> [("base_class", Hh_json.JSON_String base_class)]
+        | Some base_class -> [("base_class", `String base_class)]
         | None -> []
       in
       (* If we do not have a correct file position, skip sending that data *)
       if Int.equal line 0 && Int.equal start 0 then
         Some
-          (Hh_json.JSON_Object
-             ([("fullname", Hh_json.JSON_String completion.res_fullname)]
-             @ base_class))
+          (`Assoc
+            ([("fullname", `String completion.res_fullname)] @ base_class))
       else
         Some
-          (Hh_json.JSON_Object
-             ([
-                (* Fullname is needed for namespaces.  We often trim namespaces to make
-                 * the results more readable, such as showing "ad__breaks" instead of
-                 * "Thrift\Packages\cf\ad__breaks".
-                 *)
-                ("fullname", Hh_json.JSON_String completion.res_fullname);
-                (* Filename/line/char/base_class are used to handle class methods.
-                 * We could unify this with fullname in the future.
-                 *)
-                ("filename", Hh_json.JSON_String filename);
-                ("line", Hh_json.int_ line);
-                ("char", Hh_json.int_ start);
-              ]
-             @ base_class))
+          (`Assoc
+            ([
+               (* Fullname is needed for namespaces.  We often trim namespaces to make
+                * the results more readable, such as showing "ad__breaks" instead of
+                * "Thrift\Packages\cf\ad__breaks".
+                *)
+               ("fullname", `String completion.res_fullname);
+               (* Filename/line/char/base_class are used to handle class methods.
+                * We could unify this with fullname in the future.
+                *)
+               ("filename", `String filename);
+               ("line", `Int line);
+               ("char", `Int start);
+             ]
+            @ base_class))
     in
     let hack_to_sort_text (completion : autocomplete_item) : string option =
       let sort_text = completion.res_sortText in
@@ -2519,8 +2514,9 @@ let do_resolve
       try
         match params.Completion.data with
         | None -> raise NoLocationFound
-        | Some _ as data ->
-          let fullname = Jget.string_exn params.Completion.data "fullname" in
+        | Some _ ->
+          let data = params.Completion.data in
+          let fullname = Jget.string_exn data "fullname" in
           let filename = Jget.string_exn data "filename" in
           let file_path = Path.make filename in
           let line = Jget.int_exn data "line" in
@@ -3411,28 +3407,27 @@ let report_recheck_telemetry
           message = "timing info for file check";
         },
         [
-          ("telemetryKind", Hh_json.string_ "timingForCheck");
-          ("checkScope", Hh_json.string_ "file");
-          ("uri", Hh_json.string_ (string_of_uri uri));
-          ("checkResult", Hh_json.string_ result);
+          ("telemetryKind", `String "timingForCheck");
+          ("checkScope", `String "file");
+          ("uri", `String (string_of_uri uri));
+          ("checkResult", `String result);
         ]
         @
         match trigger with
-        | Initialize_trigger -> [("triggerKind", Hh_json.string_ "init")]
+        | Initialize_trigger -> [("triggerKind", `String "init")]
         | Message_trigger { message; metadata } ->
           [
-            ("triggerKind", Hh_json.string_ "message");
+            ("triggerKind", `String "message");
             ( "durationMs",
-              Hh_json.int_
+              `Int
                 (int_of_float
                    Float.((Unix.gettimeofday () -. metadata.timestamp) * 1000.0))
             );
             ( "triggerMessage",
-              Hh_json.JSON_Object
+              `Assoc
                 [
-                  ( "method",
-                    Hh_json.string_ (Lsp_fmt.message_name_to_string message) );
-                  ("activityId", Hh_json.string_ metadata.activity_id);
+                  ("method", `String (Lsp_fmt.message_name_to_string message));
+                  ("activityId", `String metadata.activity_id);
                 ] );
           ] )
   in
@@ -3491,7 +3486,7 @@ let publish_and_report_after_recomputing_live_squiggles
     let _ =
       (* Log diagnostics so we can track error lifetime *)
       Option.iter
-        (Telemetry.of_json_opt (Lsp_fmt.print_diagnostics params))
+        (Telemetry.of_yojson_opt (Lsp_fmt.print_diagnostics params))
         ~f:(HackEventLogger.Diagnostics.log ~activity_id)
     in
     let notification = PublishDiagnosticsNotification params in
@@ -3823,7 +3818,7 @@ let handle_shell_out_complete
       let lsp_error =
         make_lsp_error
           ~code
-          ~data:(Some (Telemetry.to_json telemetry))
+          ~data:(Some (Telemetry.to_yojson telemetry))
           ~current_stack:false
           message
       in
@@ -3867,7 +3862,7 @@ let handle_shell_out_complete
         let lsp_error =
           make_lsp_error
             ~code:Lsp.Error.InternalError
-            ~data:(Some (Telemetry.to_json telemetry))
+            ~data:(Some (Telemetry.to_yojson telemetry))
             ~stack
             ~current_stack:false
             message

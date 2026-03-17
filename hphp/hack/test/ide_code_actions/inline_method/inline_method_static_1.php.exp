@@ -9,27 +9,36 @@ Devmate Agent Fix - Private members cannot be accessed with static:: since a chi
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Inline method",
+  "kind": "refactor",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"",
-          "range":{"end":{"character":3,"line":6},"start":{"character":0,"line":3}}
+          "range": {
+            "start": { "line": 3, "character": 0 },
+            "end": { "line": 6, "character": 3 }
+          },
+          "newText": ""
         },
         {
-          "newText":"$i = 1;\n    $z = 2;\n    $res = $i + $z;\n    ",
-          "range":{"end":{"character":4,"line":9},"start":{"character":4,"line":9}}
+          "range": {
+            "start": { "line": 9, "character": 4 },
+            "end": { "line": 9, "character": 4 }
+          },
+          "newText": "$i = 1;\n    $z = 2;\n    $res = $i + $z;\n    "
         },
         {
-          "newText":"$res",
-          "range":{"end":{"character":56,"line":9},"start":{"character":8,"line":9}}
+          "range": {
+            "start": { "line": 9, "character": 8 },
+            "end": { "line": 9, "character": 56 }
+          },
+          "newText": "$res"
         }
       ]
     }
-  },
-  "kind":"refactor",
-  "title":"Inline method"
+  }
 }
 
 Applied edit for code action:

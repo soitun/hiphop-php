@@ -1,12 +1,12 @@
 textDocument/signatureHelp response:
 
 {
-  "activeParameter":0,
-  "activeSignature":0,
-  "signatures":[
+  "signatures": [
     {
-      "label":"function add(int $a, int $b): int",
-      "parameters":[{"label":"$a"},{"label":"$b"}]
+      "label": "function add(int $a, int $b): int",
+      "parameters": [ { "label": "$a" }, { "label": "$b" } ]
     }
-  ]
+  ],
+  "activeSignature": 0,
+  "activeParameter": 0
 }

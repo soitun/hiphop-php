@@ -42,15 +42,14 @@ let set_hg_to_global_rev_map ?delay_rev_200 () =
   @@ Future.of_value global_rev_230
 
 let set_next_watchman_state_transition move (hg_rev : Hg.Rev.t) =
-  Hh_json.(
-    let json = JSON_Object [("rev", JSON_String (Hg.Rev.to_string hg_rev))] in
-    let move =
-      match move with
-      | State_leave -> Watchman.State_leave ("hg.update", Some json)
-      | State_enter -> Watchman.State_enter ("hg.update", Some json)
-      | Changed_merge_base ->
-        Watchman.Changed_merge_base (hg_rev, SSet.empty, "dummy_clock")
-      | Changed_merge_base_plus_files files ->
-        Watchman.Changed_merge_base (hg_rev, files, "dummy_clock")
-    in
-    Watchman.Mocking.get_changes_returns (Watchman.Watchman_pushed move))
+  let json = `Assoc [("rev", `String (Hg.Rev.to_string hg_rev))] in
+  let move =
+    match move with
+    | State_leave -> Watchman.State_leave ("hg.update", Some json)
+    | State_enter -> Watchman.State_enter ("hg.update", Some json)
+    | Changed_merge_base ->
+      Watchman.Changed_merge_base (hg_rev, SSet.empty, "dummy_clock")
+    | Changed_merge_base_plus_files files ->
+      Watchman.Changed_merge_base (hg_rev, files, "dummy_clock")
+  in
+  Watchman.Mocking.get_changes_returns (Watchman.Watchman_pushed move)

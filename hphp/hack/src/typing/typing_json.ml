@@ -29,8 +29,6 @@ let show_supportdyn env =
   (not (TypecheckerOptions.everything_sdt env.genv.tcopt))
   || Typing_env_types.get_log_level env "show" >= 1
 
-open Hh_json
-
 let param_mode_to_string = function
   | FPnormal -> "normal"
   | FPinout -> "inout"
@@ -52,29 +50,25 @@ let cstr_kind cstr_kind =
     | Ast_defs.Constraint_super -> "super"
     | Ast_defs.Constraint_eq -> "eq"
   in
-  ("kind", Hh_json.JSON_String kind_str)
+  ("kind", `String kind_str)
 
 let user_attribute { ua_name = (_, name); _ } =
-  let open Hh_json in
-  let fields = [("name", JSON_String name)] in
-  JSON_Object fields
+  let fields = [("name", `String name)] in
+  `Assoc fields
 
-let rec from_type : env -> show_like_ty:bool -> locl_ty -> json =
+let rec from_type : env -> show_like_ty:bool -> locl_ty -> Yojson.Safe.t =
  fun env ~show_like_ty ty ->
   (* Helpers to construct fields that appear in JSON rendering of type *)
-  let obj x = JSON_Object x in
-  let kind p k = [("src_pos", Pos_or_decl.json p); ("kind", JSON_String k)] in
+  let obj x = `Assoc x in
+  let kind p k = [("src_pos", Pos_or_decl.json p); ("kind", `String k)] in
   let args tys =
-    [("args", JSON_Array (List.map tys ~f:(from_type env ~show_like_ty)))]
+    [("args", `List (List.map tys ~f:(from_type env ~show_like_ty)))]
   in
   let optional_args tys =
     if List.is_empty tys then
       []
     else
-      [
-        ( "optional_args",
-          JSON_Array (List.map tys ~f:(from_type env ~show_like_ty)) );
-      ]
+      [("optional_args", `List (List.map tys ~f:(from_type env ~show_like_ty)))]
   in
   let variadic_arg ty =
     if is_nothing ty then
@@ -94,41 +88,41 @@ let rec from_type : env -> show_like_ty:bool -> locl_ty -> json =
     | Nonexact r when Class_refinement.is_empty r -> []
     | Nonexact { cr_consts } ->
       let ref_const (id, { rc_bound; rc_is_ctx }) =
-        let is_ctx_json = ("is_ctx", JSON_Bool rc_is_ctx) in
+        let is_ctx_json = ("is_ctx", `Bool rc_is_ctx) in
         match rc_bound with
         | TRexact ty ->
           obj
             [
-              ("type", JSON_String id);
+              ("type", `String id);
               ("equal", from_type env ~show_like_ty ty);
               is_ctx_json;
             ]
         | TRloose { tr_lower; tr_upper } ->
           let ty_list tys =
-            JSON_Array (List.map tys ~f:(from_type env ~show_like_ty))
+            `List (List.map tys ~f:(from_type env ~show_like_ty))
           in
           obj
             [
-              ("type", JSON_String id);
+              ("type", `String id);
               ("lower", ty_list tr_lower);
               ("upper", ty_list tr_upper);
               is_ctx_json;
             ]
       in
-      [("refs", JSON_Array (List.map (SMap.bindings cr_consts) ~f:ref_const))]
+      [("refs", `List (List.map (SMap.bindings cr_consts) ~f:ref_const))]
   in
   let typ ty = [("type", from_type env ~show_like_ty ty)] in
   let result ty = [("result", from_type env ~show_like_ty ty)] in
-  let name x = [("name", JSON_String x)] in
-  let optional x = [("optional", JSON_Bool x)] in
-  let is_array x = [("is_array", JSON_Bool x)] in
+  let name x = [("name", `String x)] in
+  let optional x = [("optional", `Bool x)] in
+  let is_array x = [("is_array", `Bool x)] in
   let shape_field_name_to_json shape_field =
     (* TODO: need to update userland tooling? *)
     match shape_field with
-    | Typing_defs.TSFregex_group (_, s) -> Hh_json.JSON_Number s
-    | Typing_defs.TSFlit_str (_, s) -> Hh_json.JSON_String s
+    | Typing_defs.TSFregex_group (_, s) -> `Intlit s
+    | Typing_defs.TSFlit_str (_, s) -> `String s
     | Typing_defs.TSFclass_const ((_, s1), (_, s2)) ->
-      Hh_json.JSON_Array [Hh_json.JSON_String s1; Hh_json.JSON_String s2]
+      `List [`String s1; `String s2]
   in
   let make_field (k, v) =
     obj
@@ -136,7 +130,7 @@ let rec from_type : env -> show_like_ty:bool -> locl_ty -> json =
     @ optional v.sft_optional
     @ typ v.sft_ty
   in
-  let fields fl = [("fields", JSON_Array (List.map fl ~f:make_field))] in
+  let fields fl = [("fields", `List (List.map fl ~f:make_field))] in
   let as_type ty = [("as", from_type env ~show_like_ty ty)] in
   match (get_pos ty, get_node ty) with
   | (_, Tvar n) ->
@@ -203,13 +197,13 @@ let rec from_type : env -> show_like_ty:bool -> locl_ty -> json =
             | Filled ty ->
               obj
                 [
-                  ("generic_kind", JSON_String "filled");
+                  ("generic_kind", `String "filled");
                   ("type", from_type env ~show_like_ty ty);
                 ]
-            | Wildcard _ -> obj [("generic_kind", JSON_String "wildcard")]
+            | Wildcard _ -> obj [("generic_kind", `String "wildcard")]
           in
           let args_json = List.map args ~f:generic_json in
-          name s @ [("args", JSON_Array args_json)]
+          name s @ [("args", `List args_json)]
     and predicate_json predicate =
       match snd predicate with
       | IsTag tag -> tag_json tag
@@ -217,28 +211,28 @@ let rec from_type : env -> show_like_ty:bool -> locl_ty -> json =
         let predicates_json =
           List.map tp_required ~f:(fun p -> obj @@ predicate_json p)
         in
-        name "istuple" @ [("args", JSON_Array predicates_json)]
+        name "istuple" @ [("args", `List predicates_json)]
       | IsShapeOf { sp_fields; sp_allows_unknown_fields } ->
         name "isshape"
         @ [
             ( "fields",
-              JSON_Array
+              `List
                 (List.map
                    ~f:(fun (field, { sfp_predicate; sfp_optional }) ->
                      obj
                      @@ [
                           ("name", shape_field_name_to_json field);
                           ("predicate", obj @@ predicate_json sfp_predicate);
-                          ("optional", JSON_Bool sfp_optional);
+                          ("optional", `Bool sfp_optional);
                         ])
                    (TShapeMap.bindings sp_fields)) );
-            ("allows_unknown_fields", JSON_Bool sp_allows_unknown_fields);
+            ("allows_unknown_fields", `Bool sp_allows_unknown_fields);
           ]
       | IsUnionOf predicates ->
         let predicates_json =
           List.map predicates ~f:(fun p -> obj @@ predicate_json p)
         in
-        name "isunion" @ [("args", JSON_Array predicates_json)]
+        name "isunion" @ [("args", `List predicates_json)]
       (* TODO: T196048813 optional, open, fuel? *)
     in
     obj @@ kind p "negation" @ predicate_json predicate
@@ -252,7 +246,7 @@ let rec from_type : env -> show_like_ty:bool -> locl_ty -> json =
     obj
     @@ kind p "shape"
     @ is_array false
-    @ [("fields_known", JSON_Bool fields_known)]
+    @ [("fields_known", `Bool fields_known)]
     @ fields (TShapeMap.bindings fl)
   | (p, Tunion []) -> obj @@ kind p "nothing"
   | (_, Tunion [ty]) -> from_type env ~show_like_ty ty
@@ -276,18 +270,16 @@ let rec from_type : env -> show_like_ty:bool -> locl_ty -> json =
     end
   | (p, Tfun ft) ->
     let fun_kind p = kind p "function" in
-    let callconv cc =
-      [("callConvention", JSON_String (param_mode_to_string cc))]
-    in
+    let callconv cc = [("callConvention", `String (param_mode_to_string cc))] in
     let readonly_param ro =
       if ro then
-        [("readonly", JSON_Bool true)]
+        [("readonly", `Bool true)]
       else
         []
     in
     let optional_param opt =
       if opt then
-        [("optional", JSON_Bool true)]
+        [("optional", `Bool true)]
       else
         []
     in
@@ -300,23 +292,23 @@ let rec from_type : env -> show_like_ty:bool -> locl_ty -> json =
     in
     let readonly_this ro =
       if ro then
-        [("readonly_this", JSON_Bool true)]
+        [("readonly_this", `Bool true)]
       else
         []
     in
     let readonly_ret ro =
       if ro then
-        [("readonly_return", JSON_Bool true)]
+        [("readonly_return", `Bool true)]
       else
         []
     in
-    let params fps = [("params", JSON_Array (List.map fps ~f:param))] in
+    let params fps = [("params", `List (List.map fps ~f:param))] in
 
     (* Function type parameters shouldn't be declared with variance annotations *)
     let tparams ft_tparams =
       [
         ( "tparams",
-          JSON_Array
+          `List
             (List.map
                ft_tparams
                ~f:(fun
@@ -325,14 +317,13 @@ let rec from_type : env -> show_like_ty:bool -> locl_ty -> json =
                   ->
                  obj
                    [
-                     ("name", JSON_String (snd tp_name));
+                     ("name", `String (snd tp_name));
                      ( "constraints",
-                       JSON_Array
+                       `List
                          (List.map tp_constraints ~f:(fun (c, ty) ->
                               obj (cstr_kind c :: typ ty))) );
                      ( "user_attributes",
-                       JSON_Array
-                         (List.map tp_user_attributes ~f:user_attribute) );
+                       `List (List.map tp_user_attributes ~f:user_attribute) );
                    ])) );
       ]
     in
@@ -364,47 +355,52 @@ let wrap_json_accessor f x =
   | Error access_failure ->
     Error
       (Deserialization_error
-         (Hh_json.Access.access_failure_to_string access_failure))
+         (Hh_json_helpers.Access.access_failure_to_string access_failure))
 
 let wrap_json_accessor_with_default ~default f x =
   match f x with
   | Ok value -> Ok value
-  | Error (Hh_json.Access.Missing_key_error _) -> Ok default
+  | Error (Hh_json_helpers.Access.Missing_key_error _) -> Ok default
   | Error access_failure ->
     Error
       (Deserialization_error
-         (Hh_json.Access.access_failure_to_string access_failure))
+         (Hh_json_helpers.Access.access_failure_to_string access_failure))
 
 let wrap_json_accessor_with_opt f x =
   match f x with
   | Ok value -> Ok (Some value)
-  | Error (Hh_json.Access.Missing_key_error _) -> Ok None
+  | Error (Hh_json_helpers.Access.Missing_key_error _) -> Ok None
   | Error access_failure ->
     Error
       (Deserialization_error
-         (Hh_json.Access.access_failure_to_string access_failure))
+         (Hh_json_helpers.Access.access_failure_to_string access_failure))
 
-let get_string x = wrap_json_accessor (Hh_json.Access.get_string x)
+let get_string x = wrap_json_accessor (Hh_json_helpers.Access.get_string x)
 
-let get_bool x = wrap_json_accessor (Hh_json.Access.get_bool x)
+let get_bool x = wrap_json_accessor (Hh_json_helpers.Access.get_bool x)
 
-let get_array x = wrap_json_accessor (Hh_json.Access.get_array x)
+let get_array x = wrap_json_accessor (Hh_json_helpers.Access.get_array x)
 
 let get_array_opt x =
-  wrap_json_accessor_with_default ~default:([], []) (Hh_json.Access.get_array x)
+  wrap_json_accessor_with_default
+    ~default:([], [])
+    (Hh_json_helpers.Access.get_array x)
 
-let get_val x = wrap_json_accessor (Hh_json.Access.get_val x)
+let get_val x = wrap_json_accessor (Hh_json_helpers.Access.get_val x)
 
-let get_obj x = wrap_json_accessor (Hh_json.Access.get_obj x)
+let get_obj x = wrap_json_accessor (Hh_json_helpers.Access.get_obj x)
 
-let get_obj_opt x = wrap_json_accessor_with_opt (Hh_json.Access.get_obj x)
+let get_obj_opt x =
+  wrap_json_accessor_with_opt (Hh_json_helpers.Access.get_obj x)
 
 let deserialization_error ~message ~keytrace =
   Error
-    (Deserialization_error (message ^ Hh_json.Access.keytrace_to_string keytrace))
+    (Deserialization_error
+       (message ^ Hh_json_helpers.Access.keytrace_to_string keytrace))
 
 let not_supported ~message ~keytrace =
-  Error (Not_supported (message ^ Hh_json.Access.keytrace_to_string keytrace))
+  Error
+    (Not_supported (message ^ Hh_json_helpers.Access.keytrace_to_string keytrace))
 
 let get_constraint_kind key (json, keytrace) =
   Result.(
@@ -415,11 +411,13 @@ let get_constraint_kind key (json, keytrace) =
     | "eq" -> Ok Constraint_eq
     | _ -> deserialization_error ~message:"Expected constraint kind" ~keytrace)
 
-let to_locl_ty ?(keytrace = []) (ctx : Provider_context.t) (json : Hh_json.json)
-    : deserialized_result =
+let to_locl_ty
+    ?(keytrace = []) (ctx : Provider_context.t) (json : Yojson.Safe.t) :
+    deserialized_result =
   let reason = Reason.none in
   let ty (ty : locl_phase ty_) : deserialized_result = Ok (mk (reason, ty)) in
-  let rec aux (json : Hh_json.json) ~(keytrace : Hh_json.Access.keytrace) :
+  let rec aux
+      (json : Yojson.Safe.t) ~(keytrace : Hh_json_helpers.Access.keytrace) :
       deserialized_result =
     Result.Monad_infix.(
       get_string "kind" (json, keytrace) >>= fun (kind, kind_keytrace) ->
@@ -471,7 +469,7 @@ let to_locl_ty ?(keytrace = []) (ctx : Provider_context.t) (json : Hh_json.json)
         let ids =
           map_array ids_array ~keytrace:ids_keytrace ~f:(fun id_str ~keytrace ->
               match id_str with
-              | JSON_String id -> Ok id
+              | `String id -> Ok id
               | _ ->
                 deserialization_error ~message:"Expected a string" ~keytrace)
         in
@@ -589,12 +587,13 @@ let to_locl_ty ?(keytrace = []) (ctx : Provider_context.t) (json : Hh_json.json)
           let dummy_pos = Pos_or_decl.none in
           begin
             match name with
-            | Hh_json.JSON_Number name ->
-              Ok (Typing_defs.TSFregex_group (dummy_pos, name))
-            | Hh_json.JSON_String name ->
-              Ok (Typing_defs.TSFlit_str (dummy_pos, name))
-            | Hh_json.JSON_Array
-                [Hh_json.JSON_String name1; Hh_json.JSON_String name2] ->
+            | `Int n ->
+              Ok (Typing_defs.TSFregex_group (dummy_pos, string_of_int n))
+            | `Float f ->
+              Ok (Typing_defs.TSFregex_group (dummy_pos, Float.to_string f))
+            | `Intlit s -> Ok (Typing_defs.TSFregex_group (dummy_pos, s))
+            | `String name -> Ok (Typing_defs.TSFlit_str (dummy_pos, name))
+            | `List [`String name1; `String name2] ->
               Ok
                 (Typing_defs.TSFclass_const
                    ((dummy_pos, name1), (dummy_pos, name2)))
@@ -756,12 +755,12 @@ let to_locl_ty ?(keytrace = []) (ctx : Provider_context.t) (json : Hh_json.json)
           ~keytrace:kind_keytrace)
   and map_array :
       type a.
-      Hh_json.json list ->
+      Yojson.Safe.t list ->
       f:
-        (Hh_json.json ->
-        keytrace:Hh_json.Access.keytrace ->
+        (Yojson.Safe.t ->
+        keytrace:Hh_json_helpers.Access.keytrace ->
         (a, deserialization_error) result) ->
-      keytrace:Hh_json.Access.keytrace ->
+      keytrace:Hh_json_helpers.Access.keytrace ->
       (a list, deserialization_error) result =
    fun array ~f ~keytrace ->
     let array =
@@ -769,73 +768,83 @@ let to_locl_ty ?(keytrace = []) (ctx : Provider_context.t) (json : Hh_json.json)
           f elem ~keytrace:(string_of_int i :: keytrace))
     in
     Result.all array
-  and aux_args (args : Hh_json.json list) ~(keytrace : Hh_json.Access.keytrace)
+  and aux_args
+      (args : Yojson.Safe.t list) ~(keytrace : Hh_json_helpers.Access.keytrace)
       : (locl_ty list, deserialization_error) result =
     map_array args ~keytrace ~f:aux
-  and aux_variadic_arg (arg : (Hh_json.json * Hh_json.Access.keytrace) option) :
+  and aux_variadic_arg
+      (arg : (Yojson.Safe.t * Hh_json_helpers.Access.keytrace) option) :
       (locl_ty, deserialization_error) result =
     match arg with
     | None -> Ok (Typing_make_type.nothing Reason.none)
     | Some (ty, keytrace) -> aux ty ~keytrace
-  and aux_refs (refs : Hh_json.json list) ~(keytrace : Hh_json.Access.keytrace)
+  and aux_refs
+      (refs : Yojson.Safe.t list) ~(keytrace : Hh_json_helpers.Access.keytrace)
       : (locl_class_refinement, deserialization_error) result =
     let of_refined_consts consts = { cr_consts = SMap.of_list consts } in
     Result.map ~f:of_refined_consts (map_array refs ~keytrace ~f:aux_ref)
-  and aux_ref (json : Hh_json.json) ~(keytrace : Hh_json.Access.keytrace) :
+  and aux_ref
+      (json : Yojson.Safe.t) ~(keytrace : Hh_json_helpers.Access.keytrace) :
       (string * locl_refined_const, deserialization_error) result =
     Result.Monad_infix.(
       get_bool "is_ctx" (json, keytrace) >>= fun (rc_is_ctx, _) ->
       get_string "type" (json, keytrace) >>= fun (id, _) ->
-      match Hh_json.Access.get_obj "equal" (json, keytrace) with
+      match Hh_json_helpers.Access.get_obj "equal" (json, keytrace) with
       | Ok (ty_json, ty_keytrace) ->
         aux ty_json ~keytrace:ty_keytrace >>= fun ty ->
         Ok (id, { rc_bound = TRexact ty; rc_is_ctx })
-      | Error (Hh_json.Access.Missing_key_error _) ->
+      | Error (Hh_json_helpers.Access.Missing_key_error _) ->
         get_array "lower" (json, keytrace) >>= fun (los_json, los_keytrace) ->
         get_array "upper" (json, keytrace) >>= fun (ups_json, ups_keytrace) ->
         map_array los_json ~keytrace:los_keytrace ~f:aux >>= fun tr_lower ->
         map_array ups_json ~keytrace:ups_keytrace ~f:aux >>= fun tr_upper ->
         Ok (id, { rc_bound = TRloose { tr_lower; tr_upper }; rc_is_ctx })
       | Error _ as e -> wrap_json_accessor (fun _ -> e) ())
-  and aux_as (json : Hh_json.json) ~(keytrace : Hh_json.Access.keytrace) :
+  and aux_as
+      (json : Yojson.Safe.t) ~(keytrace : Hh_json_helpers.Access.keytrace) :
       (locl_ty, deserialization_error) result =
     Result.Monad_infix.(
       (* as-constraint is optional, check to see if it exists. *)
-      match Hh_json.Access.get_obj "as" (json, keytrace) with
+      match Hh_json_helpers.Access.get_obj "as" (json, keytrace) with
       | Ok (as_json, as_keytrace) ->
         aux as_json ~keytrace:as_keytrace >>= fun as_ty -> Ok as_ty
-      | Error (Hh_json.Access.Missing_key_error _) ->
+      | Error (Hh_json_helpers.Access.Missing_key_error _) ->
         Ok (mk (Reason.none, Toption (mk (Reason.none, Tnonnull))))
       | Error access_failure ->
         deserialization_error
           ~message:
             ("Invalid as-constraint: "
-            ^ Hh_json.Access.access_failure_to_string access_failure)
+            ^ Hh_json_helpers.Access.access_failure_to_string access_failure)
           ~keytrace)
-  and aux_capability (json : Hh_json.json) ~(keytrace : Hh_json.Access.keytrace)
-      : (locl_ty capability, deserialization_error) result =
+  and aux_capability
+      (json : Yojson.Safe.t) ~(keytrace : Hh_json_helpers.Access.keytrace) :
+      (locl_ty capability, deserialization_error) result =
     Result.Monad_infix.(
-      match Hh_json.Access.get_obj "capability" (json, keytrace) with
+      match Hh_json_helpers.Access.get_obj "capability" (json, keytrace) with
       | Ok (cap_json, cap_keytrace) ->
         aux cap_json ~keytrace:cap_keytrace >>= fun cap_ty -> Ok (CapTy cap_ty)
-      | Error (Hh_json.Access.Missing_key_error _) ->
+      | Error (Hh_json_helpers.Access.Missing_key_error _) ->
         (* The "capability" key is omitted for CapDefaults during encoding *)
         Ok (CapDefaults Pos_or_decl.none)
       | Error access_failure ->
         deserialization_error
           ~message:
             ("Invalid capability: "
-            ^ Hh_json.Access.access_failure_to_string access_failure)
+            ^ Hh_json_helpers.Access.access_failure_to_string access_failure)
           ~keytrace)
   and aux_get_bool_with_default
-      key default (json : Hh_json.json) ~(keytrace : Hh_json.Access.keytrace) :
+      key
+      default
+      (json : Yojson.Safe.t)
+      ~(keytrace : Hh_json_helpers.Access.keytrace) :
       (bool, deserialization_error) result =
-    match Hh_json.Access.get_bool key (json, keytrace) with
+    match Hh_json_helpers.Access.get_bool key (json, keytrace) with
     | Ok (value, _keytrace) -> Ok value
-    | Error (Hh_json.Access.Missing_key_error _) -> Ok default
+    | Error (Hh_json_helpers.Access.Missing_key_error _) -> Ok default
     | Error access_failure ->
       deserialization_error
-        ~message:(Hh_json.Access.access_failure_to_string access_failure)
+        ~message:
+          (Hh_json_helpers.Access.access_failure_to_string access_failure)
         ~keytrace
   and aux_constraint json ~keytrace =
     Result.(

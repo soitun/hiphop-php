@@ -24,13 +24,13 @@ let error_from_load_error (load_error : Saved_state_loader.LoadError.t) :
     ClientIdeMessage.rich_error =
   let data =
     Some
-      (Hh_json.JSON_Object
-         [
-           ( "debug_details",
-             Hh_json.string_
-               (Saved_state_loader.LoadError.debug_details_of_error load_error)
-           );
-         ])
+      (`Assoc
+        [
+          ( "debug_details",
+            `String
+              (Saved_state_loader.LoadError.debug_details_of_error load_error)
+          );
+        ])
   in
   let reason =
     ClientIdeUtils.make_rich_error
@@ -146,9 +146,7 @@ let init_via_build
     | { Naming_table_builder_ffi_externs.exit_status; time_taken_secs = _; _ }
       ->
       let data =
-        Some
-          (Hh_json.JSON_Object
-             [("naming_table_builder_exit_status", Hh_json.int_ exit_status)])
+        Some (`Assoc [("naming_table_builder_exit_status", `Int exit_status)])
       in
       Lwt.return
         (Failure (ClientIdeUtils.make_rich_error "full_index_error" ~data))
@@ -185,7 +183,7 @@ let init_via_find
       match load_off_disk_result with
       | Ok result -> Lwt.return (Success result)
       | Error err ->
-        let data = Some (Hh_json.JSON_Object [("err", Hh_json.string_ err)]) in
+        let data = Some (`Assoc [("err", `String err)]) in
         Lwt.return
           (Failure (ClientIdeUtils.make_rich_error "find_failed" ~data))
     end
@@ -257,12 +255,12 @@ let map_attempt
       Lwt.return_error (telemetry, prev_error)
     | Failure reason ->
       let { ClientIdeMessage.category; data; _ } = reason in
-      let data = Option.value data ~default:Hh_json.JSON_Null in
+      let data = Option.value data ~default:`Null in
       Hh_logger.log
         "Init: %s error - %s - %s"
         key
         category
-        (Hh_json.json_to_string data);
+        (Hh_json_helpers.Out.to_string data);
       let telemetry =
         telemetry
         |> Telemetry.object_
@@ -271,7 +269,7 @@ let map_attempt
                (Telemetry.create ()
                |> Telemetry.duration ~start_time
                |> Telemetry.string_ ~key:"error" ~value:category
-               |> Telemetry.json_ ~key:"data" ~value:data)
+               |> Telemetry.json ~key:"data" ~value:data)
       in
       Lwt.return_error (telemetry, reason)
   with

@@ -7,7 +7,6 @@
  *)
 
 open Hh_prelude
-open Hh_json
 
 type t = {
   path: Relative_path.t;
@@ -18,8 +17,8 @@ let from_file path = { path; fanout = true }
 
 let parse_line s =
   if String.is_prefix s ~prefix:"{" then
-    match json_of_string s with
-    | JSON_Object [("path", JSON_String p); ("fanout", JSON_Bool f)] ->
+    match Yojson.Safe.from_string s with
+    | `Assoc [("path", `String p); ("fanout", `Bool f)] ->
       { path = Relative_path.storage_of_string p; fanout = f }
     | _ -> failwith "Can't parse paths file"
   else

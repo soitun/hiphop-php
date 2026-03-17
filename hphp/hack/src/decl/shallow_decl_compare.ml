@@ -64,19 +64,16 @@ let log_changes (changes : (string * Class_diff.t) list) : unit =
   let max = 1000 in
   Hh_logger.log_lazy
   @@ lazy
-       Hh_json.(
-         json_to_multiline
-         @@ JSON_Object
-              [
-                ( "diffs",
-                  JSON_Object
-                    (List.take changes max
-                    |> List.map
-                         ~f:
-                           (Tuple2.map_snd ~f:(fun diff ->
-                                string_ @@ Class_diff.show diff))) );
-                ("truncated", bool_ (change_count > max));
-              ]);
+       (Hh_json_helpers.Out.pretty_to_string
+          (`Assoc
+            [
+              ( "diffs",
+                `Assoc
+                  (List.take changes max
+                  |> List.map ~f:(fun (name, diff) ->
+                         (name, `String (Class_diff.show diff)))) );
+              ("truncated", `Bool (change_count > max));
+            ]));
   ()
 
 let compute_changes

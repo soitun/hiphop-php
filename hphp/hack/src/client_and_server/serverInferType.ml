@@ -444,4 +444,4 @@ let go_ctx
   let env = get_env info in
   let ty = get_type info in
   ( Tast_env.print_ty env ty,
-    Tast_env.ty_to_json env ty |> Hh_json.json_to_string )
+    Tast_env.ty_to_json env ty |> Hh_json_helpers.Out.to_string )

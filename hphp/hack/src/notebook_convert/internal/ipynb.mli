@@ -11,28 +11,28 @@ type cell =
   | Non_hack of {
       cell_type: string;
       contents: string;
-      cell_bento_metadata: Hh_json.json option;
+      cell_bento_metadata: Yojson.Safe.t option;
           (** Corresponds to the cell-level "metadata" field in ipynb format.  *)
     }
   | Hack of {
       contents: string;
-      cell_bento_metadata: Hh_json.json option;
+      cell_bento_metadata: Yojson.Safe.t option;
           (** Corresponds to the cell-level "metadata" field in ipynb format.  *)
     }
 
 type t = {
   cells: cell list;
-  kernelspec: Hh_json.json;
+  kernelspec: Yojson.Safe.t;
 }
 
 (** Expects JSON matching schema:
 * https://github.com/jupyter/nbformat/blob/main/nbformat/v4/nbformat.v4.schema.json
 *)
-val ipynb_of_json : Hh_json.json -> (t, string) result
+val ipynb_of_json : Yojson.Safe.t -> (t, string) result
 
-val ipynb_to_json : t -> Hh_json.json
+val ipynb_to_json : t -> Yojson.Safe.t
 
 val ipynb_of_chunks :
   Notebook_chunk.t list ->
-  kernelspec:Hh_json.json ->
+  kernelspec:Yojson.Safe.t ->
   (t, Notebook_convert_error.t) result

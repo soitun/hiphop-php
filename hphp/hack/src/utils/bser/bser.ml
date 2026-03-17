@@ -209,11 +209,11 @@ let throws_visitor =
   }
 
 type json_state =
-  | Js_value of Hh_json.json
-  | Js_buildingArray of Hh_json.json list
-  | Js_buildingObject of (string * Hh_json.json) list
+  | Js_value of Yojson.Safe.t
+  | Js_buildingArray of Yojson.Safe.t list
+  | Js_buildingObject of (string * Yojson.Safe.t) list
   | Js_buildingField of string
-  | Js_buildingTemplate of string array * Hh_json.json list
+  | Js_buildingTemplate of string array * Yojson.Safe.t list
 
 type json_acc = json_state list
 
@@ -223,22 +223,21 @@ let json_callbacks =
     array_end =
       (function
       | Js_buildingArray elts :: rest ->
-        Js_value (Hh_json.JSON_Array (List.rev elts)) :: rest
+        Js_value (`List (List.rev elts)) :: rest
       | _ -> raise (ParseStateException (-1)));
     array_item_end =
       (function
       | Js_value x :: Js_buildingArray elts :: rest ->
         Js_buildingArray (x :: elts) :: rest
       | _ -> raise (ParseStateException (-1)));
-    integer_value =
-      (fun acc i -> Js_value (Hh_json.JSON_Number (string_of_int i)) :: acc);
-    string_value = (fun acc w -> Js_value (Hh_json.JSON_String w) :: acc);
+    integer_value = (fun acc i -> Js_value (`Int i) :: acc);
+    string_value = (fun acc w -> Js_value (`String w) :: acc);
     object_start = (fun acc _size -> Js_buildingObject [] :: acc);
     object_end =
       (function
       | Js_buildingObject elts :: rest ->
         (* note: no order fixup of name value pairs here *)
-        Js_value (Hh_json.JSON_Object elts) :: rest
+        Js_value (`Assoc elts) :: rest
       | _ -> raise (ParseStateException (-1)));
     field_start =
       (fun acc name ->
@@ -250,14 +249,14 @@ let json_callbacks =
       | Js_value x :: Js_buildingField f :: Js_buildingObject elts :: xs ->
         Js_buildingObject ((f, x) :: elts) :: xs
       | _ -> raise (ParseStateException (-1)));
-    boolean_value = (fun acc b -> Js_value (Hh_json.JSON_Bool b) :: acc);
-    null_value = (fun acc -> Js_value Hh_json.JSON_Null :: acc);
+    boolean_value = (fun acc b -> Js_value (`Bool b) :: acc);
+    null_value = (fun acc -> Js_value `Null :: acc);
     template_start =
       (fun acc fields _size -> Js_buildingTemplate (fields, []) :: acc);
     template_end =
       (function
       | Js_buildingTemplate (_, elts) :: rest ->
-        Js_value (Hh_json.JSON_Array (List.rev elts)) :: rest
+        Js_value (`List (List.rev elts)) :: rest
       | _ -> raise (ParseStateException (-1)));
     template_object_start =
       (fun acc ->
@@ -269,8 +268,7 @@ let json_callbacks =
         match acc with
         | Js_buildingObject fields :: Js_buildingTemplate (names, elts) :: rest
           ->
-          Js_buildingTemplate (names, Hh_json.JSON_Object fields :: elts)
-          :: rest
+          Js_buildingTemplate (names, `Assoc fields :: elts) :: rest
         | _ -> raise (ParseStateException (-1)));
     template_field_start =
       (fun acc i ->
@@ -286,7 +284,7 @@ let json_callbacks =
       | _ -> raise (ParseStateException (-1)));
   }
 
-let json_of_bser_file path : Hh_json.json =
+let json_of_bser_file path : Yojson.Safe.t =
   let ic = Sys_utils.open_in_bin_no_fail path in
   if input_char ic <> '\x00' then raise (ParseException (pos_in ic));
   if input_char ic <> '\x01' then raise (ParseException (pos_in ic));

@@ -2,12 +2,11 @@ open Hh_prelude
 open ServerDepsUtil
 
 let build_json_def def =
-  let open Hh_json in
-  Hh_json.JSON_Object
+  `Assoc
     [
       ( "kind",
-        string_ (SymbolDefinition.string_of_kind def.SymbolDefinition.kind) );
-      ("name", string_ (SymbolDefinition.full_name def));
+        `String (SymbolDefinition.string_of_kind def.SymbolDefinition.kind) );
+      ("name", `String (SymbolDefinition.full_name def));
       ( "position",
         Pos.to_absolute def.SymbolDefinition.pos |> Pos.multiline_json );
     ]
@@ -19,30 +18,30 @@ let rec build_json_entry
     ~(get_def :
        Relative_path.t SymbolOccurrence.t ->
        Relative_path.t SymbolDefinition.t option)
-    (occ : Relative_path.t SymbolOccurrence.t) : Hh_json.json =
+    (occ : Relative_path.t SymbolOccurrence.t) : Yojson.Safe.t =
   let open SymbolOccurrence in
-  let open Hh_json in
   let def_opt = get_def occ in
   let depends_json =
     match def_opt with
-    | None -> string_ "None"
+    | None -> `String "None"
     | Some def ->
       if Option.is_none occ.is_declaration then
         build_json_def def
       else
         let body_list = body_symbols ~ctx ~entry total_occ_list occ def in
-        Hh_json.array_
-          (build_json_entry ~ctx ~entry ~total_occ_list ~get_def)
-          body_list
+        `List
+          (List.map
+             body_list
+             ~f:(build_json_entry ~ctx ~entry ~total_occ_list ~get_def))
   in
-  Hh_json.JSON_Object
+  `Assoc
     [
-      ("kind", kind_to_string occ.type_ |> string_);
-      ("name", string_ occ.name);
+      ("kind", `String (kind_to_string occ.type_));
+      ("name", `String occ.name);
       ( "declaration",
-        opt_
-          (fun p -> Pos.to_absolute p |> Pos.multiline_json)
-          occ.is_declaration );
+        match occ.is_declaration with
+        | None -> `Null
+        | Some p -> Pos.to_absolute p |> Pos.multiline_json );
       ("position", Pos.to_absolute occ.pos |> Pos.multiline_json);
       ("depends_on", depends_json);
     ]
@@ -58,7 +57,7 @@ let interesting_occ (occ : Relative_path.t SymbolOccurrence.t) : bool =
   | _ -> true
 
 let go_json :
-    Provider_context.t -> (string * int * int) list -> Hh_json.json list =
+    Provider_context.t -> (string * int * int) list -> Yojson.Safe.t list =
  fun server_ctx pos_list ->
   let json_of_symbols acc_ctx_in (file, line, column) =
     let (acc_ctx_out, entry, _, get_def) = get_def_setup acc_ctx_in file in
@@ -68,7 +67,7 @@ let go_json :
     in
     let symbols = List.filter total_occ_list ~f:(is_target line column) in
     let json =
-      Hh_json.JSON_Array
+      `List
         (List.map
            symbols
            ~f:
@@ -85,4 +84,4 @@ let go_json :
 let go (ctx : Provider_context.t) (pos_list : (string * int * int) list) :
     string list =
   let jsons = go_json ctx pos_list in
-  List.map jsons ~f:(Hh_json.json_to_string ~pretty:true)
+  List.map jsons ~f:Hh_json_helpers.Out.pretty_to_string

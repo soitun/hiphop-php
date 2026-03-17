@@ -43,7 +43,7 @@ let go
      This differs from `hh --json` to align with the information sent to VSCode
      (similar structure, though not identical). The `hh --json` format includes
      unnecessary extra fields that aren't needed for this use case. *)
-  let error_to_json : Diagnostics.diagnostic -> Hh_json.json =
+  let error_to_json : Diagnostics.diagnostic -> Yojson.Safe.t =
    fun err ->
     let {
       User_diagnostic.severity;
@@ -58,27 +58,24 @@ let go
     } =
       User_diagnostic.to_absolute err
     in
-    let msg_to_json msg =
-      Hh_json.string_ @@ Markdown_lite.render ~add_bold:false msg
-    in
+    let msg_to_json msg = `String (Markdown_lite.render ~add_bold:false msg) in
     let reason_to_json (pos, msg) =
-      Hh_json.JSON_Object
+      `Assoc
         [("location", Pos.multiline_json pos); ("message", msg_to_json msg)]
     in
-    Hh_json.JSON_Object
+    `Assoc
       [
         ( "severity",
-          Hh_json.string_
-          @@ User_diagnostic.Severity.to_all_caps_string severity );
+          `String (User_diagnostic.Severity.to_all_caps_string severity) );
         ("range", Pos.multiline_json_no_filename pos);
         ("message", msg_to_json claim_msg);
-        ("relatedInformation", Hh_json.array_ reason_to_json reasons);
-        ("customErrors", Hh_json.array_ msg_to_json custom_msgs);
+        ("relatedInformation", `List (List.map ~f:reason_to_json reasons));
+        ("customErrors", `List (List.map ~f:msg_to_json custom_msgs));
         ( "lineAgnosticHash",
-          Hh_json.string_
-          @@ Printf.sprintf
+          `String
+            (Printf.sprintf
                "%x"
-               (User_diagnostic.hash_diagnostic_for_saved_state err) );
+               (User_diagnostic.hash_diagnostic_for_saved_state err)) );
       ]
   in
   let errors = Diagnostics.drop_fixmed_errors_in_files errors in
@@ -92,12 +89,12 @@ let go
     |> Telemetry.string_
          ~key:"filename"
          ~value:(Relative_path.to_absolute relpath)
-    |> Telemetry.json_
+    |> Telemetry.json
          ~key:"diagnostics"
          ~value:
-           (Hh_json.JSON_Array
-              (Relative_path.Map.find_opt file_to_error_json relpath
-              |> Option.value ~default:[]))
+           (`List
+             (Relative_path.Map.find_opt file_to_error_json relpath
+             |> Option.value ~default:[]))
   in
   Telemetry.create ()
   |> Telemetry.object_list

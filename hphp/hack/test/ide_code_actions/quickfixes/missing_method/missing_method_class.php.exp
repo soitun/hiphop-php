@@ -10,31 +10,37 @@ Code action title: Add override for FooParent::bar
 JSON for selected code action:
 ------------------------------------------
 {
-  "command":{
-    "arguments":[
-      {"end":{"character":4,"line":10},"start":{"character":4,"line":10}},
-      {
-        "arguments":[],
-        "command":"editor.action.inlineSuggest.trigger",
-        "title":"Trigger Inline Suggest"
-      }
-    ],
-    "command":"hack.setSelection",
-    "title":"Set Cursor Selection"
-  },
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Add override for FooParent::bar",
+  "kind": "refactor",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"\n  <<__Override>>\n  public function bar(): void {\n    \n  }\n\n",
-          "range":{"end":{"character":29,"line":7},"start":{"character":29,"line":7}}
+          "range": {
+            "start": { "line": 7, "character": 29 },
+            "end": { "line": 7, "character": 29 }
+          },
+          "newText": "\n  <<__Override>>\n  public function bar(): void {\n    \n  }\n\n"
         }
       ]
     }
   },
-  "kind":"refactor",
-  "title":"Add override for FooParent::bar"
+  "command": {
+    "title": "Set Cursor Selection",
+    "command": "hack.setSelection",
+    "arguments": [
+      {
+        "start": { "line": 10, "character": 4 },
+        "end": { "line": 10, "character": 4 }
+      },
+      {
+        "title": "Trigger Inline Suggest",
+        "command": "editor.action.inlineSuggest.trigger",
+        "arguments": []
+      }
+    ]
+  }
 }
 
 Applied edit for code action:
@@ -61,31 +67,37 @@ Code action title: Add override for FooParent::baz
 JSON for selected code action:
 ------------------------------------------
 {
-  "command":{
-    "arguments":[
-      {"end":{"character":4,"line":10},"start":{"character":4,"line":10}},
-      {
-        "arguments":[],
-        "command":"editor.action.inlineSuggest.trigger",
-        "title":"Trigger Inline Suggest"
-      }
-    ],
-    "command":"hack.setSelection",
-    "title":"Set Cursor Selection"
-  },
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Add override for FooParent::baz",
+  "kind": "refactor",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"\n  <<__Override>>\n  public function baz(): void {\n    \n  }\n\n",
-          "range":{"end":{"character":29,"line":7},"start":{"character":29,"line":7}}
+          "range": {
+            "start": { "line": 7, "character": 29 },
+            "end": { "line": 7, "character": 29 }
+          },
+          "newText": "\n  <<__Override>>\n  public function baz(): void {\n    \n  }\n\n"
         }
       ]
     }
   },
-  "kind":"refactor",
-  "title":"Add override for FooParent::baz"
+  "command": {
+    "title": "Set Cursor Selection",
+    "command": "hack.setSelection",
+    "arguments": [
+      {
+        "start": { "line": 10, "character": 4 },
+        "end": { "line": 10, "character": 4 }
+      },
+      {
+        "title": "Trigger Inline Suggest",
+        "command": "editor.action.inlineSuggest.trigger",
+        "arguments": []
+      }
+    ]
+  }
 }
 
 Applied edit for code action:

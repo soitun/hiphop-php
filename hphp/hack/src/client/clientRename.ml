@@ -54,15 +54,15 @@ let patch_to_json res =
   let pos = get_pos res in
   let (char_start, char_end) = Pos.info_raw pos in
   let (line, start, end_) = Pos.info_pos pos in
-  Hh_json.JSON_Object
+  `Assoc
     [
-      ("char_start", Hh_json.int_ char_start);
-      ("char_end", Hh_json.int_ char_end);
-      ("line", Hh_json.int_ line);
-      ("col_start", Hh_json.int_ start);
-      ("col_end", Hh_json.int_ end_);
-      ("patch_type", Hh_json.JSON_String type_);
-      ("replacement", Hh_json.JSON_String replacement);
+      ("char_start", `Int char_start);
+      ("char_end", `Int char_end);
+      ("line", `Int line);
+      ("col_start", `Int start);
+      ("col_end", `Int end_);
+      ("patch_type", `String type_);
+      ("replacement", `String replacement);
     ]
 
 let patches_to_json_string patches =
@@ -71,18 +71,17 @@ let patches_to_json_string patches =
     SMap.fold
       begin
         fun fn patch_list acc ->
-          Hh_json.JSON_Object
+          `Assoc
             [
-              ("filename", Hh_json.JSON_String fn);
-              ( "patches",
-                Hh_json.JSON_Array (List.map patch_list ~f:patch_to_json) );
+              ("filename", `String fn);
+              ("patches", `List (List.map patch_list ~f:patch_to_json));
             ]
           :: acc
       end
       file_map
       []
   in
-  Hh_json.json_to_string (Hh_json.JSON_Array entries)
+  Hh_json_helpers.Out.to_string (`List entries)
 
 let print_patches_json patches = print_endline (patches_to_json_string patches)
 

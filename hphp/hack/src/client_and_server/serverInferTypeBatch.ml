@@ -45,30 +45,27 @@ let get_tast_map ctx path_list =
 
 let result_to_string result (fn, range_start, range_end) =
   let (line, char) = File_content.Position.line_column_one_based range_start in
-  Hh_json.(
-    let obj =
-      JSON_Object
-        [
-          ( "position",
-            JSON_Object
-              ([("file", JSON_String (Relative_path.to_absolute fn))]
-              @
-              match range_end with
-              | None -> [("line", int_ line); ("character", int_ char)]
-              | Some range_end ->
-                let (end_line, end_char) =
-                  File_content.Position.line_column_one_based range_end
-                in
-                let pos l c =
-                  JSON_Object [("line", int_ l); ("character", int_ c)]
-                in
-                [("start", pos line char); ("end", pos end_line end_char)]) );
-          (match result with
-          | Ok ty -> ("type", Option.value ty ~default:JSON_Null)
-          | Error e -> ("error", JSON_String e));
-        ]
-    in
-    json_to_string obj)
+  let obj =
+    `Assoc
+      [
+        ( "position",
+          `Assoc
+            ([("file", `String (Relative_path.to_absolute fn))]
+            @
+            match range_end with
+            | None -> [("line", `Int line); ("character", `Int char)]
+            | Some range_end ->
+              let (end_line, end_char) =
+                File_content.Position.line_column_one_based range_end
+              in
+              let pos l c = `Assoc [("line", `Int l); ("character", `Int c)] in
+              [("start", pos line char); ("end", pos end_line end_char)]) );
+        (match result with
+        | Ok ty -> ("type", Option.value_map ty ~default:`Null ~f:Fn.id)
+        | Error e -> ("error", `String e));
+      ]
+  in
+  Hh_json_helpers.Out.to_string obj
 
 let helper ctx acc (pos_list : pos list) =
   let empty_map = Relative_path.Map.empty in

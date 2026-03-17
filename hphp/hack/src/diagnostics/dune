@@ -61,6 +61,7 @@
     hh_autoimport
     utils_multifile
     error_codes
+    yojson
   )
 )
 

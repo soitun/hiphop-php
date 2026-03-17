@@ -425,16 +425,13 @@ let stop
   let items =
     match reason.ClientIdeMessage.data with
     | None -> []
-    | Some (Hh_json.JSON_Object items) -> items
+    | Some (`Assoc items) -> items
     | Some json -> [("data", json)]
   in
   let items =
-    ("stop_reason", stop_reason |> Stop_reason.to_log_string |> Hh_json.string_)
-    :: items
+    ("stop_reason", `String (stop_reason |> Stop_reason.to_log_string)) :: items
   in
-  let reason =
-    { reason with ClientIdeMessage.data = Some (Hh_json.JSON_Object items) }
-  in
+  let reason = { reason with ClientIdeMessage.data = Some (`Assoc items) } in
 
   let%lwt () = destroy t ~tracking_id in
   (* Correctness here is very subtle... During the course of that call to

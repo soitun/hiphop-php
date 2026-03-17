@@ -106,7 +106,7 @@
   hg
   hh_json
   relative_path
-  sys_utils utils_core))
+  sys_utils utils_core yojson))
 
 (library
  (name decl_reference)
@@ -127,7 +127,7 @@
   pos_span_tiny)
  (preprocess
   (pps ppx_hash ppx_sexp_conv lwt_ppx ppx_deriving.std ppx_deriving.enum))
- (libraries relative_path))
+ (libraries relative_path yojson))
 
 (library
  (name stack_utils)
@@ -211,7 +211,7 @@
  (wrapped false)
  (preprocess
   (pps lwt_ppx ppx_deriving.std ppx_deriving.enum))
- (libraries utils_core sys_utils)
+ (libraries utils_core sys_utils yojson)
  (modules memory_stats))
 
 (library

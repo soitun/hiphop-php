@@ -20,7 +20,8 @@
    saved_state_rollouts)
   (libraries
    saved_state_rollouts_rust
-   utils_core)
+   utils_core
+   yojson)
   (preprocess
     (pps ppx_deriving.std)))
 
@@ -80,7 +81,7 @@
  (name parser_options)
  (wrapped false)
  (modules parserOptions experimental_features)
- (libraries collections package_info utils_core)
+ (libraries collections package_info utils_core yojson)
  (foreign_archives options_ffi)
  (preprocess
   (pps ppx_deriving.std)))

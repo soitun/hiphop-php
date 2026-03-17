@@ -38,15 +38,21 @@ let spec_input =
 
 let expected_spec_json =
   {|{
-  "gen_with_errors":true,
-  "files_to_check":[
+  "gen_with_errors": true,
+  "files_to_check": [
     "/some/path/prefix1",
-    {"from_prefix_incl":"/from/path/prefix1","to_prefix_excl":"/to/path/prefix1"},
-    {"from_prefix_incl":"/from/path/prefix2","to_prefix_excl":"/to/path/prefix2"},
-    {"from_prefix_incl":"/from/path/only"},
-    {"to_prefix_excl":"/to/path/only"}
+    {
+      "from_prefix_incl": "/from/path/prefix1",
+      "to_prefix_excl": "/to/path/prefix1"
+    },
+    {
+      "from_prefix_incl": "/from/path/prefix2",
+      "to_prefix_excl": "/to/path/prefix2"
+    },
+    { "from_prefix_incl": "/from/path/only" },
+    { "to_prefix_excl": "/to/path/only" }
   ],
-  "filename":"/some/dir/some_filename"
+  "filename": "/some/dir/some_filename"
 }|}
 
 let compare_paths (expected : Relative_path.t) (actual : Relative_path.t) : unit

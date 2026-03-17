@@ -143,8 +143,12 @@ let config_experimental_stx_features config =
        Config_keys.enable_experimental_stx_features
        config)
     ~f:(fun str ->
-      let json = Hh_json.json_of_string ~strict:true str in
-      let pairs = Hh_json.get_object_exn json in
+      let json = Yojson.Safe.from_string str in
+      let pairs =
+        match json with
+        | `Assoc pairs -> pairs
+        | _ -> failwith "expected JSON object"
+      in
       SMap.of_list
         (List.map pairs ~f:Experimental_features.parse_experimental_feature))
 
@@ -169,12 +173,16 @@ let config_tc_migration_flags config =
       |> process_migration_flags)
 
 let convert_paths str =
-  let json = Hh_json.json_of_string ~strict:true str in
-  let l = Hh_json.get_array_exn json in
+  let json = Yojson.Safe.from_string str in
+  let l =
+    match json with
+    | `List l -> l
+    | _ -> failwith "expected JSON array"
+  in
   List.filter_map
     ~f:(fun s ->
       match s with
-      | Hh_json.JSON_String path -> Some path
+      | `String path -> Some path
       | _ -> None)
     l
 
@@ -238,14 +246,18 @@ let process_untrusted_mode config =
 
 let extract_auto_namespace_element ns_map element =
   match element with
-  | (source, Hh_json.JSON_String target) -> (source, target) :: ns_map
+  | (source, `String target) -> (source, target) :: ns_map
   | _ ->
     (* This means the JSON we received is incorrect *)
     ns_map
 
 let convert_auto_namespace_to_map map =
-  let json = Hh_json.json_of_string ~strict:true map in
-  let pairs = Hh_json.get_object_exn json in
+  let json = Yojson.Safe.from_string map in
+  let pairs =
+    match json with
+    | `Assoc pairs -> pairs
+    | _ -> failwith "expected JSON object"
+  in
   (* We do a fold instead of a map to filter
    * out the incorrect entrie as we look at each item *)
   List.fold_left ~init:[] ~f:extract_auto_namespace_element pairs
@@ -256,7 +268,8 @@ let prepare_auto_namespace_map config =
     ~f:convert_auto_namespace_to_map
 
 let extract_log_level = function
-  | (log_key, Hh_json.JSON_Number log_level) -> begin
+  | (log_key, `Int log_level) -> (log_key, log_level)
+  | (log_key, `Intlit log_level) -> begin
     match int_of_string_opt log_level with
     | Some log_level -> (log_key, log_level)
     | None -> failwith "non-integer log level value"
@@ -264,8 +277,12 @@ let extract_log_level = function
   | _ -> failwith "non-integer log level value"
 
 let convert_log_levels_to_map map =
-  let json = Hh_json.json_of_string ~strict:true map in
-  let pairs = Hh_json.get_object_exn json in
+  let json = Yojson.Safe.from_string map in
+  let pairs =
+    match json with
+    | `Assoc pairs -> pairs
+    | _ -> failwith "expected JSON object"
+  in
   List.map ~f:extract_log_level pairs |> SMap.of_list
 
 let prepare_log_levels config =

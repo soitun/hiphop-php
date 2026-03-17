@@ -1696,11 +1696,11 @@ let handle_mode
     let result =
       let open Result.Monad_infix in
       Sys_utils.read_stdin_to_string ()
-      |> Hh_json.json_of_string
+      |> Yojson.Safe.from_string
       |> CstSearchService.compile_pattern ctx
       >>| CstSearchService.search ctx entry
       >>| CstSearchService.result_to_json ~sort_results:true
-      >>| Hh_json.json_to_string ~pretty:true
+      >>| Hh_json_helpers.Out.pretty_to_string
     in
     begin
       match result with
@@ -1718,7 +1718,7 @@ let handle_mode
           let result_json =
             ServerCommandTypes.Symbol_info_service.to_json result
           in
-          print_endline (Hh_json.json_to_multiline result_json)
+          print_endline (Hh_json_helpers.Out.pretty_to_string result_json)
         | None -> ())
   | Glean_index out_dir ->
     if
@@ -1881,7 +1881,7 @@ let handle_mode
     print_endline "textDocument/signatureHelp response:\n";
     result
     |> Lsp_fmt.print_signatureHelp
-    |> Hh_json.json_to_string ~sort_keys:true ~pretty:true
+    |> Hh_json_helpers.Out.pretty_to_string
     |> print_endline
   | Dump_classish_positions ->
     let path = expect_single_file () in
@@ -2237,7 +2237,7 @@ let handle_mode
              ~init:SMap.empty
       in
       let json = Count_imprecise_types.json_of_results results in
-      Printf.printf "%s" (Hh_json.json_to_string json)
+      Printf.printf "%s" (Hh_json_helpers.Out.to_string json)
   | RunSimpliHack ->
     let (errors, tasts) = compute_tasts ctx files_info files_contents in
     print_error_list error_format errors max_errors;
@@ -2269,7 +2269,7 @@ let handle_mode
       List.fold mapped ~init:Map_reduce.empty ~f:Map_reduce.reduce
     in
     let json = Map_reduce_ffi.yojson_of_t (Map_reduce.to_ffi reduced) in
-    Yojson.Safe.pretty_to_channel Stdlib.stdout json
+    Hh_json_helpers.Out.pretty_to_channel Stdlib.stdout json
 
 (*****************************************************************************)
 (* Main entry point *)

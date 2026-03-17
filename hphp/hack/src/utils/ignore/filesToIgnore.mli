@@ -40,6 +40,6 @@ type watch_spec = {
 
 val server_watch_spec : watch_spec
 
-val watchman_server_expression_terms : Hh_json.json list
+val watchman_server_expression_terms : Yojson.Safe.t list
 
-val watchman_watcher_expression_terms : Hh_json.json list
+val watchman_watcher_expression_terms : Yojson.Safe.t list

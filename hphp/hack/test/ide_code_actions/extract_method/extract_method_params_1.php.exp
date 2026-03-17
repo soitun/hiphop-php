@@ -6,23 +6,29 @@ Extract into method (CodeActionKind: "refactor") SELECTED
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Extract into method",
+  "kind": "refactor",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"  private function ${0:method0}(int $param1, Foo<string> $param2): void {\n    $param1 = $param1;\n    $z = $param2;\n  }\n\n",
-          "range":{"end":{"character":0,"line":7},"start":{"character":0,"line":7}}
+          "range": {
+            "start": { "line": 7, "character": 0 },
+            "end": { "line": 7, "character": 0 }
+          },
+          "newText": "  private function ${0:method0}(int $param1, Foo<string> $param2): void {\n    $param1 = $param1;\n    $z = $param2;\n  }\n\n"
         },
         {
-          "newText":"$this->${0:method0}($param1, $param2);",
-          "range":{"end":{"character":17,"line":14},"start":{"character":4,"line":13}}
+          "range": {
+            "start": { "line": 13, "character": 4 },
+            "end": { "line": 14, "character": 17 }
+          },
+          "newText": "$this->${0:method0}($param1, $param2);"
         }
       ]
     }
-  },
-  "kind":"refactor",
-  "title":"Extract into method"
+  }
 }
 
 Applied edit for code action:

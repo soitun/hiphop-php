@@ -6267,14 +6267,13 @@ module WithToken (Token : TokenType) = struct
         ["package_expression_keyword"; "package_expression_name"]
 
     let rec to_json_ ?(with_value = false) ?(ignore_missing = false) node =
-      let open Hh_json in
       let ch =
         match node.syntax with
         | Token t -> [("token", Token.to_json t)]
         | SyntaxList x ->
           [
             ( "elements",
-              JSON_Array
+              `List
                 (List.filter_map ~f:(to_json_ ~with_value ~ignore_missing) x) );
           ]
         | _ ->
@@ -6290,7 +6289,7 @@ module WithToken (Token : TokenType) = struct
           in
           List.rev (aux [] (children node) (children_names node))
       in
-      let k = ("kind", JSON_String (SyntaxKind.to_string (kind node))) in
+      let k = ("kind", `String (SyntaxKind.to_string (kind node))) in
       let v =
         if with_value then
           ("value", SyntaxValue.to_json node.value) :: ch
@@ -6300,12 +6299,12 @@ module WithToken (Token : TokenType) = struct
       if ignore_missing && List.is_empty ch then
         None
       else
-        Some (JSON_Object (k :: v))
+        Some (`Assoc (k :: v))
 
     let to_json ?(with_value = false) ?(ignore_missing = false) node =
       match to_json_ ~with_value ~ignore_missing node with
       | Some x -> x
-      | None -> Hh_json.JSON_Object []
+      | None -> `Assoc []
 
     let binary_operator_kind b =
       match syntax b with

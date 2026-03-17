@@ -241,9 +241,8 @@ let error_to_show_inline_chat_command user_error line_agnostic_hash =
         })
   in
   let extras =
-    Hh_json.(
-      JSON_Object
-        [("lineAgnosticHash", string_ (Printf.sprintf "%x" line_agnostic_hash))])
+    `Assoc
+      [("lineAgnosticHash", `String (Printf.sprintf "%x" line_agnostic_hash))]
   in
   let command_args =
     Code_action_types.(

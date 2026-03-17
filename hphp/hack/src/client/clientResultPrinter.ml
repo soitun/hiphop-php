@@ -8,7 +8,6 @@
  *)
 
 open Hh_prelude
-open Hh_json
 
 module type Result_printer = sig
   type t
@@ -21,7 +20,7 @@ module type Result_converter = sig
 
   val to_string : t -> string
 
-  val to_json : t -> Hh_json.json
+  val to_json : t -> Yojson.Safe.t
 end
 
 module Unit_converter = struct
@@ -29,7 +28,7 @@ module Unit_converter = struct
 
   let to_string : t -> string = (fun () -> "")
 
-  let to_json : t -> Hh_json.json = (fun () -> JSON_String "ok")
+  let to_json : t -> Yojson.Safe.t = (fun () -> `String "ok")
 end
 
 module Int_converter = struct
@@ -37,7 +36,7 @@ module Int_converter = struct
 
   let to_string : t -> string = string_of_int
 
-  let to_json : t -> Hh_json.json = (fun i -> JSON_Number (string_of_int i))
+  let to_json : t -> Yojson.Safe.t = (fun i -> `Int i)
 end
 
 module Make (Converter : Result_converter) :
@@ -48,11 +47,12 @@ module Make (Converter : Result_converter) :
     let result =
       match result with
       | Ok result -> ("result", Converter.to_json result)
-      | Error s -> ("error_message", JSON_String s)
+      | Error s -> ("error_message", `String s)
     in
-    JSON_Object [result]
+    `Assoc [result]
 
-  let print_json res = print_endline (Hh_json.json_to_string (to_json res))
+  let print_json res =
+    print_endline (Hh_json_helpers.Out.to_string (to_json res))
 
   let print_readable = function
     | Ok result -> Printf.printf "%s" (Converter.to_string result)

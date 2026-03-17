@@ -9,27 +9,36 @@ Devmate Agent Fix - This expression is of type `Awaitable`, but it's either bein
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "await expression",
+  "kind": "quickfix",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"Awaitable<mixed>",
-          "range":{"end":{"character":32,"line":7},"start":{"character":27,"line":7}}
+          "range": {
+            "start": { "line": 7, "character": 27 },
+            "end": { "line": 7, "character": 32 }
+          },
+          "newText": "Awaitable<mixed>"
         },
         {
-          "newText":"async ",
-          "range":{"end":{"character":9,"line":7},"start":{"character":9,"line":7}}
+          "range": {
+            "start": { "line": 7, "character": 9 },
+            "end": { "line": 7, "character": 9 }
+          },
+          "newText": "async "
         },
         {
-          "newText":"return (int)await gen_int() + 3;",
-          "range":{"end":{"character":30,"line":8},"start":{"character":4,"line":8}}
+          "range": {
+            "start": { "line": 8, "character": 4 },
+            "end": { "line": 8, "character": 30 }
+          },
+          "newText": "return (int)await gen_int() + 3;"
         }
       ]
     }
-  },
-  "kind":"quickfix",
-  "title":"await expression"
+  }
 }
 
 Applied edit for code action:

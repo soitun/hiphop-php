@@ -6,23 +6,29 @@ Extract into method (CodeActionKind: "refactor") SELECTED
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Extract into method",
+  "kind": "refactor",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"  private function ${0:method0}(): KeyedIterator<_> {\n    yield 2 => \"\";\n  }\n\n",
-          "range":{"end":{"character":0,"line":3},"start":{"character":0,"line":3}}
+          "range": {
+            "start": { "line": 3, "character": 0 },
+            "end": { "line": 3, "character": 0 }
+          },
+          "newText": "  private function ${0:method0}(): KeyedIterator<_> {\n    yield 2 => \"\";\n  }\n\n"
         },
         {
-          "newText":"foreach ($this->${0:method0}() as $key__ => $value__) {\n      \n    }",
-          "range":{"end":{"character":18,"line":5},"start":{"character":4,"line":5}}
+          "range": {
+            "start": { "line": 5, "character": 4 },
+            "end": { "line": 5, "character": 18 }
+          },
+          "newText": "foreach ($this->${0:method0}() as $key__ => $value__) {\n      \n    }"
         }
       ]
     }
-  },
-  "kind":"refactor",
-  "title":"Extract into method"
+  }
 }
 
 Applied edit for code action:

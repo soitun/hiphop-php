@@ -37,7 +37,8 @@
   string
   test_injector_config
   unit_test
-  utils_core))
+  utils_core
+  yojson))
 
 (library
  (name sys_utils_test)

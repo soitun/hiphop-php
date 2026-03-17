@@ -33,6 +33,7 @@
   core_unix.filename_unix
   utils_core
   base64
-  uutf)
+  uutf
+  yojson)
  (preprocess
   (pps ppx_deriving.std)))

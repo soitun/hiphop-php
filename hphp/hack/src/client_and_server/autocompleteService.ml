@@ -156,12 +156,12 @@ let autocomplete_result_to_json res =
   let name = res.res_label in
   let pos = res.res_decl_pos in
   let ty = res.res_detail in
-  Hh_json.JSON_Object
+  `Assoc
     [
-      ("name", Hh_json.JSON_String name);
-      ("type", Hh_json.JSON_String ty);
+      ("name", `String name);
+      ("type", `String ty);
       ("pos", Pos.json pos);
-      ("expected_ty", Hh_json.JSON_Bool false);
+      ("expected_ty", `Bool false);
       (* legacy field, left here in case clients need it *)
     ]
 

@@ -7,7 +7,6 @@
  *)
 
 open Hh_prelude
-open Hh_json
 open Hack
 
 (* Predicate types for the JSON facts emitted *)
@@ -248,10 +247,12 @@ end)
 module Fact_acc = struct
   type ownership_unit = string option [@@deriving eq, ord]
 
-  type owned_facts = (ownership_unit * json list) list
+  type owned_facts = (ownership_unit * Yojson.Safe.t list) list
 
   module JsonPredicateMap = WrappedMap.Make (struct
-    let compare_json = JsonKey.compare
+    type json = Yojson.Safe.t
+
+    let compare_json (x : json) (y : json) = Stdlib.compare x y
 
     let compare_predicate = compare
 
@@ -301,16 +302,21 @@ module Fact_acc = struct
 
   let add_fact
       predicate json_key ?value ({ ownership_unit; ownership; _ } as fa) =
+    let json_key = Hh_json.to_yojson json_key in
     let value =
       match value with
       | None -> []
-      | Some v -> [("value", v)]
+      | Some v -> [("value", Hh_json.to_yojson v)]
     in
     let fact_id = Fact_id.next () in
     let fields =
-      [("id", Fact_id.to_json_number fact_id); ("key", json_key)] @ value
+      [
+        ("id", Hh_json.to_yojson (Fact_id.to_json_number fact_id));
+        ("key", json_key);
+      ]
+      @ value
     in
-    let json_fact = JSON_Object fields in
+    let json_fact = `Assoc fields in
     match
       ( should_cache predicate,
         JsonPredicateMap.find_opt
@@ -344,12 +350,10 @@ module Fact_acc = struct
 
   let owned_facts_to_json ~ownership (predicate, owned_facts) =
     let fact_object ~ou facts =
-      let obj =
-        [("predicate", JSON_String predicate); ("facts", JSON_Array facts)]
-      in
-      JSON_Object
+      let obj = [("predicate", `String predicate); ("facts", `List facts)] in
+      `Assoc
         (match ou with
-        | Some ou -> ("unit", JSON_String ou) :: obj
+        | Some ou -> ("unit", `String ou) :: obj
         | None -> obj)
     in
     match ownership with

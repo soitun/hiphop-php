@@ -108,7 +108,7 @@ val to_json :
   human_formatter:(('a Pos.pos, 'a Pos.pos) t -> string) option ->
   filename_to_string:('a -> string) ->
   ('a Pos.pos, 'a Pos.pos) t ->
-  Hh_json.json
+  Yojson.Safe.t
 
 val claim_message : ('a, _) t -> 'a Message.t
 

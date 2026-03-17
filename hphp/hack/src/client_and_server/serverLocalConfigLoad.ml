@@ -960,8 +960,13 @@ let load_
   let config_version = string_opt "version" config in
   let parse_string_list s =
     try
-      let json = Hh_json.json_of_string s in
-      List.map ~f:Hh_json.get_string_exn (Hh_json.get_array_exn json)
+      match Yojson.Safe.from_string s with
+      | `List l ->
+        List.map l ~f:(fun v ->
+            match v with
+            | `String s -> s
+            | _ -> failwith "expected string")
+      | _ -> []
     with
     | _ -> []
   in

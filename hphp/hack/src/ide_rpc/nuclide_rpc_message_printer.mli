@@ -8,21 +8,21 @@
 
 val identify_symbol_response_to_json :
   (string SymbolOccurrence.t * string SymbolDefinition.t option) list ->
-  Hh_json.json
+  Yojson.Safe.t
 
-val print_json : Hh_json.json -> unit
+val print_json : Yojson.Safe.t -> unit
 
 val tast_holes_response_to_json :
   print_file:bool ->
   (string * string * string * string * Pos.t) list ->
-  Hh_json.json
+  Yojson.Safe.t
 
-val outline_response_to_json : string SymbolDefinition.t list -> Hh_json.json
+val outline_response_to_json : string SymbolDefinition.t list -> Yojson.Safe.t
 
 val highlight_references_response_to_json :
-  Ide_api_types.range list -> Hh_json.json
+  Ide_api_types.range list -> Yojson.Safe.t
 
 val infer_type_error_response_to_json :
-  string option * string option * string option * string option -> Hh_json.json
+  string option * string option * string option * string option -> Yojson.Safe.t
 
-val infer_type_response_to_json : string option * string option -> Hh_json.json
+val infer_type_response_to_json : string option * string option -> Yojson.Safe.t

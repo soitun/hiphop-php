@@ -54,5 +54,5 @@ module Getters : Config_file_common.Getters_S
 
 module Utils : sig
   val parse_hhconfig_and_hh_conf_to_json :
-    root:Path.t -> server_local_config_path:string -> Hh_json.json
+    root:Path.t -> server_local_config_path:string -> Yojson.Safe.t
 end

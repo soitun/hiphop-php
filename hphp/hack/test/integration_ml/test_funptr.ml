@@ -42,7 +42,7 @@ let go_identify expected ~ctx ~entry pos =
   in
   let (line, column) = File_content.Position.line_column_one_based pos in
   Asserter.Hh_json_json_asserter.assert_equals
-    (expected |> Hh_json.json_of_string)
+    (expected |> Yojson.Safe.from_string)
     actual
     (Printf.sprintf "ServerIdentifyFunction at line %d, column %d" line column);
   ()

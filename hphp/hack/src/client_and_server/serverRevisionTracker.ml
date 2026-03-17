@@ -67,7 +67,7 @@ type state_handler = {
     (* project root *)
     string ->
     (* state name *)
-    Hh_json.json option ->
+    Yojson.Safe.t option ->
     (* state metadata *)
     unit;
   on_commit_transition: Path.t (* project root *) -> Hg.Rev.t -> unit;

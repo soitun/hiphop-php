@@ -139,7 +139,8 @@
   relative_path
   rust_parser_errors_ffi
   rust_parser_ffi
-  sexplib)
+  sexplib
+  yojson)
  (preprocess
   (pps ppx_sexp_conv visitors.ppx ppx_deriving.std)))
 

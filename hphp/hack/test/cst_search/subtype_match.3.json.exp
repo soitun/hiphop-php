@@ -1,7 +1,22 @@
 {
-  "matched_nodes":[
-    {"match_name":"mixed","kind":"token","start_offset":85,"end_offset":94},
-    {"match_name":"mixed","kind":"token","start_offset":105,"end_offset":112},
-    {"match_name":"mixed","kind":"token","start_offset":121,"end_offset":126}
+  "matched_nodes": [
+    {
+      "match_name": "mixed",
+      "kind": "token",
+      "start_offset": 85,
+      "end_offset": 94
+    },
+    {
+      "match_name": "mixed",
+      "kind": "token",
+      "start_offset": 105,
+      "end_offset": 112
+    },
+    {
+      "match_name": "mixed",
+      "kind": "token",
+      "start_offset": 121,
+      "end_offset": 126
+    }
   ]
 }

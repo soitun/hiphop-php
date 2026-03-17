@@ -315,7 +315,6 @@ module Symbol_info_service = struct
   }
 
   let fun_call_to_json fun_call_results =
-    let open Hh_json in
     List.map fun_call_results ~f:(fun item ->
         let item_type =
           match item.type_ with
@@ -323,33 +322,31 @@ module Symbol_info_service = struct
           | Method -> "Method"
           | Constructor -> "Constructor"
         in
-        JSON_Object
+        `Assoc
           [
-            ("name", JSON_String item.name);
-            ("type", JSON_String item_type);
+            ("name", `String item.name);
+            ("type", `String item_type);
             ("pos", Pos.json item.pos);
-            ("caller", JSON_String item.caller);
+            ("caller", `String item.caller);
           ])
 
   let symbol_type_to_json symbol_type_results =
-    let open Hh_json in
     Symbol_type.(
       List.rev_map symbol_type_results ~f:(fun item ->
-          JSON_Object
+          `Assoc
             [
               ("pos", Pos.json item.pos);
-              ("type", JSON_String item.type_);
-              ("ident", int_ item.ident_);
+              ("type", `String item.type_);
+              ("ident", `Int item.ident_);
             ]))
 
   let to_json result =
-    let open Hh_json in
     let fun_call_json = fun_call_to_json result.fun_calls in
     let symbol_type_json = symbol_type_to_json result.symbol_types in
-    JSON_Object
+    `Assoc
       [
-        ("function_calls", JSON_Array fun_call_json);
-        ("symbol_types", JSON_Array symbol_type_json);
+        ("function_calls", `List fun_call_json);
+        ("symbol_types", `List symbol_type_json);
       ]
 end
 
@@ -404,7 +401,11 @@ type lint_stdin_input = {
 
 type cst_search_input = {
   sort_results: bool;
-  input: Hh_json.json;
+  input:
+    (Yojson.Safe.t
+    [@printer
+      fun fmt json ->
+        Format.pp_print_string fmt (Hh_json_helpers.Out.to_string json)]);
   files_to_search: string list option; (* if None, search all files *)
 }
 [@@deriving show]
@@ -486,7 +487,7 @@ type _ t =
   | STATS : Stats.t t
   | DUMP_FULL_FIDELITY_PARSE : string -> string t
   | RAGE : ServerRageTypes.result t
-  | CST_SEARCH : cst_search_input -> (Hh_json.json, string) result t
+  | CST_SEARCH : cst_search_input -> (Yojson.Safe.t, string) result t
   | NO_PRECHECKED_FILES : unit t
   | FUN_DEPS_BATCH : (string * int * int) list -> string list t
   | LIST_FILES_WITH_ERRORS : string list t

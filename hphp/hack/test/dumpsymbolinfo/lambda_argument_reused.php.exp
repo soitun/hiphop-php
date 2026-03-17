@@ -1,73 +1,98 @@
 {
-  "function_calls":[
+  "function_calls": [
     {
-      "name":"C::__construct",
-      "type":"Constructor",
-      "pos":{
-        "filename":"lambda_argument_reused.php",
-        "line":16,
-        "char_start":6,
-        "char_end":12
+      "name": "C::__construct",
+      "type": "Constructor",
+      "pos": {
+        "filename": "lambda_argument_reused.php",
+        "line": 16,
+        "char_start": 6,
+        "char_end": 12
       },
-      "caller":"test"
+      "caller": "test"
     },
     {
-      "name":"D::__construct",
-      "type":"Constructor",
-      "pos":{
-        "filename":"lambda_argument_reused.php",
-        "line":17,
-        "char_start":6,
-        "char_end":12
+      "name": "D::__construct",
+      "type": "Constructor",
+      "pos": {
+        "filename": "lambda_argument_reused.php",
+        "line": 17,
+        "char_start": 6,
+        "char_end": 12
       },
-      "caller":"test"
+      "caller": "test"
     }
   ],
-  "symbol_types":[
+  "symbol_types": [
     {
-      "pos":{"filename":"lambda_argument_reused.php","line":12,"char_start":3,"char_end":4},
-      "type":"(function(mixed $x): nothing)",
-      "ident":0
-    },
-    {
-      "pos":{"filename":"lambda_argument_reused.php","line":12,"char_start":8,"char_end":9},
-      "type":"mixed",
-      "ident":0
-    },
-    {
-      "pos":{"filename":"lambda_argument_reused.php","line":13,"char_start":5,"char_end":6},
-      "type":"nothing",
-      "ident":0
-    },
-    {
-      "pos":{
-        "filename":"lambda_argument_reused.php",
-        "line":13,
-        "char_start":10,
-        "char_end":11
+      "pos": {
+        "filename": "lambda_argument_reused.php",
+        "line": 12,
+        "char_start": 3,
+        "char_end": 4
       },
-      "type":"mixed",
-      "ident":0
+      "type": "(function(mixed $x): nothing)",
+      "ident": 0
     },
     {
-      "pos":{
-        "filename":"lambda_argument_reused.php",
-        "line":14,
-        "char_start":12,
-        "char_end":13
+      "pos": {
+        "filename": "lambda_argument_reused.php",
+        "line": 12,
+        "char_start": 8,
+        "char_end": 9
       },
-      "type":"nothing",
-      "ident":0
+      "type": "mixed",
+      "ident": 0
     },
     {
-      "pos":{"filename":"lambda_argument_reused.php","line":16,"char_start":3,"char_end":4},
-      "type":"(function(mixed $x): nothing)",
-      "ident":0
+      "pos": {
+        "filename": "lambda_argument_reused.php",
+        "line": 13,
+        "char_start": 5,
+        "char_end": 6
+      },
+      "type": "nothing",
+      "ident": 0
     },
     {
-      "pos":{"filename":"lambda_argument_reused.php","line":17,"char_start":3,"char_end":4},
-      "type":"(function(mixed $x): nothing)",
-      "ident":0
+      "pos": {
+        "filename": "lambda_argument_reused.php",
+        "line": 13,
+        "char_start": 10,
+        "char_end": 11
+      },
+      "type": "mixed",
+      "ident": 0
+    },
+    {
+      "pos": {
+        "filename": "lambda_argument_reused.php",
+        "line": 14,
+        "char_start": 12,
+        "char_end": 13
+      },
+      "type": "nothing",
+      "ident": 0
+    },
+    {
+      "pos": {
+        "filename": "lambda_argument_reused.php",
+        "line": 16,
+        "char_start": 3,
+        "char_end": 4
+      },
+      "type": "(function(mixed $x): nothing)",
+      "ident": 0
+    },
+    {
+      "pos": {
+        "filename": "lambda_argument_reused.php",
+        "line": 17,
+        "char_start": 3,
+        "char_end": 4
+      },
+      "type": "(function(mixed $x): nothing)",
+      "ident": 0
     }
   ]
 }

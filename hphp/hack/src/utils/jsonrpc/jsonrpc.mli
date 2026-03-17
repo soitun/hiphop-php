@@ -7,10 +7,10 @@
  *
  *)
 
-type writer = Hh_json.json -> unit
+type writer = Yojson.Safe.t -> unit
 
 type timestamped_json = {
-  json: Hh_json.json;
+  json: Yojson.Safe.t;
   timestamp: float;
 }
 

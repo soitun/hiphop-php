@@ -7,23 +7,29 @@ Extract into method (CodeActionKind: "refactor") SELECTED
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Extract into method",
+  "kind": "refactor",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"  private async function ${0:method0}(): Awaitable<void> {\n    $local = await foo();\n  }\n\n",
-          "range":{"end":{"character":0,"line":5},"start":{"character":0,"line":5}}
+          "range": {
+            "start": { "line": 5, "character": 0 },
+            "end": { "line": 5, "character": 0 }
+          },
+          "newText": "  private async function ${0:method0}(): Awaitable<void> {\n    $local = await foo();\n  }\n\n"
         },
         {
-          "newText":"await $this->${0:method0}();",
-          "range":{"end":{"character":25,"line":8},"start":{"character":4,"line":8}}
+          "range": {
+            "start": { "line": 8, "character": 4 },
+            "end": { "line": 8, "character": 25 }
+          },
+          "newText": "await $this->${0:method0}();"
         }
       ]
     }
-  },
-  "kind":"refactor",
-  "title":"Extract into method"
+  }
 }
 
 Applied edit for code action:

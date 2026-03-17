@@ -8,23 +8,23 @@
 
 open Hh_prelude
 
-type key_value_pair = string * Hh_json.json [@@deriving show]
+(* Make Yojson.Safe.t usable with [@@deriving show] *)
+type yojson = Yojson.Safe.t
+
+let pp_yojson fmt json =
+  Format.pp_print_string fmt (Hh_json_helpers.Out.to_string json)
+
+let _show_yojson json = Hh_json_helpers.Out.to_string json
+
+type key_value_pair = string * yojson [@@deriving show]
 
 (** This list is in reverse order (i.e. most recent first) *)
 type t = key_value_pair list [@@deriving show]
 
-let of_json_opt = function
-  | Hh_json.JSON_Object kvs -> Some kvs
-  | _ -> None
-
 let of_yojson_opt (json : Yojson.Safe.t) : t option =
   match json with
-  | `Assoc kvs ->
-    Some (List.map kvs ~f:(fun (k, v) -> (k, Hh_json.of_yojson v)))
+  | `Assoc kvs -> Some kvs
   | _ -> None
-
-let to_yojson (telemetry : t) : Yojson.Safe.t =
-  `Assoc (List.map telemetry ~f:(fun (k, v) -> (k, Hh_json.to_yojson v)))
 
 (* Ignore - we only use the generated `pp_key_value_pair` in deriving `show` for t *)
 let _ = show_key_value_pair
@@ -36,11 +36,14 @@ let empty = []
 
 let create () : t = empty
 
-let to_json (telemetry : t) : Hh_json.json =
-  Hh_json.JSON_Object (List.rev telemetry)
+let to_yojson (telemetry : t) : Yojson.Safe.t = `Assoc (List.rev telemetry)
 
 let to_string ?(pretty = false) (telemetry : t) : string =
-  to_json telemetry |> Hh_json.json_to_string ~pretty
+  let json = to_yojson telemetry in
+  if pretty then
+    Hh_json_helpers.Out.pretty_to_string json
+  else
+    Hh_json_helpers.Out.to_string json
 
 let string_
     ?(truncate : int option) ~(key : string) ~(value : string) (telemetry : t) :
@@ -50,7 +53,7 @@ let string_
     | None -> value
     | Some truncate -> String_utils.truncate truncate value
   in
-  (key, Hh_json.JSON_String value) :: telemetry
+  (key, `String value) :: telemetry
 
 let string_opt
     ?(truncate : int option)
@@ -58,7 +61,7 @@ let string_opt
     ~(value : string option)
     (telemetry : t) : t =
   match value with
-  | None -> (key, Hh_json.JSON_Null) :: telemetry
+  | None -> (key, `Null) :: telemetry
   | Some value -> string_ ?truncate telemetry ~key ~value
 
 let string_list
@@ -78,8 +81,8 @@ let string_list
     | Some truncate_each_string ->
       List.map ~f:(fun s -> String_utils.truncate truncate_each_string s) value
   in
-  let value = List.map ~f:(fun s -> Hh_json.JSON_String s) value in
-  (key, Hh_json.JSON_Array value) :: telemetry
+  let value = List.map ~f:(fun s -> `String s) value in
+  (key, `List value) :: telemetry
 
 let string_list_opt
     ?(truncate_list : int option)
@@ -88,23 +91,23 @@ let string_list_opt
     ~(value : string list option)
     (telemetry : t) : t =
   match value with
-  | None -> (key, Hh_json.JSON_Null) :: telemetry
+  | None -> (key, `Null) :: telemetry
   | Some value ->
     string_list ?truncate_list ?truncate_each_string telemetry ~key ~value
 
 let object_list ~(key : string) ~(value : t list) (telemetry : t) : t =
-  let value = List.map ~f:to_json value in
-  (key, Hh_json.JSON_Array value) :: telemetry
+  let value = List.map ~f:to_yojson value in
+  (key, `List value) :: telemetry
 
 let bool_ ~(key : string) ~(value : bool) (telemetry : t) : t =
-  (key, Hh_json.JSON_Bool value) :: telemetry
+  (key, `Bool value) :: telemetry
 
 let int_ ~(key : string) ~(value : int) (telemetry : t) : t =
-  (key, Hh_json.int_ value) :: telemetry
+  (key, `Int value) :: telemetry
 
 let int_opt ~(key : string) ~(value : int option) (telemetry : t) : t =
   match value with
-  | None -> (key, Hh_json.JSON_Null) :: telemetry
+  | None -> (key, `Null) :: telemetry
   | Some value -> int_ telemetry ~key ~value
 
 let int_list
@@ -117,24 +120,25 @@ let int_list
     | None -> value
     | Some truncate_list -> List.take value truncate_list
   in
-  let value = List.map ~f:(fun i -> Hh_json.int_ i) value in
-  (key, Hh_json.JSON_Array value) :: telemetry
+  let value = List.map ~f:(fun i -> `Int i) value in
+  (key, `List value) :: telemetry
 
-let json_ ~(key : string) ~(value : Hh_json.json) (telemetry : t) : t =
-  (key, value) :: telemetry
-
-let json ~key ~(value : Yojson.Safe.t) telemetry : t =
-  (key, Hh_json.of_yojson value) :: telemetry
+let json ~key ~(value : Yojson.Safe.t) telemetry : t = (key, value) :: telemetry
 
 let json_opt ~key ~(value : Yojson.Safe.t option) telemetry : t =
-  (key, Hh_json.of_yojson_opt value) :: telemetry
+  let value =
+    match value with
+    | None -> `Null
+    | Some v -> v
+  in
+  (key, value) :: telemetry
 
 let object_ ~(key : string) ~(value : t) (telemetry : t) : t =
-  (key, Hh_json.JSON_Object (List.rev value)) :: telemetry
+  (key, `Assoc (List.rev value)) :: telemetry
 
 let object_opt ~(key : string) ~(value : t option) (telemetry : t) : t =
   match value with
-  | None -> (key, Hh_json.JSON_Null) :: telemetry
+  | None -> (key, `Null) :: telemetry
   | Some value -> object_ ~key ~value telemetry
 
 let duration
@@ -145,7 +149,7 @@ let duration
   let end_time = Option.value end_time ~default:(Unix.gettimeofday ()) in
   let seconds = end_time -. start_time in
   let ms = int_of_float (1000.0 *. seconds) in
-  (key, Hh_json.int_ ms) :: telemetry
+  (key, `Int ms) :: telemetry
 
 let add_duration
     ?(key : string = "duration")
@@ -163,15 +167,13 @@ let add_duration
       ~f:(fun ((cur_key, cur_value) as cur_entry) (acc_duration, acc_telemtry)
          ->
         match cur_value with
-        | Hh_json.JSON_Number cur_value when String.equal cur_key key ->
-          (match Int.of_string_opt cur_value with
-          | Some cur_value -> (cur_value + acc_duration, acc_telemtry)
-          | None -> (acc_duration, cur_entry :: acc_telemtry))
+        | `Int cur_value when String.equal cur_key key ->
+          (cur_value + acc_duration, acc_telemtry)
         | _ -> (acc_duration, cur_entry :: acc_telemtry))
   in
   let overall_duration_ms = new_duration_ms + previous_duration_ms in
 
-  (key, Hh_json.int_ overall_duration_ms) :: filtered_telemetry
+  (key, `Int overall_duration_ms) :: filtered_telemetry
 
 let with_duration ~(description : string) (telemetry : t) (f : unit -> 'a) :
     'a * t =
@@ -187,29 +189,40 @@ let with_duration ~(description : string) (telemetry : t) (f : unit -> 'a) :
     else
       Printf.sprintf "%s_%s" description suffix
   in
-  let telemetry = (key, Hh_json.int_ ms) :: telemetry in
+  let telemetry = (key, `Int ms) :: telemetry in
   (res, telemetry)
 
 let float_ ~(key : string) ~(value : float) (telemetry : t) : t =
-  (key, Hh_json.float_ value) :: telemetry
+  if Float.is_nan value || Float.is_inf value then
+    (key, `Null) :: telemetry
+  else
+    (key, `Float value) :: telemetry
 
 let float_opt ~(key : string) ~(value : float option) (telemetry : t) : t =
   match value with
-  | None -> (key, Hh_json.JSON_Null) :: telemetry
+  | None -> (key, `Null) :: telemetry
   | Some value -> float_ telemetry ~key ~value
 
 let float_list ~(key : string) ~(value : float list) (telemetry : t) : t =
-  let value = List.map ~f:(fun f -> Hh_json.float_ f) value in
-  (key, Hh_json.JSON_Array value) :: telemetry
+  let value =
+    List.map
+      ~f:(fun f ->
+        if Float.is_nan f || Float.is_inf f then
+          `Null
+        else
+          `Float f)
+      value
+  in
+  (key, `List value) :: telemetry
 
 let error ~(stack : string option) (e : string) : key_value_pair =
-  let vals = [("message", Hh_json.JSON_String e)] in
+  let vals = [("message", `String e)] in
   let vals =
     match stack with
     | None -> vals
-    | Some stack -> ("stack", Hh_json.JSON_String stack) :: vals
+    | Some stack -> ("stack", `String stack) :: vals
   in
-  ("error", Hh_json.JSON_Object vals)
+  ("error", `Assoc vals)
 
 let exception_ (e : Exception.t) : key_value_pair =
   error
@@ -240,6 +253,29 @@ let quick_gc_stat () : t =
   |> int_ ~key:"compactions" ~value:stat.compactions
   |> int_ ~key:"top_heap_bytes" ~value:(stat.top_heap_words * bytes_per_word)
 
+(** Extract an int from a Yojson number *)
+let yojson_to_int_opt : Yojson.Safe.t -> int option = function
+  | `Int i -> Some i
+  | `Intlit s -> Int.of_string_opt s
+  | _ -> None
+
+(** Extract a float from a Yojson number *)
+let yojson_to_float_opt : Yojson.Safe.t -> float option = function
+  | `Int i -> Some (float_of_int i)
+  | `Float f -> Some f
+  | `Intlit s -> Float.of_string_opt s
+  | _ -> None
+
+(** Check if two Yojson values are equal (shallow, for telemetry diff) *)
+let yojson_equal (a : Yojson.Safe.t) (b : Yojson.Safe.t) : bool =
+  match (a, b) with
+  | (`Int a, `Int b) -> a = b
+  | (`Float a, `Float b) -> Float.(a = b)
+  | (`String a, `String b) -> String.equal a b
+  | (`Bool a, `Bool b) -> Bool.equal a b
+  | (`Null, `Null) -> true
+  | _ -> false
+
 let diff ~(all : bool) ?(suffix_keys = true) (telemetry : t) ~(prev : t) : t =
   let (prev_suffix, diff_suffix) =
     if suffix_keys then
@@ -268,16 +304,15 @@ let diff ~(all : bool) ?(suffix_keys = true) (telemetry : t) ~(prev : t) : t =
     | (c :: cs, p :: ps, _) ->
       acc |> diff_both c p |> diff_already_sorted cs ~prev:ps
   and diff_no_prev ((key, val_c) : key_value_pair) (acc : t) : t =
-    (key, val_c) :: (key ^ "__prev", Hh_json.JSON_Null) :: acc
+    (key, val_c) :: (key ^ "__prev", `Null) :: acc
   and diff_no_current ((key, val_p) : key_value_pair) (acc : t) : t =
-    let open Hh_json in
     match val_p with
-    | JSON_Object elems ->
+    | `Assoc elems ->
       let elems =
         elems |> List.fold ~init:[] ~f:(fun acc e -> diff_no_current e acc)
       in
-      (key, JSON_Null) :: (key ^ prev_suffix, JSON_Object elems) :: acc
-    | _ -> (key, Hh_json.JSON_Null) :: (key ^ prev_suffix, val_p) :: acc
+      (key, `Null) :: (key ^ prev_suffix, `Assoc elems) :: acc
+    | _ -> (key, `Null) :: (key ^ prev_suffix, val_p) :: acc
   and acc_if b elem acc =
     if b then
       elem :: acc
@@ -286,42 +321,29 @@ let diff ~(all : bool) ?(suffix_keys = true) (telemetry : t) ~(prev : t) : t =
   and diff_both
       ((key, val_c) : key_value_pair) ((_key, val_p) : key_value_pair) (acc : t)
       : t =
-    let open Hh_json in
     match (val_c, val_p) with
-    | (JSON_Object elems_c, JSON_Object elems_p) ->
+    | (`Assoc elems_c, `Assoc elems_p) ->
       let elems = diff elems_c ~prev:elems_p in
       acc_if
         (all || not (List.is_empty elems))
-        (key, JSON_Object (diff elems_c ~prev:elems_p))
+        (key, `Assoc (diff elems_c ~prev:elems_p))
         acc
-    | (JSON_Object _, _)
-    | (_, JSON_Object _)
-    | (JSON_Array _, _)
-    | (_, JSON_Array _) ->
+    | (`Assoc _, _)
+    | (_, `Assoc _)
+    | (`List _, _)
+    | (_, `List _) ->
       acc_if all (key, val_c) acc
-    | (JSON_Bool val_c, JSON_Bool val_p) when Bool.equal val_c val_p ->
-      acc_if all (key, JSON_Bool val_c) acc
-    | (JSON_String val_c, JSON_String val_p) when String.equal val_c val_p ->
-      acc_if all (key, JSON_String val_c) acc
-    | (JSON_Number val_c, JSON_Number val_p) when String.equal val_c val_p ->
-      acc_if all (key, JSON_Number val_c) acc
-    | (JSON_Null, JSON_Null) -> acc_if all (key, JSON_Null) acc
-    | (JSON_Number c, JSON_Number p) -> begin
-      (* JSON_Numbers are strings - maybe ints, maybe floats, maybe we
-         can't parse them or they're outside ocaml maximum range *)
-      try
-        let (c, p) = (int_of_string c, int_of_string p) in
-        (key ^ diff_suffix, int_ (c - p)) :: acc_if all (key, int_ c) acc
-      with
-      | _ -> begin
-        try
-          let (c, p) = (float_of_string c, float_of_string p) in
-          (key ^ diff_suffix, float_ (c -. p)) :: acc_if all (key, float_ c) acc
-        with
-        | _ -> (key, JSON_Number c) :: (key ^ prev_suffix, JSON_Number p) :: acc
-      end
-    end
-    | (_, _) -> (key, val_c) :: (key ^ prev_suffix, val_p) :: acc
+    | _ when yojson_equal val_c val_p -> acc_if all (key, val_c) acc
+    | _ ->
+      (* Try numeric diff *)
+      (match (yojson_to_int_opt val_c, yojson_to_int_opt val_p) with
+      | (Some c, Some p) ->
+        (key ^ diff_suffix, `Int (c - p)) :: acc_if all (key, `Int c) acc
+      | _ ->
+        (match (yojson_to_float_opt val_c, yojson_to_float_opt val_p) with
+        | (Some c, Some p) ->
+          (key ^ diff_suffix, `Float (c -. p)) :: acc_if all (key, `Float c) acc
+        | _ -> (key, val_c) :: (key ^ prev_suffix, val_p) :: acc))
   in
 
   diff telemetry ~prev
@@ -351,43 +373,30 @@ and add_already_sorted (telemetry1 : t) (telemetry2 : t) (acc : t) : t =
     add_already_sorted telemetry1 telemetry2 acc
 
 and add_single ((key, value) : key_value_pair) (acc : t) : t =
-  let open Hh_json in
   match value with
-  | JSON_Number _ -> (key, value) :: acc
-  | JSON_Object elems ->
+  | `Int _
+  | `Float _ ->
+    (key, value) :: acc
+  | `Assoc elems ->
     let elems = add elems [] in
     if not (List.is_empty elems) then
-      (key, JSON_Object elems) :: acc
+      (key, `Assoc elems) :: acc
     else
       acc
-  | JSON_Array _
-  | JSON_Bool _
-  | JSON_Null
-  | JSON_String _ ->
-    acc
+  | _ -> acc
 
 and add_elems
     ((key, val1) : key_value_pair) ((_key, val2) : key_value_pair) (acc : t) : t
     =
-  let open Hh_json in
   match (val1, val2) with
-  | (JSON_Number n1, JSON_Number n2) ->
-    (try
-       let n1 = int_of_string n1 in
-       let n2 = int_of_string n2 in
-       (key, int_ (n1 + n2)) :: acc
-     with
-    | _ ->
-      let n1 = float_of_string n1 in
-      let n2 = float_of_string n2 in
-      (key, float_ (n1 +. n2)) :: acc)
-  | (JSON_Object elems1, JSON_Object elems2) ->
+  | (`Int n1, `Int n2) -> (key, `Int (n1 + n2)) :: acc
+  | (`Float n1, `Float n2) -> (key, `Float (n1 +. n2)) :: acc
+  | (`Int n1, `Float n2) -> (key, `Float (float_of_int n1 +. n2)) :: acc
+  | (`Float n1, `Int n2) -> (key, `Float (n1 +. float_of_int n2)) :: acc
+  | (`Assoc elems1, `Assoc elems2) ->
     let elems = add elems1 elems2 in
     if not @@ List.is_empty elems then
-      (key, JSON_Object elems) :: acc
+      (key, `Assoc elems) :: acc
     else
       acc
-  | ( ( JSON_Number _ | JSON_Object _ | JSON_Array _ | JSON_Bool _ | JSON_Null
-      | JSON_String _ ),
-      _ ) ->
-    acc
+  | _ -> acc

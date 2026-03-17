@@ -49,7 +49,8 @@
     heap_ident
     nast
     pos
-    pos_or_decl)
+    pos_or_decl
+    yojson)
  (preprocess
   (pps ppx_deriving.std ppx_hash ppx_transform)))
 
@@ -167,7 +168,8 @@
   typing_equality_check)
  (libraries
   derive_type_instantiation
-  typing)
+  typing
+  yojson)
  (preprocess
   (pps ppx_deriving.std)))
 
@@ -439,7 +441,7 @@
  (wrapped false)
  (modules
   typing_json)
- (libraries decl_provider hackfmt typing_env_types typing_utils)
+ (libraries decl_provider hackfmt typing_env_types typing_utils yojson)
  (preprocess
   (pps ppx_deriving.std)))
 
@@ -506,7 +508,8 @@
   type_mapper_forget
   typing_defs
   typing_logic
-  typechecker_options)
+  typechecker_options
+  yojson)
  (preprocess
   (pps ppx_deriving.std ppx_hash)))
 

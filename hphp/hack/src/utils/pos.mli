@@ -77,14 +77,14 @@ val string_no_file : 'a pos -> string
 val multiline_string_no_file : 'a pos -> string
 
 (* This returns a closed interval. *)
-val json : absolute -> Hh_json.json
+val json : absolute -> Yojson.Safe.t
 
-val json_no_filename : absolute -> Hh_json.json
+val json_no_filename : absolute -> Yojson.Safe.t
 
 (* This returns a half-open interval. *)
-val multiline_json : absolute -> Hh_json.json
+val multiline_json : absolute -> Yojson.Safe.t
 
-val multiline_json_no_filename : 'a pos -> Hh_json.json
+val multiline_json_no_filename : 'a pos -> Yojson.Safe.t
 
 (** [inside_one_based span line_one_based column_one_based] determines
   whether the cursor at `line_one_based` and `column_one_based` is inside the `span`.

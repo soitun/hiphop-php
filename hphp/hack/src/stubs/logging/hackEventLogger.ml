@@ -182,7 +182,7 @@ let client_lsp_recheck
     ~start_handle_time:_ =
   ()
 
-let serverless_ide_bug ~message:_ ~data:_ = ()
+let serverless_ide_bug ~message:_ ~data:(_ : Yojson.Safe.t) = ()
 
 let client_lsp_exception ~root:_ ~code:_ ~message:_ ~data_opt:_ ~source:_ = ()
 

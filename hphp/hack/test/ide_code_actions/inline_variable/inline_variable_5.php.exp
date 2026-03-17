@@ -5,23 +5,29 @@ Inline variable $x (CodeActionKind: "refactor") SELECTED
 JSON for selected code action:
 ------------------------------------------
 {
-  "diagnostics":[],
-  "edit":{
-    "changes":{
-      "FILE.php":[
+  "title": "Inline variable $x",
+  "kind": "refactor",
+  "diagnostics": [],
+  "edit": {
+    "changes": {
+      "FILE.php": [
         {
-          "newText":"",
-          "range":{"end":{"character":10,"line":11},"start":{"character":0,"line":11}}
+          "range": {
+            "start": { "line": 11, "character": 0 },
+            "end": { "line": 11, "character": 10 }
+          },
+          "newText": ""
         },
         {
-          "newText":"5",
-          "range":{"end":{"character":20,"line":12},"start":{"character":18,"line":12}}
+          "range": {
+            "start": { "line": 12, "character": 18 },
+            "end": { "line": 12, "character": 20 }
+          },
+          "newText": "5"
         }
       ]
     }
-  },
-  "kind":"refactor",
-  "title":"Inline variable $x"
+  }
 }
 
 Applied edit for code action:

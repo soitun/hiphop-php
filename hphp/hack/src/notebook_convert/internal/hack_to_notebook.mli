@@ -7,4 +7,5 @@
  *)
 open Hh_prelude
 
-val hack_to_notebook : string -> (Hh_json.json, Notebook_convert_error.t) result
+val hack_to_notebook :
+  string -> (Yojson.Safe.t, Notebook_convert_error.t) result

@@ -99,7 +99,7 @@ module Fact_acc : sig
       are of the form {'predicate': PREDICATE, 'facts': FACTS'} and all
       predicates are different. If [ownership] is set, objects are of the form
      {'unit: UNIT, 'predicate': PREDICATE, 'facts': FACTS}. *)
-  val to_json : t -> Hh_json.json list
+  val to_json : t -> Yojson.Safe.t list
 
   (** set the current ownership unit. All facts added after the unit is set
      will be marked with this owner. Initially, ownership_unit is set to None

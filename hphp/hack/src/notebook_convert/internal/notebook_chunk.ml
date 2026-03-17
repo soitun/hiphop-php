@@ -20,11 +20,11 @@ type chunk_kind =
   | Non_hack of { cell_type: string }
 [@@deriving eq, ord]
 
-module Hh_json = struct
-  include Hh_json
+module Yojson_safe = struct
+  include Yojson.Safe
 
   (** don't include JSON fields when sorting below *)
-  let compare_json _ _ = -1
+  let compare _ _ = -1
 end
 
 (** A chunk has the information we need to map between
@@ -34,7 +34,7 @@ type t = {
   id: Id.t;
   chunk_kind: chunk_kind;
   contents: string;
-  cell_bento_metadata: Hh_json.json option;
+  cell_bento_metadata: Yojson_safe.t option;
 }
 [@@deriving ord]
 
@@ -120,15 +120,10 @@ let to_hack
     | None -> []
   in
   let json_string =
-    Hh_json.json_to_string
-      ~sort_keys:true
-      Hh_json.(
-        JSON_Object
-          (cell_bento_metadata_list
-          @ [
-              ("id", JSON_Number (string_of_int id));
-              ("cell_type", JSON_String cell_type);
-            ]))
+    `Assoc
+      (cell_bento_metadata_list
+      @ [("id", `Int id); ("cell_type", `String cell_type)])
+    |> Hh_json_helpers.Out.to_string
   in
   Printf.sprintf
     "//@bento-cell:%s\n%s\n%s\n"
@@ -139,7 +134,7 @@ let to_hack
 type metadata = {
   metadata_id: Id.t;
   metadata_cell_type: string;
-  cell_bento_metadata: Hh_json.json option;
+  cell_bento_metadata: Yojson_safe.t option;
 }
 
 exception Not_found of string
@@ -159,15 +154,15 @@ let metadata_of_comment (comment : string) :
                comment
                metadata_pattern)
       in
-      json_string |> Hh_json.json_of_string |> Hh_json.get_object_exn
+      json_string |> Yojson.Safe.from_string |> Yojson.Safe.Util.to_assoc
     in
     let find_exn obj key =
       try List.Assoc.find_exn ~equal:String.equal obj key with
       | _ -> raise (Not_found key)
     in
-    let metadata_id = Hh_json.get_number_int_exn (find_exn obj "id") in
+    let metadata_id = Yojson.Safe.Util.to_int (find_exn obj "id") in
     let metadata_cell_type =
-      Hh_json.get_string_exn (find_exn obj "cell_type")
+      Yojson.Safe.Util.to_string (find_exn obj "cell_type")
     in
     let cell_bento_metadata =
       List.Assoc.find obj "cell_bento_metadata" ~equal:String.equal
@@ -178,7 +173,7 @@ let metadata_of_comment (comment : string) :
     Error
       (Notebook_convert_error.Invalid_input
          (Printf.sprintf "missing key '%s'" key))
-  | exception Hh_json.Syntax_error msg ->
+  | exception Yojson.Json_error msg ->
     Error (Notebook_convert_error.Invalid_input msg)
   | metadata -> Ok metadata
 

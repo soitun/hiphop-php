@@ -139,7 +139,11 @@ let feature_name_map =
 let feature_name_from_string s = SMap.find_opt s feature_name_map
 
 let parse_experimental_feature (name_string, status_json) =
-  let status_string = Hh_json.get_string_exn status_json in
+  let status_string =
+    match status_json with
+    | `String s -> s
+    | _ -> failwith "expected string for experimental feature status"
+  in
   match
     ( feature_name_from_string name_string,
       feature_status_from_string status_string )

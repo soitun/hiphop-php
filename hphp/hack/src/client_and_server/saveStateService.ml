@@ -93,12 +93,12 @@ let get_hot_classes (filename : string) : SSet.t =
     SSet.empty
   ) else
     Disk.cat filename
-    |> Hh_json.json_of_string
-    |> Hh_json.get_object_exn
+    |> Yojson.Safe.from_string
+    |> Hh_json_helpers.get_object_exn
     |> List.find_exn ~f:(fun (k, _) -> String.equal k "classes")
     |> snd
-    |> Hh_json.get_array_exn
-    |> List.map ~f:Hh_json.get_string_exn
+    |> Hh_json_helpers.get_array_exn
+    |> List.map ~f:Hh_json_helpers.get_string_exn
     |> SSet.of_list
 
 let saved_state_info_file_name ~base_file_name = base_file_name ^ "_info.json"
@@ -106,7 +106,7 @@ let saved_state_info_file_name ~base_file_name = base_file_name ^ "_info.json"
 let saved_state_build_revision_read ~(base_file_name : string) : string =
   let info_file = saved_state_info_file_name ~base_file_name in
   let contents = RealDisk.cat info_file in
-  let json = Some (Hh_json.json_of_string contents) in
+  let json = Some (Yojson.Safe.from_string contents) in
   let build_revision = Hh_json_helpers.Jget.string_exn json "build_revision" in
   build_revision
 

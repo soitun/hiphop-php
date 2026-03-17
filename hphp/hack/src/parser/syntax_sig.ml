@@ -1121,7 +1121,7 @@ module type Syntax_S = sig
 
   val has_leading_trivia : TriviaKind.t -> Token.t -> bool
 
-  val to_json : ?with_value:bool -> ?ignore_missing:bool -> t -> Hh_json.json
+  val to_json : ?with_value:bool -> ?ignore_missing:bool -> t -> Yojson.Safe.t
 
   val extract_text : t -> string option
 
