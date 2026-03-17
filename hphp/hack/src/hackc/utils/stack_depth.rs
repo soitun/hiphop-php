@@ -16,7 +16,7 @@ use hhbc::Targets;
 use hhbc_gen::InstrFlags;
 use hhbc_gen::OpcodeData;
 use hhbc_gen::Outputs;
-use log::debug;
+use log::trace;
 use newtype::IdVec;
 use newtype::newtype_int;
 use thiserror::Error;
@@ -88,7 +88,7 @@ struct ComputeStackDepth<'a> {
 
 impl ComputeStackDepth<'_> {
     fn run(&mut self, params: &[ParamEntry], body_instrs: &[Instruct]) -> Result<()> {
-        debug!("ComputeStackDepth::run");
+        trace!("ComputeStackDepth::run");
         self.precompute(body_instrs);
 
         // The "normal" entrypoint.
@@ -111,12 +111,12 @@ impl ComputeStackDepth<'_> {
 
     /// Process a block of execution.
     fn process_block(&mut self, mut addr: Addr, depth: u32) -> Result<()> {
-        debug!("  -- block at {addr:?}, depth {depth}");
+        trace!("  -- block at {addr:?}, depth {depth}");
         self.cur_depth = depth;
         loop {
             if let Some(instr) = self.body_instrs.get(addr.0 as usize) {
                 if !matches!(instr, Instruct::Pseudo(Pseudo::SrcLoc(..))) {
-                    debug!(
+                    trace!(
                         "    {addr:?}, {depth}: instr {instr:?}",
                         depth = self.cur_depth
                     );
