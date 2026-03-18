@@ -44,7 +44,7 @@ struct PrologueFlags {
     HasGenerics,
     IsDynamicCall,
     HasNamedArguments,
-    ReservedZero,
+    ReservedZeroForIsInlined,
     AsyncEagerReturn,
     CallOffsetStart,
     GenericsBitmapStart = 32,

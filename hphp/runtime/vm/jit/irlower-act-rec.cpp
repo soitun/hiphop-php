@@ -83,8 +83,10 @@ void cgConvFuncPrologueFlagsToARFlags(IRLS& env, const IRInstruction* inst) {
   assertx(ActRec::AsyncEagerRet == 2);
   assertx(ActRec::CallOffsetStart == 3);
   // TODO(named_params) translate prologue flags to actrec flags and add a
-  // check for PrologueFlags::Flags::HasNamedArguments.
-  assertx(PrologueFlags::Flags::ReservedZero == flagsDelta + 1);
+  // check for PrologueFlags::Flags::HasNamedArguments. If a call has named
+  // arguments, we'll need to zero out the HasNamedArguments flag.
+  assertx(PrologueFlags::Flags::HasNamedArguments == flagsDelta);
+  assertx(PrologueFlags::Flags::ReservedZeroForIsInlined == flagsDelta + 1);
   assertx(PrologueFlags::Flags::AsyncEagerReturn == flagsDelta + 2);
   assertx(PrologueFlags::Flags::CallOffsetStart == flagsDelta + 3);
   auto const prologueFlagsLow32 = v.makeReg();
