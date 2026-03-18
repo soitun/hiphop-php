@@ -19,6 +19,7 @@
 
 #include "hphp/util/optional.h"
 
+#include <mutex>
 #include <unordered_map>
 #include <string>
 
@@ -75,6 +76,7 @@ private:
   const uint8_t* getIOBuf(const std::string& fileName);
 
   const std::string m_dumpDir;
+  mutable std::mutex m_mutex;
   std::unordered_map<std::string,
                      std::unique_ptr<const folly::IOBuf>> m_fileCache;
 };

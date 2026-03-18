@@ -344,7 +344,7 @@ public:
     }
   }
 
-  void printEventsHeader(KeyType key) const {
+  void printEventsHeader(KeyType key, std::ostream& os) const {
     EventsArray events = getAllEvents(key);
 
     bool anyEvents = false;
@@ -356,16 +356,21 @@ public:
     }
 
     if (anyEvents) {
-      printf("  == Perf events ==\n");
+      os << "  == Perf events ==\n";
 
       for (size_t i = 0; i < MAX_NUM_EVENT_TYPES; i++) {
         if (events[i]) {
-          printf("  %-16s = %" PRIu64  "\n",
-                 eventTypeToCommandLineArgument((PerfEventType)i),
-                 events[i]);
+          os << folly::format("  {:<16} = {}\n",
+                              eventTypeToCommandLineArgument(
+                                static_cast<PerfEventType>(i)),
+                              events[i]);
         }
       }
     }
+  }
+
+  void printEventsHeader(KeyType key) const {
+    printEventsHeader(key, std::cout);
   }
 };
 

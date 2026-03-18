@@ -20,7 +20,10 @@
 #include <vector>
 #include <assert.h>
 #include <iomanip>
+#include <fcntl.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include "hphp/tools/tc-print/tc-print.h"
 
@@ -40,41 +43,60 @@ static string tcRegionFileNames[TCRCount] = { "/tc_dump_a",
                                               "/tc_dump_acold",
                                               "/tc_dump_afrozen" };
 
-static size_t fileSize(FILE* f) {
-  auto fd = fileno(f);
-  struct stat st;
-  fstat(fd, &st);
-  return st.st_size;
-}
-
 void OfflineCode::openFiles(TCA tcRegionBases[TCRCount]) {
 
   for (size_t i = 0; i < TCRCount; i++) {
     if (i && tcRegionBases[i] == tcRegionBases[0]) {
       // We're looking at a dump from a VM running with dynamically sized
       // sections so all of the code will be in the A file.
-      tcRegions[i].file = tcRegions[0].file;
+      tcRegions[i].data = tcRegions[0].data;
+      tcRegions[i].dataLen = tcRegions[0].dataLen;
       tcRegions[i].baseAddr = tcRegions[0].baseAddr;
       tcRegions[i].len = tcRegions[0].len;
       continue;
     }
     string fileName = dumpDir + tcRegionFileNames[i];
-    tcRegions[i].file = fopen(fileName.c_str(), "rb");
-    if (!tcRegions[i].file) {
-      for (size_t o = 0; o < i; o++) {
-        fclose(tcRegions[o].file);
-      }
+    int fd = open(fileName.c_str(), O_RDONLY);
+    if (fd < 0) {
       error("Error opening file " + fileName);
     }
+    struct stat st;
+    if (fstat(fd, &st) != 0) {
+      close(fd);
+      error("Error stat file " + fileName);
+    }
+    auto const sz = st.st_size;
+    if (sz == 0) {
+      close(fd);
+      tcRegions[i].data = nullptr;
+      tcRegions[i].dataLen = 0;
+      tcRegions[i].baseAddr = tcRegionBases[i];
+      tcRegions[i].len = 0;
+      continue;
+    }
+    auto* mapped = static_cast<uint8_t*>(
+      mmap(nullptr, sz, PROT_READ, MAP_PRIVATE, fd, 0));
+    close(fd);
+    if (mapped == MAP_FAILED) {
+      error("Error mmap file " + fileName);
+    }
+
+    tcRegions[i].data = mapped;
+    tcRegions[i].dataLen = sz;
     tcRegions[i].baseAddr = tcRegionBases[i];
-    tcRegions[i].len = fileSize(tcRegions[i].file);
+    tcRegions[i].len = sz;
+    ownedMmaps.push_back({mapped, static_cast<size_t>(sz)});
   }
 }
 
 void OfflineCode::closeFiles() {
+  for (auto& m : ownedMmaps) {
+    munmap(m.addr, m.len);
+  }
+  ownedMmaps.clear();
   for (size_t i = 0; i < TCRCount; i++) {
-    if (i && tcRegions[i].baseAddr == tcRegions[0].baseAddr) continue;
-    fclose(tcRegions[i].file);
+    tcRegions[i].data = nullptr;
+    tcRegions[i].dataLen = 0;
   }
 }
 
@@ -112,8 +134,7 @@ TCA OfflineCode::getTransJmpTargets(const TransRec *transRec,
 
   assert(tcrMain == TCRMain);
 
-  TCA aFallThru = collectJmpTargets(tcRegions[tcrMain].file,
-                                    tcRegions[tcrMain].baseAddr,
+  TCA aFallThru = collectJmpTargets(tcRegions[tcrMain],
                                     transRec->aStart, transRec->aLen,
                                     jmpTargets);
 
@@ -121,13 +142,11 @@ TCA OfflineCode::getTransJmpTargets(const TransRec *transRec,
   // look up the address range in the "cold" file, since it the range isn't
   // there.
   if (transRec->acoldStart != transRec->afrozenStart) {
-    collectJmpTargets(tcRegions[TCRCold].file,
-                      tcRegions[TCRCold].baseAddr,
+    collectJmpTargets(tcRegions[TCRCold],
                       transRec->acoldStart, transRec->acoldLen, jmpTargets);
   }
 
-  collectJmpTargets(tcRegions[TCRFrozen].file,
-                    tcRegions[TCRFrozen].baseAddr,
+  collectJmpTargets(tcRegions[TCRFrozen],
                     transRec->afrozenStart, transRec->afrozenLen, jmpTargets);
 
   return aFallThru;
@@ -140,7 +159,8 @@ void OfflineCode::printDisasm(std::ostream& os,
                               const PerfEventsMap<TCA>& perfEvents,
                               bool hostOpcodes) {
   TCRegion tcr = findTCRegionContaining(startAddr);
-  disasm(os, tcRegions[tcr].file, tcRegions[tcr].baseAddr, startAddr, len,
+  if (tcr == TCRCount) return;
+  disasm(os, tcRegions[tcr], startAddr, len,
          perfEvents, BCMappingInfo(tcr, bcMap), true, hostOpcodes);
 }
 
@@ -175,12 +195,12 @@ folly::dynamic OfflineCode::getDisasm(TCA startAddr,
                                       bool hostOpcodes,
                                       Optional<printir::Unit> unit) {
   auto const tcr = findTCRegionContaining(startAddr);
+  if (tcr == TCRCount) return folly::dynamic::object;
   auto mappingInfo = BCMappingInfo(tcr, bcMap);
 
   if (unit) setAnnotationRanges(mappingInfo, *unit);
 
-  auto const regionInfo = getRegionInfo(tcRegions[tcr].file,
-                                        tcRegions[tcr].baseAddr,
+  auto const regionInfo = getRegionInfo(tcRegions[tcr],
                                         startAddr,
                                         len,
                                         perfEvents,
@@ -285,8 +305,7 @@ EventCounts OfflineCode::getEventCounts(TCA address,
 }
 
 void OfflineCode::disasm(std::ostream& os,
-                         FILE* file,
-                         TCA fileStartAddr,
+                         const TCRegionRec& region,
                          TCA codeStartAddr,
                          uint64_t codeLen,
                          const PerfEventsMap<TCA>& perfEvents,
@@ -294,8 +313,7 @@ void OfflineCode::disasm(std::ostream& os,
                          bool printAddr,
                          bool printBinary) {
 
-  auto const regionInfo = getRegionInfo(file,
-                                        fileStartAddr,
+  auto const regionInfo = getRegionInfo(region,
                                         codeStartAddr,
                                         codeLen,
                                         perfEvents,
@@ -483,19 +501,16 @@ TCDisasmInfo OfflineCode::getDisasmInfo(const TCA ip,
                        instrLen};
 }
 
-void OfflineCode::readDisasmFile(FILE* file,
+void OfflineCode::readFromRegion(const TCRegionRec& region,
                                  const Offset offset,
                                  const uint64_t codeLen,
                                  void* code) {
-  if (fseek(file, offset, SEEK_SET)) {
-    error("disasm error: seeking file");
+  if (offset < 0 ||
+      static_cast<uint64_t>(offset) + codeLen > region.dataLen) {
+    error("readFromRegion: offset {} + len {} exceeds buffer size {}",
+          offset, codeLen, region.dataLen);
   }
-
-  size_t readLen = fread(code, codeLen, 1, file);
-  if (readLen != 1) {
-    error("Failed to read {} bytes at offset {} from code file due to {}",
-          codeLen, offset, feof(file) ? "EOF" : "read error");
-  }
+  memcpy(code, region.data + offset, codeLen);
 }
 
 } } // HPHP::jit

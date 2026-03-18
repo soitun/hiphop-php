@@ -19,8 +19,11 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include <algorithm>
+#include <atomic>
 #include <cstdint>
 #include <string>
+#include <thread>
 #include <vector>
 #include <sstream>
 
@@ -81,6 +84,7 @@ std::string     selectedFuncName;
 TCA             minAddr         = 0;
 TCA             maxAddr         = (TCA)-1;
 uint32_t        annotationsVerbosity = 2;
+uint32_t        numThreads      = 0;
 #ifdef HHVM_FACEBOOK
 bool            printToDB       = false;
 std::string     hiveTable;
@@ -169,6 +173,8 @@ void usage() {
     "    -v <PERCENTAGE> : sets the minimum percentage to <PERCENTAGE> "
     "when printing the top helpers (implies -i). The lower the percentage,"
     " the more helpers that will show up.\n"
+    "    -P <THREADS>    : number of threads for parallel output "
+    "(default: auto-detect, 1 = sequential)\n"
     "    -j              : outputs tc-dump in JSON format (not compatible with "
     "some other flags).\n"
     // TODO(T52857399) - investigate compatibility with other flags
@@ -205,7 +211,7 @@ void parseOptions(int argc, char *argv[]) {
   opterr = 0;
   char* sortByArg = nullptr;
   while ((c = getopt(argc, argv,
-                     "hDd:F:f:G:g:ip:st:u:S:T:o:r:e:E:bB:v:k:a:A:n:jH:xc:"))
+                     "hDd:F:f:G:g:ip:st:u:S:T:o:r:e:E:bB:v:k:a:A:n:jP:H:xc:"))
          != -1) {
     switch (c) {
       case 'A':
@@ -349,6 +355,12 @@ void parseOptions(int argc, char *argv[]) {
         break;
       case 'j':
         useJSON = true;
+        break;
+      case 'P':
+        if (sscanf(optarg, "%u", &numThreads) != 1) {
+          usage();
+          exit(1);
+        }
         break;
       #ifdef HHVM_FACEBOOK
       case 'x':
@@ -764,9 +776,37 @@ dynamic getTrans(TransID transId) {
 }
 
 dynamic getTC() {
+  auto const ntrans = NTRANS;
+  std::vector<dynamic> results(ntrans);
+  if (ntrans == 0) {
+    return dynamic::object("repoSchema", repoSchemaId().begin())
+                          ("translations", dynamic::array);
+  }
+
+  if (numThreads <= 1) {
+    for (uint32_t t = 0; t < ntrans; t++) {
+      results[t] = getTrans(t);
+    }
+  } else {
+    auto const actualThreads = std::min(numThreads, ntrans);
+    std::vector<std::thread> threads;
+    auto const chunkSize = (ntrans + actualThreads - 1) / actualThreads;
+    for (uint32_t tid = 0; tid < actualThreads; tid++) {
+      auto const begin = tid * chunkSize;
+      auto const end = std::min(begin + chunkSize, ntrans);
+      if (begin >= ntrans) break;
+      threads.emplace_back([begin, end, &results] {
+        for (uint32_t t = begin; t < end; t++) {
+          results[t] = getTrans(t);
+        }
+      });
+    }
+    for (auto& t : threads) t.join();
+  }
+
   dynamic translations = dynamic::array;
-  for (uint32_t t = 0; t < NTRANS; t++) {
-    translations.push_back(getTrans(t));
+  for (uint32_t t = 0; t < ntrans; t++) {
+    translations.push_back(std::move(results[t]));
   }
 
   return dynamic::object("repoSchema", repoSchemaId().begin())
@@ -774,18 +814,20 @@ dynamic getTC() {
 }
 }
 
-// Prints the metadata, bytecode, and disassembly for the given translation
-void printTrans(TransID transId) {
+// Thread-safe version: generates all output for a translation into a string.
+std::string generateTransOutput(TransID transId) {
   always_assert(transId < NTRANS);
 
-  g_logger->printGeneric("\n====================\n");
-  g_transData->printTransRec(transId, transPerfEvents);
+  std::ostringstream os;
+
+  os << "\n====================\n";
+  g_transData->printTransRec(os, transId, transPerfEvents);
 
   const TransRec* tRec = TREC(transId);
-  if (!tRec->isValid()) return;
+  if (!tRec->isValid()) return os.str();
 
   if (!tRec->blocks.empty()) {
-    g_logger->printGeneric("----------\nbytecode:\n----------\n");
+    os << "----------\nbytecode:\n----------\n";
     const Func* curFunc = nullptr;
     for (auto& block : tRec->blocks) {
       std::stringstream byteInfo;
@@ -820,42 +862,94 @@ void printTrans(TransID transId) {
           .noMetadata()
           .range(sk.offset(), block.bcPast)
       );
-      g_logger->printBytecode(byteInfo.str());
+      os << byteInfo.str();
     }
   }
 
-  g_logger->printGeneric("----------\n%s: main\n----------\n",
-                         transCode->getArchName());
-  g_logger->printAsm("%s", getDisasmStr(transCode,
-                                        tRec->aStart,
-                                        tRec->aLen,
-                                        tRec->bcMapping,
-                                        tcaPerfEvents,
-                                        hostOpcodes).c_str());
+  os << folly::format("----------\n{}: main\n----------\n",
+                       transCode->getArchName());
+  os << getDisasmStr(transCode,
+                     tRec->aStart,
+                     tRec->aLen,
+                     tRec->bcMapping,
+                     tcaPerfEvents,
+                     hostOpcodes);
 
-  g_logger->printGeneric("----------\n%s: cold\n----------\n",
-                         transCode->getArchName());
-  // Sometimes acoldStart is the same as afrozenStart.  Avoid printing the code
-  // twice in such cases.
+  os << folly::format("----------\n{}: cold\n----------\n",
+                       transCode->getArchName());
   if (tRec->acoldStart != tRec->afrozenStart) {
-    g_logger->printAsm("%s", getDisasmStr(transCode,
-                                          tRec->acoldStart,
-                                          tRec->acoldLen,
-                                          tRec->bcMapping,
-                                          tcaPerfEvents,
-                                          hostOpcodes).c_str());
+    os << getDisasmStr(transCode,
+                       tRec->acoldStart,
+                       tRec->acoldLen,
+                       tRec->bcMapping,
+                       tcaPerfEvents,
+                       hostOpcodes);
   }
 
-  g_logger->printGeneric("----------\n%s: frozen\n----------\n",
-                         transCode->getArchName());
-  g_logger->printAsm("%s", getDisasmStr(transCode,
-                                        tRec->afrozenStart,
-                                        tRec->afrozenLen,
-                                        tRec->bcMapping,
-                                        tcaPerfEvents,
-                                        hostOpcodes).c_str());
-  g_logger->printGeneric("----------\n");
+  os << folly::format("----------\n{}: frozen\n----------\n",
+                       transCode->getArchName());
+  os << getDisasmStr(transCode,
+                     tRec->afrozenStart,
+                     tRec->afrozenLen,
+                     tRec->bcMapping,
+                     tcaPerfEvents,
+                     hostOpcodes);
+  os << "----------\n";
 
+  return os.str();
+}
+
+// Generate results in parallel and consume them in order. Workers fill slots
+// and mark them ready; the main thread prints each slot as soon as it's
+// available, then frees its memory. This bounds peak memory to roughly
+// (nThreads * avg_result_size) instead of (count * avg_result_size).
+//
+// generate(i) produces the string for item i.
+// consume(i, string) is called in order on the main thread.
+template<typename GenF, typename ConF>
+void parallelForEach(uint32_t count,
+                     uint32_t nThreads,
+                     GenF&& generate,
+                     ConF&& consume) {
+  if (count == 0) return;
+
+  if (nThreads <= 1) {
+    for (uint32_t i = 0; i < count; i++) {
+      consume(i, generate(i));
+    }
+    return;
+  }
+
+  struct Slot {
+    std::atomic<bool> ready{false};
+    std::string data;
+  };
+  std::vector<Slot> slots(count);
+
+  auto const actualThreads = std::min(nThreads, count);
+  std::vector<std::thread> threads;
+  auto const chunkSize = (count + actualThreads - 1) / actualThreads;
+  for (uint32_t tid = 0; tid < actualThreads; tid++) {
+    auto const begin = tid * chunkSize;
+    auto const end = std::min(begin + chunkSize, count);
+    if (begin >= count) break;
+    threads.emplace_back([begin, end, &slots, &generate] {
+      for (uint32_t i = begin; i < end; i++) {
+        slots[i].data = generate(i);
+        slots[i].ready.store(true, std::memory_order_release);
+      }
+    });
+  }
+
+  // Consume results in order as they become ready.
+  for (uint32_t i = 0; i < count; i++) {
+    while (!slots[i].ready.load(std::memory_order_acquire)) {
+      std::this_thread::yield();
+    }
+    consume(i, std::move(slots[i].data));
+  }
+
+  for (auto& t : threads) t.join();
 }
 
 
@@ -1037,7 +1131,11 @@ void printTopTrans() {
             transIds.size());
     nPrint = transIds.size();
   }
-  for (size_t i = 0; i < nPrint; i++) printTrans(transIds[i]);
+
+  parallelForEach(
+    nPrint, numThreads,
+    [&](uint32_t i) { return generateTransOutput(transIds[i]); },
+    [](uint32_t, std::string s) { std::cout << s; });
 }
 
 void printBytecodeStats(const OfflineTransData* tdata,
@@ -1153,6 +1251,11 @@ int main(int argc, char *argv[]) {
 
   parseOptions(argc, argv);
 
+  // Resolve thread count: 0 means auto-detect.
+  if (numThreads == 0) {
+    numThreads = std::max(1u, std::thread::hardware_concurrency());
+  }
+
   #ifdef HHVM_FACEBOOK
   Optional<DBLogger> dblogger = std::nullopt;
   if (printToDB) {
@@ -1208,9 +1311,11 @@ int main(int argc, char *argv[]) {
     // Print translations (all or for a given funcId) in the order
     // they were created.
     sortTrans();
-    for (uint32_t i=0; i < transPrintOrder.size(); i++) {
-      printTrans(transPrintOrder[i]);
-    }
+    auto const n = static_cast<uint32_t>(transPrintOrder.size());
+    parallelForEach(
+      n, numThreads,
+      [&](uint32_t i) { return generateTransOutput(transPrintOrder[i]); },
+      [](uint32_t, std::string s) { std::cout << s; });
   } else if (collectBCStats) {
     printBytecodeStats(g_transData, tcaPerfEvents, sortBy);
   } else if (filterByOpcode) {
@@ -1248,17 +1353,28 @@ int main(int argc, char *argv[]) {
     #endif
   } else {
     // Print all translations in original order, filtered by unit if desired.
+    // Build list of translation IDs to print.
+    std::vector<TransID> defaultTransIds;
     for (uint32_t t = 0; t < NTRANS; t++) {
       auto tRec = TREC(t);
       if (!tRec->isValid()) continue;
       if (tRec->kind == TransKind::Anchor) continue;
       if (sha1Filter && tRec->sha1 != *sha1Filter) continue;
-
-      printTrans(t);
-      bool opt = (tRec->kind == TransKind::OptPrologue
-                        || tRec->kind == TransKind::Optimize);
-      g_logger->flushTranslation(tRec->funcName, opt);
-  }
+      defaultTransIds.push_back(t);
+    }
+    auto const n = static_cast<uint32_t>(defaultTransIds.size());
+    parallelForEach(
+      n, numThreads,
+      [&](uint32_t i) {
+        return generateTransOutput(defaultTransIds[i]);
+      },
+      [&](uint32_t i, std::string s) {
+        std::cout << s;
+        auto tRec = TREC(defaultTransIds[i]);
+        bool opt = (tRec->kind == TransKind::OptPrologue
+                          || tRec->kind == TransKind::Optimize);
+        g_logger->flushTranslation(tRec->funcName, opt);
+      });
   }
 
   delete g_transData;

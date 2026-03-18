@@ -59,6 +59,7 @@ Optional<FileInfo> AnnotationCache::getFileInfo(const string& annotation) {
 }
 
 const uint8_t* AnnotationCache::getIOBuf(const string& fileName) {
+  std::lock_guard<std::mutex> lock(m_mutex);
   auto const& cachedElem = m_fileCache.find(fileName);
   if (cachedElem != m_fileCache.end()) return cachedElem->second->data();
 

@@ -32,24 +32,20 @@ using namespace vixl;
 const char* OfflineCode::getArchName() { return "A64"; }
 
 
-TCA OfflineCode::collectJmpTargets(FILE *file,
-                                   TCA fileStartAddr,
+TCA OfflineCode::collectJmpTargets(const TCRegionRec& region,
                                    TCA codeStartAddr,
                                    uint64_t codeLen,
                                    vector<TCA> *jmpTargets) {
 
   if (codeLen == 0) return 0;
 
-  Instruction* code = (Instruction*) alloca(codeLen);
+  std::vector<uint8_t> codeVec(codeLen);
+  Instruction* code = (Instruction*) codeVec.data();
   Instruction* frontier;
   TCA ip;
 
-  if (fseek(file, codeStartAddr - fileStartAddr, SEEK_SET)) {
-    error("collectJmpTargets error: seeking file");
-  }
-
-  size_t readLen = fread(code, codeLen, 1, file);
-  if (readLen != 1) error("collectJmpTargets error: reading file");
+  auto const offset = codeStartAddr - region.baseAddr;
+  readFromRegion(region, offset, codeLen, code);
 
   for (frontier = code, ip = codeStartAddr; frontier < code + codeLen; ) {
     TCA addr = 0;
@@ -79,8 +75,7 @@ TCA OfflineCode::collectJmpTargets(FILE *file,
   return 0;
 }
 
-TCRegionInfo OfflineCode::getRegionInfo(FILE* file,
-                                         TCA fileStartAddr,
+TCRegionInfo OfflineCode::getRegionInfo(const TCRegionRec& region,
                                          TCA codeStartAddr,
                                          uint64_t codeLen,
                                          const PerfEventsMap<TCA>& perfEvents,
@@ -95,13 +90,14 @@ TCRegionInfo OfflineCode::getRegionInfo(FILE* file,
   auto& ranges = regionInfo.ranges;
 
   char codeStr[MAX_INSTR_ASM_LEN];
-  Instruction* code = (Instruction*) alloca(codeLen);
+  std::vector<uint8_t> codeVec(codeLen);
+  Instruction* code = (Instruction*) codeVec.data();
   Instruction* frontier;
   TCA ip;
   size_t  currBC = 0;
 
-  auto const offset = codeStartAddr - fileStartAddr;
-  readDisasmFile(file, offset, codeLen, code);
+  auto const offset = codeStartAddr - region.baseAddr;
+  readFromRegion(region, offset, codeLen, code);
 
   Decoder dec;
   Disassembler dis(codeStr, MAX_INSTR_ASM_LEN);
@@ -120,6 +116,7 @@ TCRegionInfo OfflineCode::getRegionInfo(FILE* file,
   for (frontier = code, ip = codeStartAddr; frontier < code + codeLen; ) {
     dec.Decode(frontier);
 
+    uint64_t literal = 0;
     std::string literalStr;
     if (frontier->IsLoadLiteral()) {
       auto const literalWidth = frontier->Mask(LoadLiteralMask);
@@ -132,7 +129,6 @@ TCRegionInfo OfflineCode::getRegionInfo(FILE* file,
       auto const codeBegin = reinterpret_cast<uint8_t*>(code);
       auto const codeEnd = codeBegin + codeLen;
       if (literalAddr >= codeBegin && literalAddr + literalSize < codeEnd) {
-        uint64_t literal = 0;
         memcpy(&literal, literalAddr, literalSize);
         if (literalSize == sizeof(uint64_t)) {
           literalStr = folly::sformat(" [value 0x{:016x}]", literal);
@@ -150,18 +146,19 @@ TCRegionInfo OfflineCode::getRegionInfo(FILE* file,
     //   movk x18, #...        blr x18
     //   blr x18
 
-    insn = frontier->InstructionBits();
+    auto ExtractMovWideImm = [&] (const Instr& insn) {
+      return ((static_cast<int64_t>(insn) & ImmMoveWide_mask) >> ImmMoveWide_offset) <<
+        (16 * ((insn & ShiftMoveWide_mask) >> ShiftMoveWide_offset));
+    };
+    insn = frontier->GetInstructionBits();
     if ((insn & MoveWideImmX18Mask) == MOVZ_x18) {
-      callAddr = static_cast<uint32_t>((insn & 0x1fffd0) >> ImmMoveWide_offset);
+      callAddr = ExtractMovWideImm(insn);
 
     } else if ((insn & MoveWideImmX18Mask) == MOVK_x18) {
-      callAddr |= ((insn & 0x1fffe0) >> 5) << (16 * ((insn & 0x600000) >> ShiftMoveWide_offset));
+      callAddr |= ExtractMovWideImm(insn);
 
     } else if (insn == LDR_x_litx18) {
-      callAddr = static_cast<int64_t>((frontier-4)->InstructionBits()) << 32;
-      callAddr |= (frontier-8)->InstructionBits();
-      callAddr = callAddr + (int64_t)ip;
-      callAddr = callAddr + (int64_t)kInstructionSize;
+      callAddr = literal;
 
     } else if (frontier->Mask(UnconditionalBranchMask) == BL) {
       callAddr = int64_t(frontier->GetImmPCOffsetTarget((const Instruction*)ip));

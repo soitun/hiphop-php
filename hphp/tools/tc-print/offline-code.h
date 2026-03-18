@@ -17,8 +17,10 @@
 #ifndef OFFLINE_X86_CODE_
 #define OFFLINE_X86_CODE_
 
+#include <memory>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "hphp/runtime/vm/unit.h"
 #include "hphp/runtime/vm/jit/translator.h"
@@ -181,7 +183,8 @@ struct TCRegionInfo {
 };
 
 struct TCRegionRec {
-  FILE*    file;
+  const uint8_t* data;
+  size_t   dataLen;
   TCA      baseAddr;
   uint32_t len;
 };
@@ -247,6 +250,8 @@ private:
   std::string        dumpDir;
   const std::string& blockMap;
   TCRegionRec        tcRegions[TCRCount];
+  struct MmapRegion { uint8_t* addr; size_t len; };
+  std::vector<MmapRegion> ownedMmaps;
 #if defined(__x86_64__)
   xed_state_t        xed_state;
   xed_syntax_enum_t  xed_syntax;
@@ -262,8 +267,7 @@ private:
   bool tcRegionContains(TCRegion tcr, TCA addr) const;
 
   void disasm(std::ostream&,
-              FILE*  file,
-              TCA    fileStartAddr,
+              const TCRegionRec& region,
               TCA    codeStartAddr,
               uint64_t codeLen,
               const PerfEventsMap<TCA>& perfEvents,
@@ -272,11 +276,14 @@ private:
               bool   printBinary);
 
   /*
-   * Read in the specified FILE, starting at the given offset and reading
-   * `codeLen` bytes, and store those bytes in the location pointed to by
-   * `code`. Throws an error if the file is unable to be read at that location.
+   * Read from the in-memory buffer of a TC region, starting at the given
+   * offset and reading `codeLen` bytes, and store those bytes in the location
+   * pointed to by `code`. Throws an error if the read is out of bounds.
    */
-  void readDisasmFile(FILE*, const Offset, const uint64_t codeLen, void* code);
+  void readFromRegion(const TCRegionRec& region,
+                      const Offset offset,
+                      const uint64_t codeLen,
+                      void* code);
 
   /*
    * Sort the different instructions within the Unit based on address range,
@@ -287,10 +294,10 @@ private:
 
   /*
    * Get all of the disassembly information for the region
-   * [codeStartAddr, codeStartAddr + codeLen) as read from the provided FILE.
+   * [codeStartAddr, codeStartAddr + codeLen) as read from the in-memory
+   * buffer.
    */
-  TCRegionInfo getRegionInfo(FILE*  file,
-                              TCA fileStartAddr,
+  TCRegionInfo getRegionInfo(const TCRegionRec& region,
                               TCA codeStartAddr,
                               uint64_t codeLen,
                               const PerfEventsMap<TCA>& perfEvents,
@@ -325,8 +332,7 @@ private:
                               const std::string& callDest,
                               const std::string& codeStr);
 
-  TCA collectJmpTargets(FILE* file,
-                        TCA fileStartAddr,
+  TCA collectJmpTargets(const TCRegionRec& region,
                         TCA codeStartAddr,
                         uint64_t codeLen,
                         std::vector<TCA>* jmpTargets);

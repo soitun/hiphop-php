@@ -44,24 +44,20 @@ void OfflineCode::xedInit() {
   xed_syntax = getenv("HHVM_INTEL_DISAS") ? XED_SYNTAX_INTEL : XED_SYNTAX_ATT;
 }
 
-TCA OfflineCode::collectJmpTargets(FILE  *file,
-                                      TCA    fileStartAddr,
+TCA OfflineCode::collectJmpTargets(const TCRegionRec& region,
                                       TCA    codeStartAddr,
                                       uint64_t codeLen,
                                       vector<TCA> *jmpTargets) {
 
-  xed_uint8_t* code = (xed_uint8_t*) alloca(codeLen);
+  if (codeLen == 0) return 0;
+
+  std::vector<xed_uint8_t> codeVec(codeLen);
+  xed_uint8_t* code = codeVec.data();
   xed_uint8_t* frontier;
   TCA          ip;
 
-  if (codeLen == 0) return 0;
-
-  if (fseek(file, codeStartAddr - fileStartAddr, SEEK_SET)) {
-    error("collectJmpTargets error: seeking file");
-  }
-
-  size_t readLen = fread(code, codeLen, 1, file);
-  if (readLen != 1) error("collectJmpTargets error: reading file");
+  auto const offset = codeStartAddr - region.baseAddr;
+  readFromRegion(region, offset, codeLen, code);
 
   xed_decoded_inst_t xedd;
   xed_iclass_enum_t iclass = XED_ICLASS_NOP;
@@ -114,8 +110,7 @@ TCA OfflineCode::collectJmpTargets(FILE  *file,
 // by fileStartAddr, for the address range given by
 // [codeStartAddr, codeStartAddr + codeLen)
 
-TCRegionInfo OfflineCode::getRegionInfo(FILE* file,
-                                         TCA   fileStartAddr,
+TCRegionInfo OfflineCode::getRegionInfo(const TCRegionRec& region,
                                          TCA   codeStartAddr,
                                          uint64_t codeLen,
                                          const PerfEventsMap<TCA>& perfEvents,
@@ -130,14 +125,15 @@ TCRegionInfo OfflineCode::getRegionInfo(FILE* file,
   auto& ranges = regionInfo.ranges;
 
   char codeStr[MAX_INSTR_ASM_LEN];
-  xed_uint8_t* code = (xed_uint8_t*) alloca(codeLen);
+  std::vector<xed_uint8_t> codeVec(codeLen);
+  xed_uint8_t* code = codeVec.data();
   xed_uint8_t* frontier;
   TCA          ip;
   TCA          r10val = 0;
   size_t       currBC = 0;
 
-  auto const offset = codeStartAddr - fileStartAddr;
-  readDisasmFile(file, offset, codeLen, code);
+  auto const offset = codeStartAddr - region.baseAddr;
+  readFromRegion(region, offset, codeLen, code);
 
   xed_decoded_inst_t xedd;
 

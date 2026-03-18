@@ -21,6 +21,7 @@
 #include "hphp/util/build-info.h"
 
 #include <folly/Math.h>
+#include <folly/gen/String.h>
 
 using std::string;
 
@@ -411,6 +412,97 @@ void OfflineTransData::printTransRec(TransID transId,
   transStats.printEventsHeader(transId);
 
   std::cout << "}\n\n";
+}
+
+void OfflineTransData::printTransRec(std::ostream& os,
+                                     TransID transId,
+                                     const PerfEventsMap<TransID>& transStats) {
+  const TransRec* tRec = getTransRec(transId);
+  if (!tRec->isValid()) {
+    os << "Translation -1 {\n}\n";
+    return;
+  }
+
+  os << folly::format(
+    "Translation {} {{\n"
+    "  src.sha1 = {}\n"
+    "  src.funcId = {}\n"
+    "  src.funcName = {}\n"
+    "  src.resumeMode = {}\n"
+    "  src.prologue = {}\n"
+    "  src.funcEntry = {}\n"
+    "  src.bcStartOffset = {}\n",
+    tRec->id,
+    tRec->sha1,
+    tRec->src.funcID(),
+    tRec->funcName,
+    static_cast<int32_t>(tRec->src.resumeMode()),
+    tRec->src.prologue(),
+    tRec->src.funcEntry(),
+    tRec->src.prologue() || tRec->src.funcEntry()
+      ? 0 : tRec->src.offset());
+
+  if (tRec->src.prologue() || tRec->src.funcEntry()) {
+    os << folly::format(
+      "  src.numEntryArgs = {}\n", tRec->src.numEntryArgs());
+  }
+
+  os << folly::format(
+    "  src.guards = {}\n", tRec->guards.size());
+
+  for (auto& guard : tRec->guards) {
+    os << "    " << guard << '\n';
+  }
+
+  os << folly::format(
+    "  kind = {}\n"
+    "  hasLoop = {:d}\n"
+    "  aStart = {}\n"
+    "  aLen = {:#x}\n"
+    "  coldStart = {}\n"
+    "  coldLen = {:#x}\n"
+    "  frozenStart = {}\n"
+    "  frozenLen = {:#x}\n",
+    show(tRec->kind),
+    tRec->hasLoop,
+    tRec->aStart,
+    tRec->aLen,
+    tRec->acoldStart,
+    tRec->acoldLen,
+    tRec->afrozenStart,
+    tRec->afrozenLen);
+
+  if (annotationsVerbosity > 0) {
+    for (auto& annotation : tRec->annotations) {
+      os << folly::format(
+        "  annotation[\"{}\"]",
+        annotation.first);
+      auto const& annotationValue = annotation.second;
+      if (annotationsVerbosity > 1 && annotationValue.substr(0, 5) == "file:") {
+        os << '\n';
+        auto const maybeFileInfo = g_annotations->getFileInfo(annotationValue);
+
+        if (!maybeFileInfo) {
+          os << annotationValue << '\n';
+          continue;
+        }
+        auto const& fileInfo = *maybeFileInfo;
+
+        auto const& maybeValue = g_annotations->getValue(fileInfo);
+        if (maybeValue) {
+          os << '\n' << (folly::gen::split(*maybeValue, '\n') |
+                                folly::gen::unsplit("\n    "));
+        }
+        os << '\n';
+      } else {
+        os << folly::format(" = {}\n", annotationValue);
+      }
+    }
+  }
+
+  transStats.printEventsHeader(transId, os);
+
+  os << "}\n\n";
 }
 
 } } // HPHP::jit

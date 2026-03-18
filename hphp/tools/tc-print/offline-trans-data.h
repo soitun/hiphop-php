@@ -17,6 +17,7 @@
 #ifndef incl_HPHP_OFFLINE_TRANS_DATA_
 #define incl_HPHP_OFFLINE_TRANS_DATA_
 
+#include <iosfwd>
 #include <map>
 #include <string>
 #include <unordered_map>
@@ -142,6 +143,8 @@ struct OfflineTransData {
   void findFuncTrans(uint32_t selectedFuncId, std::vector<TransID> *inodes);
 
   void printTransRec(TransID transId, const PerfEventsMap<TransID>& transStats);
+  void printTransRec(std::ostream& os, TransID transId,
+                     const PerfEventsMap<TransID>& transStats);
 
   bool isAddrInSomeTrans(TCA addr) const {
     if ((aBase      <= addr && addr < aFrontier)     ||
