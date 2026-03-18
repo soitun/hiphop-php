@@ -814,6 +814,7 @@ void apc_sample_by_size() {
     sample.setInt("value_size", entry.size);
     sample.setInt("total_size", entry.totalSize());
     sample.setInt("weight", weight);
+    sample.setInt("type", static_cast<int64_t>(entry.type));
     StructuredLog::log("apc_samples", sample);
   }
 }
