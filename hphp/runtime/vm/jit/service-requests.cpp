@@ -51,7 +51,10 @@ uint64_t toStubKey(StubType type, SrcKey sk, SBInvOffset spOff) {
   auto const bcOffOrNumArgs = sk.funcEntry() ? sk.numEntryArgs() : sk.offset();
   assertx(t < (1 << 2));
   assertx(0 <= bcOffOrNumArgs && bcOffOrNumArgs < (1LL << 30));
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wtautological-compare"
   assertx(0 <= spOff.offset && spOff.offset < (1LL << 31));
+  #pragma clang diagnostic pop
   return
     (static_cast<uint64_t>(t) << 62) +
     (static_cast<uint64_t>(sk.funcEntry()) << 61) +
