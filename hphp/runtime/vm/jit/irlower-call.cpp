@@ -92,9 +92,11 @@ void cgCall(IRLS& env, const IRInstruction* inst) {
     ? inst->src(2)->funcVal() : nullptr;
   // Upgrade skipRepack if HHIR opts inferred the callee. We can't do this for
   // unpack, as it is not guaranteed to be a varray.
+  // We can also special-case calls with 0 args as never needing a repack since there's
+  // no unpack argument and param counts are non-negative.
   auto const skipRepack = extra->skipRepack || (
     func && !extra->hasUnpack && extra->numArgs <= func->numNonVariadicParams()
-  );
+  ) || numArgsInclUnpack == 0;
   auto const coeffectsVal = inst->src(4)->hasConstVal(TInt)
     ? RuntimeCoeffects::fromValue(inst->src(4)->intVal())
     : RuntimeCoeffects::none();
