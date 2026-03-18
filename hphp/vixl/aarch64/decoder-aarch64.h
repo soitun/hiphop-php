@@ -311,7 +311,12 @@ class CompiledDecodeNode;
 // handles the instruction.
 class Decoder {
  public:
-  Decoder() { ConstructDecodeGraph(); }
+  // The compiled decode graph is expensive to build but identical for every
+  // Decoder instance.  The default constructor builds it once (via a
+  // function-local static) and all subsequent Decoders share the compiled
+  // graph.  Each instance still has its own visitor list, and Decode()
+  // dispatches through the calling instance's visitors.
+  Decoder();
 
   // Top-level wrappers around the actual decoding function.
   void Decode(const Instruction* instr);
@@ -386,11 +391,16 @@ class Decoder {
   // information in kDecodeMapping and kVisitorNodes.
   void ConstructDecodeGraph();
 
+  // Private tag type for the graph-building constructor.
+  struct ConstructGraphTag {};
+  explicit Decoder(ConstructGraphTag) { ConstructDecodeGraph(); }
+
   // Root node for the compiled decoder graph, stored here to avoid a map lookup
   // for every instruction decoded.
   CompiledDecodeNode* compiled_decoder_root_;
 
-  // Map of node names to DecodeNodes.
+  // Map of node names to DecodeNodes.  Only populated in the singleton
+  // graph-owning instance; empty in all regular instances.
   std::map<std::string, DecodeNode> decode_nodes_;
 };
 
@@ -464,8 +474,10 @@ class CompiledDecodeNode {
 
   // Decode the instruction by either sampling the bits using the bit extract
   // function to find the next node, or, if we're at a leaf, calling the visitor
-  // function.
-  void Decode(const Instruction* instr) const;
+  // function.  When a non-null |decoder| is supplied it is used instead of the
+  // stored decoder_ pointer, allowing a shared decode graph to dispatch to
+  // per-instance visitor lists.
+  void Decode(const Instruction* instr, Decoder* decoder = nullptr) const;
 
   // A leaf node is a wrapper for a visitor function.
   bool IsLeafNode() const {

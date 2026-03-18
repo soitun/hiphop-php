@@ -36,17 +36,26 @@
 namespace vixl {
 namespace aarch64 {
 
+Decoder::Decoder() {
+  // Build the decode graph once; all Decoder instances share it.
+  // The graph-owning Decoder is a function-local static, so it lives for the
+  // process lifetime and its decode_nodes_ map (which owns the compiled
+  // graph) is never destroyed prematurely.
+  static const Decoder s_graphOwner{ConstructGraphTag{}};
+  compiled_decoder_root_ = s_graphOwner.compiled_decoder_root_;
+}
+
 void Decoder::Decode(const Instruction* instr) {
   std::list<DecoderVisitor*>::iterator it;
   for (it = visitors_.begin(); it != visitors_.end(); it++) {
     VIXL_ASSERT((*it)->IsConstVisitor());
   }
   VIXL_ASSERT(compiled_decoder_root_ != NULL);
-  compiled_decoder_root_->Decode(instr);
+  compiled_decoder_root_->Decode(instr, this);
 }
 
 void Decoder::Decode(Instruction* instr) {
-  compiled_decoder_root_->Decode(const_cast<const Instruction*>(instr));
+  compiled_decoder_root_->Decode(const_cast<const Instruction*>(instr), this);
 }
 
 void Decoder::AddDecodeNode(const DecodeNode& node) {
@@ -505,18 +514,22 @@ CompiledDecodeNode* DecodeNode::Compile(Decoder* decoder) {
   return compiled_node_;
 }
 
-void CompiledDecodeNode::Decode(const Instruction* instr) const {
+void CompiledDecodeNode::Decode(const Instruction* instr,
+                                Decoder* decoder) const {
   if (IsLeafNode()) {
     // If this node is a leaf, call the registered visitor function.
-    VIXL_ASSERT(decoder_ != NULL);
-    decoder_->VisitNamedInstruction(instr, instruction_name_);
+    // Use the caller-supplied decoder if available (for shared-graph usage),
+    // otherwise fall back to the decoder stored at compile time.
+    Decoder* d = decoder ? decoder : decoder_;
+    VIXL_ASSERT(d != NULL);
+    d->VisitNamedInstruction(instr, instruction_name_);
   } else {
     // Otherwise, using the sampled bit extractor for this node, look up the
     // next node in the decode tree, and call its Decode method.
     VIXL_ASSERT(bit_extract_fn_ != NULL);
     VIXL_ASSERT((instr->*bit_extract_fn_)() < decode_table_size_);
     VIXL_ASSERT(decode_table_[(instr->*bit_extract_fn_)()] != NULL);
-    decode_table_[(instr->*bit_extract_fn_)()]->Decode(instr);
+    decode_table_[(instr->*bit_extract_fn_)()]->Decode(instr, decoder);
   }
 }
 
