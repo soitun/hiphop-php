@@ -16,6 +16,7 @@
 
 #include "hphp/tools/tc-print/tc-print.h"
 
+#include <getopt.h>
 #include <stdio.h>
 #include <unistd.h>
 
@@ -85,6 +86,7 @@ TCA             minAddr         = 0;
 TCA             maxAddr         = (TCA)-1;
 uint32_t        annotationsVerbosity = 2;
 uint32_t        numThreads      = 0;
+DisasmArch      selectedArch    = hostDisasmArch();
 #ifdef HHVM_FACEBOOK
 bool            printToDB       = false;
 std::string     hiveTable;
@@ -183,6 +185,8 @@ void usage() {
     "table <HIVE_TABLE>\n"
     "    -x              : log translations to database\n"
     #endif
+    "    --arch <ARCH>   : disassemble as <ARCH> "
+    "(aarch64/arm64/a64 or x64/x86_64, default: host)\n"
     "    -h              : prints help message\n",
     kListKeyword,
     kListKeyword);
@@ -210,10 +214,38 @@ void parseOptions(int argc, char *argv[]) {
   int c;
   opterr = 0;
   char* sortByArg = nullptr;
-  while ((c = getopt(argc, argv,
-                     "hDd:F:f:G:g:ip:st:u:S:T:o:r:e:E:bB:v:k:a:A:n:jP:H:xc:"))
+
+  static struct option long_options[] = {
+    {"arch", required_argument, 0, 0},
+    {0, 0, 0, 0}
+  };
+
+  int option_index = 0;
+  while ((c = getopt_long(argc, argv,
+                     ":hDd:F:f:G:g:ip:st:u:S:T:o:r:e:E:bB:v:k:a:A:n:jP:H:xc:",
+                     long_options, &option_index))
          != -1) {
     switch (c) {
+      case 0: {
+        // Long option
+        std::string optName = long_options[option_index].name;
+        if (optName == "arch") {
+          std::string archStr = optarg;
+          // Case-insensitive comparison
+          std::transform(archStr.begin(), archStr.end(), archStr.begin(),
+                         ::tolower);
+          if (archStr == "aarch64" || archStr == "arm64" || archStr == "a64") {
+            selectedArch = DisasmArch::A64;
+          } else if (archStr == "x64" || archStr == "x86_64") {
+            selectedArch = DisasmArch::X64;
+          } else {
+            fprintf(stderr, "Error: unknown architecture '%s'\n", optarg);
+            usage();
+            exit(1);
+          }
+        }
+        break;
+      }
       case 'A':
         if (sscanf(optarg, "%p", &maxAddr) != 1) {
           usage();
@@ -344,10 +376,14 @@ void parseOptions(int argc, char *argv[]) {
           exit(1);
         }
         break;
+      case ':':
+        // Missing argument for any short options
+        fprintf (stderr, "Error: %s expects an argument\n\n", argv[optind - 1]);
+        usage();
+        exit(1);
       case '?':
-        if (optopt == 'd' || optopt == 'c' || optopt == 'p' || optopt == 't') {
-          fprintf (stderr, "Error: -%c expects an argument\n\n", optopt);
-        }
+        // Unrecognized option, short or long
+        fprintf (stderr, "Error: unrecognized option %s\n\n", argv[optind - 1]);
         usage();
         exit(1);
       case 'o':
@@ -1270,7 +1306,8 @@ int main(int argc, char *argv[]) {
                               g_transData->getMainBase(),
                               g_transData->getColdBase(),
                               g_transData->getFrozenBase(),
-                              g_transData->getBlockMap());
+                              g_transData->getBlockMap(),
+                              selectedArch);
   Hdf config = !configFile.empty()
     ? Hdf{configFile}
     : Hdf{};

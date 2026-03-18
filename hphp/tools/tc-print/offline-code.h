@@ -37,6 +37,16 @@ extern "C" {
 
 namespace HPHP { namespace jit {
 
+enum class DisasmArch { X64, A64 };
+
+constexpr inline DisasmArch hostDisasmArch() {
+#if defined(__aarch64__)
+  return DisasmArch::A64;
+#else
+  return DisasmArch::X64;
+#endif
+}
+
 enum TCRegion {
   // NOTE: whenever you update this enumeration, please don't forget to fix
   // TCRegionString[] array accordingly.
@@ -194,14 +204,16 @@ struct OfflineCode {
                  TCA _aBase,
                  TCA _coldBase,
                  TCA _frozenBase,
-                 const std::string& _blockMap)
+                 const std::string& _blockMap,
+                 DisasmArch arch = hostDisasmArch())
       : dumpDir(_dumpDir)
-      , blockMap(_blockMap) {
+      , blockMap(_blockMap)
+      , arch_(arch) {
     TCA tcRegionBases[TCRCount] = {
       _aBase, _coldBase, _frozenBase
     };
 #if defined(__x86_64__)
-    xedInit();
+    if (arch_ == DisasmArch::X64) xedInit();
 #endif
     openFiles(tcRegionBases);
     loadSymbolsMap();
@@ -249,6 +261,7 @@ private:
 
   std::string        dumpDir;
   const std::string& blockMap;
+  DisasmArch         arch_;
   TCRegionRec        tcRegions[TCRCount];
   struct MmapRegion { uint8_t* addr; size_t len; };
   std::vector<MmapRegion> ownedMmaps;
@@ -336,6 +349,32 @@ private:
                         TCA codeStartAddr,
                         uint64_t codeLen,
                         std::vector<TCA>* jmpTargets);
+
+  // Arch-specific implementations (ARM)
+  const char* getArchNameArm();
+  TCA collectJmpTargetsArm(const TCRegionRec& region,
+                           TCA codeStartAddr,
+                           uint64_t codeLen,
+                           std::vector<TCA>* jmpTargets);
+  TCRegionInfo getRegionInfoArm(const TCRegionRec& region,
+                                TCA codeStartAddr,
+                                uint64_t codeLen,
+                                const PerfEventsMap<TCA>& perfEvents,
+                                BCMappingInfo bcMappingInfo);
+
+#if defined(__x86_64__)
+  // Arch-specific implementations (x86)
+  const char* getArchNameX86();
+  TCA collectJmpTargetsX86(const TCRegionRec& region,
+                           TCA codeStartAddr,
+                           uint64_t codeLen,
+                           std::vector<TCA>* jmpTargets);
+  TCRegionInfo getRegionInfoX86(const TCRegionRec& region,
+                                TCA codeStartAddr,
+                                uint64_t codeLen,
+                                const PerfEventsMap<TCA>& perfEvents,
+                                BCMappingInfo bcMappingInfo);
+#endif
 
   std::string getSymbolName(TCA addr);
 

@@ -14,8 +14,6 @@
    +----------------------------------------------------------------------+
 */
 
-#if defined(__aarch64__)
-
 #include <iomanip>
 
 #include "hphp/tools/tc-print/offline-code.h"
@@ -29,13 +27,13 @@ namespace HPHP { namespace jit {
 
 using namespace vixl;
 
-const char* OfflineCode::getArchName() { return "A64"; }
+const char* OfflineCode::getArchNameArm() { return "A64"; }
 
 
-TCA OfflineCode::collectJmpTargets(const TCRegionRec& region,
-                                   TCA codeStartAddr,
-                                   uint64_t codeLen,
-                                   vector<TCA> *jmpTargets) {
+TCA OfflineCode::collectJmpTargetsArm(const TCRegionRec& region,
+                                      TCA codeStartAddr,
+                                      uint64_t codeLen,
+                                      vector<TCA> *jmpTargets) {
 
   if (codeLen == 0) return 0;
 
@@ -75,11 +73,11 @@ TCA OfflineCode::collectJmpTargets(const TCRegionRec& region,
   return 0;
 }
 
-TCRegionInfo OfflineCode::getRegionInfo(const TCRegionRec& region,
-                                         TCA codeStartAddr,
-                                         uint64_t codeLen,
-                                         const PerfEventsMap<TCA>& perfEvents,
-                                         BCMappingInfo bcMappingInfo) {
+TCRegionInfo OfflineCode::getRegionInfoArm(const TCRegionRec& region,
+                                            TCA codeStartAddr,
+                                            uint64_t codeLen,
+                                            const PerfEventsMap<TCA>& perfEvents,
+                                            BCMappingInfo bcMappingInfo) {
   if (codeLen == 0) return TCRegionInfo{bcMappingInfo.tcRegion};
 
   auto const codeEndAddr = codeStartAddr + codeLen;
@@ -191,5 +189,3 @@ TCRegionInfo OfflineCode::getRegionInfo(const TCRegionRec& region,
 }
 
 } } // HPHP::jit
-
-#endif

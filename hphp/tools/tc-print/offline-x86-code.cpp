@@ -35,7 +35,7 @@ namespace HPHP { namespace jit {
 
 #if defined(__x86_64__)
 
-const char* OfflineCode::getArchName() { return "X64"; }
+const char* OfflineCode::getArchNameX86() { return "X64"; }
 
 void OfflineCode::xedInit() {
   xed_state_init(&xed_state, XED_MACHINE_MODE_LONG_64,
@@ -44,10 +44,10 @@ void OfflineCode::xedInit() {
   xed_syntax = getenv("HHVM_INTEL_DISAS") ? XED_SYNTAX_INTEL : XED_SYNTAX_ATT;
 }
 
-TCA OfflineCode::collectJmpTargets(const TCRegionRec& region,
-                                      TCA    codeStartAddr,
-                                      uint64_t codeLen,
-                                      vector<TCA> *jmpTargets) {
+TCA OfflineCode::collectJmpTargetsX86(const TCRegionRec& region,
+                                         TCA    codeStartAddr,
+                                         uint64_t codeLen,
+                                         vector<TCA> *jmpTargets) {
 
   if (codeLen == 0) return 0;
 
@@ -110,11 +110,11 @@ TCA OfflineCode::collectJmpTargets(const TCRegionRec& region,
 // by fileStartAddr, for the address range given by
 // [codeStartAddr, codeStartAddr + codeLen)
 
-TCRegionInfo OfflineCode::getRegionInfo(const TCRegionRec& region,
-                                         TCA   codeStartAddr,
-                                         uint64_t codeLen,
-                                         const PerfEventsMap<TCA>& perfEvents,
-                                         BCMappingInfo bcMappingInfo) {
+TCRegionInfo OfflineCode::getRegionInfoX86(const TCRegionRec& region,
+                                            TCA   codeStartAddr,
+                                            uint64_t codeLen,
+                                            const PerfEventsMap<TCA>& perfEvents,
+                                            BCMappingInfo bcMappingInfo) {
   if (codeLen == 0) return TCRegionInfo{bcMappingInfo.tcRegion};
 
   auto const codeEndAddr = codeStartAddr + codeLen;
