@@ -1,4 +1,4 @@
-WARN: File "infinite_loop_typeconst_upper_bound.bad.php", line 21, characters 7-20:
+WARN: File "strict_method_call.php", line 7, characters 3-7:
 This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
-ERROR: File "infinite_loop_typeconst_upper_bound.bad.php", line 14, characters 31-37:
-Unbound name: `NoExist` (Naming[2049])
+ERROR: File "strict_method_call.php", line 3, characters 10-12:
+Was expecting a return type hint (Typing[4030])

@@ -1,3 +1,11 @@
+WARN: File "typing_fail_missing_cv_type.php", line 18, characters 12-19:
+This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
+WARN: File "typing_fail_missing_cv_type.php", line 18, characters 19-19:
+This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
+WARN: File "typing_fail_missing_cv_type.php", line 22, characters 12-19:
+This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
+WARN: File "typing_fail_missing_cv_type.php", line 22, characters 19-19:
+This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
 ERROR: File "typing_fail_missing_cv_type.php", line 13, characters 11-12:
 Please add a type hint `private SomeType $a` (Naming[2001])
 ERROR: File "typing_fail_missing_cv_type.php", line 14, characters 13-14:

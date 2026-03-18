@@ -1,3 +1,11 @@
+WARN: File "tconst_on_generics5.php", line 38, characters 3-4:
+This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
+WARN: File "tconst_on_generics5.php", line 38, characters 3-21:
+This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
+WARN: File "tconst_on_generics5.php", line 38, characters 8-21:
+This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
+WARN: File "tconst_on_generics5.php", line 41, characters 10-11:
+This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
 ERROR: File "tconst_on_generics5.php", line 22, characters 74-75:
 Type access is only valid for a class, `self`, or `this`. To relate type parameters and type constants, you likely want to use the 'with refinement' feature instead. (Naming[2129])
 ERROR: File "tconst_on_generics5.php", line 25, characters 77-78:

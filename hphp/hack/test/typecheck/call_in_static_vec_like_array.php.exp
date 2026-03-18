@@ -1,3 +1,5 @@
+WARN: File "call_in_static_vec_like_array.php", line 7, characters 26-31:
+This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
 ERROR: File "call_in_static_vec_like_array.php", line 7, characters 26-31:
 Expected constant expression for initializer (Parsing[1002])
 ERROR: File "call_in_static_vec_like_array.php", line 7, characters 17-18:

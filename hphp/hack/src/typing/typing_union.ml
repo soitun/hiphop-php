@@ -212,6 +212,20 @@ let exact_least_upper_bound e1 e2 =
   | (Exact, Exact) -> Exact
   | (_, _) -> nonexact
 
+(** When choosing between two Tany types, prefer the one whose reason passes
+    is_missing_type_in_hierarchy to avoid false-positive Tany_found warnings.
+    Only checks the top-level type node to avoid recursing into large
+    union/intersection types. *)
+let keep_missing_type_in_hierarchy_reason ty_keep ty_other =
+  match (get_node ty_keep, get_node ty_other) with
+  | (Tany _, Tany _)
+    when Reason.Predicates.is_missing_type_in_hierarchy (get_reason ty_other)
+         && not
+              (Reason.Predicates.is_missing_type_in_hierarchy
+                 (get_reason ty_keep)) ->
+    with_reason ty_keep (get_reason ty_other)
+  | _ -> ty_keep
+
 let rec union env ?reason ?(approx_cancel_neg = false) ty1 ty2 =
   if Log.should_log env ~level:1 then
     Log.log_union env ty1 ty2 @@ fun () ->
@@ -226,9 +240,9 @@ and union_ env ?reason ~approx_cancel_neg ty1 ty2 =
   if ty_equal ty1 ty2 then
     (env, ty1)
   else if Utils.is_sub_type_for_union env ty1 ty2 then
-    (env, ty2)
+    (env, keep_missing_type_in_hierarchy_reason ty2 ty1)
   else if Utils.is_sub_type_for_union env ty2 ty1 then
-    (env, ty1)
+    (env, keep_missing_type_in_hierarchy_reason ty1 ty2)
   else
     let r =
       match reason with
@@ -270,9 +284,9 @@ and simplify_union_ ~approx_cancel_neg env ty1 ty2 r :
   if ty_equal ty1 ty2 then
     (env, Some ty1)
   else if Utils.is_sub_type_for_union env ty1 ty2 then
-    (env, Some ty2)
+    (env, Some (keep_missing_type_in_hierarchy_reason ty2 ty1))
   else if Utils.is_sub_type_for_union env ty2 ty1 then
-    (env, Some ty1)
+    (env, Some (keep_missing_type_in_hierarchy_reason ty1 ty2))
   else
     simplify_non_subtype_union ~approx_cancel_neg env ty1 ty2 r
 
@@ -743,6 +757,10 @@ and union_reason r1 r2 =
     r2
   else if Reason.Predicates.is_none r2 then
     r1
+  else if Reason.Predicates.is_missing_type_in_hierarchy r1 then
+    r1
+  else if Reason.Predicates.is_missing_type_in_hierarchy r2 then
+    r2
   else if Reason.compare r1 r2 <= 0 then
     r1
   else

@@ -1,2 +1,4 @@
+WARN: File "test_consts3.php", line 21, characters 10-13:
+This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
 ERROR: File "test_consts3.php", line 17, characters 9-9:
 Please add a type hint (Naming[2035])

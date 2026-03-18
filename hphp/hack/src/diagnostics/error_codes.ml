@@ -837,6 +837,7 @@ module Warning = struct
     | UnboundNameWarning [@value 12033]
     | SetOrKeysetArrayGet [@value 12034]
     | SealedNotSubtype [@value 12035]
+    | TanyFound [@value 12036]
       (* Add new Warning codes here! Comment out when deprecating. *)
   [@@deriving enum, ord, show { with_path = false }]
 end

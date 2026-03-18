@@ -1,3 +1,7 @@
+WARN: File "primary_error_pos_bug.php", line 33, characters 3-6:
+This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
+WARN: File "primary_error_pos_bug.php", line 34, characters 3-10:
+This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
 ERROR: File "primary_error_pos_bug.php", line 9, characters 16-19:
 Invalid type hint (Typing[4090])
   File "primary_error_pos_bug.php", line 9, characters 19-19:

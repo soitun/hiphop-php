@@ -1,3 +1,5 @@
+WARN: File "recursive_typeconst_bad.php", line 36, characters 10-20:
+This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
 ERROR: File "recursive_typeconst_bad.php", line 6, characters 14-26:
 Cyclic type constant:
   `MyParent::MyParentShape` -> `MyParentFix::MyParentShapeFix` -> `MyParent::MyParentShape` (Typing[4131])

@@ -1,10 +1,12 @@
-WARN: File "instantiate_unresolved5.php", line 20, characters 12-16:
+WARN: File "strict_call_tany3.php", line 14, characters 3-4:
 This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
-WARN: File "instantiate_unresolved5.php", line 22, characters 5-8:
+WARN: File "strict_call_tany3.php", line 14, characters 3-18:
 This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
-WARN: File "instantiate_unresolved5.php", line 22, characters 5-16:
+WARN: File "strict_call_tany3.php", line 14, characters 8-18:
 This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
-WARN: File "instantiate_unresolved5.php", line 22, characters 12-16:
+WARN: File "strict_call_tany3.php", line 14, characters 14-18:
 This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
-ERROR: File "instantiate_unresolved5.php", line 12, characters 10-12:
+WARN: File "strict_call_tany3.php", line 15, characters 19-20:
+This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
+ERROR: File "strict_call_tany3.php", line 3, characters 10-12:
 Was expecting a return type hint (Typing[4030])

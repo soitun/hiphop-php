@@ -1,2 +1,4 @@
+WARN: File "fake_nullable.php", line 29, characters 7-12:
+This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
 ERROR: File "fake_nullable.php", line 17, characters 10-13:
 Was expecting a return type hint (Typing[4030])

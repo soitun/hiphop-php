@@ -199,6 +199,8 @@ val is_dynamic : Typing_env_types.env -> Typing_defs.locl_ty -> bool
 
 val is_any : Typing_env_types.env -> Typing_defs.locl_ty -> bool
 
+val is_any_and_not_nothing : Typing_env_types.env -> Typing_defs.locl_ty -> bool
+
 val is_tunion : Typing_env_types.env -> Typing_defs.locl_ty -> bool
 
 val is_tintersection : Typing_env_types.env -> Typing_defs.locl_ty -> bool

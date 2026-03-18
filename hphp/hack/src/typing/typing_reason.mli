@@ -404,6 +404,8 @@ val pattern : Pos.t -> t
 
 val join_point : Pos.t -> t
 
+val missing_type_in_hierarchy : Pos_or_decl.t -> t
+
 val axiom_extends :
   child:locl_phase t_ -> ancestor:locl_phase t_ -> locl_phase t_
 
@@ -424,6 +426,8 @@ val flow_return_expr : expr:locl_phase t_ -> ret:locl_phase t_ -> locl_phase t_
 val flow_return_hint : hint:locl_phase t_ -> use:locl_phase t_ -> locl_phase t_
 
 val flow_param_hint : hint:locl_phase t_ -> param:locl_phase t_ -> locl_phase t_
+
+val flow_elab : from:locl_phase t_ -> into:locl_phase t_ -> locl_phase t_
 
 val solved :
   Tvid.t -> solution:locl_phase t_ -> in_:locl_phase t_ -> locl_phase t_
@@ -665,6 +669,8 @@ module Predicates : sig
   val unpack_shape_literal_opt : t -> Pos.t option
 
   val outer_constructor_string : t -> string
+
+  val is_missing_type_in_hierarchy : t -> bool
 end
 
 (** Get the topmost function parameter projection, in the case that the reason

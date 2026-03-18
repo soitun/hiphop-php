@@ -377,6 +377,8 @@ let referenced_typeconsts env root ids =
   Option.iter ~f:(Typing_error_utils.add_typing_error ~env) ty_err_opt;
   tcs
 
+let is_any env ty = Typing_utils.is_any_and_not_nothing env ty
+
 let empty ctx = Typing_env_types.empty ctx Relative_path.default ~droot:None
 
 let restore_saved_env (env : t) (saved_env : Tast.saved_env) : t =

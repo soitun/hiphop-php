@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<e42855a58a7de615cdacdb5bd6621101>>
+// @generated SignedSource<<1bf606ea182c178ab57cf10b6adf4a3f>>
 //
 // To regenerate this file, run:
 //   buck run @fbcode//mode/dev-nosan-lg fbcode//hphp/hack/src:oxidized_regen
@@ -400,6 +400,8 @@ pub enum FlowKind {
     FlowReturnExpr,
     #[rust_to_ocaml(name = "Flow_instantiate")]
     FlowInstantiate(String),
+    #[rust_to_ocaml(name = "Flow_elab")]
+    FlowElab,
 }
 
 /// Witness the reason for a type during decling using the position of a hint
@@ -479,6 +481,8 @@ pub enum WitnessDecl {
     SupportDynamicTypeAssume(pos_or_decl::PosOrDecl),
     #[rust_to_ocaml(name = "Polymorphic_type_param")]
     PolymorphicTypeParam(pos_or_decl::PosOrDecl, String, String, isize),
+    #[rust_to_ocaml(name = "Missing_type_in_hierarchy")]
+    MissingTypeInHierarchy(pos_or_decl::PosOrDecl),
 }
 
 /// Axioms are information about types provided by the user in class or type

@@ -923,6 +923,23 @@ module Sealed_not_subtype = struct
   let quickfixes _ = []
 end
 
+module Tany_found = struct
+  type t = Typing_warning.Tany_found.t
+
+  let code = Codes.TanyFound
+
+  let codes = [code]
+
+  let code _ = code
+
+  let claim () =
+    "This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance."
+
+  let reasons _ = []
+
+  let quickfixes _ = []
+end
+
 let module_of (type a x) (kind : (x, a) Typing_warning.kind) :
     (module Warning with type t = x) =
   match kind with
@@ -954,6 +971,7 @@ let module_of (type a x) (kind : (x, a) Typing_warning.kind) :
   | Typing_warning.Unbound_name_warning -> (module Unbound_name_warning)
   | Typing_warning.Set_or_keyset_array_get -> (module Set_or_keyset_array_get)
   | Typing_warning.Sealed_not_subtype -> (module Sealed_not_subtype)
+  | Typing_warning.Tany_found -> (module Tany_found)
 
 let module_of_migrated
     (type x) (kind : (x, Typing_warning.migrated) Typing_warning.kind) :

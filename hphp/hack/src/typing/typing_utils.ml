@@ -291,6 +291,16 @@ let rec is_any env ty =
   | Tintersection tyl -> List.exists tyl ~f:(is_any env)
   | _ -> false
 
+let rec is_any_and_not_nothing env ty =
+  let (env, ty) = Env.expand_type env ty in
+  match get_node ty with
+  | Tany _ -> true
+  | Tunion [] -> false
+  | Tunion tyl
+  | Tintersection tyl ->
+    List.exists tyl ~f:(is_any_and_not_nothing env)
+  | _ -> false
+
 let is_tunion env ty =
   let (_env, ty) = Env.expand_type env ty in
   match get_node ty with

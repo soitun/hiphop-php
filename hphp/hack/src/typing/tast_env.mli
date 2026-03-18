@@ -274,6 +274,8 @@ val union_list : env -> Typing_reason.t -> Tast.ty list -> env * Tast.ty
 val referenced_typeconsts :
   env -> Aast.hint -> Aast.sid list -> (string * string * Pos.t) list
 
+val is_any : env -> Tast.ty -> bool
+
 (** Return an {!env} for which {!is_static} will return {true}.
     If you are using {!Tast_visitor}, you should have no need of this. *)
 val set_static : env -> env

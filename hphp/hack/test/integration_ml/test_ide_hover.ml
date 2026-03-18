@@ -1256,7 +1256,13 @@ let test () =
       ~hhi_files:(Hhi.get_raw_hhi_contents () |> Array.to_list)
   in
   let env = Test.setup_disk env files in
-  Test.assert_no_diagnostics env;
+  Test.assert_env_diagnostics
+    env
+    ("WARN: File \"/docblock.php\", line 106, characters 27-40:\n"
+    ^ "This expression has an unresolved type due to a limitation of the typechecker. "
+    ^ "It is silently compatible with every type, so it can be passed to or returned from "
+    ^ "any function without triggering a type error, potentially hiding bugs. "
+    ^ "Please post in the support group for further guidance. (Warn[12036])\n");
 
   let failed_cases =
     List.filter_map cases ~f:(fun ((file, line, column), expectedHover) ->

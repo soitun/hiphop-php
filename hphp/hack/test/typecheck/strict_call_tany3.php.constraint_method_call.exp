@@ -16,9 +16,5 @@ WARN: File "strict_call_tany3.php", line 15, characters 19-20:
 This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
 WARN: File "strict_call_tany3.php", line 19, characters 3-4:
 This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
-WARN: File "strict_call_tany3.php", line 19, characters 3-7:
-This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
-WARN: File "strict_call_tany3.php", line 19, characters 7-7:
-This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
 ERROR: File "strict_call_tany3.php", line 3, characters 10-12:
 Was expecting a return type hint (Typing[4030])

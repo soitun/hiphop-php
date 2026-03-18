@@ -8946,10 +8946,11 @@ end = struct
     end
     | (_, (Tdynamic | Tany _)) ->
       (* For [dynamic] ([any]) give the method type as [dynamic] ([any]) *)
-      (* TODO(mjt) record flow *)
       let method_ty =
-        map_reason class_ty ~f:(fun _class_reason ->
-            Typing_reason.witness (fst method_name))
+        map_reason class_ty ~f:(fun class_reason ->
+            Typing_reason.flow_prop_access
+              ~def:class_reason
+              ~use:(Typing_reason.witness (fst method_name)))
       in
       (env, method_ty)
     (* -- Recursive cases --------------------------------------------------- *)

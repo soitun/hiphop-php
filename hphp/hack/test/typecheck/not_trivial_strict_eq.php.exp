@@ -1,3 +1,13 @@
+WARN: File "not_trivial_strict_eq.php", line 23, characters 3-6:
+This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
+WARN: File "not_trivial_strict_eq.php", line 23, characters 3-12:
+This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
+WARN: File "not_trivial_strict_eq.php", line 23, characters 10-12:
+This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
+WARN: File "not_trivial_strict_eq.php", line 34, characters 7-10:
+This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
+WARN: File "not_trivial_strict_eq.php", line 35, characters 15-18:
+This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
 WARN: File "not_trivial_strict_eq.php", line 41, characters 10-18:
 This expression is likely always `false` (Warn[12001])
   File "not_trivial_strict_eq.php", line 39, characters 13-15:

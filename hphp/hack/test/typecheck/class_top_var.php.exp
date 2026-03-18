@@ -1,3 +1,5 @@
+WARN: File "class_top_var.php", line 4, characters 5-36:
+This expression has an unresolved type due to a limitation of the typechecker. It is silently compatible with every type, so it can be passed to or returned from any function without triggering a type error, potentially hiding bugs. Please post in the support group for further guidance. (Warn[12036])
 ERROR: File "class_top_var.php", line 7, characters 3-5:
 Encountered unexpected text `var`, was expecting a class element. (Parsing[1002])
 ERROR: File "class_top_var.php", line 7, characters 7-7:
