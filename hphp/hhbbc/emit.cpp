@@ -419,11 +419,7 @@ EmitBcInfo emit_bytecode(EmitUnitState& euState, UnitEmitter& ue, FuncEmitter& f
     };
 
     auto const emit_named_args = [&](const NamedArgNameVec* names) {
-      if (names == nullptr) {
-        fe.emitInt32(kInvalidId);
-        return;
-      }
-
+      assertx(names != nullptr);
       assertx(names->size() > 0);
       VecInit nameVec(names->size());
       for (auto name : *names) {
