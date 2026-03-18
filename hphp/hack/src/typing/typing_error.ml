@@ -339,6 +339,7 @@ module Primary = struct
       | Case_type
       | Reified_generic
       | Generic
+      | As_expression
     [@@deriving show]
 
     let target_symbol_spec_to_string = function
@@ -354,6 +355,7 @@ module Primary = struct
       | Case_type -> "case type"
       | Reified_generic -> "reified generic"
       | Generic -> "generic"
+      | As_expression -> "runtime-verified type"
 
     type t =
       | Cross_pkg_access of {

@@ -267,6 +267,9 @@ type t = {
   tco_package_allow_all_generics_violations: bool;
       (** Option for package support to bypass package boundary violation errors on all generics
           to unblock V1 of intern-prod separation.  *)
+  tco_package_allow_as_expression_violations: bool;
+      (** Option for package support to bypass package boundary violation errors on types used
+          in as/?as expressions *)
   re_no_cache: bool;
       (** Disable RE cache when calling hh_distc. Useful for performance testing.
         Corresponds to the `--no-cache` options of hh_distc. *)
@@ -398,6 +401,7 @@ val set :
   ?tco_package_allow_reifiable_tconst_violations:bool ->
   ?tco_package_allow_all_tconst_violations:bool ->
   ?tco_package_allow_all_generics_violations:bool ->
+  ?tco_package_allow_as_expression_violations:bool ->
   ?re_no_cache:bool ->
   ?hh_distc_should_disable_trace_store:bool ->
   ?hh_distc_exponential_backoff_num_retries:int ->

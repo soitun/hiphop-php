@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<468402d36ebb66fd1270251cbf42dbdd>>
+// @generated SignedSource<<9cfb5407f3ef963743c20ab6cb1f8d49>>
 //
 // To regenerate this file, run:
 //   buck run @fbcode//mode/dev-nosan-lg fbcode//hphp/hack/src:oxidized_regen
@@ -372,6 +372,9 @@ pub struct GlobalOptions {
     /// Option for package support to bypass package boundary violation errors on all generics
     /// to unblock V1 of intern-prod separation.
     pub tco_package_allow_all_generics_violations: bool,
+    /// Option for package support to bypass package boundary violation errors on types used
+    /// in as/?as expressions
+    pub tco_package_allow_as_expression_violations: bool,
     /// Disable RE cache when calling hh_distc. Useful for performance testing.
     /// Corresponds to the `--no-cache` options of hh_distc.
     pub re_no_cache: bool,

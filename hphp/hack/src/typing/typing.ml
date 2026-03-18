@@ -4767,6 +4767,17 @@ end = struct
           e
       in
       let env = might_throw ~join_pos:p env in
+      let should_check_package_boundary =
+        if Env.package_allow_as_expression_violations env then
+          `No
+        else
+          `Yes Typing_error.Primary.Package.As_expression
+      in
+      Typing_type_integrity.check_hint_integrity
+        ~in_signature:false
+        ~should_check_package_boundary
+        env
+        hint;
       let ((env, ty_err_opt1), hint_ty) =
         Phase.localize_hint_for_refinement env hint
       in

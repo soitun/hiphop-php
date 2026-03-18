@@ -223,6 +223,9 @@ let package_allow_all_tconst_violations =
 let package_allow_all_generics_violations =
   key "package_allow_all_generics_violations"
 
+let package_allow_as_expression_violations =
+  key "package_allow_as_expression_violations"
+
 let package_exclude_patterns = key "package_exclude_patterns"
 
 let extended_reasons = key "extended_reasons"

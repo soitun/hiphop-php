@@ -315,6 +315,7 @@ module Primary : sig
       | Case_type
       | Reified_generic
       | Generic
+      | As_expression
     [@@deriving show]
 
     val target_symbol_spec_to_string : target_symbol_spec -> string

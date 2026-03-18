@@ -211,6 +211,8 @@ val package_allow_all_tconst_violations : string
 
 val package_allow_all_generics_violations : string
 
+val package_allow_as_expression_violations : string
+
 val package_exclude_patterns : string
 
 val extended_reasons : string
