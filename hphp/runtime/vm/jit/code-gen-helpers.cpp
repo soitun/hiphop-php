@@ -93,7 +93,7 @@ void ldLowPtrImpl(Vout& v, Vptr mem, Vreg reg, size_t size) {
   } else if (size == 35) {
     auto packed = v.makeReg();
     v << loadzlq{mem, packed};
-    v << lea{baseless(packed * 8 + 0), reg};
+    v << shlqi{3, packed, reg, v.makeReg()};
   } else if (size == 32) {
     v << loadzlq{mem, reg};
   } else {
