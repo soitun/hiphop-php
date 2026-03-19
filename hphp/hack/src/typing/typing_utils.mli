@@ -7,26 +7,6 @@
  *)
 open Hh_prelude
 
-type expand_typedef_result = {
-  env: Typing_env_types.env;
-  ty_err_opt: Typing_error.t option;
-  cycles: Type_expansions.cycle_reporter list;
-  ty: Typing_defs.locl_ty;
-  bound: Typing_defs.locl_ty;
-}
-
-type expand_typedef =
-  Typing_defs.expand_env ->
-  Typing_env_types.env ->
-  Typing_reason.t ->
-  string ->
-  Typing_defs.locl_ty list ->
-  expand_typedef_result
-
-val expand_typedef_ref : expand_typedef ref
-
-val expand_typedef : expand_typedef
-
 type sub_type =
   Typing_env_types.env ->
   ?is_dynamic_aware:bool ->

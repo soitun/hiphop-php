@@ -893,7 +893,8 @@ and localize_typedef_instantiation
   match typedef_info with
   | Some typedef_info ->
     let tparams = typedef_info.Typing_defs.td_tparams in
-    let ((env, e1, cycles_tyargs), tyargs) =
+    (* Localize type args, handling wildcards *)
+    let ((env, e1, cycles_tyargs), tyargs_locl) =
       localize_targs_constrain_wildcards
         ~ety_env:
           {
@@ -905,16 +906,121 @@ and localize_typedef_instantiation
         tyargs
         tparams
     in
-    let TUtils.{ env; ty_err_opt = e2; cycles = cycles_td; ty = lty; bound = _ }
+    (* Expand the typedef at decl level. Substitution is handled by the
+       caller (via ety_env.substs during localization) to preserve wildcard
+       identity — decl-level substitution would duplicate Twildcard nodes. *)
+    let Typing_tdef.{ ety_env = result_ety_env; cycles = cycles_td; expansion }
         =
-      TUtils.expand_typedef ety_env env r type_name tyargs
+      Typing_tdef.expand_typedef ety_env env r type_name
     in
-    let ty_err_opt = Option.merge e1 e2 ~f:Typing_error.both in
-    ((env, ty_err_opt, cycles_td @ cycles_tyargs), lty)
+    let cycles = cycles_td @ cycles_tyargs in
+    let arity_ok td_tparams =
+      List.length tyargs_locl = List.length td_tparams
+    in
+    (* Localize a typedef constraint. For supportdyn<T>, we use the
+       localized arg directly to avoid supportdynamic.hhi leaking into
+       reasons. *)
+    let localize_cstr ety_env_inner cstr =
+      if String.equal type_name SN.Classes.cSupportDyn then
+        ((env, None, []), List.hd_exn tyargs_locl)
+      else
+        (* Disable intersection simplification when localizing the upper
+           bound constraint. Simplifying intersections during localization
+           calls Typing_intersection.intersect_list, which depends on
+           typing_subtype, which depends on typing_phase — creating a cycle
+           that can loop forever on recursive case type bounds. *)
+        let ety_env_cstr =
+          { ety_env_inner with simplify_intersections = false }
+        in
+        localize ~ety_env:ety_env_cstr env cstr
+    in
+    (* Build the ety_env for localizing the typedef body/constraint *)
+    let make_ety_env_inner td_tparams =
+      let substs = Subst.make_locl td_tparams tyargs_locl in
+      { result_ety_env with substs; under_type_constructor = false }
+    in
+    let arity_error () =
+      let (env, ty) =
+        Env.fresh_type_error
+          env
+          (Pos_or_decl.unsafe_to_raw_pos (Reason.to_pos r))
+      in
+      ((env, e1, cycles), ty)
+    in
+    (match expansion with
+    | Typing_tdef.Expanded { tparams = td_tparams; body; cstr } ->
+      if not (arity_ok td_tparams) then
+        arity_error ()
+      else
+        let ety_env_inner = make_ety_env_inner td_tparams in
+        (* TODO(T207369421): Cycle detection through constraints should be a
+           well-formedness check in typing_type_wellformedness.ml, not a
+           side effect of localization. We localize the constraint here even
+           though we discard the localized value because localizing expands
+           any typedefs referenced in the constraint, which triggers
+           add_type_expansion_check_cycles and detects constraint cycles
+           like `newtype A as B` / `newtype B as A`. *)
+        let ((env, cstr_err, cstr_cycles), _cstr) =
+          localize_cstr ety_env_inner cstr
+        in
+        let ((env, rhs_err, rhs_cycles), lty) =
+          localize ~ety_env:ety_env_inner env body
+        in
+        let ty_err_opt = Option.merge e1 cstr_err ~f:Typing_error.both in
+        let ty_err_opt = Option.merge ty_err_opt rhs_err ~f:Typing_error.both in
+        let lty = with_reason lty r in
+        ((env, ty_err_opt, cycles @ cstr_cycles @ rhs_cycles), lty)
+    | Typing_tdef.Opaque { tparams = td_tparams; cstr } ->
+      if not (arity_ok td_tparams) then
+        arity_error ()
+      else
+        let ety_env_inner = make_ety_env_inner td_tparams in
+        let ((env, cstr_err, cstr_cycles), cstr) =
+          localize_cstr ety_env_inner cstr
+        in
+        let lty = mk (r, Tnewtype (type_name, tyargs_locl, cstr)) in
+        let ty_err_opt = Option.merge e1 cstr_err ~f:Typing_error.both in
+        ((env, ty_err_opt, cycles @ cstr_cycles), lty)
+    | Typing_tdef.Cyclic { td_type_assignment } ->
+      if not (arity_ok tparams) then
+        arity_error ()
+      else
+        (* Cycle detected — produce a fallback type. *)
+        let cycle_r =
+          Typing_reason.illegal_recursive_type (Reason.to_pos r) type_name
+        in
+        let td_as_constraint = typedef_info.Typing_defs.td_as_constraint in
+        let mixed =
+          match td_as_constraint with
+          | Some ty ->
+            (match get_node ty with
+            | Tapply ((_pos, sdt), [_])
+              when String.equal sdt SN.Classes.cSupportDyn ->
+              MakeType.supportdyn_mixed cycle_r
+            | _ -> MakeType.mixed cycle_r)
+          | _ -> MakeType.mixed cycle_r
+        in
+        let lty =
+          if ety_env.under_type_constructor then
+            match td_type_assignment with
+            | CaseType _ ->
+              mk (cycle_r, Tnewtype (type_name, tyargs_locl, mixed))
+            | SimpleTypeDef _ -> mixed
+          else
+            match ety_env.visibility_behavior with
+            | Always_expand_newtype ->
+              mk (cycle_r, Tnewtype (type_name, tyargs_locl, mixed))
+            | Resolve_type_structure _
+            | Never_expand_newtype
+            | Expand_visible_newtype_only ->
+              mixed
+        in
+        ((env, e1, cycles), lty))
   | None ->
-    (* This must be unreachable. We only call localize_typedef_instantiation if we *know* that
-       we have a typedef with typedef info at hand. *)
-    failwith "Internal error: No info about typedef"
+    let (env, ty) =
+      Env.fresh_type_error env (Pos_or_decl.unsafe_to_raw_pos (Reason.to_pos r))
+    in
+    ((env, None, []), ty)
 
 and localize_cstr_ty ~ety_env env ty tp_name =
   let (env, ty) = localize ~ety_env env ty in

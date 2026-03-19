@@ -10,7 +10,6 @@
 open Hh_prelude
 open Typing_defs
 module Env = Typing_env
-module TDef = Typing_tdef
 module N = Aast
 
 (*****************************************************************************)
@@ -98,9 +97,13 @@ let bad_compare_to_enum ty enum_bound =
 let rec assert_nontrivial p bop env ty1 ty2 ~as_warning =
   let ety_env = empty_expand_env in
   let (_, ty1) = Env.expand_type env ty1 in
-  let (_, ety1, trail1) = TDef.force_expand_typedef ~ety_env env ty1 in
+  let (_, ety1, trail1) =
+    Typing_tdef_locl.force_expand_typedef ~ety_env env ty1
+  in
   let (_, ty2) = Env.expand_type env ty2 in
-  let (_, ety2, trail2) = TDef.force_expand_typedef ~ety_env env ty2 in
+  let (_, ety2, trail2) =
+    Typing_tdef_locl.force_expand_typedef ~ety_env env ty2
+  in
   match (get_node ty1, get_node ty2) with
   (* Disallow `===` on distinct abstract enum types. *)
   (* Future: consider putting this in typed lint not type checking *)

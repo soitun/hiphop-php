@@ -32,7 +32,7 @@ let check_param : env -> Nast.fun_param -> unit =
       let ety_env = empty_expand_env in
       let (env, ty) = Typing_dynamic_utils.strip_dynamic env ty in
       let ((env, ty_err_opt), ty, _) =
-        Typing_tdef.force_expand_typedef ~ety_env env ty
+        Typing_tdef_locl.force_expand_typedef ~ety_env env ty
       in
       let (_, env, ty) = Typing_utils.strip_supportdyn env ty in
       Option.iter ~f:(Typing_error_utils.add_typing_error ~env) ty_err_opt;

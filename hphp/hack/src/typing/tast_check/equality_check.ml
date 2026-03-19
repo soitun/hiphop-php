@@ -70,7 +70,7 @@ let add_warning env ~as_lint pos kind ty1 ty2 =
 let error_if_inequatable (env : Tast_env.env) ty1 ty2 err =
   let Equal = Tast_env.eq_typing_env in
   let expand_tydef =
-    Typing_tdef.force_expand_typedef ~ety_env:empty_expand_env
+    Typing_tdef_locl.force_expand_typedef ~ety_env:empty_expand_env
   in
   let expand_enum = opaque_enum_expander#on_type in
   (* Break all type abstractions *)

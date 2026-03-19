@@ -17,7 +17,7 @@ let create_handler _ctx =
       let print_if_nothing_hint A.{ cv_span; cv_type = (locl_ty, _); _ } =
         let Equal = Tast_env.eq_typing_env in
         let (_, locl_ty, _) =
-          Typing_tdef.force_expand_typedef
+          Typing_tdef_locl.force_expand_typedef
             ~ety_env:Typing_defs.empty_expand_env
             env
             locl_ty
