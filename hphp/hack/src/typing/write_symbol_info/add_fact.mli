@@ -221,3 +221,6 @@ val file_package :
   bool ->
   Fact_acc.t ->
   Fact_id.t * Fact_acc.t
+
+val target_not_used_in_prod_build :
+  Hack.XRefTarget.t -> Src.File.t -> Fact_acc.t -> Fact_id.t * Fact_acc.t

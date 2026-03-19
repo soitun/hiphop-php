@@ -39,6 +39,7 @@ type hack =
   | NamespaceDeclaration
   | PropertyDeclaration
   | PropertyDefinition
+  | TargetNotUsedInProdBuild
   | TraitDeclaration
   | TraitDefinition
   | TypeConstDeclaration
@@ -103,6 +104,7 @@ let hack_to_string = function
   | NamespaceDeclaration -> "NamespaceDeclaration"
   | PropertyDeclaration -> "PropertyDeclaration"
   | PropertyDefinition -> "PropertyDefinition"
+  | TargetNotUsedInProdBuild -> "TargetNotUsedInProdBuild"
   | TraitDeclaration -> "TraitDeclaration"
   | TraitDefinition -> "TraitDefinition"
   | TypeConstDeclaration -> "TypeConstDeclaration"
@@ -159,6 +161,7 @@ let ordered_all =
     Hack FileXRefs;
     Hack FileDeclarations;
     Hack FilePackage;
+    Hack TargetNotUsedInProdBuild;
     Hack FileCall;
     Hack GlobalNamespaceAlias;
     Hack IndexerInputsHash;

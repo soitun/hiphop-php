@@ -768,3 +768,7 @@ let file_package ~path package_ has_package_override fa =
       |> to_json_key)
   in
   Fact_acc.add_fact Predicate.(Hack FilePackage) json fa
+
+let target_not_used_in_prod_build target file fa =
+  let json = TargetNotUsedInProdBuild.({ target; file } |> to_json_key) in
+  Fact_acc.add_fact Predicate.(Hack TargetNotUsedInProdBuild) json fa

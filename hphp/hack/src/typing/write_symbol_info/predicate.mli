@@ -38,6 +38,7 @@ type hack =
   | NamespaceDeclaration
   | PropertyDeclaration
   | PropertyDefinition
+  | TargetNotUsedInProdBuild
   | TraitDeclaration
   | TraitDefinition
   | TypeConstDeclaration

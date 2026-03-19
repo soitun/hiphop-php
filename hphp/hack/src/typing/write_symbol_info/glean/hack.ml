@@ -118,7 +118,7 @@ end = struct
     let fields =
       match require_class with
       | None -> fields
-      | Some require_class -> ("requireClass", JSON_Array (List.map ~f:(fun x -> ClassDeclaration.to_json x) require_class)) :: fields in      
+      | Some require_class -> ("requireClass", JSON_Array (List.map ~f:(fun x -> ClassDeclaration.to_json x) require_class)) :: fields in
     JSON_Object fields
 
 end
@@ -1361,6 +1361,46 @@ end = struct
       ("target", XRefTarget.to_json target);
       ("file", Src.File.to_json file);
       ("uses", JSON_Array (List.map ~f:(fun x -> Src.RelByteSpan.to_json x) uses));
+    ] in
+    JSON_Object fields
+
+end
+
+and TargetNotUsedInProdBuild: sig
+  type t =
+    | Id of Fact_id.t
+    | Key of key
+  [@@deriving ord]
+
+  and key = {
+    target: XRefTarget.t;
+    file: Src.File.t;
+  }
+  [@@deriving ord]
+
+  val to_json: t -> json
+
+  val to_json_key: key -> json
+
+end = struct
+  type t =
+    | Id of Fact_id.t
+    | Key of key
+  [@@deriving ord]
+
+  and key = {
+    target: XRefTarget.t;
+    file: Src.File.t;
+  }
+  [@@deriving ord]
+  let rec to_json = function
+    | Id f -> Util.id f
+    | Key t -> Util.key (to_json_key t)
+
+  and to_json_key {target; file} =
+    let fields = [
+      ("target", XRefTarget.to_json target);
+      ("file", Src.File.to_json file);
     ] in
     JSON_Object fields
 
