@@ -149,7 +149,7 @@ let test_build_xrefs _test_ctxt =
          ~pos_start:(3, 25, 40)
          ~pos_end:(3, 25, 45))
   in
-  let target = Xrefs.{ target; receiver_type = None } in
+  let target = Xrefs.{ target; receiver_type = None; fact_id = target_id } in
   let xrefs = Xrefs.add xrefs target_id next_ref_pos target in
   let xrefs = Xrefs.add xrefs target_id ref_pos target in
   let Xrefs.{ fact_map; _ } = Xrefs.add xrefs target_id dup_ref_pos target in

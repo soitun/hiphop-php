@@ -19,16 +19,20 @@ type fact_map = (XRefTarget.t * Pos.t list) Fact_id.Map.t
 type target_info = {
   target: XRefTarget.t;
   receiver_type: Declaration.t option;
+  fact_id: Fact_id.t;
 }
 
 type pos_map = target_info list PosMap.t
 
+type used_in_prod_build_map = bool Fact_id.Map.t
+
 type t = {
   fact_map: fact_map;
   pos_map: pos_map;
+  used_in_prod_build: used_in_prod_build_map;
 }
 
-let add { fact_map; pos_map } target_id pos target_info =
+let add { fact_map; pos_map; used_in_prod_build } target_id pos target_info =
   let fact_map =
     Fact_id.Map.update
       target_id
@@ -45,6 +49,22 @@ let add { fact_map; pos_map } target_id pos target_info =
         | Some tis -> Some (target_info :: tis))
       pos_map
   in
-  { fact_map; pos_map }
+  { fact_map; pos_map; used_in_prod_build }
 
-let empty = { fact_map = Fact_id.Map.empty; pos_map = PosMap.empty }
+let mark_target_used_in_prod_build t fact_id affects_prod_build =
+  let used_in_prod_build =
+    Fact_id.Map.update
+      fact_id
+      (function
+        | None -> Some affects_prod_build
+        | Some prev -> Some (prev || affects_prod_build))
+      t.used_in_prod_build
+  in
+  { t with used_in_prod_build }
+
+let empty =
+  {
+    fact_map = Fact_id.Map.empty;
+    pos_map = PosMap.empty;
+    used_in_prod_build = Fact_id.Map.empty;
+  }

@@ -453,7 +453,12 @@ let process_mod_xref fa xrefs (pos, id) =
   let target =
     XRefTarget.Declaration (Declaration.Module (ModuleDeclaration.Id target_id))
   in
-  (Xrefs.add xrefs target_id pos Xrefs.{ target; receiver_type = None }, fa)
+  ( Xrefs.add
+      xrefs
+      target_id
+      pos
+      Xrefs.{ target; receiver_type = None; fact_id = target_id },
+    fa )
 
 let process_tast_decls ctx ~path tast source_text root_path (decls, fa) =
   let thrift_ctx =

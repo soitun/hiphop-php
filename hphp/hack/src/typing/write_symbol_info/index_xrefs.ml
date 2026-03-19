@@ -125,7 +125,13 @@ let process_xref decl_fun decl_ref_fun symbol_name pos ?receiver_type (xrefs, fa
     =
   let (target_id, fa) = decl_fun symbol_name fa in
   let target = XRefTarget.Declaration (decl_ref_fun target_id) in
-  let xrefs = Xrefs.add xrefs target_id pos Xrefs.{ target; receiver_type } in
+  let xrefs =
+    Xrefs.add
+      xrefs
+      target_id
+      pos
+      Xrefs.{ target; receiver_type; fact_id = target_id }
+  in
   (xrefs, fa)
 
 let process_enum_xref symbol_name pos (xrefs, fa) =
@@ -277,108 +283,150 @@ let receiver_type ctx occ =
               (ClassDeclaration.Key { ClassDeclaration.name = qname }))))
   | _ -> None
 
-(* given symbols occurring in a file, compute the maps of xrefs *)
-let process_xrefs ctx symbols fa : Xrefs.t * Fact_acc.t =
+let process_def_xref ctx occ pos def (xrefs, fa) =
   let open SymbolOccurrence in
-  List.fold
-    symbols
-    ~init:(Xrefs.empty, fa)
-    ~f:(fun (xrefs, fa) (File_info.{ occ; def } as sym) ->
-      if Option.is_some occ.is_declaration then
+  match def with
+  | None ->
+    (* no symbol info - likely dynamic *)
+    (match occ.type_ with
+    | Method (receiver_class, name) ->
+      let (target_id, fa) = Add_fact.method_occ receiver_class name fa in
+      let receiver_type = receiver_type ctx occ in
+      let target =
+        XRefTarget.Occurrence
+          (Occurrence.Method (MethodOccurrence.Id target_id))
+      in
+      let xrefs =
+        Xrefs.add
+          xrefs
+          target_id
+          pos
+          Xrefs.{ target; receiver_type; fact_id = target_id }
+      in
+      (xrefs, fa)
+    | _ -> (xrefs, fa))
+  | Some sym_def ->
+    let open Sym_def in
+    (match sym_def with
+    | Class { kind = Ast_defs.Cenum; name }
+    | Class { kind = Ast_defs.Cenum_class _; name } ->
+      process_enum_xref name pos (xrefs, fa)
+    | Class { kind; name } ->
+      process_container_xref
+        (Predicate.classish_to_predicate kind)
+        name
+        pos
         (xrefs, fa)
-      else
-        let pos = occ.pos in
-        match occ.type_ with
-        | Attribute _info -> process_attribute_xref ctx sym (xrefs, fa)
-        | _ ->
-          (match def with
-          | None ->
-            (* no symbol info - likely dynamic *)
-            (match occ.type_ with
-            | Method (receiver_class, name) ->
-              let (target_id, fa) =
-                Add_fact.method_occ receiver_class name fa
-              in
-              let receiver_type = receiver_type ctx occ in
-              let target =
-                XRefTarget.Occurrence
-                  (Occurrence.Method (MethodOccurrence.Id target_id))
-              in
-              let xrefs =
-                Xrefs.add xrefs target_id pos Xrefs.{ target; receiver_type }
-              in
-              (xrefs, fa)
-            | _ -> (xrefs, fa))
-          | Some sym_def ->
-            let open Sym_def in
-            (match sym_def with
-            | Class { kind = Ast_defs.Cenum; name }
-            | Class { kind = Ast_defs.Cenum_class _; name } ->
-              process_enum_xref name pos (xrefs, fa)
-            | Class { kind; name } ->
-              process_container_xref
-                (Predicate.classish_to_predicate kind)
-                name
-                pos
-                (xrefs, fa)
-            | ClassConst { class_name; name } ->
-              let ref_fun x =
-                Declaration.ClassConst (ClassConstDeclaration.Id x)
-              in
-              process_member_xref
-                ctx
-                ~class_name
-                ~name
-                pos
-                Add_fact.class_const_decl
-                ref_fun
-                ~class_const:true
-                (xrefs, fa)
-            | GlobalConst { name } -> process_gconst_xref name pos (xrefs, fa)
-            | Function { name } -> process_function_xref name pos (xrefs, fa)
-            | Method { class_name; name } ->
-              let ref_fun x = Declaration.Method (MethodDeclaration.Id x) in
-              process_member_xref
-                ctx
-                ~class_name
-                ~name
-                pos
-                Add_fact.method_decl
-                ref_fun (* TODO just pass the occurrence here *)
-                ?receiver_type:(receiver_type ctx occ)
-                ~class_const:false
-                (xrefs, fa)
-            | Property { class_name; name } ->
-              let ref_fun x =
-                Declaration.Property_ (PropertyDeclaration.Id x)
-              in
-              process_member_xref
-                ctx
-                ~class_name
-                ~name
-                pos
-                Add_fact.property_decl
-                ref_fun
-                ~class_const:false
-                (xrefs, fa)
-            | Typeconst { class_name; name } ->
-              let ref_fun x =
-                Declaration.TypeConst (TypeConstDeclaration.Id x)
-              in
-              process_member_xref
-                ctx
-                ~class_name
-                ~name
-                pos
-                Add_fact.type_const_decl
-                ref_fun
-                ~class_const:false
-                (xrefs, fa)
-            | Typedef { name } -> process_typedef_xref name pos (xrefs, fa)
-            | _ -> (xrefs, fa))))
+    | ClassConst { class_name; name } ->
+      let ref_fun x = Declaration.ClassConst (ClassConstDeclaration.Id x) in
+      process_member_xref
+        ctx
+        ~class_name
+        ~name
+        pos
+        Add_fact.class_const_decl
+        ref_fun
+        ~class_const:true
+        (xrefs, fa)
+    | GlobalConst { name } -> process_gconst_xref name pos (xrefs, fa)
+    | Function { name } -> process_function_xref name pos (xrefs, fa)
+    | Method { class_name; name } ->
+      let ref_fun x = Declaration.Method (MethodDeclaration.Id x) in
+      process_member_xref
+        ctx
+        ~class_name
+        ~name
+        pos
+        Add_fact.method_decl
+        ref_fun (* TODO just pass the occurrence here *)
+        ?receiver_type:(receiver_type ctx occ)
+        ~class_const:false
+        (xrefs, fa)
+    | Property { class_name; name } ->
+      let ref_fun x = Declaration.Property_ (PropertyDeclaration.Id x) in
+      process_member_xref
+        ctx
+        ~class_name
+        ~name
+        pos
+        Add_fact.property_decl
+        ref_fun
+        ~class_const:false
+        (xrefs, fa)
+    | Typeconst { class_name; name } ->
+      let ref_fun x = Declaration.TypeConst (TypeConstDeclaration.Id x) in
+      process_member_xref
+        ctx
+        ~class_name
+        ~name
+        pos
+        Add_fact.type_const_decl
+        ref_fun
+        ~class_const:false
+        (xrefs, fa)
+    | Typedef { name } -> process_typedef_xref name pos (xrefs, fa)
+    | _ -> (xrefs, fa))
+
+(** Given symbols occurring in a file, compute the maps of xrefs
+  * [path] The file path for which xrefs are being processed.
+  * [ctx] The provider context used to query declaration information.
+  * [symbols]  The list of symbol occurrences (and optional definitions) found
+      in the file. Each element pairs a {!SymbolOccurrence.t} with an optional
+      {!Sym_def.t} that identifies the declaration the occurrence refers to.
+  * [fa] The fact accumulator that collects Glean facts during indexing.
+  *)
+let process_xrefs ~path ctx symbols fa : Xrefs.t * Fact_acc.t =
+  let open SymbolOccurrence in
+  let (xrefs, fa) =
+    List.fold
+      symbols
+      ~init:(Xrefs.empty, fa)
+      ~f:(fun (xrefs, fa) (File_info.{ occ; def } as sym) ->
+        if Option.is_some occ.is_declaration then
+          (xrefs, fa)
+        else
+          let pos = occ.pos in
+          let (xrefs, fa) =
+            match occ.type_ with
+            | Attribute _info -> process_attribute_xref ctx sym (xrefs, fa)
+            | _ -> process_def_xref ctx occ pos def (xrefs, fa)
+          in
+          let xrefs =
+            match occ.type_ with
+            | Class { affects_prod_build; _ } ->
+              (match Xrefs.PosMap.find_opt pos xrefs.Xrefs.pos_map with
+              | Some (Xrefs.{ fact_id; _ } :: _) ->
+                Xrefs.mark_target_used_in_prod_build
+                  xrefs
+                  fact_id
+                  affects_prod_build
+              | _ -> xrefs)
+            | _ -> xrefs
+          in
+          (xrefs, fa))
+  in
+  (* Emit TargetNotUsedInProdBuild for targets where no occurrence has
+     affects_prod_build = true *)
+  let fa =
+    Fact_id.Map.fold
+      (fun fact_id used_in_prod fa ->
+        if used_in_prod then
+          fa
+        else
+          match Fact_id.Map.find_opt fact_id xrefs.Xrefs.fact_map with
+          | Some (target, _) ->
+            Add_fact.target_not_used_in_prod_build target (Src.File.Key path) fa
+            |> snd
+          | None -> fa)
+      xrefs.Xrefs.used_in_prod_build
+      fa
+  in
+  (xrefs, fa)
 
 let process_xrefs_and_calls ctx fa File_info.{ path; tast; symbols; _ } =
   Fact_acc.set_ownership_unit fa (Some path);
-  let ((Xrefs.{ pos_map; _ } as xrefs), fa) = process_xrefs ctx symbols fa in
+  let ((Xrefs.{ pos_map; _ } as xrefs), fa) =
+    process_xrefs ~path ctx symbols fa
+  in
   let fa = process_calls ctx path tast pos_map fa in
   (fa, xrefs)
