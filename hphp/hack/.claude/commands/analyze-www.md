@@ -12,12 +12,12 @@ building and running a TAST (Typed Abstract Syntax Tree) logger analysis.
 ## Overview
 
 You will:
-1. Design a TAST logger to collect data about the pattern
-2. Implement: shared types library, logger, summarizer, orchestrator, tests
-3. Build, test, lint
-4. Commit and submit a draft diff
-5. Run on `~/www` via hh_distc (~20 min), monitoring every 5 minutes
-6. Analyze results and report with pastry links
+- Design a TAST logger to collect data about the pattern
+- Implement: shared types library, logger, summarizer, orchestrator, tests
+- Build, test, lint
+- Run on `~/www` via hh_distc (~20 min), monitoring every 5 minutes
+- Analyze results and report with pastry links
+- Iterate on the analysis
 
 ## Prerequisites
 
@@ -198,9 +198,18 @@ output; e2e tests validate the full multi-file pipeline end-to-end.
 arc lint -a
 ```
 
-Commit with a structured message, tag should be "analyze-www". Submit as draft:
+`sl status`: make sure you've committed everything.
+Commit with a structured description. Put `Tags: hack_analyze-www` on its own
+line immediately before `Differential Revision:` — nothing else after it, or
+Phabricator will parse trailing text as part of the tag and error.
+Top of the commit summary should include
+"**ANALYSIS IN PROGRESS** started $HUMAN_READABLE_DATE, results will be reported here.
+The commit summary should also include user's question that we are answering.
+
+Then submit a draft:
+
 ```bash
-jf submit --draft
+jf submit --draft --update-fields
 ```
 
 ## Step 11: Run on WWW
@@ -219,6 +228,13 @@ vs 1-2 hours with the old single-machine hh_client approach).
 
 Monitor progress by checking hh_distc's output (it shows progress indicators).
 
+**Large raw logs**: WWW raw logs can be multi-GB. Gzip before uploading to pastry
+(JSON log lines compress ~100-200x):
+```bash
+gzip -c /tmp/<prefix>raw_*.log | pastry --title "<name> raw log (gzipped, gunzip to read)" -q
+```
+Note in the commit message that the paste is gzipped.
+
 ## Step 12: Analyze and report
 
 When the run completes:
@@ -226,17 +242,22 @@ When the run completes:
 2. Identify interesting patterns and outliers
 3. Amend the commit message with:
    - www commit hash for the www you analyzed (`sl id` in the WWW repo)
-   - Pastry links (raw log + summary)
+   - Pastry links at both the top and bottom of the commit body (above Tags).
+     Use paste IDs only, no URLs: **full report**: PXXXX and **raw data**: PXXXX
+     Note if raw data is gzipped.
    - Key statistics in a markdown table
    - Analysis of what the results mean
    - Follow-up questions or hypotheses
-   - tag should be "analyze-www"
+   - `jf s -n --update-fields` because we are modifying metadata for an existing commit.
 4. Get the diff link from `sl show | grep 'Differential Revision: https:'`
 5. Notify the user - if they requested a gchat or a pingme, do it here.
 Your message should say: your results are ready at $THE_DIFF_LINK
 we will continue to iterate on the analysis, feel free to guide the iteration
 with your hypotheses or requests for more data.
 
+Constraints:
+- All claims must be substantiated: for example with data, examples, and links to code
+- The Hack language has many features, with complex interactions. Do not guess how things work or why: use at least one subagent to look at the implementation of hack under $FBCODE/hphp/hack/src and at least one other subagent to look at the tests under $FBCODE/hphp/hack/test as needed to clarify your understanding.
 
 ## Step 13: Iterate
 
@@ -254,9 +275,10 @@ automatically iterated on the previous commit based on auto-generated hypotheses
 interesting and/or informative examples and patterns
 - amend the commit with the full report from WWW and pastry links to logs and the report and your discussion and observations
 
-## Step 14: Final iteration
+## Step 14: iteration
 
 iterate again *if needed*: if there are reasonable things not shown in the data that we need to dive deeper on.
+Otherwise, amend the commit message to not lose *any* information (especially do not change the Differential Revision line, nor lose any data or pastry links) but DO delete the **ANALYSIS IN PROGRESS** lines.
 
 ## Coding Conventions (MANDATORY)
 
