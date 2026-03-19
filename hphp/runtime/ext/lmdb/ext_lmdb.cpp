@@ -49,8 +49,10 @@ template <typename T>
 struct LmdbObjectMap {
  public:
   static LmdbObjectMap<T>* get() {
-    static LmdbObjectMap* const map = new LmdbObjectMap<T>();
-    return map;
+    // Thread-local to avoid data races when multiple HHVM worker threads
+    // concurrently call addObject/releaseObject on the shared std::map.
+    static thread_local LmdbObjectMap map;
+    return &map;
   }
 
   unsigned long addObject(T* object) {
@@ -663,8 +665,6 @@ struct LmdbExtension final : HPHP::Extension {
  * - close dbs
  * - abort transactions
  * - close env
- *
- * Thread safety?  Probably can just make everything thread local.
  *
  * Clean up dependencies and headers.
  */
