@@ -2553,6 +2553,16 @@ let check_trait_diamonds
         end else
           ((default_parent_class_elt (), elts), None)
       else
+        (* When we have a diamond between a class parent and a used trait
+           (e.g. D extends C { use TraitA; use TraitB; } where C also uses
+           TraitA), we need to keep the trait's entry rather than the class
+           parent's entry. *)
+        let elts =
+          if Ast_defs.is_c_class (Cls.kind prev_parent) then
+            ParentClassEltSet.remove elts (default_parent_class_elt ())
+          else
+            elts
+        in
         ((default_parent_class_elt (), elts), None)
   else
     ((default_parent_class_elt (), elts), None)
