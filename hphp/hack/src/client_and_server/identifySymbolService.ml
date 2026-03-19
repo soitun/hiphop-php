@@ -46,9 +46,18 @@ let is_target
             This explains the `- 1` *)
     target_char - 1 <= end_
 
-let process_class_id ?is_declaration ?(class_id_type = ClassId) (pos, cid) =
+let process_class_id
+    ?is_declaration
+    ?(class_id_type = ClassId)
+    ?(affects_prod_build = true)
+    (pos, cid) =
   Result_set.singleton
-    { name = cid; type_ = Class class_id_type; is_declaration; pos }
+    {
+      name = cid;
+      type_ = Class { class_id_type; affects_prod_build };
+      is_declaration;
+      pos;
+    }
 
 let process_attribute (pos, name) class_name method_ =
   let type_ =
@@ -321,9 +330,11 @@ let typed_property = typed_member_id ~kind:`Property
 let typed_constructor env ty pos =
   typed_method env ty (pos, SN.Members.__construct)
 
-let typed_class_id ?(class_id_type = ClassId) env ty pos =
+let typed_class_id
+    ?(class_id_type = ClassId) ?(affects_prod_build = true) env ty pos =
   Tast_env.get_class_ids env ty
-  |> List.map ~f:(fun cid -> process_class_id ~class_id_type (pos, cid))
+  |> List.map ~f:(fun cid ->
+         process_class_id ~class_id_type ~affects_prod_build (pos, cid))
   |> List.fold ~init:Result_set.empty ~f:Result_set.union
 
 (* When we detect a function reference encapsulated in a string,
@@ -343,6 +354,11 @@ let visitor =
   let class_name = ref None in
   let parent_class_hint = ref None in
   let method_name = ref None in
+
+  let in_nameof = ref false in
+  let in_class_ptr = ref false in
+  let in_attribute = ref false in
+
   object (self)
     inherit [_] Tast_visitor.reduce as super
 
@@ -430,7 +446,18 @@ let visitor =
         end
         | _ -> self#zero
       in
-      acc + super#on_expr env expr
+      let old_nameof = !in_nameof in
+      let old_class_ptr = !in_class_ptr in
+      (match expr_ with
+      | Aast.Nameof _ -> in_nameof := true
+      | Aast.Class_const (_, (_, name)) when String.equal name SN.Members.mClass
+        ->
+        in_class_ptr := true
+      | _ -> ());
+      let result = acc + super#on_expr env expr in
+      in_nameof := old_nameof;
+      in_class_ptr := old_class_ptr;
+      result
 
     method! on_expression_tree
         env (Aast.{ et_class; et_runtime_expr; et_free_vars = _ } as expr) =
@@ -472,7 +499,17 @@ let visitor =
            instance when refactoring class names, because we want to avoid
            refactoring `self`, `static`, and `parent` class ids. *)
         typed_class_id ~class_id_type:Other env ty p
-      | Aast.CI _ -> typed_class_id env ty p
+      | Aast.CI _ ->
+        let affects_prod_build =
+          if !in_nameof || !in_attribute then
+            false
+          else if !in_class_ptr then
+            let tcopt = Tast_env.get_tcopt env in
+            not (TypecheckerOptions.package_allow_classconst_violations tcopt)
+          else
+            true
+        in
+        typed_class_id ~affects_prod_build env ty p
 
     method! on_If env cond then_block else_block : Result_set.t =
       match ServerUtils.resugar_invariant_call env cond then_block with
@@ -692,7 +729,9 @@ let visitor =
       | [h] when String.equal (snd sid) SN.Classes.cSupportDyn ->
         self#on_hint env h
       | _ ->
-        let acc = process_class_id sid in
+        let acc =
+          process_class_id ~affects_prod_build:(not !in_attribute) sid
+        in
         self#plus acc (super#on_Happly env sid hl)
 
     method! on_catch env (sid, lid, block) =
@@ -859,19 +898,27 @@ let visitor =
       acc
 
     method! on_user_attribute env ua =
-      let tcopt = Tast_env.get_tcopt env in
-      (* Don't show __SupportDynamicType if it's implicit everywhere *)
-      if
-        String.equal
-          (snd ua.Aast.ua_name)
-          SN.UserAttributes.uaSupportDynamicType
-        && TypecheckerOptions.everything_sdt tcopt
-        && not (TypecheckerOptions.enable_no_auto_dynamic tcopt)
-      then
-        Result_set.empty
-      else
-        let acc = process_attribute ua.Aast.ua_name !class_name !method_name in
-        self#plus acc (super#on_user_attribute env ua)
+      let old_in_attribute = !in_attribute in
+      in_attribute := true;
+      let result =
+        let tcopt = Tast_env.get_tcopt env in
+        (* Don't show __SupportDynamicType if it's implicit everywhere *)
+        if
+          String.equal
+            (snd ua.Aast.ua_name)
+            SN.UserAttributes.uaSupportDynamicType
+          && TypecheckerOptions.everything_sdt tcopt
+          && not (TypecheckerOptions.enable_no_auto_dynamic tcopt)
+        then
+          Result_set.empty
+        else
+          let acc =
+            process_attribute ua.Aast.ua_name !class_name !method_name
+          in
+          self#plus acc (super#on_user_attribute env ua)
+      in
+      in_attribute := old_in_attribute;
+      result
 
     method! on_SetModule env sm =
       let (pos, id) = sm in

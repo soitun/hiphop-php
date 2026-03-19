@@ -1,0 +1,1 @@
+8 11 --config package_allow_classconst_violations=false

@@ -23,6 +23,10 @@ let print_readable ?(short_pos = false) x =
           (kind_to_string type_)
           (Pos.string_no_file pos)
           (Option.is_some is_declaration);
+        (match type_ with
+        | Class { affects_prod_build; _ } ->
+          Printf.printf "affects_prod_build: %b\n" affects_prod_build
+        | _ -> ());
         Printf.printf "definition:";
         begin
           match definition with

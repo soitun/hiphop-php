@@ -1,4 +1,5 @@
 name: \I, kind: class, span: line 11, characters 3-3, is_declaration: false
+affects_prod_build: true
 definition:
  I
    kind: interface
@@ -9,6 +10,7 @@ definition:
 
 
 name: \J, kind: class, span: line 11, characters 3-3, is_declaration: false
+affects_prod_build: true
 definition:
  J
    kind: interface

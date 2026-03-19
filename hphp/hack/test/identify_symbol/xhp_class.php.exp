@@ -1,4 +1,5 @@
 name: \:xhp:foo-element, kind: class, span: line 3, characters 7-22, is_declaration: true
+affects_prod_build: true
 definition:
  :xhp:foo-element
    kind: class

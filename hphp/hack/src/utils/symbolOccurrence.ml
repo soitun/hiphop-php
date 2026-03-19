@@ -88,8 +88,14 @@ type receiver =
     }
 [@@deriving ord, eq, show]
 
+type class_kind = {
+  class_id_type: class_id_type;
+  affects_prod_build: bool;
+}
+[@@deriving ord, eq, show]
+
 type kind =
-  | Class of class_id_type
+  | Class of class_kind
   | BuiltInType of built_in_type_hint
   | Function
   | Method of receiver_class * string

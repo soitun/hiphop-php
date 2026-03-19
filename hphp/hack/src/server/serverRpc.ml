@@ -217,7 +217,10 @@ let handle :
         let name = Utils.add_ns name in
         List.concat
           [
-            get_def_opt (SO.Class SO.ClassId) name;
+            get_def_opt
+              (SO.Class
+                 { SO.class_id_type = SO.ClassId; SO.affects_prod_build = true })
+              name;
             (* SO.Record and Class find the same things *)
             get_def_opt SO.Function name;
             get_def_opt SO.GConst name;
