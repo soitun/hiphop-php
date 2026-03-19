@@ -209,11 +209,12 @@ struct SlabManager : TaggedSlabList {
 
   // Return whether unmapping was successful.
   static bool UnmapSlab(void* ptr) {
-    // The Linux man page for munmap mentions "All pages containing a part of
-    // the indicated range are unmapped", which could mean that the entire 1GB
-    // page could get unmapped when we only intend to unmap a single slab in it.
-    // Thus, we try to create a new mapping (not in RSS) to replace this slab.
-    return mmap(ptr, kSlabSize, PROT_NONE,
+    // Remap the slab to a read-only anonymous mapping instead of unmapping
+    // the page completely. Concurrent reads from try_shared_pop then hit
+    // the shared zero page, safely get zero and bail. By doing so, the
+    // slab's previous private physical backing can be reclaimed, while the
+    // VA range stays intact to avoid shutdown races with try_shared_pop.
+    return mmap(ptr, kSlabSize, PROT_READ,
                 MAP_FIXED | MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE,
                 -1 , 0) == ptr;
   }
