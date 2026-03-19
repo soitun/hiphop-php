@@ -994,12 +994,17 @@ hphp_fast_string_set ConcurrentTableSharedStore::debugGetKeys() {
 
 hphp_fast_string_map<HPHP::Optional<std::string>>
 ConcurrentTableSharedStore::debugGetEntries(const HPHP::Optional<std::string>& prefix,
-                                                  HPHP::Optional<uint32_t> count) {
+                                                  HPHP::Optional<uint32_t> count,
+                                                  HPHP::Optional<uint32_t> minSize) {
   hphp_fast_string_map<HPHP::Optional<std::string>> entries;
   std::unique_lock l(m_lock);
   for (auto const& iter : m_vars) {
     if (prefix && strncmp(iter.first, prefix->c_str(), prefix->size()) != 0) {
       // if we asked for a prefix filter, and it does not match, continue
+      continue;
+    }
+
+    if (minSize && iter.second.dataSize < *minSize) {
       continue;
     }
 

@@ -284,7 +284,8 @@ struct ConcurrentTableSharedStore {
 
   hphp_fast_string_map<HPHP::Optional<std::string>>
   debugGetEntries(const HPHP::Optional<std::string>& prefix,
-                        HPHP::Optional<uint32_t> count);
+                        HPHP::Optional<uint32_t> count,
+                        HPHP::Optional<uint32_t> minSize = std::nullopt);
 
   hphp_fast_string_map<EntryInfo> debugGetMetadata();
 

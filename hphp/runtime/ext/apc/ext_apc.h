@@ -112,7 +112,8 @@ using APCEntryMap = hphp_fast_string_map<HPHP::Optional<std::string>>;
 APCKeySet apc_debug_get_keys();
 APCEntryMap apc_debug_get_all_entries();
 APCEntryMap apc_debug_get_entries_with_prefix(const std::string& prefix,
-                                  HPHP::Optional<uint32_t> count);
+                                  HPHP::Optional<uint32_t> count,
+                                  HPHP::Optional<uint32_t> minSize = std::nullopt);
 std::vector<EntryInfo> apc_debug_get_all_entry_info();
 std::vector<EntryInfo> apc_debug_get_random_entry_info(uint32_t count);
 

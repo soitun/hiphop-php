@@ -740,8 +740,9 @@ APCEntryMap apc_debug_get_all_entries() {
 }
 
 APCEntryMap apc_debug_get_entries_with_prefix(const std::string& prefix,
-                                              HPHP::Optional<uint32_t> count) {
-  return apc_store().debugGetEntries(prefix, count);
+                                              HPHP::Optional<uint32_t> count,
+                                              HPHP::Optional<uint32_t> minSize) {
+  return apc_store().debugGetEntries(prefix, count, minSize);
 }
 
 std::vector<EntryInfo> apc_debug_get_all_entry_info() {
