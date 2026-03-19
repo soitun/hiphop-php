@@ -1,0 +1,3 @@
+function bad_add(int $x, string $y): int {
+  return $x + $y;
+}
