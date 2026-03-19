@@ -106,7 +106,7 @@ struct StoreValue {
    */
   mutable std::atomic<APCHandle*> m_data;
   mutable std::atomic<uint32_t> expireTime{};
-  int32_t dataSize{0};  // For file storage, negative means serialized object
+  uint32_t dataSize{0};
   // Reference to any HotCache entry to be cleared if the value is treadmilled.
   mutable std::atomic<HotCacheIdx> hotIndex{kHotCacheUnknown};
   APCKind kind;
@@ -145,7 +145,7 @@ struct EntryInfo {
   };
 
   EntryInfo(const char* apckey,
-            int32_t size,
+            uint32_t size,
             int64_t ttl,
             int64_t maxTTL,
             uint16_t bumpTTL,
@@ -166,7 +166,7 @@ struct EntryInfo {
   static Type getAPCType(const APCHandle* handle);
 
   std::string key;
-  int32_t size;
+  uint32_t size;
   int64_t ttl;
   int64_t maxTTL;
   uint16_t bumpTTL;
@@ -207,7 +207,7 @@ struct ConcurrentTableSharedStore {
    * Returns: true if the value was added, including if we've replaced an
    * expired value.
    */
-  bool add(const String& key, const Variant& val, int64_t max_ttl, 
+  bool add(const String& key, const Variant& val, int64_t max_ttl,
            int64_t bump_ttl, APCHandleLevel level, bool pure = false);
 
   /*

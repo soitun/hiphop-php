@@ -910,7 +910,7 @@ EntryInfo ConcurrentTableSharedStore::makeEntryInfo(const char* key,
                                                     StoreValue* sval,
                                                     int64_t curr_time) {
   auto const handle = sval->data();
-  int32_t size = sval->dataSize;
+  uint32_t size = sval->dataSize;
   auto type = EntryInfo::getAPCType(handle);
   auto calcTTL = [&](uint32_t expire) -> int64_t {
     if (expire) {
