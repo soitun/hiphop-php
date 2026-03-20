@@ -3,7 +3,7 @@
 @@ -1,178 +1,178 @@
  FoldedClass {
      name: "\\T1",
-     pos: Pos(root|multiple_01.good.php, 6:7-9),
+     pos: Pos(root|multiple_01.good.php, 4:7-9),
      kind: Ctrait,
      methods: {
          "foo": FoldedElement {
@@ -25,7 +25,7 @@
          "class": ClassConst {
              is_synthesized: true,
              kind: CCConcrete,
-             pos: Pos(root|multiple_01.good.php, 6:7-9),
+             pos: Pos(root|multiple_01.good.php, 4:7-9),
              ty: class<this>,
              origin: "\\T1",
              refs: [],
@@ -34,7 +34,7 @@
      req_constraints_ancestors: [
          CREqual(
              Requirement(
-                 Pos(root|multiple_01.good.php, 7:17-18),
+                 Pos(root|multiple_01.good.php, 5:17-18),
                  C,
              ),
          ),
@@ -42,7 +42,7 @@
  }
  FoldedClass {
      name: "\\T2",
-     pos: Pos(root|multiple_01.good.php, 14:7-9),
+     pos: Pos(root|multiple_01.good.php, 12:7-9),
      kind: Ctrait,
      methods: {
          "bar": FoldedElement {
@@ -64,7 +64,7 @@
          "class": ClassConst {
              is_synthesized: true,
              kind: CCConcrete,
-             pos: Pos(root|multiple_01.good.php, 14:7-9),
+             pos: Pos(root|multiple_01.good.php, 12:7-9),
              ty: class<this>,
              origin: "\\T2",
              refs: [],
@@ -73,7 +73,7 @@
      req_constraints_ancestors: [
          CREqual(
              Requirement(
-                 Pos(root|multiple_01.good.php, 15:17-18),
+                 Pos(root|multiple_01.good.php, 13:17-18),
                  C,
              ),
          ),
@@ -81,7 +81,7 @@
  }
  FoldedClass {
      name: "\\C",
-     pos: Pos(root|multiple_01.good.php, 22:13-14),
+     pos: Pos(root|multiple_01.good.php, 20:13-14),
      kind: Cclass(
          Concrete,
      ),
@@ -154,7 +154,7 @@
          "class": ClassConst {
              is_synthesized: true,
              kind: CCConcrete,
-             pos: Pos(root|multiple_01.good.php, 22:13-14),
+             pos: Pos(root|multiple_01.good.php, 20:13-14),
              ty: class<this>,
              origin: "\\C",
              refs: [],
@@ -167,15 +167,15 @@
      req_constraints_ancestors: [
          CREqual(
              Requirement(
--                Pos(root|multiple_01.good.php, 23:11-13),
-+                Pos(root|multiple_01.good.php, 23:7-9),
+-                Pos(root|multiple_01.good.php, 21:11-13),
++                Pos(root|multiple_01.good.php, 21:7-9),
                  C,
              ),
          ),
          CREqual(
              Requirement(
--                Pos(root|multiple_01.good.php, 23:7-9),
-+                Pos(root|multiple_01.good.php, 23:11-13),
+-                Pos(root|multiple_01.good.php, 21:7-9),
++                Pos(root|multiple_01.good.php, 21:11-13),
                  C,
              ),
          ),

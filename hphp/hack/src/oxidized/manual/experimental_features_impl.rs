@@ -26,7 +26,6 @@ impl FeatureName {
             TypeConstSuperBound => Preview,
             ClassConstDefault => Migration,
             UpcastExpression => Unstable,
-            RequireClass => OngoingRelease,
             RequireConstraint => OngoingRelease,
             NewtypeSuperBounds => Unstable,
             CaseTypes => OngoingRelease,

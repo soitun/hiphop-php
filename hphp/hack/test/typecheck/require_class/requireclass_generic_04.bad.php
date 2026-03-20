@@ -1,6 +1,5 @@
 <?hh
 
-<<file:__EnableUnstableFeatures('require_class')>>
 
 interface I {}
 

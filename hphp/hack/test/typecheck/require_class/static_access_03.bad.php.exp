@@ -1,6 +1,6 @@
-ERROR: File "static_access_03.bad.php", line 13, characters 36-38:
+ERROR: File "static_access_03.bad.php", line 12, characters 36-38:
 No static method `bar` in `C` (Typing[4090])
-  File "static_access_03.bad.php", line 13, characters 19-21:
+  File "static_access_03.bad.php", line 12, characters 19-21:
   Did you mean instance method `foo` instead?
-  File "static_access_03.bad.php", line 10, characters 13-13:
+  File "static_access_03.bad.php", line 9, characters 13-13:
   Declaration of `C` is here

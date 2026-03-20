@@ -1,5 +1,4 @@
 <?hh
-<<file:__EnableUnstableFeatures("require_class")>>
 
 final class DemoClass {
   use TDemo;

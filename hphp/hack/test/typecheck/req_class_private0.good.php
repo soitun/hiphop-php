@@ -1,10 +1,10 @@
 <?hh
 
-<<file:__EnableUnstableFeatures("require_class")>>
-
 final class DemoClass {
   use TDemo;
-  private static function forPrivate(): void { echo "private"; }
+  private static function forPrivate(): void {
+    echo "private";
+  }
 
   public static function bleh(): void {
     DemoClass::forPrivate();
@@ -25,5 +25,5 @@ trait TDemo {
 
 <<__EntryPoint>>
 function main(): void {
-    DemoClass::demoFunc();
+  DemoClass::demoFunc();
 }

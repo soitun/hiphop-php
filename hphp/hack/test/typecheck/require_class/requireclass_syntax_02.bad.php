@@ -3,7 +3,6 @@
 
 // bad: require is can only be used with classes
 
-<<file:__EnableUnstableFeatures('require_class')>>
 
 interface I {}
 

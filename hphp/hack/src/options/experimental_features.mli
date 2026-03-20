@@ -35,7 +35,6 @@ type feature_name =
   | TypeConstSuperBound
   | ClassConstDefault
   | UpcastExpression
-  | RequireClass
   | RequireConstraint
   | NewtypeSuperBounds
   | CaseTypes

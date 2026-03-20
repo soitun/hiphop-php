@@ -3,13 +3,13 @@
 @@ -1,86 +1,86 @@
  FoldedClass {
      name: "\\T1",
-     pos: Pos(root|trait_require_class.php, 6:7-9),
+     pos: Pos(root|trait_require_class.php, 4:7-9),
      kind: Ctrait,
      consts: {
          "class": ClassConst {
              is_synthesized: true,
              kind: CCConcrete,
-             pos: Pos(root|trait_require_class.php, 6:7-9),
+             pos: Pos(root|trait_require_class.php, 4:7-9),
              ty: class<this>,
              origin: "\\T1",
              refs: [],
@@ -18,7 +18,7 @@
      req_constraints_ancestors: [
          CREqual(
              Requirement(
-                 Pos(root|trait_require_class.php, 7:17-18),
+                 Pos(root|trait_require_class.php, 5:17-18),
                  C,
              ),
          ),
@@ -26,13 +26,13 @@
  }
  FoldedClass {
      name: "\\T2",
-     pos: Pos(root|trait_require_class.php, 10:7-9),
+     pos: Pos(root|trait_require_class.php, 8:7-9),
      kind: Ctrait,
      consts: {
          "class": ClassConst {
              is_synthesized: true,
              kind: CCConcrete,
-             pos: Pos(root|trait_require_class.php, 10:7-9),
+             pos: Pos(root|trait_require_class.php, 8:7-9),
              ty: class<this>,
              origin: "\\T2",
              refs: [],
@@ -41,17 +41,17 @@
      req_constraints_ancestors: [
          CREqual(
              Requirement(
--                Pos(root|trait_require_class.php, 12:17-18),
+-                Pos(root|trait_require_class.php, 10:17-18),
 -                D,
-+                Pos(root|trait_require_class.php, 11:17-18),
++                Pos(root|trait_require_class.php, 9:17-18),
 +                C,
              ),
          ),
          CREqual(
              Requirement(
--                Pos(root|trait_require_class.php, 11:17-18),
+-                Pos(root|trait_require_class.php, 9:17-18),
 -                C,
-+                Pos(root|trait_require_class.php, 12:17-18),
++                Pos(root|trait_require_class.php, 10:17-18),
 +                D,
              ),
          ),
@@ -59,7 +59,7 @@
  }
  FoldedClass {
      name: "\\C",
-     pos: Pos(root|trait_require_class.php, 15:7-8),
+     pos: Pos(root|trait_require_class.php, 13:7-8),
      kind: Cclass(
          Concrete,
      ),
@@ -67,7 +67,7 @@
          "class": ClassConst {
              is_synthesized: true,
              kind: CCConcrete,
-             pos: Pos(root|trait_require_class.php, 15:7-8),
+             pos: Pos(root|trait_require_class.php, 13:7-8),
              ty: class<this>,
              origin: "\\C",
              refs: [],
@@ -76,7 +76,7 @@
  }
  FoldedClass {
      name: "\\D",
-     pos: Pos(root|trait_require_class.php, 16:7-8),
+     pos: Pos(root|trait_require_class.php, 14:7-8),
      kind: Cclass(
          Concrete,
      ),
@@ -84,7 +84,7 @@
          "class": ClassConst {
              is_synthesized: true,
              kind: CCConcrete,
-             pos: Pos(root|trait_require_class.php, 16:7-8),
+             pos: Pos(root|trait_require_class.php, 14:7-8),
              ty: class<this>,
              origin: "\\D",
              refs: [],

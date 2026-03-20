@@ -41,7 +41,6 @@ type feature_name =
   | TypeConstSuperBound
   | ClassConstDefault
   | UpcastExpression
-  | RequireClass
   | RequireConstraint
   | NewtypeSuperBounds
   | CaseTypes
@@ -95,7 +94,6 @@ let feature_name_map =
       ("type_const_super_bound", TypeConstSuperBound);
       ("class_const_default", ClassConstDefault);
       ("upcast_expression", UpcastExpression);
-      ("require_class", RequireClass);
       ("require_constraint", RequireConstraint);
       ("newtype_super_bounds", NewtypeSuperBounds);
       ("case_types", CaseTypes);
