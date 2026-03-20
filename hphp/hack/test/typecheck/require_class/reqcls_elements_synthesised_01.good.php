@@ -4,9 +4,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 
-<<file:
-  __EnableUnstableFeatures('method_trait_diamond', 'require_class'),
->>
+<<file: __EnableUnstableFeatures('require_class')>>
 
 trait T1 {
   public function foo(): void {}

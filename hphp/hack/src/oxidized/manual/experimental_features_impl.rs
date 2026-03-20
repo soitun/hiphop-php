@@ -25,7 +25,6 @@ impl FeatureName {
             TypeConstMultipleBounds => Preview,
             TypeConstSuperBound => Preview,
             ClassConstDefault => Migration,
-            MethodTraitDiamond => OngoingRelease,
             UpcastExpression => Unstable,
             RequireClass => OngoingRelease,
             RequireConstraint => OngoingRelease,

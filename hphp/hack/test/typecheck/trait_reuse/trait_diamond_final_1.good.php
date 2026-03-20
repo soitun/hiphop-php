@@ -1,8 +1,6 @@
 <?hh
 // Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
 
-<<file:__EnableUnstableFeatures('method_trait_diamond')>>
-
 trait T {
   public final function f(): void {}
 }

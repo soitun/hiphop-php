@@ -3,8 +3,6 @@
 
 // OK
 
-<<file:__EnableUnstableFeatures('method_trait_diamond')>>
-
 trait MyTrait1 {
   public function testFun(): void {}
 }

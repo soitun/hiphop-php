@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<79e06242bac941ea1a63be43d5782ee4>>
+// @generated SignedSource<<5f2ab7120318aa5e17900941f66a00d7>>
 //
 // To regenerate this file, run:
 //   buck run @fbcode//mode/dev-nosan-lg fbcode//hphp/hack/src:oxidized_regen
@@ -95,7 +95,6 @@ pub enum FeatureName {
     TypeConstMultipleBounds,
     TypeConstSuperBound,
     ClassConstDefault,
-    MethodTraitDiamond,
     UpcastExpression,
     RequireClass,
     RequireConstraint,

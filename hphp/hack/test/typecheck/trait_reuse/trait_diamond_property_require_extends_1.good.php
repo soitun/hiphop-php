@@ -1,5 +1,4 @@
 <?hh
-<<file:__EnableUnstableFeatures('method_trait_diamond')>>
 
 class C {
   public int $myprop = 1;

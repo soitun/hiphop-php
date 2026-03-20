@@ -7,8 +7,6 @@
 // if __EnableMethodTraitDiamond is selected, then import of traits
 // defining generic properties is forbidden
 
-<<file:__EnableUnstableFeatures('method_trait_diamond')>>
-
 trait MyTrait1<T> {
   public int $myprop = 1;
 }

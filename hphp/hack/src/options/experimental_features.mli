@@ -34,7 +34,6 @@ type feature_name =
   | TypeConstMultipleBounds
   | TypeConstSuperBound
   | ClassConstDefault
-  | MethodTraitDiamond
   | UpcastExpression
   | RequireClass
   | RequireConstraint

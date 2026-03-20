@@ -40,7 +40,6 @@ type feature_name =
   | TypeConstMultipleBounds
   | TypeConstSuperBound
   | ClassConstDefault
-  | MethodTraitDiamond
   | UpcastExpression
   | RequireClass
   | RequireConstraint
@@ -95,7 +94,6 @@ let feature_name_map =
       ("type_const_multiple_bounds", TypeConstMultipleBounds);
       ("type_const_super_bound", TypeConstSuperBound);
       ("class_const_default", ClassConstDefault);
-      ("method_trait_diamond", MethodTraitDiamond);
       ("upcast_expression", UpcastExpression);
       ("require_class", RequireClass);
       ("require_constraint", RequireConstraint);
