@@ -16,7 +16,7 @@ class C {
 }
 
 <<__SupportDynamicType>>
-final class BKSMap<+TKey  as supportdyn<mixed> as MinsMapkey, +TValue  as supportdyn<mixed> as BKSClientValue>
+final class BKSMap<+TKey  as supportdyn<mixed> as MinsMapkey, +TValue  as supportdyn<mixed> as BKSClientMixed>
   extends BKSExpression<BKSClientMap<TKey, TValue>>
   {
 
@@ -43,7 +43,7 @@ type MinsType = ?MinsNonnullType;
 interface IBKSExpression<+T  as supportdyn<mixed>>
 {
 }
-type BKSClientValue = ?MinsValue;
+type BKSClientMixed = ?MinsValue;
 type BKSClientMap<+TKey, +TValue> =
   MinsBaseMap<TKey, TValue>;
 <<__SupportDynamicType>>
@@ -55,8 +55,8 @@ abstract class BKSExpression<+T  as supportdyn<mixed> as MinsType> implements IB
 final class BKSString extends BKSConstant<string, MinsString> {
 }
 <<__SupportDynamicType>>
-abstract class BKSConstant<TBKSServerType as supportdyn<mixed> , +TBKSClientValue  as supportdyn<mixed> as BKSClientValue>
-  extends BKSExpression<TBKSClientValue>
+abstract class BKSConstant<TBKSServerType as supportdyn<mixed> , +TBKSClientMixed  as supportdyn<mixed> as BKSClientMixed>
+  extends BKSExpression<TBKSClientMixed>
  {
   public static function const(TBKSServerType $value): ~this {
     throw new Exception("A");
