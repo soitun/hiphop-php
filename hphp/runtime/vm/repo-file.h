@@ -20,6 +20,7 @@
 #include "hphp/runtime/vm/source-location.h"
 
 #include "hphp/util/blob.h"
+#include "hphp/util/blob-writer.h"
 #include "hphp/util/compact-tagged-ptrs.h"
 
 #include <cstdint>
@@ -313,27 +314,17 @@ using ArrayOrToken = TokenOrPtr<const ArrayData>;
 // We can't use the hardware accelerated hash functions because different
 // hardware has different hash functions. We need a hash function that is stable
 // between different hardware implementations.
-
-struct CaseSensitiveCompare {
-  bool equal(const std::string& s1, const std::string& s2) const {
-    return s1 == s2;
-  }
-  size_t hash(const std::string& s) const {
-    return hash_string_cs_software(s.c_str(), s.size());
-  }
-};
-
 struct TypeNameCompare {
-  bool equal(const std::string& s1, const std::string& s2) const {
+  bool equal(const std::string_view& s1, const std::string_view& s2) const {
     return tstrcmp_slice(s1, s2) == 0;
   }
-  size_t hash(const std::string& s) const {
-    return hash_string_i_software(s.c_str(), s.size());
+  size_t hash(const std::string_view& s) const {
+    return hash_string_i_software(s.data(), s.size());
   }
 };
 
-using FuncNameCompare = CaseSensitiveCompare;
-using CaseSensitiveHashMapIndex = Blob::HashMapIndex<CaseSensitiveCompare>;
+using FuncNameCompare = Blob::CaseSensitiveCompare;
+using CaseSensitiveHashMapIndex = Blob::HashMapIndex<Blob::CaseSensitiveCompare>;
 using HashMapTypeIndex = Blob::HashMapIndex<TypeNameCompare>;
 using HashMapFuncIndex = Blob::HashMapIndex<FuncNameCompare>;
 

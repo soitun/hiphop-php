@@ -254,19 +254,19 @@ void RepoFileBuilder::finish(const RepoGlobalData& global,
     m_data->hashMapIndex<Blob::Bounds, FuncNameCompare>(
       RepoFileIndexes::AUTOLOAD_FUNCS, autoloadMap.getFuncs(),
       key_lambda, value_lambda);
-    m_data->hashMapIndex<Blob::Bounds, CaseSensitiveCompare>(
+    m_data->hashMapIndex<Blob::Bounds, Blob::CaseSensitiveCompare>(
       RepoFileIndexes::AUTOLOAD_CONSTANTS, autoloadMap.getConstants(),
       key_lambda, value_lambda);
     m_data->hashMapIndex<Blob::Bounds, TypeNameCompare>(
       RepoFileIndexes::AUTOLOAD_TYPEALIASES, autoloadMap.getTypeAliases(),
       key_lambda, value_lambda);
-    m_data->hashMapIndex<Blob::Bounds, CaseSensitiveCompare>(
+    m_data->hashMapIndex<Blob::Bounds, Blob::CaseSensitiveCompare>(
       RepoFileIndexes::AUTOLOAD_MODULES, autoloadMap.getModules(),
       key_lambda, value_lambda);
   }
 
   // Path to Blob::Bounds for the UnitInfo
-  m_data->hashMapIndex<Blob::Bounds, CaseSensitiveCompare>(
+  m_data->hashMapIndex<Blob::Bounds, Blob::CaseSensitiveCompare>(
     RepoFileIndexes::PATH_TO_UNIT_INFO, m_data->unitEmittersIndex,
     [](auto const& unit) { return unit.path->toCppString(); },
     [&](auto const& unit) { return &unitInfosBounds[unit.sn]; });
@@ -372,7 +372,7 @@ template <typename KeyCompare>
 const RepoUnitInfo* findUnitInfoFromKey(
     const RepoFileData& data, const Blob::HashMapIndex<KeyCompare>& map,
     const StringData* key) {
-  auto bounds = data.getFromIndex<Blob::Bounds>(map, key->toCppString());
+  auto bounds = data.getFromIndex<Blob::Bounds>(map, key->slice());
   if (!bounds) {
     return nullptr;
   }
@@ -448,7 +448,7 @@ void RepoFile::loadGlobalTables(bool loadAutoloadMap) {
   data.unitSymbolsIndex = data.listIndex(RepoFileIndexes::UNIT_SYMBOLS);
   data.unitInfosIndex = data.listIndex(RepoFileIndexes::UNIT_INFOS);
 
-  data.pathToUnitInfoBoundsIndex = data.hashMapIndex<CaseSensitiveCompare>(
+  data.pathToUnitInfoBoundsIndex = data.hashMapIndex<Blob::CaseSensitiveCompare>(
     RepoFileIndexes::PATH_TO_UNIT_INFO);
 
   // Repo autoload map
@@ -457,9 +457,9 @@ void RepoFile::loadGlobalTables(bool loadAutoloadMap) {
       std::make_unique<RepoAutoloadMap>(
         data.hashMapIndex<TypeNameCompare>(RepoFileIndexes::AUTOLOAD_TYPES),
         data.hashMapIndex<FuncNameCompare>(RepoFileIndexes::AUTOLOAD_FUNCS),
-        data.hashMapIndex<CaseSensitiveCompare>(RepoFileIndexes::AUTOLOAD_CONSTANTS),
+        data.hashMapIndex<Blob::CaseSensitiveCompare>(RepoFileIndexes::AUTOLOAD_CONSTANTS),
         data.hashMapIndex<TypeNameCompare>(RepoFileIndexes::AUTOLOAD_TYPEALIASES),
-        data.hashMapIndex<CaseSensitiveCompare>(RepoFileIndexes::AUTOLOAD_MODULES)
+        data.hashMapIndex<Blob::CaseSensitiveCompare>(RepoFileIndexes::AUTOLOAD_MODULES)
       )
     );
   }

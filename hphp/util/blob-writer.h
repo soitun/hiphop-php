@@ -544,7 +544,7 @@ struct Reader {
 
   template <typename T, typename KeyCompare>
   Optional<T> getFromIndex(const Blob::HashMapIndex<KeyCompare>& map,
-                           const std::string& key) const {
+                           const std::string_view& key) const {
     if (map.size == 0) {
       return {};
     }
@@ -662,6 +662,27 @@ struct Reader {
     );
   }
 
+};
+
+// We can't use the hardware accelerated hash functions because different
+// hardware has different hash functions. We need a hash function that is stable
+// between different hardware implementations.
+struct CaseSensitiveCompare {
+  bool equal(const std::string_view& s1, const std::string_view& s2) const {
+    return s1 == s2;
+  }
+  size_t hash(const std::string_view& s) const {
+    return hash_string_cs_software(s.data(), s.size());
+  }
+};
+
+struct CaseInsensitiveCompare {
+  bool equal(const std::string_view& s1, const std::string_view& s2) const {
+    return bstrcasecmp(s1, s2) == 0;
+  }
+  size_t hash(const std::string_view& s) const {
+    return hash_string_i_software(s.data(), s.size());
+  }
 };
 
 }
