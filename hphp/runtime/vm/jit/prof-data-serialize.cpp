@@ -1697,8 +1697,8 @@ bool ProfDataSerializer::present(const TypeAlias* ta) const {
 }
 
 void write_raw_string(ProfDataSerializer& ser, const StringData* str) {
-  uint32_t sz = str->size();
-  write_raw(ser, sz);
+  auto sz = str->size();
+  write_raw(ser, safe_cast<uint32_t>(sz));
   write_raw(ser, str->data(), sz);
   if (allowBespokeArrayLikes()) {
     write_raw(ser, str->color());
@@ -1737,10 +1737,15 @@ void write_string(ProfDataSerializer& ser, const StringData* str) {
   write_raw_string(ser, str);
 }
 
+constexpr uint32_t kMaxCppStringLen = 2 << 20;
+
 void write_string(ProfDataSerializer& ser, const std::string& str) {
   ITRACE(2, "cpp string>\n");
   uint64_t size = str.size();
-  write_raw(ser, size);
+  if (size > kMaxCppStringLen) {
+    throw std::runtime_error(folly::sformat("string too long {} > {}", size, kMaxCppStringLen));
+  }
+  write_raw(ser, safe_cast<uint32_t>(size));
   write_raw(ser, str.data(), size);
   ITRACE(2, "cpp string {}\n", str);
 }
@@ -1754,14 +1759,13 @@ StringData* read_string(ProfDataDeserializer& ser) {
 
 std::string read_cpp_string(ProfDataDeserializer& ser) {
   ITRACE(2, "cpp string>\n");
-  auto const size = read_raw<uint64_t>(ser);
-  constexpr uint32_t kMaxStringLen = 2 << 20;
-  if (size > kMaxStringLen) {
-    throw std::runtime_error("string too long, likely corrupt");
+  auto const size = read_raw<uint32_t>(ser);
+  if (size > kMaxCppStringLen) {
+    throw std::runtime_error(folly::sformat("string too long {} > {}, likely corrupt", size, kMaxCppStringLen));
   }
-  auto const buf = std::make_unique<char[]>(size);
-  read_raw(ser, buf.get(), size);
-  auto const res = std::string{buf.get(), size};
+  std::string res;
+  res.resize(size);
+  read_raw(ser, res.data(), size);
   ITRACE(2, "cpp string : {}\n", res);
   return res;
 }
