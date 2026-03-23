@@ -230,23 +230,24 @@ ALWAYS_INLINE void hash128(const void *key, size_t len, uint64_t seed,
 
 #ifdef AARCH64_HASH_HELPER
 
-template <bool unsafe> 
+template <bool unsafe, bool caseSensitive> 
 ALWAYS_INLINE strhash_t aarch64_hash_helper(const char *buf, uint32_t len){
+  constexpr uint64_t caseSensitiveMask = caseSensitive ? 0xffffffffffffffffull : 0xdfdfdfdfdfdfdfdfull;
   uint32_t crc0 = ~0;
   if (len >= 16) {
     /* Main loop. */
     do {
       auto const x = *(const uint64_t*)buf;
       auto const y = *(const uint64_t*)(buf + 8);
-      crc0 = crc32c_u64_helper(crc0, x & 0xdfdfdfdfdfdfdfdfull);
-      crc0 = crc32c_u64_helper(crc0, y & 0xdfdfdfdfdfdfdfdfull);
+      crc0 = crc32c_u64_helper(crc0, x & caseSensitiveMask);
+      crc0 = crc32c_u64_helper(crc0, y & caseSensitiveMask);
       buf += 16;
       len -= 16;
     } while (len >= 16);
   }
   if (len >= 8) {
     auto const x = *(const uint64_t*)buf;
-    crc0 = crc32c_u64_helper(crc0, x & 0xdfdfdfdfdfdfdfdfull);
+    crc0 = crc32c_u64_helper(crc0, x & caseSensitiveMask);
     buf += 8;
     len -= 8;
   }
@@ -267,7 +268,7 @@ ALWAYS_INLINE strhash_t aarch64_hash_helper(const char *buf, uint32_t len){
         x |= y;
       }
     }
-    crc0 = crc32c_u64_helper(crc0, x & 0xdfdfdfdfdfdfdfdfull);
+    crc0 = crc32c_u64_helper(crc0, x & caseSensitiveMask);
   }
   return crc0 >> 1;
 }

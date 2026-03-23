@@ -46,12 +46,22 @@ bool IsHWHashSupported() {
 
 NEVER_INLINE
 strhash_t hash_string_i_unsafe(const char *buf, uint32_t len) {
-  return aarch64_hash_helper<true>(buf, len);
+  return aarch64_hash_helper<true, false>(buf, len);
 }
 
 NEVER_INLINE
 strhash_t hash_string_i(const char *buf, uint32_t len){
-  return aarch64_hash_helper<false>(buf, len);
+  return aarch64_hash_helper<false, false>(buf, len);
+}
+
+NEVER_INLINE
+strhash_t hash_string_cs_unsafe(const char *buf, uint32_t len) {
+  return aarch64_hash_helper<true, true>(buf, len);
+}
+
+NEVER_INLINE
+strhash_t hash_string_cs(const char *buf, uint32_t len){
+  return aarch64_hash_helper<false, true>(buf, len);
 }
 
 #endif
