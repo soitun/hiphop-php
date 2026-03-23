@@ -79,18 +79,6 @@ enum class Indexes {
   SIZE // Leave last!
 };
 
-struct FileEntry {
-  std::string path;
-  size_t contentOffset;
-  size_t size;
-  char* buf;
-
-  template <typename SerDe>
-  void serde(SerDe& sd) {
-    sd(path)(contentOffset)(size);
-  }
-};
-
 struct PathCompare {
   bool equal(const std::string& s1, const std::string& s2) const {
     return s1 == s2;
