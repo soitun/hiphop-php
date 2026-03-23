@@ -1,8 +1,6 @@
 <?hh
 // Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
 
-
-
 class C {
   const int X = 1;
 }

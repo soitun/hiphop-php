@@ -1,6 +1,6 @@
 <?hh
 
-<<file:__EnableUnstableFeatures('require_class', 'require_constraint')>>
+<<file:__EnableUnstableFeatures('require_constraint')>>
 
 class E {}
 
