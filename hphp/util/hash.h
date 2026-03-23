@@ -37,6 +37,8 @@
 #elif defined(__aarch64__) && defined(__ARM_FEATURE_CRC32)
 #  if !defined(USE_HWCRC)
 #    define USE_HWCRC
+#    define AARCH64_HASH_HELPER
+#    include <arm_acle.h>
 #  endif
 #else
 #  undef USE_HWCRC
@@ -58,6 +60,14 @@ using inthash_t = int32_t;
 constexpr strhash_t STRHASH_MASK = 0x7fffffff;
 constexpr strhash_t STRHASH_MSB  = 0x80000000;
 
+#if defined(USE_HWCRC) && defined(__ARM_FEATURE_CRC32)
+
+ALWAYS_INLINE uint32_t crc32c_u64_helper(uint32_t a, uint64_t b) {
+  return __crc32cd(a, b);
+}
+
+#endif
+
 inline size_t hash_int64_fallback(uint64_t key) {
   // "64 bit Mix Functions", from Thomas Wang's "Integer Hash Function."
   // http://www.concentric.net/~ttwang/tech/inthash.htm
@@ -74,9 +84,7 @@ ALWAYS_INLINE size_t hash_int64(uint64_t k) {
 #if defined(USE_HWCRC) && defined(__SSE4_2__)
   return _mm_crc32_u64(0, k);
 #elif defined(USE_HWCRC) && defined(__ARM_FEATURE_CRC32)
-  size_t res;
-  __asm("crc32cx %w0, wzr, %x1\n" : "=r"(res) : "r"(k));
-  return res;
+  return crc32c_u64_helper(0, k);
 #else
   return hash_int64_fallback(k);
 #endif
@@ -90,10 +98,8 @@ inline size_t hash_int64_pair(uint64_t k1, uint64_t k2) {
   k1 += k1;
   return _mm_crc32_u64(k1, k2);
 #elif defined(USE_HWCRC) && defined(__ARM_FEATURE_CRC32)
-  size_t res;
   k1 += k1;
-  __asm("crc32cx %w0, %w1, %x2\n" : "=r"(res) : "r"(k2), "r"(k1));
-  return res;
+  return crc32c_u64_helper(k2, k1);
 #else
   return (hash_int64(k1) << 1) ^ hash_int64(k2);
 #endif
@@ -221,6 +227,52 @@ ALWAYS_INLINE void hash128(const void *key, size_t len, uint64_t seed,
 #undef BIG_CONSTANT
 ///////////////////////////////////////////////////////////////////////////////
 } // namespace MurmurHash3
+
+#ifdef AARCH64_HASH_HELPER
+
+template <bool unsafe> 
+ALWAYS_INLINE strhash_t aarch64_hash_helper(const char *buf, uint32_t len){
+  uint32_t crc0 = ~0;
+  if (len >= 16) {
+    /* Main loop. */
+    do {
+      auto const x = *(const uint64_t*)buf;
+      auto const y = *(const uint64_t*)(buf + 8);
+      crc0 = crc32c_u64_helper(crc0, x & 0xdfdfdfdfdfdfdfdfull);
+      crc0 = crc32c_u64_helper(crc0, y & 0xdfdfdfdfdfdfdfdfull);
+      buf += 16;
+      len -= 16;
+    } while (len >= 16);
+  }
+  if (len >= 8) {
+    auto const x = *(const uint64_t*)buf;
+    crc0 = crc32c_u64_helper(crc0, x & 0xdfdfdfdfdfdfdfdfull);
+    buf += 8;
+    len -= 8;
+  }
+  if (len > 0) {
+    static_assert(std::endian::native == std::endian::little);
+    uint64_t x;
+    auto shift = (8 - len) << 3;
+    if constexpr (unsafe) {
+      x = *(const uint64_t*)buf;
+      x <<= shift;
+    } else {
+      x = *buf++;
+      x <<= shift;
+      for (; len > 1; --len) {
+        shift += 8;
+        uint64_t y = *buf++;
+        y <<= shift;
+        x |= y;
+      }
+    }
+    crc0 = crc32c_u64_helper(crc0, x & 0xdfdfdfdfdfdfdfdfull);
+  }
+  return crc0 >> 1;
+}
+
+#endif
 
 // Four functions for hashing: hash_string_(cs|i)(_unsafe)?.
 //   cs: case-sensitive;

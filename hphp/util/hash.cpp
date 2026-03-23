@@ -42,6 +42,20 @@ bool IsHWHashSupported() {
 #endif
 }
 
+#ifdef AARCH64_HASH_HELPER
+
+NEVER_INLINE
+strhash_t hash_string_i_unsafe(const char *buf, uint32_t len) {
+  return aarch64_hash_helper<true>(buf, len);
+}
+
+NEVER_INLINE
+strhash_t hash_string_i(const char *buf, uint32_t len){
+  return aarch64_hash_helper<false>(buf, len);
+}
+
+#endif
+
 #if !defined(USE_HWCRC) || !(defined(__SSE4_2__) || \
                              defined(__ARM_FEATURE_CRC32))
 NEVER_INLINE
