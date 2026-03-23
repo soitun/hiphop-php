@@ -21,9 +21,10 @@
 #include "hphp/util/service-data.h"
 #include "hphp/util/trace.h"
 
-#include <folly/FileUtil.h>
 #include <cstddef>
 #include <cstdint>
+#include <folly/FileUtil.h>
+#include <magic_enum/magic_enum.hpp>
 
 TRACE_SET_MOD(vfs)
 
@@ -69,14 +70,10 @@ constexpr size_t kIndexDataSizeLimit = std::numeric_limits<uint32_t>::max();
 enum class Chunks {
   FILES,
   DIRECTORIES,
-
-  SIZE // Leave last!
 };
 
 enum class Indexes {
   PATH_TO_ENTRY,
-
-  SIZE // Leave last!
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -270,8 +267,8 @@ VirtualFileSystem::VirtualFileSystem(const std::string& path,
   data.check(Chunks::FILES, kFileSizeLimit);
   data.check(Chunks::DIRECTORIES, kDirectorySizeLimit);
 
-  for (auto i = 0; i < uint32_t(Indexes::SIZE); i++) {
-    data.check(Indexes(i), kIndexSizeLimit, kIndexDataSizeLimit);
+  for (auto index : magic_enum::enum_values<Indexes>()) {
+    data.check(index, kIndexSizeLimit, kIndexDataSizeLimit);
   }
 
   data.pathToEntryIndex =

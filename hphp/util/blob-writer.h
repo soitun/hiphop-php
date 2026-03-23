@@ -22,6 +22,7 @@
 #include "hphp/util/htonll.h"
 
 #include <folly/FileUtil.h>
+#include <magic_enum/magic_enum.hpp>
 
 namespace HPHP {
 
@@ -195,60 +196,63 @@ private:
 // stored near the beginning of the file and can be used to compute
 // offsets for the sections. Since we don't know the sizes until after
 // we write everything, we have to write these as fixed size integers.
-template <typename CHUNK, typename INDEX>
+template <typename Chunk, typename Index>
 struct SizeHeader {
-  size_t chunks[uint32_t(CHUNK::SIZE)] = { 0 };
-  size_t indexes[uint32_t(INDEX::SIZE) * 2] = { 0 };
+  static constexpr size_t ChunkSize = magic_enum::enum_count<Chunk>();
+  static constexpr size_t IndexSize = magic_enum::enum_count<Index>();
+
+  size_t chunks[ChunkSize] = { 0 };
+  size_t indexes[IndexSize * 2] = { 0 };
 
   constexpr static size_t kFileSize = sizeof(chunks) + sizeof(indexes);
 
   void write(const Blob::FD& fd) const {
-    for (auto i = 0; i < uint32_t(CHUNK::SIZE); i++) {
+    for (auto i = 0; i < ChunkSize; i++) {
       fd.writeInt(chunks[i]);
     }
-    for (auto i = 0; i < uint32_t(INDEX::SIZE) * 2; i++) {
+    for (auto i = 0; i < IndexSize * 2; i++) {
       fd.writeInt(indexes[i]);
     }
   }
 
   void read(const Blob::FD& fd) {
-    for (auto i = 0; i < uint32_t(CHUNK::SIZE); i++) {
+    for (auto i = 0; i < ChunkSize; i++) {
       chunks[i] = fd.readInt<size_t>();
     }
-    for (auto i = 0; i < uint32_t(INDEX::SIZE) * 2; i++) {
+    for (auto i = 0; i < IndexSize * 2; i++) {
       indexes[i] = fd.readInt<size_t>();
     }
   }
 
-  size_t get(CHUNK chunk) {
+  size_t get(Chunk chunk) {
     return chunks[uint32_t(chunk)];
   }
 
-  void add(CHUNK chunk, size_t size) {
-    auto chunk_int = uint32_t(chunk);
+  void add(Chunk chunk, size_t size) {
     assertx(canWrite(chunk));
+    auto chunk_int = size_t(chunk);
     chunks[chunk_int] += size;
   }
 
-  void set(INDEX index, size_t indexSize, size_t dataSize) {
+  void set(Index index, size_t indexSize, size_t dataSize) {
     // We must write indexes from the lowest to highest and after chunks
-    auto index_int = uint32_t(index);
     assertx(canWrite(index));
+    auto index_int = size_t(index);
     indexes[index_int * 2] = indexSize;
     indexes[index_int * 2 + 1] = dataSize;
   }
 
-  bool canWrite(CHUNK chunk) {
-    for (auto i = uint32_t(chunk) + 1; i < uint32_t(CHUNK::SIZE); i++) {
+  bool canWrite(Chunk chunk) {
+    for (auto i = size_t(chunk) + 1; i < ChunkSize; i++) {
       if (chunks[i] != 0) {
         return false;
       }
     }
-    return canWrite(INDEX(-1));
+    return canWrite(Index(-1));
   }
 
-  bool canWrite(INDEX index) {
-    for (auto i = uint32_t(index) + 1; i < uint32_t(INDEX::SIZE); i++) {
+  bool canWrite(Index index) {
+    for (auto i = size_t(index) + 1; i < IndexSize; i++) {
       if (indexes[i * 2] != 0 || indexes[i * 2 + 1] != 0) {
         return false;
       }
@@ -259,14 +263,14 @@ struct SizeHeader {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-template <typename CHUNK, typename INDEX>
+template <typename Chunk, typename Index>
 struct Writer {
 
   Blob::FD fd;
   std::string sourceFilename;
   std::string destFilename;
   uint64_t sizeHeaderOffset = 0;
-  SizeHeader<CHUNK, INDEX> sizes;
+  SizeHeader<Chunk, Index> sizes;
 
   void header(const std::string& path, const Magic& magic, Version version) {
     sourceFilename = folly::sformat("{}.part", path);
@@ -293,7 +297,7 @@ struct Writer {
     sizes.write(fd);
   }
 
-  void write(CHUNK chunk, const void* data, size_t size) {
+  void write(Chunk chunk, const void* data, size_t size) {
     fd.write(data, size);
     sizes.add(chunk, size);
   }
@@ -332,7 +336,7 @@ struct Writer {
   * return null
   */
   template <typename T, typename KeyCompare, typename L, typename KF, typename VF>
-  void hashMapIndex(INDEX index, L& list, KF key_lambda, VF value_lambda) {
+  void hashMapIndex(Index index, L& list, KF key_lambda, VF value_lambda) {
     BlobEncoder indexBlob;
     BlobEncoder dataBlob;
     auto num_buckets = list.size();
@@ -390,7 +394,7 @@ struct Writer {
   * return blob.read()
   */
   template <typename T>
-  std::vector<Blob::Bounds> listIndex(INDEX index, std::vector<T> list) {
+  std::vector<Blob::Bounds> listIndex(Index index, std::vector<T> list) {
     BlobEncoder indexBlob;
     BlobEncoder dataBlob;
 
@@ -431,38 +435,41 @@ struct Writer {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-template <typename CHUNK, typename INDEX>
+template <typename Chunk, typename Index>
 struct Offsets {
-  uint64_t chunks[uint32_t(CHUNK::SIZE)] = { 0 };
-  uint64_t indexes[uint32_t(INDEX::SIZE) * 2] = { 0 };
+  static constexpr size_t ChunkSize = magic_enum::enum_count<Chunk>();
+  static constexpr size_t IndexSize = magic_enum::enum_count<Index>();
 
-  size_t init(size_t offset, SizeHeader<CHUNK, INDEX> sizes) {
-    for (auto i = 0; i < uint32_t(CHUNK::SIZE); i++) {
+  uint64_t chunks[ChunkSize] = { 0 };
+  uint64_t indexes[IndexSize * 2] = { 0 };
+
+  size_t init(size_t offset, SizeHeader<Chunk, Index> sizes) {
+    for (auto i = 0; i < ChunkSize; i++) {
       chunks[i] = offset;
       offset += sizes.chunks[i];
     }
-    for (auto i = 0; i < uint32_t(INDEX::SIZE) * 2; i++) {
+    for (auto i = 0; i < IndexSize * 2; i++) {
       indexes[i] = offset;
       offset += sizes.indexes[i];
     }
     return offset;
   }
 
-  size_t get(CHUNK chunk) const {
+  size_t get(Chunk chunk) const {
     return chunks[uint32_t(chunk)];
   }
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 
-template <typename CHUNK, typename INDEX>
+template <typename Chunk, typename Index>
 struct Reader {
 
   Blob::FD fd;
   std::string path;
   uint64_t fileSize = 0;
-  SizeHeader<CHUNK, INDEX> sizes;
-  Offsets<CHUNK, INDEX> offsets;
+  SizeHeader<Chunk, Index> sizes;
+  Offsets<Chunk, Index> offsets;
 
   void init(const std::string& p, const Magic& expectedMagic,
               Version expectedVersion) {
@@ -507,7 +514,7 @@ struct Reader {
       auto offset =
         sizeof(Magic) + sizeof(Version) +
         sizeof(uint8_t) + repoSchemaSize +
-        SizeHeader<CHUNK, INDEX>::kFileSize;
+        SizeHeader<Chunk, Index>::kFileSize;
 
       offset = offsets.init(offset, sizes);
 
@@ -521,7 +528,7 @@ struct Reader {
   }
 
   template <typename KeyCompare>
-  Blob::HashMapIndex<KeyCompare> hashMapIndex(INDEX index) {
+  Blob::HashMapIndex<KeyCompare> hashMapIndex(Index index) {
     auto i = uint32_t(index);
     auto indexOffset = offsets.indexes[i * 2];
     auto indexSize = sizes.indexes[i * 2];
@@ -532,7 +539,7 @@ struct Reader {
       Blob::Bounds { dataOffset, dataSize });
   }
 
-  Blob::ListIndex listIndex(INDEX index) {
+  Blob::ListIndex listIndex(Index index) {
     auto i = uint32_t(index);
     auto indexOffset = offsets.indexes[i * 2];
     auto indexSize = sizes.indexes[i * 2];
@@ -614,7 +621,7 @@ struct Reader {
     return { res };
   }
 
-  void check(CHUNK chunk, size_t limit) {
+  void check(Chunk chunk, size_t limit) {
     auto size = sizes.get(chunk);
     auto offset = offsets.get(chunk);
     always_assert_flog(
@@ -630,7 +637,7 @@ struct Reader {
     );
   }
 
-  void check(INDEX index, size_t indexLimit, size_t dataLimit) {
+  void check(Index index, size_t indexLimit, size_t dataLimit) {
     auto index_int = uint32_t(index);
     auto indexSize = sizes.indexes[index_int * 2];
     auto indexOffset = offsets.indexes[index_int * 2];

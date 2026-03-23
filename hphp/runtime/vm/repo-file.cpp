@@ -26,6 +26,7 @@
 #include "hphp/util/blob-writer.h"
 
 #include <folly/String.h>
+#include <magic_enum/magic_enum.hpp>
 
 TRACE_SET_MOD(repo_file)
 
@@ -39,8 +40,6 @@ enum class RepoFileChunks {
   UNIT_EMITTERS,
   GLOBAL_DATA,
   PACKAGE_INFO,
-
-  SIZE // Leave last!
 };
 
 enum class RepoFileIndexes {
@@ -52,8 +51,6 @@ enum class RepoFileIndexes {
   AUTOLOAD_TYPEALIASES,
   AUTOLOAD_MODULES,
   PATH_TO_UNIT_INFO,
-
-  SIZE // Leave last!
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -405,8 +402,8 @@ void RepoFile::init(const std::string& path) {
   data.check(RepoFileChunks::GLOBAL_DATA, kGlobalDataSizeLimit);
   data.check(RepoFileChunks::PACKAGE_INFO, kPackageInfoSizeLimit);
 
-  for (auto i = 0; i < uint32_t(RepoFileIndexes::SIZE); i++) {
-    data.check(RepoFileIndexes(i), kIndexSizeLimit, kIndexDataSizeLimit);
+  for (auto index : magic_enum::enum_values<RepoFileIndexes>()) {
+    data.check(index, kIndexSizeLimit, kIndexDataSizeLimit);
   }
 
   // We load global data eagerly
