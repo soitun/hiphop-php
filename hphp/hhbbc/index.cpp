@@ -34,6 +34,7 @@
 #include <tbb/concurrent_hash_map.h>
 
 #include <folly/AtomicLinkedList.h>
+#include <folly/FBVector.h>
 #include <folly/Format.h>
 #include <folly/Lazy.h>
 #include <folly/MapUtil.h>
@@ -1700,6 +1701,8 @@ private:
   };
 
   struct NodeIdxSet {
+    using version_t = uint32_t;
+
     NodeIdxSet();
 
     bool operator[](const Node& n) const {
@@ -1707,10 +1710,15 @@ private:
     }
     bool add(Node& n);
     void erase(Node& n);
-    void clear() { ++version; }
+    void clear() {
+      if (++version == 0) {             // overflow, unlikely
+        std::fill(versions.begin(), versions.end(), (version_t)0);
+        version = 1;
+      }
+    }
   private:
-    std::vector<uint64_t> versions;
-    uint64_t version;
+    folly::fbvector<version_t> versions;
+    version_t version;
   };
 
   // Iterating through parents or children can result in one of three
@@ -1860,7 +1868,8 @@ struct ClassGraphHasher {
 
 bool ClassGraph::NodeIdxSet::add(Node& n) {
   if (n.idx >= versions.size()) {
-    versions.resize(folly::nextPowTwo(n.idx+1), 0);
+    // We are using fbvector, so resize won't reallocate unless needed.
+    versions.resize(n.idx + 1, 0);
   }
   if (versions[n.idx] == version) return false;
   versions[n.idx] = version;
@@ -1921,7 +1930,7 @@ struct ClassGraph::Table {
 };
 
 ClassGraph::NodeIdxSet::NodeIdxSet()
-  : versions{folly::nextPowTwo((Node::Idx)(table().nodes.size() + 1)), 0}
+  : versions((Node::Idx)(table().nodes.size() + 1), 0)
   , version{1}
 {
   assertx(!table().locking);
