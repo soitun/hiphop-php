@@ -1,7 +1,5 @@
 <?hh
 
-<<file:__EnableUnstableFeatures('require_class')>>
-
 trait T {
   require class C;
 
