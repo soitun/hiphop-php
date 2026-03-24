@@ -992,6 +992,7 @@ type witness_decl =
   | Polymorphic_type_param of
       (Pos_or_decl.t[@hash.ignore]) * string * string * int
   | Missing_type_in_hierarchy of (Pos_or_decl.t[@hash.ignore])
+  | Enforced_type of (Pos_or_decl.t[@hash.ignore])
 [@@deriving hash]
 
 let witness_decl_to_raw_pos = function
@@ -1027,6 +1028,7 @@ let witness_decl_to_raw_pos = function
   | Polymorphic_type_param (pos_or_decl, _, _, _)
   | Missing_type_in_hierarchy pos_or_decl ->
     pos_or_decl
+  | Enforced_type pos_or_decl -> pos_or_decl
 
 let map_pos_witness_decl pos_or_decl witness =
   match witness with
@@ -1065,6 +1067,7 @@ let map_pos_witness_decl pos_or_decl witness =
   | Polymorphic_type_param (p, new_name, orig_name, rank) ->
     Polymorphic_type_param (pos_or_decl p, new_name, orig_name, rank)
   | Missing_type_in_hierarchy p -> Missing_type_in_hierarchy (pos_or_decl p)
+  | Enforced_type p -> Enforced_type (pos_or_decl p)
 
 let string_of_pessimise_reason = function
   | PRabstract -> "abstract"
@@ -1118,6 +1121,7 @@ let constructor_string_of_witness_decl = function
   | Support_dynamic_type_assume _ -> "Rsupport_dynamic_type_assume"
   | Polymorphic_type_param _ -> "Rpolymorphic_type_param"
   | Missing_type_in_hierarchy _ -> "Rmissing_type_in_hierarchy"
+  | Enforced_type _ -> "Renforced_type"
 
 let pp_witness_decl fmt witness =
   let comma_ fmt () = Format.fprintf fmt ",@ " in
@@ -1162,6 +1166,7 @@ let pp_witness_decl fmt witness =
     | Global_class_prop p
     | Missing_type_in_hierarchy p ->
       Pos_or_decl.pp fmt p
+    | Enforced_type p -> Pos_or_decl.pp fmt p
     | Polymorphic_type_param (p, s1, s2, r) ->
       Pos_or_decl.pp fmt p;
       comma ();
@@ -1288,6 +1293,8 @@ let witness_decl_to_json = function
       ]
   | Missing_type_in_hierarchy pos_or_decl ->
     `Assoc [("Missing_type_in_hierarchy", `List [Pos_or_decl.json pos_or_decl])]
+  | Enforced_type pos_or_decl ->
+    `Assoc [("Enforced_type", `List [Pos_or_decl.json pos_or_decl])]
 
 let pessimise_reason_to_string pr =
   match pr with
@@ -1443,6 +1450,11 @@ let witness_decl_to_string prefix witness =
         "%s because the expression came from %s. The type might be a lie!"
         prefix
         missing_type_in_hierarchy )
+  | Enforced_type pos_or_decl ->
+    ( pos_or_decl,
+      Format.sprintf
+        "%s because the target type is enforced by the runtime"
+        prefix )
 
 (* ~~ Axiom ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ *)
 
@@ -2836,6 +2848,8 @@ module Constructors = struct
 
   let missing_type_in_hierarchy pos =
     from_witness_decl @@ Missing_type_in_hierarchy pos
+
+  let enforced_type pos = from_witness_decl @@ Enforced_type pos
 end
 
 include Constructors
@@ -2963,6 +2977,14 @@ module Predicates = struct
     let p r =
       match r with
       | Instantiate _ -> true
+      | _ -> false
+    in
+    on_outermost r p
+
+  let is_enforced_type r =
+    let p r =
+      match r with
+      | From_witness_decl (Enforced_type _) -> true
       | _ -> false
     in
     on_outermost r p

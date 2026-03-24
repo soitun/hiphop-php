@@ -946,7 +946,8 @@ let make_like ?reason env ty =
 
 let make_like_if_enforced env et_enforced et_type =
   match et_enforced with
-  | Enforced when Env.get_support_dynamic_type env -> make_like env et_type
+  | Enforced when Env.get_support_dynamic_type env ->
+    make_like ~reason:(Reason.enforced_type (get_pos et_type)) env et_type
   | _ -> et_type
 
 let rec is_capability ty =

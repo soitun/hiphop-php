@@ -406,6 +406,8 @@ val join_point : Pos.t -> t
 
 val missing_type_in_hierarchy : Pos_or_decl.t -> t
 
+val enforced_type : Pos_or_decl.t -> t
+
 val axiom_extends :
   child:locl_phase t_ -> ancestor:locl_phase t_ -> locl_phase t_
 
@@ -671,6 +673,8 @@ module Predicates : sig
   val outer_constructor_string : t -> string
 
   val is_missing_type_in_hierarchy : t -> bool
+
+  val is_enforced_type : t -> bool
 end
 
 (** Get the topmost function parameter projection, in the case that the reason

@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<1bf606ea182c178ab57cf10b6adf4a3f>>
+// @generated SignedSource<<421aefd1693c39e8e6bbd5b04e6610f5>>
 //
 // To regenerate this file, run:
 //   buck run @fbcode//mode/dev-nosan-lg fbcode//hphp/hack/src:oxidized_regen
@@ -483,6 +483,8 @@ pub enum WitnessDecl {
     PolymorphicTypeParam(pos_or_decl::PosOrDecl, String, String, isize),
     #[rust_to_ocaml(name = "Missing_type_in_hierarchy")]
     MissingTypeInHierarchy(pos_or_decl::PosOrDecl),
+    #[rust_to_ocaml(name = "Enforced_type")]
+    EnforcedType(pos_or_decl::PosOrDecl),
 }
 
 /// Axioms are information about types provided by the user in class or type

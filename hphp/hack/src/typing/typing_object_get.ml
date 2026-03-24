@@ -825,15 +825,9 @@ and obj_get_concrete_class_with_member_info
           Typing_error.Callback.(
             (with_side_effect ~eff unify_error [@alert "-deprecated"]))
         in
+        let lty = TUtils.make_like_if_enforced env et_enforced member_ty in
         let (env, coerce_ty_err_opt) =
-          Typing_coercion.coerce_type
-            p
-            ur
-            env
-            ty
-            (TUtils.make_like_if_enforced env et_enforced member_ty)
-            et_enforced
-            err
+          Typing_coercion.coerce_type p ur env ty lty et_enforced err
         in
         let coerce_ty_mismatch =
           match coerce_ty_err_opt with

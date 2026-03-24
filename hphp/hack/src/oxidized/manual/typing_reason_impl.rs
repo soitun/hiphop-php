@@ -39,7 +39,8 @@ impl WitnessDecl {
             | Self::SupportDynamicTypeAssume(pos_or_decl)
             | Self::TupleFromSplat(pos_or_decl)
             | Self::PolymorphicTypeParam(pos_or_decl, _, _, _)
-            | Self::MissingTypeInHierarchy(pos_or_decl) => pos_or_decl,
+            | Self::MissingTypeInHierarchy(pos_or_decl)
+            | Self::EnforcedType(pos_or_decl) => pos_or_decl,
         }
     }
 }
