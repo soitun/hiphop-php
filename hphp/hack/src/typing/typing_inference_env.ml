@@ -538,16 +538,18 @@ let get_tyvar_upper_bounds env var : ITySet.t =
     | TVIConstraints cstr -> cstr.upper_bounds)
 
 let set_tyvar_lower_bounds env var lower_bounds =
-  let tyvar_constraints = get_tyvar_constraints_exn env var in
-  let tyvar_constraints = { tyvar_constraints with lower_bounds } in
-  let env = set_tyvar_constraints env var tyvar_constraints in
-  env
+  match get_tyvar_constraints_opt env var with
+  | None -> env
+  | Some tyvar_constraints ->
+    let tyvar_constraints = { tyvar_constraints with lower_bounds } in
+    set_tyvar_constraints env var tyvar_constraints
 
 let set_tyvar_upper_bounds env var upper_bounds =
-  let tyvar_constraints = get_tyvar_constraints_exn env var in
-  let tyvar_constraints = { tyvar_constraints with upper_bounds } in
-  let env = set_tyvar_constraints env var tyvar_constraints in
-  env
+  match get_tyvar_constraints_opt env var with
+  | None -> env
+  | Some tyvar_constraints ->
+    let tyvar_constraints = { tyvar_constraints with upper_bounds } in
+    set_tyvar_constraints env var tyvar_constraints
 
 let set_tyvar_eager_solve_fail env v =
   match get_tyvar_info_opt env v with
