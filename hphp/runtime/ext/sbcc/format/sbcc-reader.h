@@ -17,48 +17,53 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
+#include <string>
 
-#include "hphp/util/blob.h"
-#include "hphp/util/hash.h"
 #include "hphp/util/sha1.h"
 
 namespace HPHP {
 
+struct UnitEmitter;
+
 ///////////////////////////////////////////////////////////////////////////////
-// SBCC file format constants and structures.
-//
-// Uses the Blob::Writer/Reader container format (hphp/util/blob-writer.h),
-// following the same pattern as VirtualFileSystem (hphp/util/virtual-file-system).
-// Compatibility is handled by Blob's built-in repo schema check.
-//
-// Layout (Blob container):
-//   [Blob header: magic "SBCC" + version + repo schema + size table]
-//   [Chunk UE_BLOBS:  concatenated serialized UnitEmitters]
-//   [Index SHA1_TO_ENTRY: mangled SHA1 -> Blob::Bounds hash map]
+// SBCC lookup result classification.
 
-constexpr uint16_t kCurrentVersion = 1;
-
-// Chunks in the .sbcc Blob container.
-enum class SBCCChunk : uint32_t {
-  UE_BLOBS,
-  SIZE,
+enum class SBCCLookupResult : uint8_t {
+  Hit,
+  Miss,
+  Corrupt,
 };
 
-// Blob hash map indexes.
-enum class SBCCIndex : uint32_t {
-  SHA1_TO_ENTRY,
-  SIZE,
-};
+///////////////////////////////////////////////////////////////////////////////
+// SBCC Reader — uses Blob::Reader, following the VirtualFileSystem pattern.
 
-// Keyed by mangled SHA1 string in the SHA1_TO_ENTRY index.
-// Key comparator for the Blob hash map index (SHA1 string comparison).
-struct SBCCSha1Compare {
-  bool equal(const std::string_view& s1, const std::string_view& s2) const {
-    return s1 == s2;
-  }
-  size_t hash(const std::string_view& s) const {
-    return hash_string_cs_software(s.data(), s.size());
-  }
+struct SBCCReader {
+  SBCCReader();
+  ~SBCCReader();
+
+  // Open the .sbcc file via Blob::Reader. Validates header.
+  // Throws on error.
+  void init(const std::string& path);
+
+  // Release resources.
+  void destroy();
+
+  bool initialized() const;
+
+  size_t entryCount() const;
+
+  // Look up a unit by mangled SHA1 (content-addressed, like BCCache).
+  // Returns: nullptr on miss, loaded UE on hit.
+  // The returned UE's m_filepath is set to makeStaticString(filename).
+  std::unique_ptr<UnitEmitter> lookup(
+    const SHA1& sha1,
+    const char* filename,
+    SBCCLookupResult* result = nullptr) const;
+
+private:
+  struct Data;
+  std::unique_ptr<Data> m_data;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

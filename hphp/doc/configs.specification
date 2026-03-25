@@ -785,6 +785,8 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 
   enable decl-directed bytecode compilation
 
+- std::string Eval.SBCCPath = "", UNKNOWN
+
 - uint32_t Eval.LogDeclDeps = 0, UNKNOWN
 
 - uint32_t Eval.LogDeclErrors = 0, UNKNOWN

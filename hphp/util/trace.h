@@ -195,6 +195,7 @@ namespace Trace {
       TM(reusetc)       \
       TM(ringbuffer)    \
       TM(runtime)       \
+      TM(sbcc)          \
       TM(servicereq)    \
       TM(sib)           \
       TM(simplify)      \
