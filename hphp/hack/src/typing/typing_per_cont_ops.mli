@@ -26,6 +26,9 @@ module LEnvC = Typing_per_cont_env
  * interfere with them. *)
 val restore_conts_from : LEnvC.t -> from:LEnvC.t -> C.t list -> LEnvC.t
 
+(* Function that's used to merge locals from two environments.
+ * It is not expected to raise an exception.
+ *)
 type 'a locals_merge_fn =
   'a ->
   Typing_local_types.local ->

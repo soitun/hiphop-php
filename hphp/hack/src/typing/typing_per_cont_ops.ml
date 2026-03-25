@@ -24,22 +24,23 @@ type 'a locals_merge_fn =
 (*****************************************************************************)
 
 let union union_types env context1 context2 =
-  let (env, local_types) =
-    LMap.merge_env
-      env
-      ~combine:(fun env _ tyopt1 tyopt2 ->
+  let env_ref = ref env in
+  let local_types =
+    LMap.merge
+      (fun _ tyopt1 tyopt2 ->
         match (tyopt1, tyopt2) with
         | (Some ty1, Some ty2) ->
-          let (env, ty) = union_types env ty1 ty2 in
-          (env, Some ty)
+          let (env, ty) = union_types !env_ref ty1 ty2 in
+          env_ref := env;
+          Some ty
         | (Some local, None)
         | (None, Some local) ->
-          (env, Some { local with Typing_local_types.defined = false })
-        | (None, None) -> (env, None))
-      (* TODO: we could do better here in case only in one side. *)
+          Some { local with Typing_local_types.defined = false }
+        | (None, None) -> None)
       context1.local_types
       context2.local_types
   in
+  let env = !env_ref in
   let (env, tpenv) =
     Type_parameter_env_ops.join env context1.tpenv context2.tpenv
   in
