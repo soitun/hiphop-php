@@ -83,9 +83,7 @@ let kind trivia = trivia.kind
 let text trivia = trivia.text
 
 let text_from_trivia_list trivia_list =
-  (* TODO: Better way to accumulate a string? *)
-  let folder str trivia = str ^ text trivia in
-  List.fold_left folder "" trivia_list
+  String.concat "" (List.map text trivia_list)
 
 let from_positioned source_text positioned_trivia offset =
   let kind = PositionedTrivia.kind positioned_trivia in
