@@ -239,33 +239,57 @@ and union_ env ?reason ~approx_cancel_neg ty1 ty2 =
   let r2 = get_reason ty2 in
   if ty_equal ty1 ty2 then
     (env, ty1)
-  else if Utils.is_sub_type_for_union env ty1 ty2 then
-    (env, keep_missing_type_in_hierarchy_reason ty2 ty1)
-  else if Utils.is_sub_type_for_union env ty2 ty1 then
-    (env, keep_missing_type_in_hierarchy_reason ty1 ty2)
   else
-    let r =
-      match reason with
-      | Some r -> r
-      | _ -> union_reason r1 r2
-    in
-    let (env, non_ty2) =
-      Typing_intersection.negate_type env Reason.none ty2 ~approx:Utils.ApproxUp
-    in
-    if Utils.is_sub_type_for_union env non_ty2 ty1 then
-      (env, MakeType.mixed r)
-    else
-      let (env, non_ty1) =
-        Typing_intersection.negate_type
-          env
-          Reason.none
-          ty1
-          ~approx:Utils.ApproxUp
+    (* Fast path for closed shapes: bypass expensive subtype and negation
+       checks that are O(n) per field and always fail for closed shapes with
+       different field sets. Go directly to union_shapes which handles all
+       cases correctly. Open shapes need subtype checks for canonical
+       representation. *)
+    match (get_node ty1, get_node ty2) with
+    | ( Tshape { s_origin = _; s_unknown_value = sk1; s_fields = fdm1 },
+        Tshape { s_origin = _; s_unknown_value = sk2; s_fields = fdm2 } )
+      when is_nothing sk1 && is_nothing sk2 ->
+      let r =
+        match reason with
+        | Some r -> r
+        | _ -> union_reason r1 r2
       in
-      if Utils.is_sub_type_for_union env non_ty1 ty2 then
-        (env, MakeType.mixed r)
+      let (env, ty) =
+        union_shapes ~approx_cancel_neg env (sk1, fdm1, r1) (sk2, fdm2, r2)
+      in
+      (env, mk (r, ty))
+    | _ ->
+      if Utils.is_sub_type_for_union env ty1 ty2 then
+        (env, keep_missing_type_in_hierarchy_reason ty2 ty1)
+      else if Utils.is_sub_type_for_union env ty2 ty1 then
+        (env, keep_missing_type_in_hierarchy_reason ty1 ty2)
       else
-        union_lists ~approx_cancel_neg env [ty1] [ty2] r
+        let r =
+          match reason with
+          | Some r -> r
+          | _ -> union_reason r1 r2
+        in
+        let (env, non_ty2) =
+          Typing_intersection.negate_type
+            env
+            Reason.none
+            ty2
+            ~approx:Utils.ApproxUp
+        in
+        if Utils.is_sub_type_for_union env non_ty2 ty1 then
+          (env, MakeType.mixed r)
+        else
+          let (env, non_ty1) =
+            Typing_intersection.negate_type
+              env
+              Reason.none
+              ty1
+              ~approx:Utils.ApproxUp
+          in
+          if Utils.is_sub_type_for_union env non_ty1 ty2 then
+            (env, MakeType.mixed r)
+          else
+            union_lists ~approx_cancel_neg env [ty1] [ty2] r
 
 and simplify_union ~approx_cancel_neg env ty1 ty2 r =
   if Log.should_log env ~level:2 then
