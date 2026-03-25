@@ -2889,26 +2889,43 @@ end = struct
       invalid ~fail env
     (* Otherwise, all projections must subtype *)
     | _ ->
-      let field_names =
-        TShapeSet.of_list (TShapeMap.keys fdm_sub @ TShapeMap.keys fdm_super)
-      in
-      TShapeSet.fold
-        (fun field_name acc ->
-          let res =
-            shape_project_and_simplify_subtype
-              ~subtype_env
-              ~this_ty
-              ~super_like
-              ~env
-              (supportdyn_sub, r_sub, shape_kind_sub, fdm_sub)
-              (supportdyn_super, r_super, shape_kind_super, fdm_super)
-              field_name
-          in
-          match res with
-          | Ok prop -> acc &&& prop
-          | Error fail -> acc &&& invalid ~fail)
-        field_names
-        (valid env)
+      if
+        phys_equal fdm_sub fdm_super
+        && phys_equal shape_kind_sub shape_kind_super
+        && Bool.equal supportdyn_sub supportdyn_super
+      then
+        (* Fast path: identical field maps and shape kinds *)
+        valid env
+      else
+        (* Use TShapeMap.merge to iterate both maps in O(n) instead of
+           constructing a TShapeSet in O(n log n). Collect field names
+           that need subtype checking (skip physically identical fields). *)
+        let fields_to_check =
+          TShapeMap.merge
+            (fun _field_name opt_sub opt_super ->
+              match (opt_sub, opt_super) with
+              | (Some f1, Some f2) when phys_equal f1 f2 -> None
+              | _ -> Some ())
+            fdm_sub
+            fdm_super
+        in
+        TShapeMap.fold
+          (fun field_name () acc ->
+            let res =
+              shape_project_and_simplify_subtype
+                ~subtype_env
+                ~this_ty
+                ~super_like
+                ~env
+                (supportdyn_sub, r_sub, shape_kind_sub, fdm_sub)
+                (supportdyn_super, r_super, shape_kind_super, fdm_super)
+                field_name
+            in
+            match res with
+            | Ok prop -> acc &&& prop
+            | Error fail -> acc &&& invalid ~fail)
+          fields_to_check
+          (valid env)
 
   (* Helper function to project out a field and then simplify subtype *)
   and shape_project_and_simplify_subtype

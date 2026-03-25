@@ -734,42 +734,82 @@ and union_shapes
   let (env, shape_kind) =
     union_shape_kind ~approx_cancel_neg env shape_kind1 shape_kind2
   in
-  let ((env, shape_kind), fdm) =
-    TShapeMap.merge_env
-      (env, shape_kind)
-      fdm1
-      fdm2
-      ~combine:(fun (env, shape_kind) k fieldopt1 fieldopt2 ->
-        match ((shape_kind1, fieldopt1, r1), (shape_kind2, fieldopt2, r2)) with
-        | ((_, None, _), (_, None, _)) -> ((env, shape_kind), None)
-        (* key is present on one side but not the other *)
-        | ((_, Some { sft_ty; _ }, _), (shape_kind_other, None, r))
-        | ((shape_kind_other, None, r), (_, Some { sft_ty; _ }, _)) ->
-          let sft_ty =
-            if is_nothing shape_kind_other then
-              sft_ty
-            else
-              let r =
-                Reason.missing_optional_field
-                  (Reason.to_pos r, Utils.get_printable_shape_field_name k)
+  if phys_equal fdm1 fdm2 then
+    (* Fast path: physically identical field maps need no per-field work *)
+    ( env,
+      Tshape
+        {
+          s_origin = Missing_origin;
+          s_unknown_value = shape_kind;
+          s_fields = fdm1;
+        } )
+  else
+    (* Use TShapeMap.merge (Stdlib.Map.merge) instead of the list-based
+       merge_env. This avoids O(n log n) overhead from bindings + find_opt
+       by walking both trees directly in O(n). *)
+    let env_ref = ref env in
+    let all_from_fdm1 = ref true in
+    let all_from_fdm2 = ref true in
+    let fdm =
+      TShapeMap.merge
+        (fun k fieldopt1 fieldopt2 ->
+          match (fieldopt1, fieldopt2) with
+          (* Fast path: physically identical field records — skip union *)
+          | (Some f1, Some f2) when phys_equal f1 f2 -> Some f1
+          | _ ->
+            (match
+               ((shape_kind1, fieldopt1, r1), (shape_kind2, fieldopt2, r2))
+             with
+            | ((_, None, _), (_, None, _)) -> None
+            (* key is present on one side but not the other *)
+            | ((_, Some { sft_ty; _ }, _), (shape_kind_other, None, r))
+            | ((shape_kind_other, None, r), (_, Some { sft_ty; _ }, _)) ->
+              let sft_ty =
+                if is_nothing shape_kind_other then
+                  sft_ty
+                else
+                  let r =
+                    Reason.missing_optional_field
+                      (Reason.to_pos r, Utils.get_printable_shape_field_name k)
+                  in
+                  with_reason shape_kind_other r
               in
-              with_reason shape_kind_other r
-          in
-          ((env, shape_kind), Some { sft_optional = true; sft_ty })
-        (* key is present on both sides *)
-        | ( (_, Some { sft_optional = optional1; sft_ty = ty1 }, _),
-            (_, Some { sft_optional = optional2; sft_ty = ty2 }, _) ) ->
-          let sft_optional = optional1 || optional2 in
-          let (env, sft_ty) = union ~approx_cancel_neg env ty1 ty2 in
-          ((env, shape_kind), Some { sft_optional; sft_ty }))
-  in
-  ( env,
-    Tshape
-      {
-        s_origin = Missing_origin;
-        s_unknown_value = shape_kind;
-        s_fields = fdm;
-      } )
+              all_from_fdm1 := false;
+              all_from_fdm2 := false;
+              Some { sft_optional = true; sft_ty }
+            (* key is present on both sides *)
+            | ( (_, Some { sft_optional = optional1; sft_ty = ty1 }, _),
+                (_, Some { sft_optional = optional2; sft_ty = ty2 }, _) ) ->
+              let sft_optional = optional1 || optional2 in
+              let (env, sft_ty) = union ~approx_cancel_neg !env_ref ty1 ty2 in
+              env_ref := env;
+              if not (Bool.equal sft_optional optional1 && phys_equal sft_ty ty1)
+              then
+                all_from_fdm1 := false;
+              if not (Bool.equal sft_optional optional2 && phys_equal sft_ty ty2)
+              then
+                all_from_fdm2 := false;
+              Some { sft_optional; sft_ty }))
+        fdm1
+        fdm2
+    in
+    (* Preserve physical identity when result matches an input map.
+       This enables the phys_equal fast path for subsequent merges. *)
+    let fdm =
+      if !all_from_fdm1 then
+        fdm1
+      else if !all_from_fdm2 then
+        fdm2
+      else
+        fdm
+    in
+    ( !env_ref,
+      Tshape
+        {
+          s_origin = Missing_origin;
+          s_unknown_value = shape_kind;
+          s_fields = fdm;
+        } )
 
 and union_shape_kind ~approx_cancel_neg env shape_kind1 shape_kind2 =
   union ~approx_cancel_neg env shape_kind1 shape_kind2

@@ -946,10 +946,13 @@ let rec ty__compare : type a. ?normalize_lists:bool -> a ty_ -> a ty_ -> int =
   and shape_field_type_compare :
       type a. a shape_field_type -> a shape_field_type -> int =
    fun sft1 sft2 ->
-    let { sft_ty = ty1; sft_optional = optional1 } = sft1 in
-    let { sft_ty = ty2; sft_optional = optional2 } = sft2 in
-    chain_compare (ty_compare ty1 ty2) (fun _ ->
-        Bool.compare optional1 optional2)
+    if phys_equal sft1 sft2 then
+      0
+    else
+      let { sft_ty = ty1; sft_optional = optional1 } = sft1 in
+      let { sft_ty = ty2; sft_optional = optional2 } = sft2 in
+      chain_compare (ty_compare ty1 ty2) (fun _ ->
+          Bool.compare optional1 optional2)
   and shape_type_compare : type a. a shape_type -> a shape_type -> int =
    fun s1 s2 ->
     let {
@@ -968,16 +971,15 @@ let rec ty__compare : type a. ?normalize_lists:bool -> a ty_ -> a ty_ -> int =
     in
     if same_type_origin shape_origin1 shape_origin2 then
       0
+    else if phys_equal fields1 fields2 then
+      if phys_equal unknown_fields_type1 unknown_fields_type2 then
+        0
+      else
+        ty_compare unknown_fields_type1 unknown_fields_type2
     else begin
       chain_compare
         (ty_compare unknown_fields_type1 unknown_fields_type2)
-        (fun _ ->
-          List.compare
-            (fun (k1, v1) (k2, v2) ->
-              chain_compare (TShapeField.compare k1 k2) (fun _ ->
-                  shape_field_type_compare v1 v2))
-            (TShapeMap.elements fields1)
-            (TShapeMap.elements fields2))
+        (fun _ -> TShapeMap.compare shape_field_type_compare fields1 fields2)
     end
   and tuple_extra_compare : type a. a tuple_extra -> a tuple_extra -> int =
    fun t1 t2 ->
