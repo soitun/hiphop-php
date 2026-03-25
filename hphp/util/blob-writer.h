@@ -22,6 +22,7 @@
 #include "hphp/util/htonll.h"
 
 #include <folly/FileUtil.h>
+#include <folly/system/MemoryMapping.h>
 #include <magic_enum/magic_enum.hpp>
 
 namespace HPHP {
@@ -30,6 +31,8 @@ namespace Blob {
 
 using Magic = std::array<char, 4>;
 using Version = uint16_t;
+
+enum class ReadMode { PReadOnly, MMap };
 
 ////////////////////////////////////////////////////////////////////////////////
 // Wrapper around file descriptor for automatic closing and wrapping
@@ -154,6 +157,17 @@ struct FD {
   };
 
   Blob readBlob(size_t offset, size_t size) const {
+    if (m_mapping) {
+      auto range = m_mapping->range();
+      always_assert_flog(
+        offset + size <= range.size(),
+        "readBlob out of bounds in {}: offset {} + size {} > mapLen {}",
+        m_path, offset, size, range.size()
+      );
+      BlobDecoder decoder{
+        reinterpret_cast<const char*>(range.data() + offset), size};
+      return { nullptr, std::move(decoder) };
+    }
     auto buffer = std::make_unique<char[]>(size);
     if (size > 0) this->pread(buffer.get(), size, offset);
     BlobDecoder decoder{buffer.get(), size};
@@ -166,6 +180,7 @@ struct FD {
   FD(FD&& o) noexcept
     : m_fd{o.m_fd}
     , m_path{std::move(o.m_path)}
+    , m_mapping{std::move(o.m_mapping)}
   {
     o.m_fd = -1;
   }
@@ -173,8 +188,16 @@ struct FD {
   FD& operator=(FD&& o) {
     std::swap(m_fd, o.m_fd);
     std::swap(m_path, o.m_path);
+    std::swap(m_mapping, o.m_mapping);
     return *this;
   }
+
+  // mmap the file for zero-copy reads. CHECKs on failure.
+  void enableMmap(size_t fileSize) {
+    always_assert(fileSize > 0);
+    m_mapping.emplace(m_fd, 0, fileSize);
+  }
+
 private:
   static uint8_t  hostToFile(uint8_t v)  { return v; }
   static uint16_t hostToFile(uint16_t v) { return htons(v); }
@@ -188,6 +211,7 @@ private:
 
   int m_fd;
   std::string m_path;
+  std::optional<folly::MemoryMapping> m_mapping;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -472,7 +496,8 @@ struct Reader {
   Offsets<Chunk, Index> offsets;
 
   void init(const std::string& p, const Magic& expectedMagic,
-              Version expectedVersion) {
+              Version expectedVersion,
+              ReadMode mode = ReadMode::PReadOnly) {
     path = p;
     fd = Blob::FD{path, O_CLOEXEC | O_RDONLY};
 
@@ -524,6 +549,10 @@ struct Reader {
         "calculated end of data offset {} does not match file size {}",
         path, offset, fileSize
       );
+    }
+
+    if (mode == ReadMode::MMap) {
+      fd.enableMmap(fileSize);
     }
   }
 
