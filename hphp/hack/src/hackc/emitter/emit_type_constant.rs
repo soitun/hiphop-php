@@ -111,12 +111,7 @@ fn shape_field_name(sf: &ShapeFieldName) -> (String, bool) {
     use oxidized::ast_defs::Id;
     match sf {
         ShapeFieldName::SFlitStr((_, s)) => {
-            (
-                // FIXME: This is not safe--string literals are binary strings.
-                // There's no guarantee that they're valid UTF-8.
-                unsafe { String::from_utf8_unchecked(s.clone().into()) },
-                false,
-            )
+            (String::from_utf8_lossy(s.as_slice()).into_owned(), false)
         }
         ShapeFieldName::SFclassname(Id(_, cname)) => (
             hhbc::ClassName::from_ast_name_and_mangle(cname).to_string(),

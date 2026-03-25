@@ -2162,15 +2162,10 @@ fn emit_call_lhs_and_fcall<'a>(
             };
             match o.as_ref() {
                 (obj, Expr(_, _, Expr_::String(id)), null_flavor, _) => {
-                    emit_id(
-                        e,
-                        obj,
-                        // FIXME: This is not safe--string literals are binary strings.
-                        // There's no guarantee that they're valid UTF-8.
-                        unsafe { std::str::from_utf8_unchecked(id.as_slice()) },
-                        null_flavor,
-                        fcall_args,
-                    )
+                    let method_name = std::str::from_utf8(id.as_slice()).map_err(|e| {
+                        Error::unrecoverable(format!("invalid UTF-8 in method name: {e}"))
+                    })?;
+                    emit_id(e, obj, method_name, null_flavor, fcall_args)
                 }
                 (Expr(_, pos, Expr_::New(new_exp)), Expr(_, _, Expr_::Id(id)), null_flavor, _)
                     if fcall_args.num_args == 0 =>

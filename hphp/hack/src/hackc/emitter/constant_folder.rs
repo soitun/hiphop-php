@@ -558,7 +558,9 @@ fn value_to_expr_(v: TypedValue) -> Result<ast::Expr_, Error> {
             f.to_f64(),
         ))),
         TypedValue::EnumClassLabel(l) => {
-            let s = unsafe { std::str::from_utf8_unchecked(l.as_bytes()) };
+            let s = std::str::from_utf8(l.as_bytes()).map_err(|e| {
+                Error::unrecoverable(format!("invalid UTF-8 in enum class label: {e}"))
+            })?;
             Ok(Expr_::EnumClassLabel(Box::new((None, s.to_owned()))))
         }
         TypedValue::Bool(false) => Ok(Expr_::False),
