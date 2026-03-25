@@ -15,12 +15,11 @@
 */
 
 #include "hphp/util/synchronizable-multi.h"
-#include "hphp/util/compatibility.h"
 #include "hphp/util/lock.h"
 #include "hphp/util/rank.h"
-#include "hphp/util/timer.h"
 
 #include <sys/errno.h>
+#include <time.h>
 
 namespace HPHP {
 ///////////////////////////////////////////////////////////////////////////////
@@ -31,7 +30,9 @@ SynchronizableMulti::SynchronizableMulti(int size) :
 }
 
 inline
-bool SynchronizableMulti::waitImpl(int id, int q, Priority pri, timespec *ts) {
+bool SynchronizableMulti::waitImpl(
+    int id, int q, Priority pri,
+    std::optional<std::chrono::nanoseconds> timeout) {
   assert(id >= 0 && id < m_conds.size());
   auto& cond = m_conds[id];
 
@@ -45,8 +46,14 @@ bool SynchronizableMulti::waitImpl(int id, int q, Priority pri, timespec *ts) {
   cond_list.push(cond, pri);
 
   int ret;
-  if (ts) {
-    ret = pthread_cond_timedwait(cond, &m_mutex.getRaw(), ts);
+  if (timeout) {
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    static_assert(sizeof(ts.tv_nsec) == 8);
+    ts.tv_nsec += timeout->count();
+    ts.tv_sec += ts.tv_nsec / 1000000000L;
+    ts.tv_nsec %= 1000000000L;
+    ret = pthread_cond_timedwait(cond, &m_mutex.getRaw(), &ts);
   } else {
     ret = pthread_cond_wait(cond, &m_mutex.getRaw());
   }
@@ -60,20 +67,12 @@ bool SynchronizableMulti::waitImpl(int id, int q, Priority pri, timespec *ts) {
 }
 
 void SynchronizableMulti::wait(int id, int q, Priority pri) {
-  waitImpl(id, q, pri, nullptr);
+  waitImpl(id, q, pri, std::nullopt);
 }
 
-bool SynchronizableMulti::wait(int id, int q, Priority pri, long seconds) {
-  return wait(id, q, pri, seconds, 0);
-}
-
-bool SynchronizableMulti::wait(int id, int q, Priority pri, long seconds,
-                               long long nanosecs) {
-  struct timespec ts;
-  Timer::GetRealtimeTime(ts);
-  ts.tv_sec += seconds;
-  ts.tv_nsec += nanosecs;
-  return waitImpl(id, q, pri, &ts);
+bool SynchronizableMulti::wait(int id, int q, Priority pri,
+                               std::chrono::nanoseconds timeout) {
+  return waitImpl(id, q, pri, timeout);
 }
 
 void SynchronizableMulti::setNumGroups(int num_groups) {

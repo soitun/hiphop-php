@@ -17,9 +17,9 @@
 #pragma once
 
 #include <atomic>
+#include <chrono>
 #include <memory>
 #include <set>
-#include <time.h>
 #include <vector>
 
 #include <boost/range/adaptors.hpp>
@@ -37,7 +37,6 @@
 #include "hphp/util/logger.h"
 #include "hphp/util/numa.h"
 #include "hphp/util/synchronizable-multi.h"
-#include "hphp/util/timer.h"
 
 namespace HPHP {
 ///////////////////////////////////////////////////////////////////////////////
@@ -119,14 +118,14 @@ public:
   /**
    * Constructor.
    */
-  JobQueue(int maxQueueCount, int dropCacheTimeout,
-           bool dropStack, int lifoSwitchThreshold = INT_MAX,
-           int maxJobQueuingMs = -1, int numPriorities = 1)
+  JobQueue(int maxQueueCount, std::chrono::nanoseconds dropCacheTimeout,
+           bool dropStack, int lifoSwitchThreshold,
+           std::chrono::nanoseconds maxJobQueuing, int numPriorities)
       : SynchronizableMulti(maxQueueCount + 1) // reaper added
       , m_dropCacheTimeout(dropCacheTimeout)
       , m_dropStack(dropStack)
       , m_lifoSwitchThreshold(lifoSwitchThreshold)
-      , m_maxJobQueuingMs(maxJobQueuingMs)
+      , m_maxJobQueuing(maxJobQueuing)
       , m_jobReaperId(maxQueueCount) {
     assertx(maxQueueCount > 0);
     m_jobQueues.resize(numPriorities);
@@ -137,8 +136,7 @@ public:
    */
   void enqueue(TJob job, int priority = 0, bool eagerNotify = true) {
     assertx(priority >= 0);
-    timespec enqueueTime;
-    Timer::GetMonotonicTime(enqueueTime);
+    auto const enqueueTime = std::chrono::steady_clock::now();
     Lock lock(this);
     m_jobQueues[priority].emplace_back(job, enqueueTime);
     ++m_jobCount;
@@ -158,9 +156,7 @@ public:
       *expired = true;
       return dequeueOnlyExpiredImpl(id, q, inc);
     }
-    timespec now;
-    Timer::GetMonotonicTime(now);
-    return dequeueMaybeExpiredImpl(id, q, inc, now, expired,
+    return dequeueMaybeExpiredImpl(id, q, inc, expired,
                                    highpri, workerStop);
   }
 
@@ -216,7 +212,8 @@ public:
 
  private:
   friend class JobQueue_Expiration_Test;
-  TJob dequeueMaybeExpiredImpl(int id, int q, bool inc, const timespec& now,
+
+  TJob dequeueMaybeExpiredImpl(int id, int q, bool inc,
                                bool* expired, bool highPri = false,
                                bool* workerStop = nullptr) {
     *expired = false;
@@ -242,7 +239,7 @@ public:
         // with huge stack is still more preferable than a non-flushed worker
         // without huge stack.
         wait(id, q, highPri ? Priority::High : Priority::Low);
-      } else if (m_dropCacheTimeout > 0) {
+      } else if (m_dropCacheTimeout > std::chrono::nanoseconds::zero()) {
         // When we can't dequeue due to the max active worker limit, we flush
         // the thread immediately to reduce resource pressure.
         if (!ableToDequeue ||
@@ -260,7 +257,7 @@ public:
           }
         }
       } else {
-        // m_dropCacheTimeout <= 0, a thread that starts waiting more recently
+        // m_dropCacheTimeout <= 0s, a thread that starts waiting more recently
         // should be given a task first (LIFO), same as unflushed threads.
         wait(id, q, highPri ? Priority::Highest : Priority::Normal);
       }
@@ -276,6 +273,7 @@ public:
     --m_jobCount;
 
     // look across all our queues from highest priority to lowest.
+    auto const now = std::chrono::steady_clock::now();
     for (auto& jobs : boost::adaptors::reverse(m_jobQueues)) {
       if (jobs.empty()) {
         continue;
@@ -283,9 +281,8 @@ public:
 
       // peek at the beginning of the queue to see if the request has already
       // timed out.
-      if (m_maxJobQueuingMs > 0 &&
-          gettime_diff_us(jobs.front().second, now) >
-          m_maxJobQueuingMs * 1000) {
+      if (m_maxJobQueuing > std::chrono::nanoseconds::zero() &&
+          now - jobs.front().second > m_maxJobQueuing) {
         *expired = true;
         TJob job = jobs.front().first;
         jobs.pop_front();
@@ -315,17 +312,16 @@ public:
    */
   TJob dequeueOnlyExpiredImpl(int id, int q, bool inc) {
     assertx(id == m_jobReaperId);
-    assertx(m_maxJobQueuingMs > 0);
+    assertx(m_maxJobQueuing > std::chrono::nanoseconds::zero());
     Lock lock(this);
-    while(!m_stopped) {
-      long waitTimeUs = m_maxJobQueuingMs * 1000;
+    while (!m_stopped) {
+      auto const now = std::chrono::steady_clock::now();
+      auto waitTime = m_maxJobQueuing;
 
       for (auto& jobs : boost::adaptors::reverse(m_jobQueues)) {
         if (!jobs.empty()) {
-          timespec now;
-          Timer::GetMonotonicTime(now);
-          int64_t queuedTimeUs = gettime_diff_us(jobs.front().second, now);
-          if (queuedTimeUs > m_maxJobQueuingMs * 1000) {
+          auto const queuedTime = now - jobs.front().second;
+          if (queuedTime > m_maxJobQueuing) {
             if (inc) incActiveWorker();
             --m_jobCount;
 
@@ -334,14 +330,11 @@ public:
             return job;
           }
           // oldest job hasn't expired yet. wake us up when it will.
-          long waitTimeForQueue = m_maxJobQueuingMs * 1000 - queuedTimeUs;
-          waitTimeUs = ((waitTimeUs < waitTimeForQueue) ?
-                        waitTimeUs :
-                        waitTimeForQueue);
+          auto const waitTimeForQueue = m_maxJobQueuing - queuedTime;
+          waitTime = std::min(waitTime, waitTimeForQueue);
         }
       }
-      if (wait(id, q, Priority::Low,
-               waitTimeUs / 1000000, waitTimeUs % 1000000)) {
+      if (wait(id, q, Priority::Low, waitTime)) {
         // We got woken up by somebody calling notify (as opposed to timeout),
         // then some work might be on the queue. We only expire things here,
         // so let's notify somebody else as well.
@@ -352,27 +345,30 @@ public:
   }
 
   int m_jobCount{0};
-  folly::small_vector<std::deque<std::pair<TJob, timespec>>, 2> m_jobQueues;
+  folly::small_vector<
+    std::deque<std::pair<TJob, std::chrono::steady_clock::time_point>>,
+    2
+  > m_jobQueues;
   bool m_stopped{false};
   std::atomic<int> m_workerCount{0};
   std::atomic<int> m_maxActiveWorkers{INT_MAX};
-  const int m_dropCacheTimeout;
+  const std::chrono::nanoseconds m_dropCacheTimeout;
   const bool m_dropStack;
   const int m_lifoSwitchThreshold;
-  const int m_maxJobQueuingMs;
+  const std::chrono::nanoseconds m_maxJobQueuing;
   const int m_jobReaperId;              // equals max worker thread count
 };
 
 template<class TJob, class Policy>
 struct JobQueue<TJob,true,Policy> : JobQueue<TJob,false,Policy> {
-  JobQueue(int threadCount, int dropCacheTimeout,
-           bool dropStack, int lifoSwitchThreshold=INT_MAX,
-           int maxJobQueuingMs = -1, int numPriorities = 1) :
+  JobQueue(int threadCount, std::chrono::nanoseconds dropCacheTimeout,
+           bool dropStack, int lifoSwitchThreshold,
+           std::chrono::nanoseconds maxJobQueuing, int numPriorities) :
     JobQueue<TJob,false,Policy>(threadCount,
                                 dropCacheTimeout,
                                 dropStack,
                                 lifoSwitchThreshold,
-                                maxJobQueuingMs,
+                                maxJobQueuing,
                                 numPriorities) {
     pthread_cond_init(&m_cond, nullptr);
   }
@@ -508,10 +504,10 @@ struct JobQueueDispatcher : IHostHealthObserver {
    * Constructor.
    */
   JobQueueDispatcher(int maxThreadCount, int maxQueueCountConfig,
-                     int dropCacheTimeout, bool dropStack,
+                     int dropCacheTimeoutSec, bool dropStack,
                      typename TWorker::ContextType context,
                      int lifoSwitchThreshold = INT_MAX,
-                     int maxJobQueuingMs = -1, int numPriorities = 1,
+                     int maxJobQueuingMs = 0, int numPriorities = 1,
                      int hugeCount = 0,
                      int initThreadCount = -1,
                      unsigned hugeStackKb = 0,
@@ -526,8 +522,9 @@ struct JobQueueDispatcher : IHostHealthObserver {
       , m_hugeStackKb(hugeStackKb)
       , m_tlExtraKb(extraKb)
       , m_threadGroupSuffix(threadGroupSuffix)
-      , m_queue(m_maxQueueCount, dropCacheTimeout, dropStack,
-                lifoSwitchThreshold, maxJobQueuingMs, numPriorities) {
+      , m_queue(m_maxQueueCount, std::chrono::seconds(dropCacheTimeoutSec),
+                dropStack, lifoSwitchThreshold,
+                std::chrono::milliseconds(maxJobQueuingMs), numPriorities) {
     assertx(maxThreadCount >= 1);
     assertx(m_maxQueueCount >= maxThreadCount);
     if (maxQueueCountConfig < maxThreadCount) {

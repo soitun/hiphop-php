@@ -17,9 +17,13 @@
 #pragma once
 
 #include "hphp/util/mutex.h"
+
+#include <chrono>
+#include <optional>
+#include <vector>
+
 #include <pthread.h>
 #include <folly/IntrusiveList.h>
-#include <vector>
 
 namespace HPHP {
 ///////////////////////////////////////////////////////////////////////////////
@@ -48,8 +52,8 @@ struct SynchronizableMulti {
    * on.
    */
   void wait(int id, int q, Priority pri);
-  bool wait(int id, int q, Priority pri, long seconds); // false if timed out
-  bool wait(int id, int q, Priority pri, long seconds, long long nanosecs);
+  bool wait(int id, int q, Priority pri,
+            std::chrono::nanoseconds timeout); // false if timed out
   void notifySpecific(int id);
   void notify();
   void notifyAll();
@@ -119,7 +123,8 @@ struct SynchronizableMulti {
   };
   std::vector<CondVarList> m_cond_list_vec;
 
-  bool waitImpl(int id, int q, Priority pri, timespec *ts);
+  bool waitImpl(int id, int q, Priority pri,
+                std::optional<std::chrono::nanoseconds> timeout);
 };
 
 ///////////////////////////////////////////////////////////////////////////////

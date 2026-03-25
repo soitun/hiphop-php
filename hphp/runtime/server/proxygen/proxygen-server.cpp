@@ -30,6 +30,7 @@
 #include "hphp/runtime/debugger/debugger.h"
 #include "hphp/util/alloc.h"
 #include "hphp/util/process.h"
+#include "hphp/util/timer.h"
 
 #include <folly/portability/Unistd.h>
 #include <proxygen/lib/http/codec/HTTP2Constants.h>

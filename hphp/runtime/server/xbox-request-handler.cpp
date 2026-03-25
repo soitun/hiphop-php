@@ -41,6 +41,7 @@
 #include "hphp/util/hardware-counter.h"
 #include "hphp/util/process.h"
 #include "hphp/util/stack-trace.h"
+#include "hphp/util/timer.h"
 
 #include <folly/ScopeGuard.h>
 
@@ -175,7 +176,7 @@ void XboxRequestHandler::abortRequest(Transport *transport) {
   if (!vmStack().isAllocated()) {
     hphp_memory_cleanup();
   }
-  
+
   transport->onSendEnd();
 }
 

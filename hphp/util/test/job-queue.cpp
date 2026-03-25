@@ -15,6 +15,7 @@
 */
 #include "hphp/util/job-queue.h"
 
+#include <chrono>
 #include <thread>
 #include <gtest/gtest.h>
 
@@ -23,7 +24,8 @@ namespace HPHP {
 TEST(JobQueue, Ordering) {
   {
     // FIFO only.
-    JobQueue<int> job_queue(1, 0, false);
+    JobQueue<int> job_queue(1, std::chrono::nanoseconds::zero(), false, INT_MAX,
+                            std::chrono::nanoseconds::zero(), 1);
     for (int i = 0; i < 100; ++i) {
       job_queue.enqueue(i);
     }
@@ -38,7 +40,8 @@ TEST(JobQueue, Ordering) {
 
   {
     // LIFO only.
-    JobQueue<int> job_queue(1, 0, false, 0);
+    JobQueue<int> job_queue(1, std::chrono::nanoseconds::zero(), false, 0,
+                            std::chrono::nanoseconds::zero(), 1);
     for (int i = 0; i < 100; ++i) {
       job_queue.enqueue(i);
     }
@@ -54,7 +57,8 @@ TEST(JobQueue, Ordering) {
 
   {
     // Hybrid. First do 50 LIFO, then 50 FIFO.
-    JobQueue<int> job_queue(1, 0, false, 50);
+    JobQueue<int> job_queue(1, std::chrono::nanoseconds(0), false, 50,
+                            std::chrono::nanoseconds::zero(), 1);
     for (int i = 0; i < 100; ++i) {
       job_queue.enqueue(i);
     }
@@ -73,52 +77,46 @@ TEST(JobQueue, Ordering) {
 }
 
 TEST(JobQueue, Expiration) {
-  timespec timeOk;
-  clock_gettime(CLOCK_MONOTONIC, &timeOk);
-  timespec timeExpired = timeOk;
-  timeExpired.tv_sec += 31;
-
   {
-    JobQueue<int> fifo_queue(1, 0, false, INT_MAX, 30000);
+    JobQueue<int> fifo_queue(1, std::chrono::nanoseconds::zero(), false,
+                             INT_MAX, std::chrono::seconds(30), 1);
     fifo_queue.enqueue(1);
     fifo_queue.enqueue(2);
     fifo_queue.enqueue(3);
 
     bool expired = false;
-    EXPECT_EQ(1, fifo_queue.dequeueMaybeExpiredImpl(0, 0, true,
-                                                    timeOk, &expired));
+    EXPECT_EQ(1, fifo_queue.dequeueMaybeExpiredImpl(0, 0, true, &expired));
     EXPECT_FALSE(expired);
-    EXPECT_EQ(2, fifo_queue.dequeueMaybeExpiredImpl(0, 0, true, timeExpired,
-                                                    &expired));
+    fifo_queue.m_jobQueues[0].front().second -= std::chrono::seconds(31);
+    EXPECT_EQ(2, fifo_queue.dequeueMaybeExpiredImpl(0, 0, true, &expired));
     EXPECT_TRUE(expired);
-    EXPECT_EQ(3, fifo_queue.dequeueMaybeExpiredImpl(0, 0, true,
-                                                    timeOk, &expired));
+    EXPECT_EQ(3, fifo_queue.dequeueMaybeExpiredImpl(0, 0, true, &expired));
     EXPECT_FALSE(expired);
   }
 
   {
-    JobQueue<int> lifo_queue(1, 0, false, 0, 30000);
+    JobQueue<int> lifo_queue(1, std::chrono::nanoseconds::zero(), false, 0,
+                             std::chrono::seconds(30), 1);
     lifo_queue.enqueue(1);
     lifo_queue.enqueue(2);
     lifo_queue.enqueue(3);
 
     bool expired = false;
-    EXPECT_EQ(3, lifo_queue.dequeueMaybeExpiredImpl(0, 0,
-                                                    true, timeOk, &expired));
+    EXPECT_EQ(3, lifo_queue.dequeueMaybeExpiredImpl(0, 0, true, &expired));
     EXPECT_FALSE(expired);
     // now we should get a job from the beginning of the queue even though we
     // are in lifo mode before request expiration is enabled.
-    EXPECT_EQ(1, lifo_queue.dequeueMaybeExpiredImpl(0, 0, true, timeExpired,
-                                                    &expired));
+    lifo_queue.m_jobQueues[0].front().second -= std::chrono::seconds(31);
+    EXPECT_EQ(1, lifo_queue.dequeueMaybeExpiredImpl(0, 0, true, &expired));
     EXPECT_TRUE(expired);
-    EXPECT_EQ(2, lifo_queue.dequeueMaybeExpiredImpl(0, 0,
-                                                    true, timeOk, &expired));
+    EXPECT_EQ(2, lifo_queue.dequeueMaybeExpiredImpl(0, 0, true, &expired));
     EXPECT_FALSE(expired);
   }
 
   {
     // job reaper.
-    JobQueue<int> lifo_queue(1, 0, false, 0, 30000);
+    JobQueue<int> lifo_queue(1, std::chrono::nanoseconds::zero(), false, 0,
+                             std::chrono::seconds(30), 1);
     lifo_queue.enqueue(1);
     lifo_queue.enqueue(2);
     lifo_queue.enqueue(3);
@@ -126,8 +124,8 @@ TEST(JobQueue, Expiration) {
     lifo_queue.enqueue(5);
 
     // manipulate m_jobs timestamp to simulate time passing.
-    lifo_queue.m_jobQueues[0][0].second.tv_sec -= 32;
-    lifo_queue.m_jobQueues[0][1].second.tv_sec -= 31;
+    lifo_queue.m_jobQueues[0][0].second -= std::chrono::seconds(32);
+    lifo_queue.m_jobQueues[0][1].second -= std::chrono::seconds(31);
 
     // having job reaper should not affect anything other threads are doing.
     {
@@ -157,7 +155,7 @@ TEST(JobQueue, Expiration) {
     }
 
     // now set the first job to be expired.
-    lifo_queue.m_jobQueues[0][0].second.tv_sec -= 32;
+    lifo_queue.m_jobQueues[0][0].second -= std::chrono::seconds(32);
     lifo_queue.notify();
 
     // busy wait until value is updated.
@@ -181,7 +179,8 @@ TEST(JobQueue, Expiration) {
 }
 
 TEST(JobQueue, Priority) {
-  JobQueue<int> fifo_queue(1, 0, false, INT_MAX, 30, 3);
+  JobQueue<int> fifo_queue(1, std::chrono::nanoseconds::zero(), false, INT_MAX,
+                           std::chrono::milliseconds(30), 3);
   fifo_queue.enqueue(1);
   fifo_queue.enqueue(2);
   fifo_queue.enqueue(3, 2);
