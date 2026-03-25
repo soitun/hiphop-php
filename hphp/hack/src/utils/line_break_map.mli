@@ -30,7 +30,12 @@ val offset_to_file_pos_triple : t -> int -> int * int * int
  *)
 val offset_to_position : t -> int -> int * int
 
-exception Position_not_found
+exception
+  Position_not_found of {
+    line: int;
+    column: int;
+    num_lines_in_file: int;
+  }
 
 (* Take a one-based (line, column) pair, produce a zero-based offset.
  *

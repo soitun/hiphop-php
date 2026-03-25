@@ -89,16 +89,23 @@ let offset_to_position bolmap offset =
   let (index, line_start, offset) = offset_to_file_pos_triple bolmap offset in
   (index, offset - line_start + 1)
 
-(* TODO: add more informative data to the exception *)
-exception Position_not_found
+exception
+  Position_not_found of {
+    line: int;
+    column: int;
+    num_lines_in_file: int;
+  }
 
 let position_to_offset ?(existing = false) bolmap (line, column) =
   let len = Array.length bolmap in
   let file_line = line in
+  let raise_not_found () =
+    raise (Position_not_found { line; column; num_lines_in_file = len })
+  in
   (* Treat all file_line errors the same: Not_found *)
   let line_start =
     try bolmap.(file_line - 1) with
-    | _ -> raise Position_not_found
+    | _ -> raise_not_found ()
   in
   let offset = line_start + column - 1 in
   if
@@ -106,7 +113,7 @@ let position_to_offset ?(existing = false) bolmap (line, column) =
   then
     offset
   else
-    raise Position_not_found
+    raise_not_found ()
 
 let offset_to_line_start_offset bolmap offset =
   offset - snd (offset_to_position bolmap offset) + 1
