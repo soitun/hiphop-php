@@ -24,6 +24,7 @@ fn main() {
     cxx_build::bridge("ffi_bridge.rs")
         .files(files.iter().filter(is_cpp))
         .include(fbcode)
+        .include(fbcode.join("third-party-buck/platform010/build/fmt/include"))
         .define("NO_HHVM", "1")
         .warnings(false)
         .cpp(true)
