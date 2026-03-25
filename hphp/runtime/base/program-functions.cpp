@@ -2652,6 +2652,11 @@ void hphp_process_init(bool initForWorkerProcess /* = false */,
   init_current_pthread_stack_limits();
   BootStats::mark("pthread_init");
 
+  // Freeze cache-layer registration and install the dispatcher.
+  // Extensions register layers during moduleLoad() (called from
+  // RuntimeOption::Load); this call finalizes the dispatch chain.
+  initUnitEmitterCacheDispatcher();
+
   Process::InitProcessStatics();
   BootStats::mark("Process::InitProcessStatics");
 

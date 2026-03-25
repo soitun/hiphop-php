@@ -150,7 +150,33 @@ using UnitEmitterCacheHook =
     // nullptr will be returned for ICE UEs instead.
     const std::function<std::unique_ptr<UnitEmitter>(bool)>&
   );
+// Alias used as the layer registration type.
+using UnitEmitterCacheLayer = UnitEmitterCacheHook;
+
 extern UnitEmitterCacheHook g_unit_emitter_cache_hook;
+
+// Explicit priorities for the composable cache-layer dispatcher.
+// Lower values are outermost (called first): LocalDisk -> RemoteCache -> HackC.
+enum class UnitEmitterCacheHookPriority : int {
+  LocalDisk   = 10,  // e.g. SBCC — fastest, purely local
+  RemoteCache = 20,  // e.g. BCCache — network-backed
+};
+
+// Freeze registration and install the dispatcher as g_unit_emitter_cache_hook.
+// Only installs the dispatcher if at least one layer was registered.
+// Called once during hphp_process_init().
+void initUnitEmitterCacheDispatcher();
+
+// Register a named cache layer with an explicit dispatch priority.
+// Lower priority values are invoked first (outermost) in the chain:
+//   LocalDisk(10) -> RemoteCache(20) -> HackC.
+// Duplicate layer names abort at startup.
+// Must be called during moduleLoad(), before initUnitEmitterCacheDispatcher()
+// freezes registration in hphp_process_init().
+void registerUnitEmitterCacheLayer(
+    std::string_view name,
+    UnitEmitterCacheHookPriority priority,
+    UnitEmitterCacheLayer layer);
 
 // Invoke hackc directly without any caching.
 std::unique_ptr<UnitEmitter> compile_unit(

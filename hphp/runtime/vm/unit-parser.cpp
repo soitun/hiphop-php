@@ -17,8 +17,10 @@
 #include "hphp/runtime/vm/unit-parser.h"
 
 #include <memory>
+#include <algorithm>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 #include <folly/compression/Zstd.h>
 #include <folly/json/DynamicConverter.h>
@@ -46,6 +48,91 @@ namespace HPHP {
 TRACE_SET_MOD(unit_parse)
 
 UnitEmitterCacheHook g_unit_emitter_cache_hook = nullptr;
+
+///////////////////////////////////////////////////////////////////////////////
+// Cache layer dispatcher
+
+namespace {
+
+struct CacheLayer {
+  UnitEmitterCacheHookPriority priority;
+  std::string name;
+  UnitEmitterCacheLayer hook;
+};
+
+std::vector<CacheLayer> s_cache_layers;
+
+// True after initUnitEmitterCacheDispatcher(); registration is forbidden after this.
+static bool s_layers_frozen = false;
+
+// Forward declaration for recursive dispatch.
+std::unique_ptr<UnitEmitter> invokeLayer(
+  size_t depth,
+  const char* filename,
+  const SHA1& sha1,
+  folly::StringPiece::size_type fileLen,
+  HhvmDeclProvider* provider,
+  const std::function<std::unique_ptr<UnitEmitter>(bool)>& hackc);
+
+// The dispatcher set as g_unit_emitter_cache_hook once any layer is registered.
+// Layers are sorted by priority ascending; lowest priority is called first (outermost).
+std::unique_ptr<UnitEmitter> dispatchUnitEmitterCacheLayers(
+  const char* filename,
+  const SHA1& sha1,
+  folly::StringPiece::size_type fileLen,
+  HhvmDeclProvider* provider,
+  const std::function<std::unique_ptr<UnitEmitter>(bool)>& hackc) {
+  if (s_cache_layers.empty()) return hackc(true);
+  return invokeLayer(0, filename, sha1, fileLen, provider, hackc);
+}
+
+std::unique_ptr<UnitEmitter> invokeLayer(
+  size_t depth,
+  const char* filename,
+  const SHA1& sha1,
+  folly::StringPiece::size_type fileLen,
+  HhvmDeclProvider* provider,
+  const std::function<std::unique_ptr<UnitEmitter>(bool)>& hackc) {
+  auto const n = s_cache_layers.size();
+  assertx(depth < n);
+  auto const& layer = s_cache_layers[depth];
+  return layer.hook(
+    filename, sha1, fileLen, provider,
+    [&](bool wantsICE) -> std::unique_ptr<UnitEmitter> {
+      if (depth + 1 >= n) return hackc(wantsICE);
+      return invokeLayer(depth + 1, filename, sha1, fileLen, provider, hackc);
+    }
+  );
+}
+
+} // namespace
+
+void registerUnitEmitterCacheLayer(
+    std::string_view name,
+    UnitEmitterCacheHookPriority priority,
+    UnitEmitterCacheLayer layer) {
+  always_assert(layer != nullptr);
+  always_assert(!s_layers_frozen);
+  for (auto const& l : s_cache_layers) {
+    always_assert_flog(
+      l.name != name,
+      "HHVM fatal: duplicate unit emitter cache layer '{}'", name);
+  }
+  // Insert sorted by priority ascending (lower = outermost = called first).
+  // Use upper_bound so that layers with equal priority preserve registration order.
+  auto it = std::upper_bound(
+    s_cache_layers.begin(), s_cache_layers.end(), priority,
+    [](UnitEmitterCacheHookPriority p, const CacheLayer& l) {
+      return p < l.priority;
+    });
+  s_cache_layers.insert(it, {priority, std::string(name), layer});
+}
+
+void initUnitEmitterCacheDispatcher() {
+  always_assert(!g_unit_emitter_cache_hook);
+  g_unit_emitter_cache_hook = &dispatchUnitEmitterCacheLayers;
+  s_layers_frozen = true;
+}
 
 namespace {
 

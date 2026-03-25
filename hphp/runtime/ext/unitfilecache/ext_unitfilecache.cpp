@@ -167,13 +167,14 @@ static struct UnitFileCacheExtension final : Extension {
     Config::Bind(filename, ini, config, "UnitFileCache.Path", filename);
 
     if (!filename.empty()) {
-      always_assert(!HPHP::g_unit_emitter_cache_hook);
-
       replacePlaceholders(filename);
 
       try {
         s_state = std::make_unique<State>(filename);
-        HPHP::g_unit_emitter_cache_hook = &cache_hook;
+        HPHP::registerUnitEmitterCacheLayer(
+          "UnitFileCache",
+          HPHP::UnitEmitterCacheHookPriority::LocalDisk,
+          &cache_hook);
       } catch (const SQLiteExc& exn) {
         if (exn.code() != SQLiteExc::Code::BUSY) {
           Logger::FError("Unable to open unit file cache at {}: {}",
