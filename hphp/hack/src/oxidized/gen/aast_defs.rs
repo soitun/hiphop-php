@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<104bf4d9407204285e7d2817c0afee2f>>
+// @generated SignedSource<<193bfeea394b6c23094652f92dc235ed>>
 //
 // To regenerate this file, run:
 //   buck run @fbcode//mode/dev-nosan-lg fbcode//hphp/hack/src:oxidized_regen
@@ -591,6 +591,12 @@ pub enum ClassId_<Ex, En> {
     ///     $d::$prop = 1;
     ///     new $d();
     CIexpr(Expr<Ex, En>),
+    /// Reified generic used in a class position
+    ///
+    ///     // Given `class C<reify T> { ... }`
+    ///     new T();
+    ///     T::some_meth();
+    CIreified(ClassName),
     /// Explicit class name. This is the common case.
     ///
     ///     Foo::some_meth()

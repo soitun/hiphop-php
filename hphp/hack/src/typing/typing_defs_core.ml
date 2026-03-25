@@ -1308,11 +1308,13 @@ let class_id_con_ordinal cid =
   | Aast.CIstatic -> 2
   | Aast.CIexpr _ -> 3
   | Aast.CI _ -> 4
+  | Aast.CIreified _ -> 5
 
 let class_id_compare cid1 cid2 =
   match (cid1, cid2) with
   | (Aast.CIexpr _e1, Aast.CIexpr _e2) -> 0
   | (Aast.CI (_, id1), Aast.CI (_, id2)) -> String.compare id1 id2
+  | (Aast.CIreified (_, id1), Aast.CIreified (_, id2)) -> String.compare id1 id2
   | _ -> class_id_con_ordinal cid2 - class_id_con_ordinal cid1
 
 let class_id_equal cid1 cid2 = Int.equal (class_id_compare cid1 cid2) 0

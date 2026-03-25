@@ -1008,6 +1008,7 @@ let stash_conts_for_closure
 let requires_consistent_construct = function
   | CIstatic -> true
   | CIexpr _ -> true
+  | CIreified _ -> false
   | CIparent -> false
   | CIself -> false
   | CI _ -> false
@@ -1191,14 +1192,23 @@ let check_class_get
         primary
         @@ Primary.Parent_abstract_call
              { meth_name = mid; pos = p; decl_pos = def_pos })
-  | CI _ when get_ce_abstract ce && function_pointer ->
+  | CIreified _
+  | CI _
+    when get_ce_abstract ce && function_pointer ->
     Typing_error_utils.add_typing_error
       ~env
       Typing_error.(
         primary
         @@ Primary.Abstract_function_pointer
              { class_name = cid; meth_name = mid; pos = p; decl_pos = def_pos })
-  | CI (_, name) when get_ce_abstract ce ->
+  | CI _ when get_ce_abstract ce ->
+    Typing_error_utils.add_typing_error
+      ~env
+      Typing_error.(
+        primary
+        @@ Primary.Classname_abstract_call
+             { class_name = cid; meth_name = mid; pos = p; decl_pos = def_pos })
+  | CIreified (_, name) when get_ce_abstract ce ->
     let is_newable = Env.get_newable env name in
     if is_newable then
       (* If T is newable, any concrete implementation will have all static methods implemented. *)
@@ -1293,6 +1303,7 @@ let check_class_get
   | CIself
   | CIparent
   | CIstatic
+  | CIreified _
   | CIexpr _ ->
     ()
 
@@ -5386,7 +5397,7 @@ end = struct
     in
     let allow_abstract_bound_generic =
       match tcid with
-      | (ty, _, Aast.CI (_, tn)) -> is_generic_equal_to tn ty
+      | (ty, _, Aast.CIreified (_, tn)) -> is_generic_equal_to tn ty
       | _ -> false
     in
     let gather
@@ -5539,7 +5550,8 @@ end = struct
           (obj_ty, ctor_fty) )
       | CIstatic
       | CI _
-      | CIself ->
+      | CIself
+      | CIreified _ ->
         ( (env, tel, typed_unpack_element, should_forget_fakes_acc),
           (c_ty, ctor_fty) )
       | CIexpr _ ->
@@ -11762,100 +11774,79 @@ end = struct
           Env.fresh_type_error env p
       in
       make_result env [] Aast.CIself ty
-    | CI ((p, id) as c) -> begin
-      match Env.get_pos_and_kind_of_generic env id with
-      | Some (def_pos, _kind) ->
-        let ((env, ty_err_opt), tal) =
-          (* Since higher-kinded types are not supported, type parameter id cannot take arguments.
-             The following call performs some error handling if tal is non-empty, but its
-             elements are not actually localized. *)
-          let expected_tparams = [] in
-          Phase.localize_targs
-            ~check_type_integrity:check_targs_integrity
-            ~is_method:true
-            ~def_pos
-            ~use_pos:p
-            ~use_name:(strip_ns (snd c))
-            ~check_explicit_targs
-            env
-            expected_tparams
-            (List.map ~f:snd tal)
+    | CI ((p, id) as c) ->
+      let class_ = Env.get_class env id in
+      (match class_ with
+      | Decl_entry.NotYetAvailable
+      | Decl_entry.DoesNotExist ->
+        let (env, ty) = Env.fresh_type_error env p in
+        make_result env [] (Aast.CI c) ty
+      | Decl_entry.Found class_ ->
+        if not is_attribute_param then (
+          let should_check_package_boundary =
+            if inside_nameof || is_attribute || is_catch then
+              `No
+            else if is_const then begin
+              if Env.package_allow_classconst_violations env then
+                if is_classptr then
+                  `ClassPtrLinterOnly
+                else
+                  (* Non-::class constants: skip the class-level check
+                     here and let class_const handle it *)
+                  `No
+              else
+                `Yes Typing_error.Primary.Package.Class
+            end else
+              `Yes Typing_error.Primary.Package.Class
+          in
+          let (access_errs, access_linter_errs) =
+            TVis.check_top_level_access
+              ~in_signature:false
+              ~should_check_package_boundary
+              ~use_pos:p
+              ~def_pos:(Cls.pos class_)
+              env
+              (Cls.internal class_)
+              (Cls.get_module class_)
+              (Cls.get_package class_)
+              id
+          in
+          List.iter access_linter_errs ~f:(fun (pos, w) ->
+              Lints_diagnostics.crosspackage_linter
+                pos
+                w.current_package
+                w.target_package
+                w.target_package_before_override
+                w.classptr_reference_warning);
+          List.iter ~f:(Typing_error_utils.add_typing_error ~env) access_errs
+        );
+
+        (* Don't add Exact superfluously to class type if it's final *)
+        let exact =
+          if Cls.final class_ then
+            nonexact
+          else
+            exact
+        in
+        let ((env, ty_err_opt), ty, tal) =
+          List.map ~f:snd tal
+          |> Phase.localize_targs_and_check_constraints
+               ~exact
+               ~check_type_integrity:check_targs_integrity
+               ~def_pos:(Cls.pos class_)
+               ~use_pos:p
+               ~check_explicit_targs
+               env
+               c
+               (Reason.witness (fst c))
+               (Cls.tparams class_)
         in
         Option.iter ~f:(Typing_error_utils.add_typing_error ~env) ty_err_opt;
-        let r = Reason.hint (Pos_or_decl.of_raw_pos p) in
-        let tgeneric = MakeType.generic r id in
-        make_result env tal (Aast.CI c) tgeneric
-      | None ->
-        (* Not a type parameter *)
-        let class_ = Env.get_class env id in
-        (match class_ with
-        | Decl_entry.NotYetAvailable
-        | Decl_entry.DoesNotExist ->
-          let (env, ty) = Env.fresh_type_error env p in
-          make_result env [] (Aast.CI c) ty
-        | Decl_entry.Found class_ ->
-          if not is_attribute_param then (
-            let should_check_package_boundary =
-              if inside_nameof || is_attribute || is_catch then
-                `No
-              else if is_const then begin
-                if Env.package_allow_classconst_violations env then
-                  if is_classptr then
-                    `ClassPtrLinterOnly
-                  else
-                    (* Non-::class constants: skip the class-level check
-                       here and let class_const handle it *)
-                    `No
-                else
-                  `Yes Typing_error.Primary.Package.Class
-              end else
-                `Yes Typing_error.Primary.Package.Class
-            in
-            let (access_errs, access_linter_errs) =
-              TVis.check_top_level_access
-                ~in_signature:false
-                ~should_check_package_boundary
-                ~use_pos:p
-                ~def_pos:(Cls.pos class_)
-                env
-                (Cls.internal class_)
-                (Cls.get_module class_)
-                (Cls.get_package class_)
-                id
-            in
-            List.iter access_linter_errs ~f:(fun (pos, w) ->
-                Lints_diagnostics.crosspackage_linter
-                  pos
-                  w.current_package
-                  w.target_package
-                  w.target_package_before_override
-                  w.classptr_reference_warning);
-            List.iter ~f:(Typing_error_utils.add_typing_error ~env) access_errs
-          );
-
-          (* Don't add Exact superfluously to class type if it's final *)
-          let exact =
-            if Cls.final class_ then
-              nonexact
-            else
-              exact
-          in
-          let ((env, ty_err_opt), ty, tal) =
-            List.map ~f:snd tal
-            |> Phase.localize_targs_and_check_constraints
-                 ~exact
-                 ~check_type_integrity:check_targs_integrity
-                 ~def_pos:(Cls.pos class_)
-                 ~use_pos:p
-                 ~check_explicit_targs
-                 env
-                 c
-                 (Reason.witness (fst c))
-                 (Cls.tparams class_)
-          in
-          Option.iter ~f:(Typing_error_utils.add_typing_error ~env) ty_err_opt;
-          make_result env tal (Aast.CI c) ty)
-    end
+        make_result env tal (Aast.CI c) ty)
+    | CIreified ((p, id) as c) ->
+      let r = Reason.hint (Pos_or_decl.of_raw_pos p) in
+      let tgeneric = MakeType.generic r id in
+      make_result env [] (Aast.CIreified c) tgeneric
     | CIexpr ((_, p, _) as e) ->
       let (env, te, ty) =
         Expr.expr ~expected:None ~ctxt:Expr.Context.default env e
@@ -12150,7 +12141,8 @@ end = struct
           then
             match cid with
             | CIexpr _
-            | CI _ ->
+            | CI _
+            | CIreified _ ->
               uninstantiable_error env p cid (Cls.pos class_info) name pos c_ty
             | CIstatic
             | CIparent

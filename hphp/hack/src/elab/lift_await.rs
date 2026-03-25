@@ -203,9 +203,11 @@ fn check_await_usage(expr: &Expr) -> AwaitUsage {
         Expr_::New(box (nast::ClassId(_, _, cid), _, args, unpacked_arg, _)) => {
             let mut res = match cid {
                 ClassId_::CIexpr(expr) => check_await_usage(expr),
-                ClassId_::CIparent | ClassId_::CIself | ClassId_::CIstatic | ClassId_::CI(_) => {
-                    NoAwait
-                }
+                ClassId_::CIparent
+                | ClassId_::CIself
+                | ClassId_::CIstatic
+                | ClassId_::CI(_)
+                | ClassId_::CIreified(_) => NoAwait,
             };
             res = args
                 .iter()
@@ -1112,7 +1114,8 @@ impl LiftAwait {
                     ClassId_::CIparent
                     | ClassId_::CIself
                     | ClassId_::CIstatic
-                    | ClassId_::CI(_) => {}
+                    | ClassId_::CI(_)
+                    | ClassId_::CIreified(_) => {}
                 }
                 let mut exprs = vec![];
                 for arg in args.iter_mut() {

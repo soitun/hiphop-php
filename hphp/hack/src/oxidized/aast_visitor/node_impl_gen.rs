@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<8d97465dcc6342be52844d1d4d816fb8>>
+// @generated SignedSource<<5157c19289fc989402ef1c09fd7def95>>
 //
 // To regenerate this file, run:
 //   buck run @fbcode//mode/dev-nosan-lg fbcode//hphp/hack/src:oxidized_regen
@@ -392,6 +392,7 @@ impl<P: Params> Node<P> for ClassId_<P::Ex, P::En> {
             ClassId_::CIself => Ok(()),
             ClassId_::CIstatic => Ok(()),
             ClassId_::CIexpr(a0) => a0.accept(c, v),
+            ClassId_::CIreified(a0) => a0.accept(c, v),
             ClassId_::CI(a0) => a0.accept(c, v),
         }
     }

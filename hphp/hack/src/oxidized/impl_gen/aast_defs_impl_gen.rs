@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<e0e1f66bab46feac1c5ecb60c9722742>>
+// @generated SignedSource<<9f24771b98721dd12e7a100008da0c17>>
 //
 // To regenerate this file, run:
 //   buck run @fbcode//mode/dev-nosan-lg fbcode//hphp/hack/src:oxidized_regen
@@ -756,6 +756,9 @@ impl<Ex, En> ClassId_<Ex, En> {
     pub fn mk_ciexpr(p0: Expr<Ex, En>) -> Self {
         ClassId_::CIexpr(p0)
     }
+    pub fn mk_cireified(p0: ClassName) -> Self {
+        ClassId_::CIreified(p0)
+    }
     pub fn mk_ci(p0: ClassName) -> Self {
         ClassId_::CI(p0)
     }
@@ -783,6 +786,12 @@ impl<Ex, En> ClassId_<Ex, En> {
             _ => false,
         }
     }
+    pub fn is_cireified(&self) -> bool {
+        match self {
+            ClassId_::CIreified(..) => true,
+            _ => false,
+        }
+    }
     pub fn is_ci(&self) -> bool {
         match self {
             ClassId_::CI(..) => true,
@@ -792,6 +801,12 @@ impl<Ex, En> ClassId_<Ex, En> {
     pub fn as_ciexpr(&self) -> Option<&Expr<Ex, En>> {
         match self {
             ClassId_::CIexpr(p0) => Some(p0),
+            _ => None,
+        }
+    }
+    pub fn as_cireified(&self) -> Option<&ClassName> {
+        match self {
+            ClassId_::CIreified(p0) => Some(p0),
             _ => None,
         }
     }
@@ -807,6 +822,12 @@ impl<Ex, En> ClassId_<Ex, En> {
             _ => None,
         }
     }
+    pub fn as_cireified_mut(&mut self) -> Option<&mut ClassName> {
+        match self {
+            ClassId_::CIreified(p0) => Some(p0),
+            _ => None,
+        }
+    }
     pub fn as_ci_mut(&mut self) -> Option<&mut ClassName> {
         match self {
             ClassId_::CI(p0) => Some(p0),
@@ -816,6 +837,12 @@ impl<Ex, En> ClassId_<Ex, En> {
     pub fn as_ciexpr_into(self) -> Option<Expr<Ex, En>> {
         match self {
             ClassId_::CIexpr(p0) => Some(p0),
+            _ => None,
+        }
+    }
+    pub fn as_cireified_into(self) -> Option<ClassName> {
+        match self {
+            ClassId_::CIreified(p0) => Some(p0),
             _ => None,
         }
     }

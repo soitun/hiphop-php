@@ -8,11 +8,9 @@ use hhbc::ClassishKind;
 use hhbc::SpecialClsRef;
 use hhbc_string_utils as string_utils;
 use naming_special_names_rust::classes;
-use naming_special_names_rust::user_attributes;
 use oxidized::aast::*;
 use oxidized::ast;
 use oxidized::ast_defs;
-use string_utils::reified::ReifiedTparam;
 
 use crate::emitter::Emitter;
 
@@ -113,8 +111,6 @@ impl ClassExpr {
                         Some(name) => Self::Id(ast_defs::Id(pos, name)),
                         None => Self::Special(SpecialClsRef::SelfCls),
                     }
-                } else if Self::get_reified_tparam(scope, &id).is_some() {
-                    Self::Reified(ast_defs::Id(pos, id))
                 } else {
                     Self::Id(ast_defs::Id(pos, id))
                 }
@@ -134,33 +130,11 @@ impl ClassExpr {
         let expr = match cid_ {
             ClassId_::CIexpr(e) => e.clone(),
             ClassId_::CI(sid) => Expr((), annot.clone(), Expr_::mk_id(sid.clone())),
+            ClassId_::CIreified(sid) => return Self::Reified(sid.clone()),
             ClassId_::CIparent => return Self::Special(SpecialClsRef::ParentCls),
             ClassId_::CIstatic => return Self::Special(SpecialClsRef::LateBoundCls),
             ClassId_::CIself => return Self::Special(SpecialClsRef::SelfCls),
         };
         Self::expr_to_class_expr(emitter, scope, check_traits, resolve_self, expr)
-    }
-
-    pub fn get_reified_tparam<'a>(scope: &Scope<'a>, name: &str) -> Option<(ReifiedTparam, bool)> {
-        fn soft(tp: &ast::Tparam) -> bool {
-            tp.user_attributes
-                .iter()
-                .any(|ua| user_attributes::is_soft(&ua.name.1))
-        }
-        let reified = |(_, tp): &(usize, &ast::Tparam)| {
-            matches!(tp.reified, ReifyKind::Reified | ReifyKind::SoftReified) && tp.name.1 == name
-        };
-
-        if let Some((i, tp)) = scope.get_fun_tparams().iter().enumerate().find(reified) {
-            return Some((ReifiedTparam::Fun(i), soft(tp)));
-        }
-        if let Some((i, tp)) = scope.get_class_tparams().iter().enumerate().find(reified) {
-            return Some((ReifiedTparam::Class(i), soft(tp)));
-        }
-        None
-    }
-
-    pub fn is_reified_tparam<'a>(scope: &Scope<'a>, name: &str) -> bool {
-        Self::get_reified_tparam(scope, name).is_some()
     }
 }

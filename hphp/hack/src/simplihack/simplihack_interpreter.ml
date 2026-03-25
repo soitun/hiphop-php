@@ -407,7 +407,7 @@ end = struct
 
   let class_id (ctx : Context.t) (ClassId (pos, cid)) =
     match cid with
-    | Aast.(CIparent | CIself | CIstatic | CIexpr _) ->
+    | Aast.(CIparent | CIself | CIstatic | CIexpr _ | CIreified _) ->
       (* Special class refs not supported *)
       Context.eval_error ~ctx ~pos ~msg:"Unsupported class reference"
     | Aast.CI name -> Context.find_class ~ctx name (* Named class *)

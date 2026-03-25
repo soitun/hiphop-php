@@ -11,7 +11,7 @@ module SN = Naming_special_names
 
 let is_dynamic = function
   | Aast.(
-      ( CIparent | CIself | CIstatic | CI _
+      ( CIparent | CIself | CIstatic | CI _ | CIreified _
       | CIexpr (_, _, (Lvar _ | This | Dollardollar _ | Await _ | Delay _)) ))
     ->
     false

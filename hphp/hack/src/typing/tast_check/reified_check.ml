@@ -198,11 +198,10 @@ let handler =
       let Equal = Tast_env.eq_typing_env in
       (* only considering functions where one or more params are reified *)
       match x with
-      | (_, call_pos, Class_get ((_, _, CI (_, t)), _, _)) ->
-        if equal_reify_kind (Env.get_reified env t) Reified then
-          Typing_error_utils.add_typing_error
-            ~env
-            Typing_error.(primary @@ Primary.Class_get_reified call_pos)
+      | (_, call_pos, Class_get ((_, _, CIreified (_, _t)), _, _)) ->
+        Typing_error_utils.add_typing_error
+          ~env
+          Typing_error.(primary @@ Primary.Class_get_reified call_pos)
       | (fun_ty, pos, Method_caller _) ->
         (match get_ft_tparams env fun_ty with
         | Some (ft_tparams, _) ->
@@ -213,21 +212,14 @@ let handler =
         | None -> ())
       | ( _,
           pos,
-          FunctionPointer (FP_class_const ((ty, _, CI (_, class_id)), _), _, _)
-        )
+          FunctionPointer
+            (FP_class_const ((_, _, CIreified (_, _class_id)), _), _, _) )
         when Env.is_in_expr_tree env ->
-        let (_env, ty) = Env.expand_type env ty in
-        begin
-          match get_node ty with
-          (* If we get Tgeneric here, the underlying type was reified *)
-          | Tgeneric ci when String.equal ci class_id ->
-            Typing_error_utils.add_typing_error
-              ~env
-              Typing_error.(
-                expr_tree
-                @@ Primary.Expr_tree.Reified_static_method_in_expr_tree pos)
-          | _ -> ()
-        end
+        Typing_error_utils.add_typing_error
+          ~env
+          Typing_error.(
+            expr_tree
+            @@ Primary.Expr_tree.Reified_static_method_in_expr_tree pos)
       | (fun_ty, pos, FunctionPointer (_, targs, _)) -> begin
         match get_ft_tparams env fun_ty with
         | Some (ft_tparams, _) ->
@@ -262,39 +254,26 @@ let handler =
             targs
             reification
         | _ -> ())
-      | (_, pos, New ((ty, _, CI (_, class_id)), targs, _, _, _)) ->
-        let (env, ty) = Env.expand_type env ty in
-        (match get_node ty with
-        | Tgeneric ci when String.equal ci class_id ->
-          (* ignoring type arguments here: If we get a Tgeneric here, the underlying type
-             parameter must have been newable and reified, neither of which his allowed for
-             higher-kinded type-parameters *)
-          if not (Env.get_newable env ci) then
-            Typing_error_utils.add_typing_error
-              ~env
-              Typing_error.(
-                primary @@ Primary.New_without_newable { pos; name = ci })
-        (* No need to report a separate error here if targs is non-empty:
-             If targs is not empty then there are two cases:
-             - ci is indeed higher-kinded, in which case it is not allowed to be newable
-               (yielding an error above)
-             - ci is not higher-kinded. Typing_phase.localize_targs_* is called
-               on the the type arguments, reporting the arity mismatch *)
-        | _ ->
-          (match Env.get_class env class_id with
-          | Decl_entry.Found cls ->
-            let tparams = Cls.tparams cls in
-            let class_pos = Cls.pos cls in
-            verify_call_targs
-              env
-              pos
-              class_pos
-              tparams
-              targs
-              Type_validator.Resolved
-          | Decl_entry.DoesNotExist
-          | Decl_entry.NotYetAvailable ->
-            ()))
+      | (_, pos, New ((_, _, CI (_, class_id)), targs, _, _, _)) ->
+        (match Env.get_class env class_id with
+        | Decl_entry.Found cls ->
+          let tparams = Cls.tparams cls in
+          let class_pos = Cls.pos cls in
+          verify_call_targs
+            env
+            pos
+            class_pos
+            tparams
+            targs
+            Type_validator.Resolved
+        | Decl_entry.DoesNotExist
+        | Decl_entry.NotYetAvailable ->
+          ())
+      | (_, pos, New ((_, _, CIreified (_, name)), _, _, _, _)) ->
+        if not (Env.get_newable env name) then
+          Typing_error_utils.add_typing_error
+            ~env
+            Typing_error.(primary @@ Primary.New_without_newable { pos; name })
       | ( _,
           pos,
           New ((_, _, ((CIstatic | CIself | CIparent) as cid)), _, _, _, _) ) ->

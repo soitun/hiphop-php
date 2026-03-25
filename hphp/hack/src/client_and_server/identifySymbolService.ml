@@ -202,6 +202,7 @@ let process_constructor_arg_names
     | Aast.CIexpr (ty, _, _) ->
       concrete_cls_name_from_ty enclosing_class_name ty
     | Aast.CI (_, id) -> Some id
+    | Aast.CIreified (_, id) -> Some id
   in
   let recv =
     match cls_name with
@@ -510,6 +511,9 @@ let visitor =
             true
         in
         typed_class_id ~affects_prod_build env ty p
+      | Aast.CIreified (id_pos, _) ->
+        (* TODO(T259578698) causes bug where reified generic identifies to its bounds *)
+        typed_class_id env ty id_pos
 
     method! on_If env cond then_block else_block : Result_set.t =
       match ServerUtils.resugar_invariant_call env cond then_block with

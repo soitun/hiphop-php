@@ -429,23 +429,28 @@ fn print_expr(
         Expr_::New(x) => {
             let (cid, _, es, unpacked_element, _) = &**x;
             match &cid.2 {
-                ast::ClassId_::CIexpr(ci_expr) => {
+                // TODO(T259578698) invert and fix named parameter clash below
+                ast::ClassId_::CIexpr(_) | ast::ClassId_::CIreified(_) => {
                     w.write_all(b"new ")?;
-                    match ci_expr.2.as_id() {
-                        Some(ast_defs::Id(_, cname)) => w.write_all(
+                    match &cid.2 {
+                        ast::ClassId_::CIexpr(ast::Expr(_, _, ast::Expr_::Id(id))) => w.write_all(
                             lstrip(
                                 &adjust_id(
                                     env,
-                                    ClassName::from_ast_name_and_mangle(cname).as_str(),
+                                    ClassName::from_ast_name_and_mangle(&id.1).as_str(),
                                 ),
                                 "\\",
                             )
                             .as_bytes(),
                         )?,
-                        None => {
+                        ast::ClassId_::CIexpr(ci_expr) => {
                             let buf = print_expr_to_string(ctx, env, ci_expr)?;
                             w.write_all(lstrip_bslice(&buf, br"\"))?
                         }
+                        ast::ClassId_::CIreified(ast_defs::Id(_, id)) => {
+                            w.write_all(id.as_bytes())?
+                        }
+                        _ => unreachable!(),
                     }
                     write::paren(w, |w| {
                         write::concat_by(w, ", ", es, |w, arg| match arg {
@@ -496,6 +501,7 @@ fn print_expr(
                     )?,
                     _ => print_expr(ctx, w, env, e)?,
                 },
+                ast::ClassId_::CIreified(ast_defs::Id(_, id)) => w.write_all(id.as_bytes())?,
                 _ => {
                     return Err(
                         Error::fail("TODO Unimplemented unexpected class_id in ClassGet").into(),
@@ -516,6 +522,7 @@ fn print_expr(
                     }
                     _ => Err(Error::fail("TODO: expected Id in Nameof CIexpr").into()),
                 },
+                ast::ClassId_::CIreified(ast_defs::Id(_, s1)) => w.write_all(s1.as_bytes()),
                 _ => Err(Error::fail("TODO: unexpected class_id in Nameof").into()),
             }
         }
@@ -538,6 +545,12 @@ fn print_expr(
                     },
                     Ok,
                 ),
+            ast::ClassId_::CIreified(ast_defs::Id(_, s1)) => {
+                let s2 = &(cc.1).1;
+                w.write_all(s1.as_bytes())?;
+                w.write_all(b"::")?;
+                w.write_all(s2.as_bytes())
+            }
             _ => Err(Error::fail("TODO: unexpected class_id in ClassConst").into()),
         },
         Expr_::Unop(u) => match u.0 {
@@ -659,6 +672,9 @@ fn print_expr(
                             )?,
                             _ => print_expr(ctx, w, env, e)?,
                         },
+                        ast::ClassId_::CIreified(ast_defs::Id(_, id)) => {
+                            w.write_all(id.as_bytes())?
+                        }
                         _ => {
                             return Err(Error::fail(
                                 "TODO Unimplemented unexpected class_id in function pointer",

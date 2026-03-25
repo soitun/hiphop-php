@@ -422,7 +422,7 @@ impl<'o, 't> DirectDeclSmartConstructors<'o, 't> {
         // to do it is in a linter. All this should be removed from here and put into a linter.
         if let Some(const_refs) = &mut this.const_refs {
             match &class_id.2 {
-                nast::ClassId_::CI(sid) => {
+                nast::ClassId_::CIreified(sid) | nast::ClassId_::CI(sid) => {
                     const_refs.insert(typing_defs::ClassConstRef(
                         typing_defs::ClassConstFrom::From(sid.1.clone()),
                         value_name.clone(),

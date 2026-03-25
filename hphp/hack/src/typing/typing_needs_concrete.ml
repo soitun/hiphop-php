@@ -157,6 +157,7 @@ let check_class_get
           in
           add_warning env warning
       | CI _ -> ()
+      | CIreified _ -> ()
       | CIexpr _ -> ()
     end
 
@@ -193,6 +194,7 @@ let check_instantiation
     | CIself
     | CIparent
     | CI _
+    | CIreified _
     | CIexpr _ ->
       ()
 

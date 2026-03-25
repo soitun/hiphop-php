@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<9bf0fd63ae6ce7d846018264a93cb872>>
+// @generated SignedSource<<1f3b9a9fd8ac527ef57640bdfa98a66a>>
 //
 // To regenerate this file, run:
 //   buck run @fbcode//mode/dev-nosan-lg fbcode//hphp/hack/src:oxidized_regen
@@ -536,6 +536,9 @@ impl Transform for ClassId_ {
             ClassId_::CIself => {}
             ClassId_::CIstatic => {}
             ClassId_::CIexpr(ref mut __binding_0) => __binding_0.transform(env, &mut pass.clone()),
+            ClassId_::CIreified(ref mut __binding_0) => {
+                __binding_0.transform(env, &mut pass.clone())
+            }
             ClassId_::CI(ref mut __binding_0) => __binding_0.transform(env, &mut pass.clone()),
         }
     }

@@ -84,6 +84,7 @@ fn is_dynamic(class_id: &ClassId) -> bool {
         | ClassId_::CIself
         | ClassId_::CIstatic
         | ClassId_::CI(..)
+        | ClassId_::CIreified(..)
         | ClassId_::CIexpr(Expr(
             _,
             _,

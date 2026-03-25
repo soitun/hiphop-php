@@ -1228,6 +1228,7 @@ impl RewriteState {
                                 _,
                                 ClassId_::CIexpr(Expr(_, _, Id(box ast_defs::Id(_, name)))),
                             ) => name != classes::PARENT && name != classes::SELF,
+                            ClassId(_, _, ClassId_::CIreified(_)) => true,
                             _ => false,
                         };
 
@@ -1697,6 +1698,7 @@ impl RewriteState {
                     ClassId(_, _, ClassId_::CIexpr(Expr(_, _, Id(box ast_defs::Id(_, name))))) => {
                         name != classes::PARENT && name != classes::SELF
                     }
+                    ClassId(_, _, ClassId_::CIreified(_)) => true,
                     _ => false,
                 };
 

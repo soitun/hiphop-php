@@ -135,7 +135,8 @@ and check_await_usage expr =
         | CIparent
         | CIself
         | CIstatic
-        | CI _ ->
+        | CI _
+        | CIreified _ ->
           NoAwait
       in
       let arg_exprs =

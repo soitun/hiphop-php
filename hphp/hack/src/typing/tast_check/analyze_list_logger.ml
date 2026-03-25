@@ -98,6 +98,7 @@ let receiver_kind_of_class_id_ = function
   | Aast.CIstatic -> Analyze_list_logger_types.Static
   | Aast.CIparent -> Analyze_list_logger_types.Parent
   | Aast.CI _ -> Analyze_list_logger_types.Explicit
+  | Aast.CIreified _ -> Analyze_list_logger_types.Explicit
   | Aast.CIexpr _ -> Analyze_list_logger_types.Expr
 
 (** Check whether an lvalue expression involves a function call anywhere

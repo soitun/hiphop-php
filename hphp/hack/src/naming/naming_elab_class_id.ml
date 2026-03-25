@@ -43,7 +43,8 @@ let on_class_id on_error class_id ~ctx =
     match class_id with
     (* TODO[mjt] if we don't expect these from lowering should we refine the
        NAST repr? *)
-    | (_, _, Aast.(CIparent | CIself | CIstatic | CI _)) -> (class_id, None)
+    | (_, _, Aast.(CIparent | CIself | CIstatic | CI _ | CIreified _)) ->
+      (class_id, None)
     | (annot, _, Aast.(CIexpr (_, expr_pos, Id (id_pos, cname)))) ->
       if String.equal cname SN.Classes.cParent then
         if not in_class then

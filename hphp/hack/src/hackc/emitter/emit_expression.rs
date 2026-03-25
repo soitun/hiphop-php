@@ -737,6 +737,7 @@ fn text_of_class_id(cid: &ast::ClassId) -> String {
         ast::ClassId_::CIstatic => "static".into(),
         ast::ClassId_::CIexpr(e) => text_of_expr(e),
         ast::ClassId_::CI(ast_defs::Id(_, id)) => id.into(),
+        ast::ClassId_::CIreified(ast_defs::Id(_, id)) => id.into(),
     }
 }
 
@@ -1169,7 +1170,7 @@ fn extract_shape_field_name_pstring<'a>(
             ast::Expr_::mk_nameof(ast::ClassId((), pos.clone(), ast::ClassId_::CI(id.clone())))
         }
         SF::SFclassConst(id, p) => {
-            if ClassExpr::is_reified_tparam(&env.scope, &id.1) {
+            if reified::is_reified_tparam(env, &id.1) {
                 return Err(Error::fatal_parse(
                     &id.0,
                     "Reified generics cannot be used in shape keys",
@@ -3835,7 +3836,7 @@ fn emit_reified_type<'a>(e: &Emitter, env: &Env<'a>, pos: &Pos, name: &str) -> R
             e.named_local(string_utils::reified::reified_generic_captured_name(i).as_str()),
         )
     };
-    match ClassExpr::get_reified_tparam(&env.scope, name) {
+    match reified::get_reified_tparam(env, name) {
         Some((i, is_soft)) => {
             if is_soft {
                 return Err(Error::fatal_parse(

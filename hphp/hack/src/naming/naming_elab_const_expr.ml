@@ -158,7 +158,7 @@ let on_expr_bottom_up on_error ((_annot, pos, expr_) as expr) ~ctx =
       | Aast.CIstatic ->
         on_error (Err.naming @@ Naming_error.Illegal_constant pos);
         (ctx, Error (Err.invalid_expr expr))
-      | Aast.(CIparent | CIself | CI _) -> (ctx, Ok expr)
+      | Aast.(CIparent | CIself | CI _ | CIreified _) -> (ctx, Ok expr)
       | Aast.CIexpr (_, _, expr_) -> begin
         match expr_ with
         (* NB this relies on `class_id` elaboration having been applied, if

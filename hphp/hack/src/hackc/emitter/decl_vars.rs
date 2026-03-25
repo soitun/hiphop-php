@@ -60,6 +60,7 @@ impl<'a> DeclvarVisitor<'a> {
             ClassId_::CIparent | ClassId_::CIself | ClassId_::CIstatic | ClassId_::CI(_) => {
                 Err("Expects CIexpr as class_id on aast where expr was on ast".into())
             }
+            ClassId_::CIreified(_) => Ok(()),
             ClassId_::CIexpr(e) => {
                 self.visit_expr(&mut (), e)?;
                 Ok(())

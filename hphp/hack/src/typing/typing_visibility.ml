@@ -100,6 +100,7 @@ let is_private_visible_for_class env x self_id cid class_ =
           "You cannot access private members using the trait's name (did you mean to use self::?)"
       | _ -> Some "You cannot access this member"
     end)
+  | CIreified _ -> Some "You cannot access this member"
   | CIexpr _ ->
     if Cls.final class_ && String.equal self_id (Cls.name class_) then
       None

@@ -990,6 +990,9 @@ impl<'ast, 'a: 'b, 'b> VisitorMut<'ast> for ClosureVisitor<'a, 'b> {
     }
 
     fn visit_class_id_(&mut self, scope: &mut Scope<'b>, cid: &mut ClassId_) -> Result<()> {
+        if let ClassId_::CIreified(id) = cid {
+            self.state_mut().add_generic(scope, &id.1);
+        }
         cid.recurse(scope, self)
     }
 
@@ -1209,6 +1212,11 @@ impl<'a: 'b, 'b> ClosureVisitor<'a, 'b> {
                     };
                     match &cid.2 {
                         ClassId_::CIexpr(Expr(_, _, Expr_::Id(id))) if !is_selflike_keyword(id) => {
+                            let mut res = Expr_::Call(x);
+                            res.recurse(scope, self)?;
+                            Ok(res)
+                        }
+                        ClassId_::CIreified(_) => {
                             let mut res = Expr_::Call(x);
                             res.recurse(scope, self)?;
                             Ok(res)

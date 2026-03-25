@@ -513,6 +513,7 @@ and pp_class_id ppf (_, _, class_id_) =
   | Aast.CIstatic -> Fmt.string ppf "static"
   | Aast.CIself -> Fmt.string ppf "self"
   | Aast.CI (_, name) -> Fmt.string ppf name
+  | Aast.CIreified (_, name) -> Fmt.string ppf name
   | Aast.CIexpr expr -> pp_expr ppf expr
 
 and pp_function_ptr_id ppf = function

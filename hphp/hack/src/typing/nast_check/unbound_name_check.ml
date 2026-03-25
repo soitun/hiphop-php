@@ -434,6 +434,19 @@ let handler ctx =
             id
         in
         env
+      | Aast.CIreified id ->
+        (* TODO(T259578698) eliminate reified lookup shared w/ hint check *)
+        let custom_err_config = get_custom_error_config env in
+        let () =
+          check_type_name
+            env
+            custom_err_config
+            ~allow_typedef:env.class_id_allow_typedef
+            ~allow_generics:true
+            ~kind:Name_context.ClassContext
+            id
+        in
+        env
       | _ -> env
 
     method! at_catch env (id, _, _) =

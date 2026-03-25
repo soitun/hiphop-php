@@ -39,6 +39,7 @@ let string_of_class_id_ = function
   | CIstatic -> "static"
   | CIexpr _ -> "" (* <expr>::class is banned *)
   | CI (_, name) -> name
+  | CIreified (_, name) -> name
 
 let check_string_coercion_point env expr ty =
   if env.Typing_env_types.emit_string_coercion_error then
@@ -46,8 +47,7 @@ let check_string_coercion_point env expr ty =
     | (_, pos, Class_const ((_, _, cid_), (_, cls)))
       when cls = Naming_special_names.Members.mClass -> begin
       match cid_ with
-      | CI (_, name) when Typing_env.get_reified env name = Reified ->
-        () (* nameof T is illegal (T187575261) *)
+      | CIreified _ -> () (* nameof T is illegal (T187575261) *)
       | _ ->
         let check ty =
           match get_node ty with

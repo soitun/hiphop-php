@@ -45,6 +45,8 @@ module ExprDepTy = struct
           (pos, ereason, dep))
       | N.CI (p, cls) ->
         (Pos_or_decl.of_raw_pos p, Reason.ERclass cls, Dep_Cls cls)
+      | N.CIreified (p, cls) ->
+        (Pos_or_decl.of_raw_pos p, Reason.ERclass cls, Dep_Cls cls)
       | N.CIstatic -> (pos, Reason.ERstatic, Dep_This)
       | N.CIexpr (_, p, N.This) ->
         (Pos_or_decl.of_raw_pos p, Reason.ERstatic, Dep_This)

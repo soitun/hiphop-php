@@ -4,11 +4,11 @@
 // LICENSE file in the "hack" directory of this source tree.
 
 use decl_provider::TypeDecl;
-use env::ClassExpr;
 use env::Env;
 use env::emitter::Emitter;
 use error::Result;
 use hash::HashSet;
+use hhbc_string_utils::reified::ReifiedTparam;
 use instruction_sequence::InstrSeq;
 use instruction_sequence::instr;
 use naming_special_names_rust as sn;
@@ -49,6 +49,41 @@ pub(crate) fn get_erased_tparams<'a>(env: &'a Env<'a>) -> impl Iterator<Item = S
     })
 }
 
+pub(crate) fn get_reified_tparam<'a>(
+    env: &'a Env<'a>,
+    name: &str,
+) -> Option<(ReifiedTparam, bool)> {
+    fn soft(tp: &oxidized::ast::Tparam) -> bool {
+        tp.user_attributes
+            .iter()
+            .any(|ua| sn::user_attributes::is_soft(&ua.name.1))
+    }
+    let reified = |(_, tp): &(usize, &oxidized::ast::Tparam)| {
+        matches!(
+            tp.reified,
+            aast::ReifyKind::Reified | aast::ReifyKind::SoftReified
+        ) && tp.name.1 == name
+    };
+
+    if let Some((i, tp)) = env.scope.get_fun_tparams().iter().enumerate().find(reified) {
+        return Some((ReifiedTparam::Fun(i), soft(tp)));
+    }
+    if let Some((i, tp)) = env
+        .scope
+        .get_class_tparams()
+        .iter()
+        .enumerate()
+        .find(reified)
+    {
+        return Some((ReifiedTparam::Class(i), soft(tp)));
+    }
+    None
+}
+
+pub(crate) fn is_reified_tparam<'a>(env: &'a Env<'a>, name: &str) -> bool {
+    get_reified_tparam(env, name).is_some()
+}
+
 pub(crate) fn has_reified_type_constraint<'a>(env: &Env<'a>, h: &aast::Hint) -> ReificationLevel {
     use aast::Hint_;
     fn is_all_erased<'a>(
@@ -66,7 +101,7 @@ pub(crate) fn has_reified_type_constraint<'a>(env: &Env<'a>, h: &aast::Hint) -> 
     }
     match &*h.1 {
         Hint_::Happly(Id(_, id), hs) => {
-            if ClassExpr::is_reified_tparam(&env.scope, id) {
+            if is_reified_tparam(env, id) {
                 ReificationLevel::Definitely
             } else if hs.is_empty() || is_all_erased(env, hs.iter()) {
                 ReificationLevel::Not
@@ -279,7 +314,7 @@ pub(crate) fn happly_decl_has_reified_generics<'a>(
         Hint_::Happly(Id(_, id), _) => {
             // If the parameter itself is a reified type parameter, then we want to do the
             // tparam check
-            if ClassExpr::is_reified_tparam(&env.scope, id) {
+            if is_reified_tparam(env, id) {
                 return true;
             }
             // If the parameter is an erased type parameter, then no check is necessary

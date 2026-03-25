@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<bbf4a633297574846b0996833ffed33d>>
+// @generated SignedSource<<b456f8f3ae73e89f1825e7e2a5294587>>
 //
 // To regenerate this file, run:
 //   buck run @fbcode//mode/dev-nosan-lg fbcode//hphp/hack/src:oxidized_regen
@@ -392,6 +392,7 @@ impl<P: Params> NodeMut<P> for ClassId_<P::Ex, P::En> {
             ClassId_::CIself => Ok(()),
             ClassId_::CIstatic => Ok(()),
             ClassId_::CIexpr(a0) => a0.accept(c, v),
+            ClassId_::CIreified(a0) => a0.accept(c, v),
             ClassId_::CI(a0) => a0.accept(c, v),
         }
     }

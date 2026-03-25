@@ -1398,7 +1398,7 @@ fn expr_to_class_id_<'a>(env: &mut Env<'a>, e: ast::Expr) -> Result<ast::ClassId
     let Expr(ex, epos, expr_) = e;
     match expr_ {
         Expr_::Id(name) => match env.get_reification(&name.1) {
-            Some(true) => Ok(ast::ClassId_::CIexpr(Expr(ex, epos, Expr_::Id(name)))),
+            Some(true) => Ok(ast::ClassId_::CIreified(*name)),
             Some(false) => parsing_error(syntax_error::erased_generic_as_class_id, epos),
             None => Ok(ast::ClassId_::CIexpr(Expr(ex, epos, Expr_::Id(name)))),
         },
@@ -2113,11 +2113,13 @@ fn p_function_pointer_expr<'a>(
             aast::FunctionPointerSource::Code,
         )),
         Expr_::ClassConst(c) => match &(c.0).2 {
-            aast::ClassId_::CIexpr(Expr(_, _, Expr_::Id(_))) => Ok(Expr_::mk_function_pointer(
-                aast::FunctionPtrId::FPClassConst(c.0.to_owned(), c.1.to_owned()),
-                targs,
-                aast::FunctionPointerSource::Code,
-            )),
+            aast::ClassId_::CIexpr(Expr(_, _, Expr_::Id(_))) | aast::ClassId_::CIreified(_) => {
+                Ok(Expr_::mk_function_pointer(
+                    aast::FunctionPtrId::FPClassConst(c.0.to_owned(), c.1.to_owned()),
+                    targs,
+                    aast::FunctionPointerSource::Code,
+                ))
+            }
             _ => {
                 raise_parsing_error(node, env, &syntax_error::function_pointer_bad_recv);
                 missing_syntax("function or static method", node, env)
@@ -2590,6 +2592,11 @@ fn p_constructor_call<'a>(
         fail_if_invalid_class_creation(node, env, &name.1);
     }
     let class_id_ = expr_to_class_id_(env, e)?;
+    if let aast::ClassId_::CIreified(_) = class_id_
+        && !hl.is_empty()
+    {
+        raise_parsing_error(&c.argument_list, env, &syntax_error::targs_not_allowed);
+    }
     Ok(Expr_::mk_new(
         ast::ClassId((), pos, class_id_),
         hl,

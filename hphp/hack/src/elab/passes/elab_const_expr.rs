@@ -239,7 +239,10 @@ impl Pass for ElabConstExprPass {
                     }
 
                     ClassId_::CIparent | ClassId_::CIself | ClassId_::CI(..) => Continue(()),
-
+                    ClassId_::CIreified(..) => {
+                        // TODO(T259578698) this is a bug (from the CIexpr(Id) case), allows class-bound reified in constexpr
+                        Continue(())
+                    }
                     ClassId_::CIexpr(Expr(_, _, expr_)) => match expr_ {
                         Expr_::This | Expr_::Id(..) => Continue(()),
                         _ => {

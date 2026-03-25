@@ -126,6 +126,7 @@ let class_id_to_str = function
   | CIexpr (_, _, Dollardollar _) -> SN.SpecialIdents.dollardollar
   | CIexpr _ -> assert false
   | CI (_, x) -> x
+  | CIreified (_, x) -> x
 
 let is_kvc_kind name =
   String.equal name SN.Collections.cMap

@@ -328,6 +328,12 @@ and ('ex, 'en) class_id_ =
        *     $d::some_meth();
        *     $d::$prop = 1;
        *     new $d(); *)
+  | CIreified of class_name
+      (** Reified generic used in a class position
+       *
+       *     // Given `class C<reify T> { ... }`
+       *     new T();
+       *     T::some_meth(); *)
   | CI of class_name
       (** Explicit class name. This is the common case.
        *
