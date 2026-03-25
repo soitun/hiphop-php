@@ -19,7 +19,6 @@
 #include <cstdint>
 
 #include "hphp/util/blob.h"
-#include "hphp/util/hash.h"
 #include "hphp/util/sha1.h"
 
 namespace HPHP {
@@ -50,14 +49,13 @@ enum class SBCCIndex : uint32_t {
   SIZE,
 };
 
-// Keyed by mangled SHA1 string in the SHA1_TO_ENTRY index.
-// Key comparator for the Blob hash map index (SHA1 string comparison).
-struct SBCCSha1Compare {
-  bool equal(const std::string_view& s1, const std::string_view& s2) const {
-    return s1 == s2;
+// Key comparator for the Blob hash map index using SHA1 directly.
+struct SHA1Compare {
+  bool equal(const SHA1& a, const SHA1& b) const {
+    return a == b;
   }
-  size_t hash(const std::string_view& s) const {
-    return hash_string_cs_software(s.data(), s.size());
+  size_t hash(const SHA1& s) const {
+    return s.hash();
   }
 };
 

@@ -37,7 +37,7 @@ TRACE_SET_MOD(sbcc)
 // Reader state — follows the VirtualFileSystem::Data pattern.
 
 struct SBCCReader::Data : Blob::Reader<SBCCChunk, SBCCIndex> {
-  Blob::HashMapIndex<SBCCSha1Compare> sha1ToEntryIndex;
+  Blob::HashMapIndex<SHA1Compare> sha1ToEntryIndex;
 };
 
 namespace {
@@ -120,7 +120,7 @@ void SBCCReader::init(const std::string& path) {
   data->check(SBCCIndex::SHA1_TO_ENTRY, kIndexSizeLimit, kIndexDataSizeLimit);
 
   data->sha1ToEntryIndex =
-    data->hashMapIndex<SBCCSha1Compare>(SBCCIndex::SHA1_TO_ENTRY);
+    data->hashMapIndex<SHA1Compare>(SBCCIndex::SHA1_TO_ENTRY);
 
   m_data = std::move(data);
 }
@@ -138,10 +138,10 @@ std::unique_ptr<UnitEmitter> SBCCReader::lookup(
     return nullptr;
   }
 
-  // Look up the entry by mangled SHA1 using Blob's hash map index.
-  auto bounds = m_data->getFromIndex<Blob::Bounds>(
+  // Look up via hash map index.
+  auto bounds = m_data->getFromIndex<Blob::Bounds, SHA1>(
     m_data->sha1ToEntryIndex,
-    sha1.toString());
+    sha1);
   if (!bounds) {
     if (result) *result = SBCCLookupResult::Miss;
     return nullptr;

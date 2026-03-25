@@ -361,12 +361,24 @@ struct Writer {
   */
   template <typename T, typename KeyCompare, typename L, typename KF, typename VF>
   void hashMapIndex(Index index, L& list, KF key_lambda, VF value_lambda) {
+    hashMapIndex<T, std::string, KeyCompare>(
+      index, list,
+      [&](auto const& it) { return std::string{key_lambda(it)}; },
+      value_lambda);
+  }
+
+  // Variant for non-string key types (e.g. SHA1). Keys are serialized via
+  // serde instead of as length-prefixed strings. Pair with the StoredKey
+  // parameter on getFromIndex() on the reader side.
+  template <typename T, typename Key, typename KeyCompare,
+            typename L, typename KF, typename VF>
+  void hashMapIndex(Index index, L& list, KF key_lambda, VF value_lambda) {
     BlobEncoder indexBlob;
     BlobEncoder dataBlob;
     auto num_buckets = list.size();
 
     struct Item {
-      std::string key;
+      Key key;
       const T* value;
     };
     using Bucket = std::vector<Item>;
@@ -578,9 +590,10 @@ struct Reader {
                            Blob::Bounds { dataOffset, dataSize });
   }
 
-  template <typename T, typename KeyCompare>
+  template <typename T, typename StoredKey = std::string,
+            typename KeyCompare, typename LookupKey>
   Optional<T> getFromIndex(const Blob::HashMapIndex<KeyCompare>& map,
-                           const std::string_view& key) const {
+                           const LookupKey& key) const {
     if (map.size == 0) {
       return {};
     }
@@ -612,7 +625,7 @@ struct Reader {
                                 nextOffset - currentOffset);
 
     while (dataBlob.decoder.remaining() > 0) {
-      std::string candidate_key;
+      StoredKey candidate_key;
       dataBlob.decoder(candidate_key);
 
       T res;

@@ -18,8 +18,6 @@
 
 #include "hphp/runtime/ext/sbcc/format/sbcc-file.h"
 
-#include <cstring>
-
 #include "hphp/util/blob-writer.h"
 #include "hphp/util/logger.h"
 
@@ -29,7 +27,7 @@ namespace HPHP {
 // SBCCWriter — follows the VirtualFileSystemWriter pattern.
 
 struct SBCCWriter::Data : Blob::Writer<SBCCChunk, SBCCIndex> {
-  hphp_fast_string_map<Blob::Bounds> entries;
+  std::unordered_map<SHA1, Blob::Bounds> entries;
 };
 
 SBCCWriter::SBCCWriter(const std::string& outputPath)
@@ -44,7 +42,7 @@ void SBCCWriter::addUnit(const SHA1& sha1,
                          size_t blobSize) {
   // Skip duplicate SHA1s — same content produces the same bytecode,
   // so the first entry is sufficient.
-  if (m_data->entries.count(sha1.toString())) return;
+  if (m_data->entries.count(sha1)) return;
 
   // Record the content offset before writing.
   auto contentOffset = m_data->sizes.get(SBCCChunk::UE_BLOBS);
@@ -52,15 +50,13 @@ void SBCCWriter::addUnit(const SHA1& sha1,
   // Write blob directly to the UE_BLOBS chunk.
   m_data->write(SBCCChunk::UE_BLOBS, blobData, blobSize);
 
-  // Record entry keyed by mangled SHA1 string.
-  m_data->entries.emplace(
-    sha1.toString(),
-    Blob::Bounds{contentOffset, blobSize});
+  // Record entry keyed by SHA1.
+  m_data->entries.emplace(sha1, Blob::Bounds{contentOffset, blobSize});
 }
 
 void SBCCWriter::finish() {
   // Write hash map index (SHA1 -> Blob::Bounds).
-  m_data->hashMapIndex<Blob::Bounds, SBCCSha1Compare>(
+  m_data->hashMapIndex<Blob::Bounds, SHA1, SHA1Compare>(
     SBCCIndex::SHA1_TO_ENTRY, m_data->entries,
     [](auto const& it) { return it.first; },
     [](auto const& it) { return &it.second; });
