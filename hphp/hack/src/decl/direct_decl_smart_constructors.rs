@@ -1555,26 +1555,20 @@ impl<'o, 't> DirectDeclSmartConstructors<'o, 't> {
         constraints: Node,
         match_constraint: impl Fn(Node) -> Option<(ConstraintKind, Node)>,
     ) -> (Vec<Ty>, Vec<Ty>) {
-        // XXX rewrite this as a simple loop
-        let append = |tys: &mut Vec<Ty>, ty| {
-            if let Some(ty) = ty {
-                tys.push(ty);
-            }
-        };
-        constraints.into_iter().fold(
-            (Vec::new(), Vec::new()),
-            |(mut super_, mut as_), constraint| {
-                if let Some((kind, hint)) = match_constraint(constraint) {
-                    use ConstraintKind::*;
+        let mut super_ = Vec::new();
+        let mut as_ = Vec::new();
+        for constraint in constraints.into_iter() {
+            if let Some((kind, hint)) = match_constraint(constraint) {
+                if let Some(ty) = self.node_to_ty(hint) {
                     match kind {
-                        ConstraintAs => append(&mut as_, self.node_to_ty(hint)),
-                        ConstraintSuper => append(&mut super_, self.node_to_ty(hint)),
-                        _ => (),
-                    };
-                };
-                (super_, as_)
-            },
-        )
+                        ConstraintKind::ConstraintAs => as_.push(ty),
+                        ConstraintKind::ConstraintSuper => super_.push(ty),
+                        _ => {}
+                    }
+                }
+            }
+        }
+        (super_, as_)
     }
 
     fn partition_type_bounds_into_lower_and_upper(&self, constraints: Node) -> (Vec<Ty>, Vec<Ty>) {
