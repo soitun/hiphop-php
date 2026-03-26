@@ -18,6 +18,7 @@
 
 #include "hphp/util/hash-set.h"
 
+#include <cstdint>
 #include <map>
 #include <set>
 #include <string>
@@ -52,6 +53,7 @@ void GetRepoOptionsFlagsForSystemlib(RepoOptionsFlags& flags);
 void InitHackcHHBCFlags(const RepoOptionsFlags& repo_flags, hackc::HhbcFlags& flags);
 void InitHackcParserFlags(const RepoOptionsFlags& repo_flags, hackc::ParserFlags& flags);
 
+using Int32Vector = std::vector<int32_t>;
 using StringStringMap = std::map<std::string, std::string>;
 using StringVector = std::vector<std::string>;
 using StringSet = std::set<std::string>;

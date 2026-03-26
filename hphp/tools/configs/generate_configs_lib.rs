@@ -268,6 +268,7 @@ pub enum ConfigType {
     UInt32t,
     UInt64t,
     StdString,
+    StdVectorInt32t,
     StdVectorStdString,
     StdSetStdString,
     StdMapStdStringStdString,
@@ -289,6 +290,7 @@ impl ConfigType {
             ConfigType::UInt32t => "uint32_t",
             ConfigType::UInt64t => "uint64_t",
             ConfigType::StdString => "std::string",
+            ConfigType::StdVectorInt32t => "std::vector<int32_t>",
             ConfigType::StdVectorStdString => "std::vector<std::string>",
             ConfigType::StdSetStdString => "std::set<std::string>",
             ConfigType::StdMapStdStringStdString => "std::map<std::string,std::string>",
@@ -324,6 +326,9 @@ impl ConfigType {
             | ConfigType::UInt32t
             | ConfigType::UInt64t => vec![Include::library("cstdint")],
             ConfigType::StdString => vec![Include::library("string")],
+            ConfigType::StdVectorInt32t => {
+                vec![Include::library("vector"), Include::library("cstdint")]
+            }
             ConfigType::StdVectorStdString => {
                 vec![Include::library("vector"), Include::library("string")]
             }
@@ -356,6 +361,7 @@ impl ConfigType {
             | ConfigType::UInt32t
             | ConfigType::UInt64t => "0",
             ConfigType::StdString => "\"\"",
+            ConfigType::StdVectorInt32t => "{}",
             ConfigType::StdVectorStdString => "{}",
             ConfigType::StdSetStdString => "{}",
             ConfigType::StdMapStdStringStdString => "{}",
@@ -366,6 +372,7 @@ impl ConfigType {
 
     fn repo_option(&self) -> &str {
         match *self {
+            ConfigType::StdVectorInt32t => "Cfg::Int32Vector",
             ConfigType::StdVectorStdString => "Cfg::StringVector",
             ConfigType::StdSetStdString => "Cfg::StringSet",
             ConfigType::StdMapStdStringStdString => "Cfg::StringStringMap",
@@ -405,6 +412,7 @@ fn parse_type<'a, E: ParseError<&'a str>>(input: &'a str) -> IResult<&'a str, Co
             value(ConfigType::UInt32t, tag("uint32_t")),
             value(ConfigType::UInt64t, tag("uint64_t")),
             value(ConfigType::StdString, tag("std::string")),
+            value(ConfigType::StdVectorInt32t, tag("std::vector<int32_t>")),
             value(
                 ConfigType::StdVectorStdString,
                 tag("std::vector<std::string>"),
@@ -1786,5 +1794,99 @@ mod test {
         assert_eq!(res, Ok(("", r#"(25 << 10) + 1"#)));
         let res = parse_num_expr::<VerboseError<&str>>(r#"15 - (25 << 10) + 1"#);
         assert_eq!(res, Ok(("", r#"15 - (25 << 10) + 1"#)));
+    }
+
+    #[test]
+    fn test_parse_type_vector_int32() {
+        let res = parse_type::<VerboseError<&str>>("std::vector<int32_t>");
+        assert_eq!(res, Ok(("", ConfigType::StdVectorInt32t)));
+    }
+
+    #[test]
+    fn test_vector_int32_config_type_properties() {
+        assert_eq!(ConfigType::StdVectorInt32t.str(), "std::vector<int32_t>");
+        assert_eq!(ConfigType::StdVectorInt32t.default(), "{}");
+        assert_eq!(
+            ConfigType::StdVectorInt32t.repo_option(),
+            "Cfg::Int32Vector"
+        );
+
+        let includes = ConfigType::StdVectorInt32t.includes();
+        assert_eq!(includes.len(), 2);
+        assert_eq!(includes[0].str(), "#include <vector>");
+        assert_eq!(includes[1].str(), "#include <cstdint>");
+    }
+
+    #[test]
+    fn test_parse_vector_int32_config() {
+        let input = "Test section\n\n# TestSection\n\n\
+                      - std::vector<int32_t> TestSection.BlockedSignals = {}, UNKNOWN\n\n\
+                      ";
+        let res = parse_option_doc::<VerboseError<&str>>(input);
+        assert!(res.is_ok(), "Failed to parse: {:?}", res);
+        let (_, sections) = res.unwrap();
+        assert_eq!(sections.len(), 1);
+        assert_eq!(sections[0].configs.len(), 1);
+        assert_eq!(sections[0].configs[0].type_, ConfigType::StdVectorInt32t);
+        assert_eq!(sections[0].configs[0].name, "TestSection.BlockedSignals");
+    }
+
+    #[test]
+    fn test_generate_defs_vector_int32() {
+        let input = "Test section\n\n# TestSection\n\n\
+                      - std::vector<int32_t> TestSection.BlockedSignals = {}, UNKNOWN\n\n\
+                      ";
+        let (_, sections) = parse_option_doc::<VerboseError<&str>>(input).unwrap();
+        let output_dir = std::env::temp_dir().join("generate_defs_vector_int32_test");
+        let _ = fs::create_dir_all(&output_dir);
+
+        generate_defs(sections, output_dir.clone());
+
+        let h_content = fs::read_to_string(output_dir.join("testsection.h")).unwrap();
+        assert!(
+            h_content.contains("static std::vector<int32_t> BlockedSignals;"),
+            "Header should declare BlockedSignals as std::vector<int32_t>, got:\n{}",
+            h_content
+        );
+        assert!(
+            h_content.contains("#include <vector>"),
+            "Header should include <vector>"
+        );
+        assert!(
+            h_content.contains("#include <cstdint>"),
+            "Header should include <cstdint>"
+        );
+
+        let cpp_content = fs::read_to_string(output_dir.join("testsection.cpp")).unwrap();
+        assert!(
+            cpp_content.contains("std::vector<int32_t> TestSection::BlockedSignals = {};"),
+            "Cpp should define BlockedSignals with default {{}}, got:\n{}",
+            cpp_content
+        );
+
+        let _ = fs::remove_dir_all(&output_dir);
+    }
+
+    #[test]
+    fn test_generate_loader_vector_int32() {
+        let input = "Test section\n\n# TestSection\n\n\
+                      - std::vector<int32_t> TestSection.BlockedSignals = {}, UNKNOWN\n\n\
+                      ";
+        let (_, sections) = parse_option_doc::<VerboseError<&str>>(input).unwrap();
+        let output_dir = std::env::temp_dir().join("generate_loader_vector_int32_test");
+        let _ = fs::create_dir_all(&output_dir);
+
+        generate_loader(sections, output_dir.clone());
+
+        let cpp_content = fs::read_to_string(output_dir.join("testsection-loader.cpp")).unwrap();
+        assert!(
+            cpp_content.contains(
+                "Config::Bind(Cfg::TestSection::BlockedSignals, ini, config, \"TestSection.BlockedSignals\", {})"
+            ),
+            "Loader should generate Config::Bind for vector<int32_t>, got:\n{}",
+            cpp_content
+        );
+
+        let _ = fs::remove_dir_all(&output_dir);
     }
 }
