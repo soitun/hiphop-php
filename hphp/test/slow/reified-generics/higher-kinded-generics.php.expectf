@@ -1,1 +1,1 @@
-Fatal error: Cannot have higher kinded reified generics in %s on line 6
+Fatal error: Type arguments are not allowed in this position in %s on line 6
