@@ -17,13 +17,6 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 
 - std::string Repo.Local.Path = "", UNKNOWN, postprocess
 - std::string Repo.Central.Path = "", UNKNOWN, postprocess
-- int32_t Repo.Central.FileMode = 0, UNKNOWN
-- std::string Repo.Central.FileUser = "", UNKNOWN
-- std::string Repo.Central.FileGroup = "", UNKNOWN
-- bool Repo.AllowFallbackPath = true, UNKNOWN
-- std::string Repo.Journal = "delete", UNKNOWN
-- bool Repo.Commit = true, UNKNOWN
-- uint32_t Repo.BusyTimeoutMS = 15000, UNKNOWN
 
 - std::string Repo.Path = Repo.Path, UNKNOWN, postprocess|staticdefault("")
 - bool Repo.LitstrLazyLoad = true, UNKNOWN
