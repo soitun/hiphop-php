@@ -9,23 +9,27 @@
  *
  */
 class Directory {
-  public $path;
-  public $handle;
+  public string $path;
+  public resource $handle;
 
-  public function __construct($path) {
+  public function __construct(string $path): void {
     $this->path = $path;
+    /* HH_FIXME[4110] opendir returns mixed (resource|false) */
     $this->handle = opendir($path);
   }
 
-  public function read() {
+  public function read(): mixed {
+    /* HH_FIXME[4110] readdir expects resource */
     return readdir($this->handle);
   }
 
-  public function rewind() {
+  public function rewind(): void {
+    /* HH_FIXME[4110] rewinddir expects resource */
     rewinddir($this->handle);
   }
 
-  public function close() {
+  public function close(): void {
+    /* HH_FIXME[4110] closedir expects resource */
     closedir($this->handle);
   }
 }

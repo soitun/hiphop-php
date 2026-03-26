@@ -5,7 +5,7 @@ namespace HH {
 type XenonSample = shape(
   'timeNano' => int,
   'lastTriggerTimeNano' => int,
-  'stack' => vec,
+  'stack' => vec<mixed>,
   'ioWaitSample' => bool,
 );
 

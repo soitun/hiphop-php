@@ -10,5 +10,5 @@
  *
  */
 class PDOException extends RuntimeException {
-  public $errorInfo;
+  public mixed $errorInfo;
 }

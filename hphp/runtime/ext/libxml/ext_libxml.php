@@ -1,12 +1,12 @@
 <?hh
 
 class LibXMLError {
-  public $level;
-  public $code;
-  public $column;
-  public $message;
-  public $file;
-  public $line;
+  public mixed $level;
+  public mixed $code;
+  public mixed $column;
+  public mixed $message;
+  public mixed $file;
+  public mixed $line;
 }
 
 /* Retrieve array of errors.
@@ -15,7 +15,7 @@ class LibXMLError {
  * buffer, or an empty array otherwise.
  */
 <<__Native>>
-function libxml_get_errors(): varray;
+function libxml_get_errors(): varray<LibXMLError>;
 
 /* Returns a LibXMLError object if there is any error in the buffer, FALSE
  * otherwise.

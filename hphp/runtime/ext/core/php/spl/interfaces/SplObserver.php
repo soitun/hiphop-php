@@ -21,5 +21,5 @@ interface SplObserver {
    *
    * @return     mixed   No value is returned.
    */
-  public function update ( SplSubject $subject );
+  public function update ( SplSubject $subject ): void;
 }

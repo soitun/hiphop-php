@@ -24,7 +24,7 @@ class Reflection {
    *                     export is returned as a string, otherwise NULL is
    *                     returned.
    */
-  public static function export(Reflector $refl, $return = false) {
+  public static function export(Reflector $refl, bool $return = false): mixed {
     $s = $refl->__toString();
     if ($return) {
       return $s;
@@ -44,7 +44,7 @@ class Reflection {
    *
    * @return     mixed   An array of modifier names.
    */
-  public static function getModifierNames($modifiers)[] {
+  public static function getModifierNames(int $modifiers)[]: vec<string> {
     $ret = vec[];
 
     $abstract = ReflectionMethod::IS_ABSTRACT |

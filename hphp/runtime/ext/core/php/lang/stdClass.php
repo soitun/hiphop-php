@@ -6,7 +6,7 @@ final class stdClass {
 
 // used in unserialize() for unknown classes
 final class __PHP_Incomplete_Class {
-  public $__PHP_Incomplete_Class_Name;
+  public ?string $__PHP_Incomplete_Class_Name;
 
   public function __construct() {
     throw new Exception(

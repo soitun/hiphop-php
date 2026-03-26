@@ -118,7 +118,7 @@ function clear_static_memoization(?string $cls, ?string $func = null) : bool;
 <<__Native>>
 function ffp_parse_string_native(string $program)[]: string;
 
-newtype ParseTree = darray;
+newtype ParseTree = darray<arraykey, mixed>;
 
 function ffp_parse_string(string $program)[]: ParseTree {
   $json = ffp_parse_string_native($program);
@@ -165,7 +165,7 @@ function get_request_count(): int;
  * which weren't shown to be identical at the bytecode level.
  */
 <<__Native>>
-function get_compiled_units(int $kind = 0): keyset;
+function get_compiled_units(int $kind = 0): keyset<string>;
 
 /**
  * Prefetch units corresponding to the given sets of paths, before

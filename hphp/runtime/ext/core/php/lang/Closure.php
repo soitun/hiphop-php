@@ -7,7 +7,7 @@ class Closure {
 
   /* @return array
    */
-  public final function __debugInfo(): dict {
+  public final function __debugInfo(): dict<string, mixed> {
     return dict[];
   }
 }

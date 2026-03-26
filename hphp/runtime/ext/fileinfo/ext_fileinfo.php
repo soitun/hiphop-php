@@ -2,10 +2,10 @@
 
 class finfo {
 
-  private $resource;
+  private mixed $resource;
 
-  private $options;
-  private $magic_file;
+  private int $options;
+  private ?string $magic_file;
 
   /**
    * Create a new fileinfo resource
@@ -25,11 +25,11 @@ class finfo {
     $this->magic_file = $magic_file;
   }
 
-  public function __sleep() {
+  public function __sleep(): vec<string> {
     return vec['options', 'magic_file'];
   }
 
-  public function __wakeup() {
+  public function __wakeup(): void {
     $this->resource = finfo_open($this->options, $this->magic_file);
   }
 
