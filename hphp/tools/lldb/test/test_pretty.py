@@ -3,7 +3,6 @@
 # pyre-strict
 
 from . import base  # usort: skip (must be first, needed for sys.path side-effects)
-import unittest
 
 
 class PrettyPrintTypedValuesTestCase(base.TestHHVMTypesBinary):
@@ -99,11 +98,7 @@ class PrettyPrintTypedValuesTestCase(base.TestHHVMTypesBinary):
             expected_output = r"\(HPHP::VarNR\) v = \{ Double, 2.718 \}"
             self.assertRegex(output.strip(), expected_output)
 
-    @unittest.skip("Caching is interacting strangely with unit tests")
     def test_pp_tvs_2(self) -> None:
-        # These were originally in test_pp_tvs, but are showing
-        # strange interaction with caching when run alongside the other tests.
-        # They pass when run individually.
         with self.subTest("TypedValue (PersistentDict)"):
             self.run_until_breakpoint("takeTypedValuePersistentDict")
             _, output = self.run_commands(["frame variable tv"])

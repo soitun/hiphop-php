@@ -222,6 +222,8 @@ def clear_caches(
 ) -> None:
     if target is None:
         _target_cache.clear()
+        for cache in _all_caches:
+            cache.clear()
         return
 
     target_idx = target.GetDebugger().GetIndexOfTarget(target)
