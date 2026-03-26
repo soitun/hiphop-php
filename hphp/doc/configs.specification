@@ -34,6 +34,10 @@ The format can be found in hphp/tools/configs/generate_configs.rs
   A lot of configs uses Server.Mode but not Repo so put this second
 
 - bool Server.Mode = false, UNKNOWN, nobind
+
+  Whether HHVM is running in server mode (daemon/server) versus CLI mode.
+  Set automatically based on execution mode; affects JIT and profiling defaults.
+
 - int Server.ThreadJobMaxQueuingMilliSeconds = -1, UNKNOWN
 - bool Server.ThreadDropStack = false, UNKNOWN
 - bool Server.HttpSafeMode = false, UNKNOWN
@@ -68,9 +72,17 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - int Server.Backlog = 128, UNKNOWN
 - int Server.ConnectionLimit = 0, UNKNOWN
 - int Server.ThreadCount, UNKNOWN
+
+  Number of HTTP server worker threads for handling requests. Each thread
+  processes one request at a time. Defaults to 2x the number of CPU cores.
+
 - int Server.QueueCount = Server.ThreadCount, UNKNOWN
 - int Server.IOThreadCount = 1, UNKNOWN
 - int Server.HighQueueingThreshold = 60, UNKNOWN, nobind
+
+  Queued request count above which the server reports
+  queued_requests_high=1 in health counters for load balancer monitoring.
+
 - int Server.HugeThreadCount = 0, UNKNOWN
 
 - int Server.RequestFanoutLimit = INT_MAX, yichenzhou
@@ -108,11 +120,26 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 
 - int Server.HugeStackSizeKb = 384, UNKNOWN
 - uint32_t Server.LoopSampleRate = 0, UNKNOWN
+
+  Sampling rate for the Proxygen IO event loop observer. When non-zero,
+  every Nth loop iteration records busy/idle time percentiles as service
+  data counters for monitoring.
+
 - int Server.WarmupThrottleRequestCount = 0, UNKNOWN
+
+  Number of requests to serve with a reduced worker thread pool before
+  scaling up to full ThreadCount; prevents overwhelming a cold server
+  before JIT warmup completes. 0 disables throttling.
+
 - int Server.WarmupThrottleThreadCount, UNKNOWN
 - int Server.ThreadDropCacheTimeoutSeconds = 0, UNKNOWN
 - int Server.RequestTimeoutSeconds = 0, UNKNOWN
 - int64_t Server.MaxRequestAgeFactor = 0, UNKNOWN
+
+  Multiplier applied to the request timeout to compute the maximum
+  allowed request age; if any request exceeds this, the server aborts
+  to prevent runaway requests from blocking garbage collection. 0 disables.
+
 - int Server.PspTimeoutSeconds = 0, UNKNOWN
 - int Server.PspCpuTimeoutSeconds = 0, UNKNOWN
 - int64_t Server.RequestHugeMaxBytes = 24LL << 20, UNKNOWN
@@ -122,8 +149,21 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 
 - int Server.GracefulShutdownWait = 0, UNKNOWN
 - bool Server.HarshShutdown = true, UNKNOWN
+
+  If the new server cannot bind its port after a graceful admin-command
+  shutdown fails, reads the old server's PID file and sends SIGKILL.
+
 - bool Server.KillOnTimeout = true, UNKNOWN
+
+  Spawns a watchdog thread during shutdown that forcibly terminates the
+  process with _Exit() if the combined shutdown wait times are exceeded.
+
 - bool Server.EvilShutdown = true, UNKNOWN
+
+  If the new server cannot bind its port after graceful and harsh shutdown
+  fail, forcibly kills any process occupying the port via kill -9 (or
+  unlinks the socket file).
+
 - int Server.PreShutdownWait = 0, UNKNOWN
 - int Server.ShutdownListenWait = 0, UNKNOWN
 - int Server.ShutdownEOMWait = 0, UNKNOWN
@@ -141,8 +181,21 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - int64_t Server.RSSNeededMb = 4096, UNKNOWN
 - int64_t Server.CriticalFreeMb = 512, UNKNOWN
 - int Server.CacheFreeFactor = 50, UNKNOWN, postprocess
+
+  Percentage (0-100) of page-cache memory (excluding current RSS) that
+  HHVM considers reclaimable when estimating available memory during
+  old-server-stop handoff.
+
 - bool Server.Five0ThreeOnShutdownAbort = false, UNKNOWN, lookuppath(Server.503OnShutdownAbort)
+
+  When true, sends HTTP 503 responses to incoming requests during server
+  shutdown instead of abruptly aborting connections.
+
 - int Server.Five0ThreeRetryAfterSeconds = -1, UNKNOWN, lookuppath(Server.503RetryAfterSeconds)
+
+  When >= 0, adds a Retry-After header (in seconds) to 503 responses
+  sent during shutdown or queue timeout. Negative disables the header.
+
 - std::vector<std::string> Server.SSLNextProtocols = {}, UNKNOWN
 - bool Server.EnableH2C = false, UNKNOWN
 - bool Server.EnableKeepAlive = true, UNKNOWN
@@ -236,6 +289,10 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - std::string Server.RequestInitFunction = "", UNKNOWN
 - std::string Server.RequestInitDocument = "", UNKNOWN
 - bool Server.ThreadJobLIFO = false, UNKNOWN
+
+  When true, the server processes incoming requests in LIFO order, which
+  under heavy load sheds stale requests by prioritizing newest arrivals.
+
 - int Server.ThreadJobLIFOSwitchThreshold, UNKNOWN
 - std::vector<std::string> Server.IncludeSearchPaths = {}, UNKNOWN
 - std::string Server.FontPath = "", UNKNOWN
@@ -248,10 +305,24 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - std::set<std::string> Server.AllowedFiles = {}, UNKNOWN
 - std::set<std::string> Server.ForbiddenFileExtensions = {}, UNKNOWN
 - bool Server.LockCodeMemory = false, UNKNOWN
+
+  When true, locks HHVM's executable code segments into physical memory
+  via mlock(), preventing the kernel from paging out the runtime's code.
+
 - int Server.MaxArrayChain = INT_MAX, UNKNOWN, postprocess
+
+  Maximum hash collision chain length in arrays and hash collections;
+  exceeding this raises a fatal error to defend against hash-flooding.
+  Internally doubled for VanillaDict.
+
 - bool Server.WarnOnCollectionToArray = false, UNKNOWN
 - bool Server.UseDirectCopy = false, UNKNOWN
 - bool Server.AlwaysUseRelativePath = false, UNKNOWN
+
+  When true, absolute paths in include/require are resolved relative to
+  SourceRoot instead of being used directly, enabling faster unit lookups
+  when the file table uses relative paths only.
+
 - bool Server.Forking.Enabled = true, UNKNOWN
 - bool Server.Forking.LogForkAttempts = false, UNKNOWN
 - std::string Server.LightProcessFilePrefix = "./lightprocess", UNKNOWN
@@ -489,17 +560,37 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 
 - bool Eval.KeepProfData, UNKNOWN
 
+  Whether JIT profiling data (ProfData) is retained in memory after
+  optimized translations have been generated. Defaults to true on ARM,
+  false on x86. When false, ProfData is freed via Treadmill after PGO
+  completes.
+
 - int Eval.ProfDataTTLHours = 24, UNKNOWN
 
 - std::string Eval.ProfDataTag = "", UNKNOWN
 
 - bool Eval.DisableSmallAllocator, UNKNOWN
 
+  Bypasses HHVM's custom slab-based small allocator in favor of standard
+  malloc/jemalloc. Defaults to true under any sanitizer (via
+  FOLLY_SANITIZE), false otherwise. Required for sanitizer compatibility;
+  also useful for debugging memory issues.
+
 - std::string Eval.CodeCoverageOutputFile = "", UNKNOWN
 
 - bool Eval.EnableArgsInBacktraces, UNKNOWN, globaldata
 
+  Include function arguments, reified generic type info, and $this
+  references in stack traces from debug_backtrace() and exceptions.
+  Defaults to true in non-repo mode, false in repo-authoritative mode.
+  When enabled, the JIT must keep parameters live at call sites and
+  async tail-call optimization is disabled.
+
 - bool Eval.AuthoritativeMode = false, UNKNOWN, postprocess
+
+  When true, disallows eval() and reflective mutation of static/private
+  properties, matching Repo.Authoritative restrictions. Automatically
+  forced true in repo-authoritative builds.
 
 - bool Eval.DisableEval = false, andywli
 
@@ -523,6 +614,11 @@ The format can be found in hphp/tools/configs/generate_configs.rs
       fatal error.
 
 - bool Eval.EmitClsMethPointers = true, UNKNOWN, globaldata|unitcacheflag|hackc(hhbc)
+
+  Controls whether the compiler emits ClsMeth pointer types -- first-class
+  values representing a (Class, static method) pair. Affects bytecode
+  generation, type inference, and runtime comparison semantics.
+
 - uint32_t Eval.RaiseClassConversionNoticeSampleRate = 0, UNKNOWN, globaldata
 
   Whether implicit class conversions can raise a notice.
@@ -662,6 +758,10 @@ The format can be found in hphp/tools/configs/generate_configs.rs
   Enables StructuredLog for static strings
 
 - bool Eval.HackArrCompatSerializeNotices = false, UNKNOWN, globaldata(onlyhhbbc)|compileroption(HackArrCompatSerializeNotices)|unitcacheflag
+
+  When true, raises compatibility notices during serialization/JSON
+  encoding when Hack array types are used in contexts that historically
+  expected legacy PHP arrays.
 
 - bool Eval.LogKnownMethodsAsDynamicCalls = true, UNKNOWN, globaldata(onlyhhbbc)|compileroption(LogKnownMethodsAsDynamicCalls)|unitcacheflag
 
@@ -930,6 +1030,10 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 
 - bool Eval.EmitDebuggerIntrCheck = true, UNKNOWN
 
+  When the VSCode debugger is enabled, causes the JIT to emit interrupt
+  checks at function entries, call returns, and exception sites that test
+  per-function RDS flags set by the debugger.
+
 - bool Eval.LogArrayAccessProfile = false, UNKNOWN
 
   Log the profile used to optimize array-like gets and sets.
@@ -950,7 +1054,15 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 
 - bool Eval.RegionRelaxGuards = true, UNKNOWN
 
+  Enables profiling-guided optimization of JIT region type guards.
+  Guards are relaxed (widened) based on profiled type information and
+  duplicate translations are eliminated.
+
 - bool Eval.WorkloadAwareMaturity = true, UNKNOWN
+
+  When enabled, caps maximum JIT maturity at 99 (instead of 100) if a
+  workload change is detected before full compilation, preventing the
+  server from appearing permanently immature to load balancers.
 
 - int32_t Eval.DumpBytecode = 0, UNKNOWN
 
@@ -1018,9 +1130,22 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 
 - bool Eval.MapTgtCacheHuge = false, UNKNOWN
 
+  Hints the kernel to back the per-thread RDS (Request Data Segment,
+  historically "target cache") with huge pages via madvise(MADV_HUGEPAGE)
+  to reduce TLB misses. Only effective in release builds.
+
 - bool Eval.NewTHPHotText = false, UNKNOWN
 
+  Uses the kernel's Transparent Huge Pages (THP) mechanism via
+  madvise(MADV_HUGEPAGE) to back the hot text code section, instead of
+  the older hugetlb-based approach. Requires Linux 5.3+.
+
 - bool Eval.FileBackedColdArena, UNKNOWN
+
+  Use file-backed storage for infrequently-accessed ("cold") data via
+  memory-mapped files under Eval.ColdArenaFileDir. Defaults to true in
+  repo-authoritative server mode. The OS can page out cold data to disk,
+  reducing RSS. fork() is blocked when active.
 
 - std::string Eval.ColdArenaFileDir = "/tmp", UNKNOWN
 
@@ -1044,11 +1169,20 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 
 - bool Eval.BigAllocUseLocalArena = true, UNKNOWN
 
+  Directs large GC heap allocations (slabs and big objects) to the
+  NUMA-local jemalloc arena backed by node-local huge pages, rather than
+  the default global arena.
+
 - bool Eval.JsonParserUseLocalArena = true, UNKNOWN
 
 - bool Eval.XmlParserUseLocalArena = true, UNKNOWN
 
 - bool Eval.LowStaticArrays, UNKNOWN
+
+  Allocate static (immutable) arrays in low memory (below 4GB) via
+  low_malloc. Defaults to true except when built with USE_LOWPTR and
+  running in server mode, where it defaults to false to conserve low
+  memory address space for compressed pointers.
 
 - bool Eval.RecycleAProf = true, UNKNOWN
 
@@ -1058,9 +1192,24 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 
 - bool Eval.Verify, UNKNOWN
 
+  Run the HHBC bytecode verifier on non-systemlib units when created.
+  Defaults to true if the HHVM_VERIFY environment variable is set, false
+  otherwise. In debug builds, verification always runs. Systemlib units
+  are excluded (verified at build time instead).
+
 - bool Eval.VerifyOnly = false, UNKNOWN
 
+  When true, only verify bytecode and exit without executing. Exit code 0
+  means verification succeeded, 1 means failure. Used by the --verify
+  CLI mode.
+
 - bool Eval.FatalOnVerifyError, UNKNOWN
+
+  When true and bytecode verification fails, creates a fatal unit with
+  FatalOp::Parse instead of continuing execution. When false, a warning
+  is printed to stderr but execution proceeds. Defaults to true in
+  non-repo mode, false in repo-authoritative mode (where bytecode was
+  already verified at build time).
 
 - bool Eval.AbortBuildOnVerifyError = true, UNKNOWN, globaldata|unitcacheflag|compileroption(AbortBuildOnVerifyError)
 
@@ -1115,9 +1264,23 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 
 - bool Eval.EnableNuca = true, UNKNOWN
 
+  Enables NUCA (Non-Uniform Cache Architecture) thread affinity on
+  single-NUMA-node systems with multiple L3 caches. Worker threads are
+  pinned to CPU groups sharing the same L3 cache.
+
 - bool Eval.EnableNuma, UNKNOWN, postprocess
 
+  Enables NUMA-aware memory allocation and thread binding on multi-node
+  systems. Binds worker threads, RDS, and jemalloc arenas to local NUMA
+  nodes to reduce cross-node memory access latency.
+
 - bool Eval.EnableReusableTC, UNKNOWN
+
+  Enable Translation Cache (TC) recycling, allowing HHVM to reclaim and
+  reuse JIT code memory from invalidated translations. Requires the
+  HHVM_REUSE_TC compile-time flag; when available, defaults to true in
+  non-repo-authoritative mode, false in repo-authoritative mode. Without
+  this, the TC is append-only.
 
 - bool Eval.LogServerRestartStats = false, UNKNOWN
 
@@ -1128,15 +1291,31 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 
 - int64_t Eval.StressUnitCacheFreq = 0, UNKNOWN
 
+  Testing knob that forces the unit cache to treat every Nth lookup as
+  changed, triggering recompilation. Used to stress-test the compilation
+  pipeline. 0 disables.
+
 - int64_t Eval.PerfWarningSampleRate = 1, UNKNOWN
 
   Perf warning sampling rates. The SelectHotCFG warning is noisy.
 
 - int64_t Eval.SelectHotCFGSampleRate = 100, UNKNOWN
 
+  Sample rate multiplier for warnings logged when the hot CFG region
+  selector truncates a translation region due to exceeding the maximum
+  bytecode instruction limit.
+
 - int64_t Eval.FunctionCallSampleRate = 0, UNKNOWN
 
+  Sampling rate (1-in-N) for logging function calls via StructuredLog.
+  Each request has a 1/N chance of enabling full function call tracing
+  via EventHook. 0 disables.
+
 - double Eval.InitialLoadFactor = 1.0, UNKNOWN
+
+  Load factor exponent used to transform CPU utilization reported to
+  load balancers. 1.0 reports actual utilization; higher values compress
+  reported load, attracting more traffic. Adjustable at runtime.
 
 - int32_t Eval.BespokeArrayLikeMode = 2, UNKNOWN
 
@@ -1336,6 +1515,11 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 
 - bool Eval.UseGraphColor = true, UNKNOWN
 
+  Register allocation algorithm for optimized JIT translations. When true,
+  uses graph-coloring; when false, uses XLS (eXtended Linear Scan). Only
+  affects Optimize and OptPrologue translations; profiling translations
+  always use linear scan.
+
 - std::vector<std::string> Eval.IniGetHide = {}, UNKNOWN
 
 - std::string Eval.UseRemoteUnixServer = "no", UNKNOWN
@@ -1364,6 +1548,9 @@ The format can be found in hphp/tools/configs/generate_configs.rs
   complete.
 
 - bool Eval.TrashFillOnRequestExit = false, UNKNOWN
+
+  Fills large heap allocations with a trash byte pattern on request exit
+  to help detect use-after-free bugs. Redundant with ASAN.
 
 - bool Eval.EnableReverseDataMap = true, UNKNOWN
 
@@ -1527,6 +1714,10 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - bool Eval.CrashOnStaticAnalysisError, UNKNOWN
 
 - bool Eval.ReplaceTrivialBuiltins = true, UNKNOWN
+
+  Enables unwrapping trivial Hack builtin wrapper functions (annotated
+  with <<TrivialHHVMBuiltinWrapper>>) to directly call the underlying
+  native HHVM builtin, eliminating wrapper overhead.
 
 - bool Eval.ReflectionMissConstantFromIncludedEnumsNotice = false, fzn
 
@@ -1820,7 +2011,17 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - int Jit.LdimmqSpan = 8, UNKNOWN
 - int Jit.PrintOptimizedIR = 0, UNKNOWN
 - int Jit.Concurrently = 1, UNKNOWN
+
+  JIT compilation concurrency level. 0 = global lock (serial), 1 =
+  per-function locks for profiling translations only, 2+ = also
+  per-function for optimized translations.
+
 - bool Jit.PGORacyProfiling = false, UNKNOWN
+
+  When true, uses non-atomic decrements for PGO profiling counters
+  instead of locked atomic operations, trading profiling accuracy for
+  speed under concurrent workloads.
+
 - bool Jit.AlwaysInterpOne = false, UNKNOWN
 - uint32_t Jit.NopInterval = 0, UNKNOWN
 - uint32_t Jit.MaxTranslations = 10, UNKNOWN
@@ -1880,6 +2081,11 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - bool Jit.DisabledByHphpd = false, UNKNOWN
 - bool Jit.DisabledByVSDebug = true, UNKNOWN
 - uint32_t Jit.WarmupStatusBytes = ((25 << 10) + 1), UNKNOWN
+
+  Byte threshold for JIT translation cache growth per request. If the
+  TC grows by at least this many bytes during a request,
+  server_warmup_status() reports the server as still warming up.
+
 - uint32_t Jit.WarmupMaxCodeGenRate = 20000, UNKNOWN
 - uint32_t Jit.WarmupRateSeconds = 64, UNKNOWN
 - uint32_t Jit.WarmupMinFillFactor = 10, UNKNOWN
@@ -1888,7 +2094,17 @@ The format can be found in hphp/tools/configs/generate_configs.rs
   In seconds
 
 - int Jit.RetargetJumps = 1, UNKNOWN
+
+  Optimization level for retargeting redundant jumps in JIT code.
+  0 = disabled, 1 = retarget duplicate service request bind jumps,
+  2+ = also retarget conditional jumps to the same target.
+
 - bool Jit.ForceVMRegSync = false, UNKNOWN
+
+  When true, forces the JIT to synchronize VM registers (PC, SP, FP)
+  at every call site, not just where the compiler determines it is
+  necessary. Useful for debugging VM register state issues.
+
 - bool Jit.StressEagerVMRegSync = false, UNKNOWN
 
   Sync VM reg state for all native calls.
@@ -1896,6 +2112,12 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - std::string Jit.RegionSelector = "tracelet", UNKNOWN
 - bool Jit.NoGdb = true, UNKNOWN
 - bool Jit.PGO, UNKNOWN
+
+  Enable Profile-Guided Optimization in the JIT. Functions are first
+  compiled with profiling instrumentation, then recompiled with full
+  optimizations after Jit.PGOThreshold executions (default 2000, or
+  2 in debug builds). Default: true.
+
 - std::string Jit.PGORegionSelector = "hotcfg", UNKNOWN
 - uint64_t Jit.PGOThreshold, UNKNOWN
 - bool Jit.PGOOnly = false, UNKNOWN
@@ -1940,7 +2162,17 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - bool Jit.AlignMacroFusionPairs, UNKNOWN
 - bool Jit.AlignUniqueStubs = true, UNKNOWN
 - bool Jit.SerdesModeForceOff = false, UNKNOWN
+
+  When true, forcibly disables JIT serdes (serialization/deserialization)
+  mode, overriding the JitSerdesMode setting. Serdes saves/restores JIT
+  profiling data across restarts to speed up warmup.
+
 - bool Jit.DesUnitPreload = false, UNKNOWN
+
+  When true, preloads compilation units referenced in serialized JIT
+  profile data during deserialization using a worker thread pool,
+  parallelizing unit loading at startup.
+
 - std::set<std::string> Jit.SerdesDebugFunctions = {}, UNKNOWN
 - std::set<std::string> Jit.FuncBlockList = {}, UNKNOWN
 - uint32_t Jit.SerializeOptProfSeconds, UNKNOWN
@@ -1963,7 +2195,16 @@ The format can be found in hphp/tools/configs/generate_configs.rs
   it may be retrieved from the core.
 
 - bool Jit.ProfileGuardTypes = false, UNKNOWN
+
+  When true, instruments JIT type guards to count how often each type
+  is checked at runtime. Per-type counts are logged via StructuredLog
+  at request exit.
+
 - uint32_t Jit.FilterLease = 1, UNKNOWN
+
+  When true, adds an early check before triggering JIT optimization
+  for hot functions: verifies the optimize write lease could be acquired
+  before entering the optimization path, avoiding wasted work.
 
 - std::string Jit.TraceUploadBucket = "hhvm_jit_trace", paulbiss
 
