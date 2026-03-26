@@ -70,7 +70,7 @@ function date_default_timezone_get(): string;
 function date_default_timezone_set(string $name): bool;
 <<__PHPStdLib>>
 function date_diff(
-  DateTime $datetime,
+  DateTimeInterface $datetime,
   DateTimeInterface $datetime2,
   bool $absolute = false,
 ): DateInterval;
