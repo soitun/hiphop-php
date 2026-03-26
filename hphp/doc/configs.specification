@@ -340,7 +340,6 @@ The format can be found in hphp/tools/configs/generate_configs.rs
   Allow process execution APIs like proc_open, system, exec, etc.
 
 - int64_t Server.RequestMemoryMaxBytes = 16LL << 30, UNKNOWN, staticdefault(INT64_MAX)
-- bool Server.RequestMemoryMaxBytesSet = false, UNKNOWN
 - int64_t Server.LowestMaxPostSize = INT64_MAX, UNKNOWN, nobind
 - int64_t Server.Upload.MaxFileSize = 100, UNKNOWN, postprocess|lookuppath(Server.Upload.UploadMaxFileSize)
 - std::string Server.Upload.TmpDir = "/tmp", UNKNOWN, lookuppath(Server.Upload.UploadsTmpDir)
@@ -802,11 +801,6 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 
   Synchronize class loading between threads
 
-- uint32_t Eval.ServiceRouterJumpstartWarmup = 0, nikunjm
-
-  Maximum number of ServiceRouter tiers to store in the jumpstart profile.
-  Tiers are recorded during profiling and warmed up when the profile is loaded.
-
 - uint64_t Eval.VMStackElms, UNKNOWN
 
   Maximum number of elements on the VM execution stack.
@@ -865,10 +859,6 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 
   The number of worker threads to spawn for facts extraction.
 
-- bool Eval.FactsExcludeModuleMembership = false, UNKNOWN
-
-  Whether to force the old Facts SQLite DB format.
-
 - bool Eval.HackCompilerInheritConfig = true, UNKNOWN
 
   Whether the HackC compiler should inherit the compiler config of the
@@ -899,8 +889,6 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 
   Whether to trust existing versions of extracted embedded data.
 
-- bool Eval.LogThreadCreateBacktraces = false, UNKNOWN
-
 - bool Eval.FailJitPrologs = false, UNKNOWN
 
 - bool Eval.UseHHBBC, UNKNOWN, compileroption(UseHHBBC)
@@ -913,15 +901,9 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 
 - bool Eval.CachePerRepoOptionsPath = true, UNKNOWN
 
-- bool Eval.LogHackcMemStats = false, UNKNOWN
-
 - uint32_t Eval.TsameCollisionSampleRate = 1, UNKNOWN
 
 - uint32_t Eval.WarnOnTooManyArguments = 0, emil
-
-  0 -> no warning, 1 -> warning, 2 -> exception
-
-- uint32_t Eval.GetClassBadArgument = 0, emil
 
   0 -> no warning, 1 -> warning, 2 -> exception
 
@@ -948,8 +930,6 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - bool Eval.EnableLogBridge = true, UNKNOWN
 
 - bool Eval.MoreAccurateMemStats = true, UNKNOWN
-
-- bool Eval.MemInfoCheckCgroup2 = true, UNKNOWN
 
 - bool Eval.SpinOnCrash = false, UNKNOWN
 
@@ -982,8 +962,6 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - uint32_t Eval.HHBCArenaChunkSize = 10 << 20, UNKNOWN
 
 - bool Eval.ProfileBC = false, UNKNOWN
-
-- bool Eval.ProfileHeapAcrossRequests = false, UNKNOWN
 
 - bool Eval.ProfileHWEnable = true, UNKNOWN
 
@@ -1112,8 +1090,6 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - bool Eval.DumpArrAccProf = false, UNKNOWN
 
 - bool Eval.DumpCoeffectFunParamProf = false, UNKNOWN
-
-- bool Eval.DumpAst = false, UNKNOWN
 
 - bool Eval.DumpTargetProfiles = false, UNKNOWN
 
@@ -1482,8 +1458,6 @@ The format can be found in hphp/tools/configs/generate_configs.rs
   0 - Nothing
   1 - Warn
   2 - Throw exception
-
-- uint32_t Eval.DeploymentViolationWarningSampleRate = 1, UNKNOWN
 
 - uint32_t Eval.EnforceModules = 0, UNKNOWN
 
