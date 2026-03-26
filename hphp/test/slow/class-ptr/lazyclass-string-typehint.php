@@ -39,7 +39,7 @@ function foo3(T $x) : T {
   return Foo::class;
 }
 
-function foo4(inout <<__Soft>> HH\classname $x) :mixed{
+function foo4(<<__Soft>> inout HH\classname $x) :mixed{
   var_dump($x);
   $x = Baz::class;
 }
