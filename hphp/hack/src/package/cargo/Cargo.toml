@@ -13,7 +13,7 @@ path = "../package.rs"
 [dependencies]
 anyhow = "1.0.102"
 hash = { version = "0.0.0", path = "../../utils/hash" }
-once_cell = "1.21"
+once_cell = "1.21.4"
 serde = { version = "1.0.219", features = ["derive", "rc"] }
 toml = { version = "0.9.12", features = ["preserve_order"] }
 
