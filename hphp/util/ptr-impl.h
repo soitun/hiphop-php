@@ -181,8 +181,8 @@ struct PtrImpl {
 
   PtrImpl(PtrImpl<T, S, P, Init>&& r)
       noexcept requires (!ptrimpl::is_normal<S> && !ptrimpl::is_movable<S, P>) {
-    S::set(m_s, S::get(r.m_s));
-    S::set(r.m_s, 0);
+    S::template set<P>(m_s, S::template get<P>(r.m_s));
+    S::template set<P>(r.m_s, 0);
   }
 
   ~PtrImpl() = default;
@@ -219,8 +219,8 @@ struct PtrImpl {
 
   PtrImpl& operator=(PtrImpl<T, S, P, Init>&& r)
       noexcept requires (!ptrimpl::is_normal<S> && !ptrimpl::is_movable<S, P>) {
-    S::set(m_s, S::get(r.m_s));
-    S::set(r.m_s, 0);
+    S::template set<P>(m_s, S::template get<P>(r.m_s));
+    S::template set<P>(r.m_s, 0);
     return *this;
   }
 
@@ -281,4 +281,18 @@ template<class T, typename S, typename P> class FormatValue<HPHP::ptrimpl::PtrIm
   const HPHP::ptrimpl::PtrImpl<T, S, P> m_val;
 };
 
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+namespace std {
+
+template <typename T, typename S, typename P>
+struct hash<HPHP::ptrimpl::PtrImpl<T, S, P>> {
+  size_t operator()(const HPHP::ptrimpl::PtrImpl<T, S, P>& o) const {
+    return std::hash<T*>()(o.get());
+  }
+};
+
+///////////////////////////////////////////////////////////////////////////////
 }
