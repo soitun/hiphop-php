@@ -1396,11 +1396,6 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 
   Raise a notice if a Class type is used as a memo key
 
-- bool Eval.VecHintNotices = false, UNKNOWN
-
-  Raise a notice if a ClsMeth type is passed to a function that
-  expects a vec/varray
-
 - bool Eval.NoticeOnCreateDynamicProp = false, UNKNOWN
 
   Switches on miscellaneous junk.
@@ -1608,10 +1603,6 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - int32_t Eval.NoticeOnCoerceForStrConcat2 = 0, UNKNOWN
 
   0 nothing, 1 notice, 2 error
-
-- std::string Eval.TaoMigrationOverride = "", UNKNOWN
-
-- std::string Eval.SRRouteMigrationOverride = "", UNKNOWN
 
 - int32_t Eval.SampleRequestTearing = 0, UNKNOWN
 
@@ -2351,7 +2342,6 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - bool Stats.Enable = false, UNKNOWN
 - bool Stats.APC = false, UNKNOWN
 - bool Stats.Web = false, UNKNOWN
-- bool Stats.Memory = false, UNKNOWN
 - bool Stats.SQL = false, UNKNOWN
 - bool Stats.SQLTable = false, UNKNOWN
 - bool Stats.NetworkIO = false, UNKNOWN

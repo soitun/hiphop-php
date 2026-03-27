@@ -1285,10 +1285,6 @@ bool AdminRequestHandler::handleStatsRequest(const std::string &cmd,
   if (cmd == "stats-web") {
     return toggle_switch(transport, Cfg::Stats::Web);
   }
-  if (cmd == "stats-mem") {
-    toggle_switch(transport, Cfg::Stats::Memory);
-    return true;
-  }
   if (cmd == "stats-sql") {
     return toggle_switch(transport, Cfg::Stats::SQL);
   }
