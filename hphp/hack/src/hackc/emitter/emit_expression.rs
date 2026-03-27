@@ -1176,10 +1176,12 @@ fn extract_shape_field_name_pstring<'a>(
                     "Reified generics cannot be used in shape keys",
                 ));
             } else {
-                ast::Expr_::mk_class_const(
-                    ast::ClassId((), pos.clone(), ast::ClassId_::CI(id.clone())),
-                    p.clone(),
-                )
+                let class_id_ = if string_utils::is_self(&id.1) {
+                    ast::ClassId_::CIself
+                } else {
+                    ast::ClassId_::CI(id.clone())
+                };
+                ast::Expr_::mk_class_const(ast::ClassId((), id.0.clone(), class_id_), p.clone())
             }
         }
     })
@@ -3908,13 +3910,13 @@ fn emit_new<'a>(
     ),
     is_reflection_class_builtin: bool,
 ) -> Result<InstrSeq> {
-    let resolve_self = match &cid.2.as_ciexpr() {
-        Some(ci_expr) => match ci_expr.as_id() {
-            Some(ast_defs::Id(_, n)) if string_utils::is_self(n) => env
-                .scope
-                .get_class_tparams()
-                .iter()
-                .all(|tp| tp.reified.is_erased()),
+    let resolve_self = match &cid.2 {
+        ast::ClassId_::CIself => env
+            .scope
+            .get_class_tparams()
+            .iter()
+            .all(|tp| tp.reified.is_erased()),
+        ast::ClassId_::CIexpr(ci_expr) => match ci_expr.as_id() {
             Some(ast_defs::Id(_, n)) if string_utils::is_parent(n) => env
                 .scope
                 .get_class()

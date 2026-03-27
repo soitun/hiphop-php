@@ -1223,11 +1223,12 @@ impl RewriteState {
                     // Desugared: $0v->visitCall(new ExprPos(...), $0v->visitStaticMethod(new ExprPos(...), $0smXX, vec[])
                     ClassConst(box (cid, s)) => {
                         let is_supported = match &cid {
+                            ClassId(_, _, ClassId_::CIself) => false,
                             ClassId(
                                 _,
                                 _,
                                 ClassId_::CIexpr(Expr(_, _, Id(box ast_defs::Id(_, name)))),
-                            ) => name != classes::PARENT && name != classes::SELF,
+                            ) => name != classes::PARENT,
                             ClassId(_, _, ClassId_::CIreified(_)) => true,
                             _ => false,
                         };
@@ -1695,8 +1696,9 @@ impl RewriteState {
             // Desugared: $0v->visitClassConstant(new ExprPos(...), nameof MyClass, 'FOO', MyClass::FOO)
             ClassConst(box (cid, s)) => {
                 let is_supported = match &cid {
+                    ClassId(_, _, ClassId_::CIself) => false,
                     ClassId(_, _, ClassId_::CIexpr(Expr(_, _, Id(box ast_defs::Id(_, name))))) => {
-                        name != classes::PARENT && name != classes::SELF
+                        name != classes::PARENT
                     }
                     ClassId(_, _, ClassId_::CIreified(_)) => true,
                     _ => false,

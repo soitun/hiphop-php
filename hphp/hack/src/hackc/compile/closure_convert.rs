@@ -1221,7 +1221,7 @@ impl<'a: 'b, 'b> ClosureVisitor<'a, 'b> {
                             res.recurse(scope, self)?;
                             Ok(res)
                         }
-                        _ => Err(Error::fatal_parse(pc, "Invalid class")),
+                        ClassId_::CIself | _ => Err(Error::fatal_parse(pc, "Invalid class")),
                     }
                 }
                 (_, Some(_)) => Err(Error::fatal_parse(pc, "Class must be a Class type")),
@@ -1499,7 +1499,7 @@ fn is_parent_call(x: &CallExpr) -> bool {
 }
 
 fn is_selflike_keyword(id: &Id) -> bool {
-    string_utils::is_self(id) || string_utils::is_parent(id) || string_utils::is_static(id)
+    string_utils::is_parent(id) || string_utils::is_static(id)
 }
 
 fn hoist_toplevel_functions(defs: &mut Vec<Def>) {

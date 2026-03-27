@@ -226,12 +226,19 @@ fn shape_to_typed_value(
                     scope,
                     &ast::ClassId((), Pos::NONE, ast::ClassId_::CI(class_id.clone())),
                 )?,
-                ast_defs::ShapeFieldName::SFclassConst(class_id, id) => class_const_to_typed_value(
-                    emitter,
-                    scope,
-                    &ast::ClassId((), Pos::NONE, ast::ClassId_::CI(class_id.clone())),
-                    id,
-                )?,
+                ast_defs::ShapeFieldName::SFclassConst(class_id, id) => {
+                    let class_id_ = if string_utils::is_self(&class_id.1) {
+                        ast::ClassId_::CIself
+                    } else {
+                        ast::ClassId_::CI(class_id.clone())
+                    };
+                    class_const_to_typed_value(
+                        emitter,
+                        scope,
+                        &ast::ClassId((), Pos::NONE, class_id_),
+                        id,
+                    )?
+                }
             };
             let value = expr_to_typed_value(emitter, scope, expr)?;
             Ok(DictEntry { key, value })

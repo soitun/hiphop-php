@@ -264,6 +264,22 @@ impl print_expr::SpecialClassResolver for Emitter {
             _ => Cow::Borrowed(id),
         }
     }
+
+    fn resolve_class_id<'a>(
+        &self,
+        scope_opt: Option<&'a Scope<'a>>,
+        cid: &ast::ClassId_,
+    ) -> Option<String> {
+        match cid {
+            ast::ClassId_::CIself => ClassExpr::get_original_class_name(
+                self,
+                scope_opt.unwrap_or(&ast_scope::Scope::default()),
+                true,
+                true,
+            ),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Clone, Debug, Default)]

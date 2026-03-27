@@ -42,68 +42,66 @@ impl Pass for ElabClassIdPass {
     */
     fn on_ty_class_id_top_down(&mut self, env: &Env, elem: &mut ClassId) -> ControlFlow<()> {
         let ClassId(_annot, pos, class_id_) = elem;
-        if let ClassId_::CIexpr(Expr(_, expr_pos, expr_)) = class_id_ as &mut ClassId_ {
-            // [mjt] For some reason the legacy code modifies the position of
-            // the surrounding [ClassId]. This seems wrong and causes a clone
-            *pos = expr_pos.clone();
-            match expr_ {
-                Expr_::Id(sid) => {
-                    // If the id is a special ref to a class, it is only
-                    // valid if we are in a class
-                    let Id(id_pos, cname) = sid as &mut Sid;
-                    if cname == sn::classes::PARENT {
-                        if !self.in_class {
-                            let err_pos = std::mem::replace(id_pos, Pos::NONE);
-                            env.emit_error(NamingError::ParentOutsideClass(err_pos));
-                            let ci_pos = std::mem::replace(expr_pos, Pos::NONE);
-                            *class_id_ = ClassId_::CI(Id(ci_pos, sn::classes::UNKNOWN.to_string()))
-                        } else {
-                            *class_id_ = ClassId_::CIparent
-                        }
-                    } else if cname == sn::classes::SELF {
-                        if !self.in_class {
-                            let err_pos = std::mem::replace(id_pos, Pos::NONE);
-                            env.emit_error(NamingError::SelfOutsideClass(err_pos));
-                            let ci_pos = std::mem::replace(expr_pos, Pos::NONE);
-                            *class_id_ = ClassId_::CI(Id(ci_pos, sn::classes::UNKNOWN.to_string()))
-                        } else {
-                            *class_id_ = ClassId_::CIself
-                        }
-                    } else if cname == sn::classes::STATIC {
-                        if !self.in_class {
-                            let err_pos = std::mem::replace(id_pos, Pos::NONE);
-                            env.emit_error(NamingError::StaticOutsideClass(err_pos));
-                            let ci_pos = std::mem::replace(expr_pos, Pos::NONE);
-                            *class_id_ = ClassId_::CI(Id(ci_pos, sn::classes::UNKNOWN.to_string()))
-                        } else {
-                            *class_id_ = ClassId_::CIstatic
-                        }
-                    } else {
-                        // Otherwise, replace occurrences of CIexpr(_,_,Id(..))
-                        // with CI(..)
-                        let ci_pos = std::mem::replace(expr_pos, Pos::NONE);
-                        let ci_name = std::mem::take(cname);
-                        *class_id_ = ClassId_::CI(Id(ci_pos, ci_name))
-                    }
-                    Continue(())
-                }
-
-                Expr_::Lvar(lid) => {
-                    // Convert Lvar(this) => this; note that this overlaps
-                    // with lvar elaboration
-                    let Lid(_lid_pos, lcl_id) = &**lid;
-                    if local_id::get_name(lcl_id) == sn::special_idents::THIS {
-                        *expr_ = Expr_::This
-                    }
-                    Continue(())
-                }
-                _ => Continue(()),
+        match class_id_ {
+            ClassId_::CIself if !self.in_class => {
+                env.emit_error(NamingError::SelfOutsideClass(pos.clone()));
+                *class_id_ = ClassId_::CI(Id(
+                    std::mem::replace(pos, Pos::NONE),
+                    sn::classes::UNKNOWN.to_string(),
+                ));
             }
-        } else {
-            // We only ever expect a `CIexpr(..)` to come from lowering.
-            // We should change the lowered AST repr to make this impossible.
-            Continue(())
+            ClassId_::CIexpr(Expr(_, expr_pos, expr_)) => {
+                // [mjt] For some reason the legacy code modifies the position of
+                // the surrounding [ClassId]. This seems wrong and causes a clone
+                *pos = expr_pos.clone();
+                match expr_ {
+                    Expr_::Id(sid) => {
+                        // If the id is a special ref to a class, it is only
+                        // valid if we are in a class
+                        let Id(id_pos, cname) = sid as &mut Sid;
+                        if cname == sn::classes::PARENT {
+                            if !self.in_class {
+                                let err_pos = std::mem::replace(id_pos, Pos::NONE);
+                                env.emit_error(NamingError::ParentOutsideClass(err_pos));
+                                let ci_pos = std::mem::replace(expr_pos, Pos::NONE);
+                                *class_id_ =
+                                    ClassId_::CI(Id(ci_pos, sn::classes::UNKNOWN.to_string()))
+                            } else {
+                                *class_id_ = ClassId_::CIparent
+                            }
+                        } else if cname == sn::classes::STATIC {
+                            if !self.in_class {
+                                let err_pos = std::mem::replace(id_pos, Pos::NONE);
+                                env.emit_error(NamingError::StaticOutsideClass(err_pos));
+                                let ci_pos = std::mem::replace(expr_pos, Pos::NONE);
+                                *class_id_ =
+                                    ClassId_::CI(Id(ci_pos, sn::classes::UNKNOWN.to_string()))
+                            } else {
+                                *class_id_ = ClassId_::CIstatic
+                            }
+                        } else {
+                            // Otherwise, replace occurrences of CIexpr(_,_,Id(..))
+                            // with CI(..)
+                            let ci_pos = std::mem::replace(expr_pos, Pos::NONE);
+                            let ci_name = std::mem::take(cname);
+                            *class_id_ = ClassId_::CI(Id(ci_pos, ci_name))
+                        }
+                    }
+
+                    Expr_::Lvar(lid) => {
+                        // Convert Lvar(this) => this; note that this overlaps
+                        // with lvar elaboration
+                        let Lid(_lid_pos, lcl_id) = &**lid;
+                        if local_id::get_name(lcl_id) == sn::special_idents::THIS {
+                            *expr_ = Expr_::This
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            _ => {}
         }
+        Continue(())
     }
 
     fn on_ty_class__top_down(&mut self, _: &Env, _: &mut nast::Class_) -> ControlFlow<()> {
@@ -135,7 +133,6 @@ mod tests {
         let mut pass = ElabClassIdPass::default();
 
         let cases = vec![
-            (sn::classes::SELF, ClassId_::CIself),
             (sn::classes::PARENT, ClassId_::CIparent),
             (sn::classes::STATIC, ClassId_::CIstatic),
         ];

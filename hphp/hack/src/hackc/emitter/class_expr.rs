@@ -23,7 +23,7 @@ pub enum ClassExpr {
 }
 
 impl ClassExpr {
-    fn get_original_class_name(
+    pub fn get_original_class_name(
         emitter: &Emitter,
         scope: &Scope<'_>,
         check_traits: bool,
@@ -105,12 +105,6 @@ impl ClassExpr {
                         Some(name) => Self::Id(ast_defs::Id(pos, name)),
                         None => Self::Special(SpecialClsRef::ParentCls),
                     }
-                } else if string_utils::is_self(&id) {
-                    match Self::get_original_class_name(emitter, scope, check_traits, resolve_self)
-                    {
-                        Some(name) => Self::Id(ast_defs::Id(pos, name)),
-                        None => Self::Special(SpecialClsRef::SelfCls),
-                    }
                 } else {
                     Self::Id(ast_defs::Id(pos, id))
                 }
@@ -133,7 +127,17 @@ impl ClassExpr {
             ClassId_::CIreified(sid) => return Self::Reified(sid.clone()),
             ClassId_::CIparent => return Self::Special(SpecialClsRef::ParentCls),
             ClassId_::CIstatic => return Self::Special(SpecialClsRef::LateBoundCls),
-            ClassId_::CIself => return Self::Special(SpecialClsRef::SelfCls),
+            ClassId_::CIself => {
+                return match Self::get_original_class_name(
+                    emitter,
+                    scope,
+                    check_traits,
+                    resolve_self,
+                ) {
+                    Some(name) => Self::Id(ast_defs::Id(annot.clone(), name)),
+                    None => Self::Special(SpecialClsRef::SelfCls),
+                };
+            }
         };
         Self::expr_to_class_expr(emitter, scope, check_traits, resolve_self, expr)
     }

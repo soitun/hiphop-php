@@ -43,6 +43,9 @@ let on_class_id on_error class_id ~ctx =
     match class_id with
     (* TODO[mjt] if we don't expect these from lowering should we refine the
        NAST repr? *)
+    | (annot, pos, Aast.CIself) when not in_class ->
+      ( (annot, pos, Aast.CI (pos, SN.Classes.cUnknown)),
+        Some (Err.naming @@ Naming_error.Self_outside_class pos) )
     | (_, _, Aast.(CIparent | CIself | CIstatic | CI _ | CIreified _)) ->
       (class_id, None)
     | (annot, _, Aast.(CIexpr (_, expr_pos, Id (id_pos, cname)))) ->
@@ -52,12 +55,6 @@ let on_class_id on_error class_id ~ctx =
             Some (Err.naming @@ Naming_error.Parent_outside_class id_pos) )
         else
           ((annot, expr_pos, Aast.CIparent), None)
-      else if String.equal cname SN.Classes.cSelf then
-        if not in_class then
-          ( (annot, expr_pos, Aast.CI (expr_pos, SN.Classes.cUnknown)),
-            Some (Err.naming @@ Naming_error.Self_outside_class id_pos) )
-        else
-          ((annot, expr_pos, Aast.CIself), None)
       else if String.equal cname SN.Classes.cStatic then
         if not in_class then
           ( (annot, expr_pos, Aast.CI (expr_pos, SN.Classes.cUnknown)),

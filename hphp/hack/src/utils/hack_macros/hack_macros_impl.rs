@@ -1238,18 +1238,7 @@ mod tests {
                                 (),
                                 __hygienic_pos.clone(),
                                 Expr_::ClassGet(Box::new((
-                                    ClassId(
-                                        (),
-                                        __hygienic_pos.clone(),
-                                        ClassId_::CIexpr(Expr(
-                                            (),
-                                            __hygienic_pos.clone(),
-                                            Expr_::Id(Box::new(Id(
-                                                __hygienic_pos.clone(),
-                                                "self".to_owned()
-                                            )))
-                                        ))
-                                    ),
+                                    ClassId((), __hygienic_pos.clone(), ClassId_::CIself),
                                     (
                                         __hygienic_pos.clone(),
                                         "$__xhpAttributeDeclarationCache".to_owned()
@@ -1293,14 +1282,7 @@ mod tests {
                                                 ClassId(
                                                     (),
                                                     __hygienic_pos.clone(),
-                                                    ClassId_::CIexpr(Expr(
-                                                        (),
-                                                        __hygienic_pos.clone(),
-                                                        Expr_::Id(Box::new(Id(
-                                                            __hygienic_pos.clone(),
-                                                            "self".to_owned()
-                                                        )))
-                                                    ))
+                                                    ClassId_::CIself
                                                 ),
                                                 (
                                                     __hygienic_pos.clone(),
@@ -1355,14 +1337,7 @@ mod tests {
                                                 ClassId(
                                                     (),
                                                     __hygienic_pos.clone(),
-                                                    ClassId_::CIexpr(Expr(
-                                                        (),
-                                                        __hygienic_pos.clone(),
-                                                        Expr_::Id(Box::new(Id(
-                                                            __hygienic_pos.clone(),
-                                                            "self".to_owned()
-                                                        )))
-                                                    ))
+                                                    ClassId_::CIself
                                                 ),
                                                 (
                                                     __hygienic_pos.clone(),

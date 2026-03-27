@@ -239,6 +239,23 @@ fn print_expr(
             mangled.into()
         }
     }
+    fn resolve_class_id_for_print(
+        ctx: &Context<'_>,
+        env: &ExprEnv<'_>,
+        is_class_constant: bool,
+        cid: &ast::ClassId_,
+    ) -> String {
+        match ctx
+            .special_class_resolver
+            .resolve_class_id(env.map(|e| e.scope), cid)
+        {
+            Some(name) => fmt_class_name(is_class_constant, name.into()).into_owned(),
+            None => match cid {
+                ast::ClassId_::CIself => classes::SELF.to_string(),
+                _ => panic!("resolve_class_id_for_print: unhandled class_id variant"),
+            },
+        }
+    }
     fn get_class_name_from_id<'e>(
         ctx: &Context<'_>,
         env: &ExprEnv<'e>,
@@ -430,9 +447,13 @@ fn print_expr(
             let (cid, _, es, unpacked_element, _) = &**x;
             match &cid.2 {
                 // TODO(T259578698) invert and fix named parameter clash below
-                ast::ClassId_::CIexpr(_) | ast::ClassId_::CIreified(_) => {
+                ast::ClassId_::CIself | ast::ClassId_::CIexpr(_) | ast::ClassId_::CIreified(_) => {
                     w.write_all(b"new ")?;
                     match &cid.2 {
+                        ast::ClassId_::CIself => {
+                            let s = resolve_class_id_for_print(ctx, env, false, &cid.2);
+                            w.write_all(s.as_bytes())?
+                        }
                         ast::ClassId_::CIexpr(ast::Expr(_, _, ast::Expr_::Id(id))) => w.write_all(
                             lstrip(
                                 &adjust_id(
@@ -501,6 +522,10 @@ fn print_expr(
                     )?,
                     _ => print_expr(ctx, w, env, e)?,
                 },
+                ast::ClassId_::CIself => {
+                    let s = resolve_class_id_for_print(ctx, env, false, &(cg.0).2);
+                    w.write_all(s.as_bytes())?
+                }
                 ast::ClassId_::CIreified(ast_defs::Id(_, id)) => w.write_all(id.as_bytes())?,
                 _ => {
                     return Err(
@@ -522,11 +547,20 @@ fn print_expr(
                     }
                     _ => Err(Error::fail("TODO: expected Id in Nameof CIexpr").into()),
                 },
+                ast::ClassId_::CIself => {
+                    let s = resolve_class_id_for_print(ctx, env, false, &cid.2);
+                    w.write_all(s.as_bytes())
+                }
                 ast::ClassId_::CIreified(ast_defs::Id(_, s1)) => w.write_all(s1.as_bytes()),
                 _ => Err(Error::fail("TODO: unexpected class_id in Nameof").into()),
             }
         }
         Expr_::ClassConst(cc) => match &(cc.0).2 {
+            ast::ClassId_::CIself => {
+                let s1 = resolve_class_id_for_print(ctx, env, true, &(cc.0).2);
+                let s2 = &(cc.1).1;
+                write::concat_str_by(w, "::", [&s1.into(), s2])
+            }
             ast::ClassId_::CIexpr(e1) => handle_possible_colon_colon_class_expr(ctx, w, env, expr)?
                 .map_or_else(
                     || {
@@ -661,6 +695,10 @@ fn print_expr(
                 }
                 ast::FunctionPtrId::FPClassConst(ast::ClassId(_, _, class_id), (_, meth_name)) => {
                     match class_id {
+                        ast::ClassId_::CIself => {
+                            let s = resolve_class_id_for_print(ctx, env, false, class_id);
+                            w.write_all(s.as_bytes())?
+                        }
                         ast::ClassId_::CIexpr(e) => match e.as_id() {
                             Some(id) => w.write_all(
                                 get_class_name_from_id(
