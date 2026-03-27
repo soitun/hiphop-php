@@ -38,7 +38,6 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - bool Server.AddVaryEncoding = true, UNKNOWN
 - bool Server.LogSettingsOnStartup = false, UNKNOWN
 - bool Server.LogReorderProps = false, UNKNOWN
-- bool Server.WarmupConcurrently = false, UNKNOWN
 - bool Server.DedupeWarmupRequests = false, UNKNOWN
 - int Server.WarmupThreadCount = 1, UNKNOWN
 - int Server.ExtendedWarmup.ThreadCount = 1, UNKNOWN
@@ -1153,12 +1152,6 @@ The format can be found in hphp/tools/configs/generate_configs.rs
   running in server mode, where it defaults to false to conserve low
   memory address space for compressed pointers.
 
-- bool Eval.RecycleAProf = true, UNKNOWN
-
-- int64_t Eval.HeapPurgeWindowSize = 5 * 1000000, UNKNOWN
-
-- uint64_t Eval.HeapPurgeThreshold = 128 * 1024 * 1024, UNKNOWN
-
 - bool Eval.Verify, UNKNOWN
 
   Run the HHBC bytecode verifier on non-systemlib units when created.
@@ -1497,8 +1490,6 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - std::vector<std::string> Eval.UnixServerAllowedGroups = {}, UNKNOWN
 
 - bool Eval.UnixServerRunPSPInBackground = true, UNKNOWN
-
-- bool Eval.UnixServerProxyXbox = true, UNKNOWN
 
 - bool Eval.UnixServerAssumeRepoReadable = true, UNKNOWN
 
@@ -1908,7 +1899,6 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - uint32_t HHIR.LoadElimMaxIters = 10, UNKNOWN
 - bool HHIR.LoadEnableTeardownOpts = true, UNKNOWN
 - uint32_t HHIR.LoadStackTeardownMaxDecrefs = 0, UNKNOWN
-- uint32_t HHIR.LoadThrowMaxDecrefs = 0, UNKNOWN
 - bool HHIR.StorePRE = true, UNKNOWN
 - bool HHIR.SinkDefs = true, UNKNOWN
 - bool HHIR.LowerBespokesPostIRGen = true, UNKNOWN
@@ -2000,7 +1990,6 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - uint32_t Jit.RetranslateAllRequest, UNKNOWN
 - uint32_t Jit.RetranslateAllSeconds, UNKNOWN
 - bool Jit.RerunRetranslateAll = false, UNKNOWN
-- bool Jit.BuildOutliningHashes = false, UNKNOWN
 - bool Jit.PGOLayoutSplitHotCold = true, UNKNOWN
 - bool Jit.PGOLayoutResplitFrozen = true, UNKNOWN
 - bool Jit.PGOVasmBlockCounters = true, UNKNOWN
@@ -2092,7 +2081,6 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 - double Jit.PGODecRefNZReleasePercent, UNKNOWN
 - double Jit.PGODecRefNopDecPercentCOW, UNKNOWN
 - double Jit.PGODecRefNopDecPercent, UNKNOWN
-- bool Jit.PGOArrayGetStress = false, UNKNOWN
 - double Jit.PGOMinBlockCountPercent = 0.23, UNKNOWN
 
   Mininum weight of a tracelet to include it in HotCFG as a percentage
@@ -2353,9 +2341,6 @@ The format can be found in hphp/tools/configs/generate_configs.rs
   12 hours. Read before config is loaded so has to use staticdefault
 
 - std::vector<std::string> Stats.TrackedKeys = {}, UNKNOWN
-- int32_t Stats.ProfilerTraceBuffer = 2000000, UNKNOWN
-- double Stats.ProfilerTraceExpansion = 1.2, UNKNOWN
-- int32_t Stats.ProfilerMaxTraceBuffer = 0, UNKNOWN
 - bool Stats.TrackPerUnitMemory = false, UNKNOWN
 
 # Strobelight
