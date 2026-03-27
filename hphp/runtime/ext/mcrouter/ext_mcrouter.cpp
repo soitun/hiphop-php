@@ -135,10 +135,10 @@ uint64_t getDelta(const Reply& /*reply*/) {
       mc::OpFromType<Reply, mc::ReplyOpMapping>::value);
 }
 uint64_t getDelta(const mc::McIncrReply& reply) {
-  return *reply.delta_ref();
+  return *reply.delta();
 }
 uint64_t getDelta(const mc::McDecrReply& reply) {
-  return *reply.delta_ref();
+  return *reply.delta();
 }
 
 // Helpers for retrieving 'casToken' field
@@ -149,7 +149,7 @@ uint64_t getCasToken(const Reply& /*reply*/) {
       mc::OpFromType<Reply, mc::ReplyOpMapping>::value);
 }
 uint64_t getCasToken(const mc::McGetsReply& reply) {
-  return *reply.casToken_ref();
+  return *reply.casToken();
 }
 
 } // anonymous
@@ -448,7 +448,7 @@ static Object mcr_flushall(ObjectData* this_, int64_t val) {
   using Request = mc::McFlushAllRequest;
 
   auto request = std::make_unique<Request>("unused");
-  request->delay_ref() = val;
+  request->delay() = val;
 
   return Native::data<MCRouter>(this_)->issue<Request>(std::move(request));
 }
@@ -467,10 +467,10 @@ static Object HHVM_METHOD(MCRouter, cas,
 
   auto request = std::make_unique<Request>(
       folly::StringPiece(key.c_str(), key.size()));
-  request->value_ref() = folly::IOBuf(
+  request->value() = folly::IOBuf(
       folly::IOBuf::COPY_BUFFER, folly::StringPiece(val.c_str(), val.size()));
-  request->exptime_ref() = expiration;
-  request->casToken_ref() = cas;
+  request->exptime() = expiration;
+  request->casToken() = cas;
 
   return Native::data<MCRouter>(this_)->issue<Request>(std::move(request));
 }
