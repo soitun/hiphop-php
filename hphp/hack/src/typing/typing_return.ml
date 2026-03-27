@@ -26,7 +26,17 @@ let strip_awaitable fun_kind env ty =
     | Tclass ((_, class_name), _, [ty])
       when String.equal class_name SN.Classes.cAwaitable ->
       ty
-    | _ -> ty
+    | _ ->
+      let (env, ty_opt) = Typing_dynamic_utils.try_strip_dynamic env ty in
+      (match ty_opt with
+      | Some stripped ->
+        let (_env, stripped) = Env.expand_type env stripped in
+        (match get_node stripped with
+        | Tclass ((_, class_name), _, [inner_ty])
+          when String.equal class_name SN.Classes.cAwaitable ->
+          MakeType.locl_like (get_reason ty) inner_ty
+        | _ -> ty)
+      | None -> ty)
 
 let enforce_return_not_disposable ret_pos fun_kind env et =
   let stripped_et = strip_awaitable fun_kind env et in
@@ -103,6 +113,14 @@ let force_return_kind ~is_toplevel env p ety =
   | (Ast_defs.FAsync, Tclass ((_, class_name), _, _))
     when String.equal class_name SN.Classes.cAwaitable ->
     (* For toplevel functions, this is already checked in the parser *)
+    (env, ty)
+  | (Ast_defs.FAsync, _)
+    when let (_env, stripped) = Typing_dynamic_utils.strip_dynamic env ty in
+         let (_env, stripped) = Env.expand_type env stripped in
+         match get_node stripped with
+         | Tclass ((_, class_name), _, _) ->
+           String.equal class_name SN.Classes.cAwaitable
+         | _ -> false ->
     (env, ty)
   | (Ast_defs.FGenerator, Tclass ((_, class_name), _, _))
     when String.equal class_name SN.Classes.cGenerator ->
