@@ -5178,6 +5178,11 @@ OPTBLD_INLINE void iopGetMemoAgnosticImplicitContext() {
   vmStack().pushObject(context->m_memoAgnosticIC);
 }
 
+OPTBLD_INLINE void iopGetWholeImplicitContext() {
+  assertx(*ImplicitContext::activeCtx);
+  vmStack().pushObject(*ImplicitContext::activeCtx);
+}
+
 OPTBLD_INLINE void iopCheckProp(const StringData* propName) {
   auto* cls = vmfp()->getClass();
   auto* propVec = cls->getPropData();

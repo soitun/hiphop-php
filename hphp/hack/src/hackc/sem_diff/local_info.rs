@@ -118,6 +118,7 @@ impl LocalInfo {
             | Opcode::CreateCl(..)
             | Opcode::CreateCont
             | Opcode::GetMemoAgnosticImplicitContext
+            | Opcode::GetWholeImplicitContext
             | Opcode::DblAsBits
             | Opcode::Dict(..)
             | Opcode::Dim(..)

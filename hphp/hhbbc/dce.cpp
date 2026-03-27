@@ -1601,6 +1601,9 @@ void dce(Env& env, const bc::ResolveClass&)     { pushRemovableIfNoThrow(env); }
 void dce(Env& env, const bc::GetMemoAgnosticImplicitContext&) {
   pushRemovableIfNoThrow(env);
 }
+void dce(Env& env, const bc::GetWholeImplicitContext&) {
+  pushRemovableIfNoThrow(env);
+}
 
 /*
  * Default implementation is conservative: assume we use all of our

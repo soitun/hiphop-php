@@ -963,6 +963,7 @@ fn convert_opcode(ctx: &mut Context<'_>, opcode: &Opcode) -> bool {
         Opcode::ContValid => simple!(Hhbc::ContValid),
         Opcode::CreateCont => simple!(Hhbc::CreateCont),
         Opcode::GetMemoAgnosticImplicitContext => simple!(Hhbc::GetMemoAgnosticImplicitContext),
+        Opcode::GetWholeImplicitContext => simple!(Hhbc::GetWholeImplicitContext),
         Opcode::DblAsBits => todo!(),
         Opcode::Dir => simple!(Immediate::Dir),
         Opcode::Div => simple!(Hhbc::Div),

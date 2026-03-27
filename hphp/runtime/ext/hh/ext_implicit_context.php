@@ -180,9 +180,6 @@ final class ImplicitContextData {}
 <<__Native>>
 function get_implicit_context<T>(class<T> $key)[leak_safe]: ?T::T;
 
-<<__Native>>
-function get_whole_implicit_context()[zoned]: ImplicitContextData;
-
 /**
  * Creates memo agnostic implicit context $context keyed by $key.
  */

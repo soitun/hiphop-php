@@ -258,12 +258,6 @@ TypedValue HHVM_FUNCTION(get_implicit_context, TypedValue key) {
   return result;
 }
 
-ObjectRet HHVM_FUNCTION(get_whole_implicit_context) {
-  assertx(*ImplicitContext::activeCtx);
-  auto const obj = *ImplicitContext::activeCtx;
-  return Object{obj};
-}
-
 int64_t HHVM_FUNCTION(get_implicit_context_memo_key) {
   assertx(*ImplicitContext::activeCtx);
   auto const obj = *ImplicitContext::activeCtx;
@@ -350,8 +344,6 @@ static struct HHImplicitContext final : Extension {
                   HHVM_FN(get_state_unsafe));
     HHVM_NAMED_FE(HH\\ImplicitContext\\_Private\\get_implicit_context,
                   HHVM_FN(get_implicit_context));
-    HHVM_NAMED_FE(HH\\ImplicitContext\\_Private\\get_whole_implicit_context,
-                  HHVM_FN(get_whole_implicit_context));
     HHVM_NAMED_FE(HH\\ImplicitContext\\_Private\\create_memo_agnostic,
                   HHVM_FN(create_memo_agnostic));
     HHVM_NAMED_FE(HH\\ImplicitContext\\_Private\\create_memo_sensitive,

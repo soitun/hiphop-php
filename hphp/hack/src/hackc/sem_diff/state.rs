@@ -1230,6 +1230,7 @@ fn is_checkpoint_instr(instr: &NodeInstr) -> bool {
             Opcode::ClsCnsD(_, _)
             | Opcode::CnsE(_)
             | Opcode::GetMemoAgnosticImplicitContext
+            | Opcode::GetWholeImplicitContext
             | Opcode::Dict(..)
             | Opcode::Dir
             | Opcode::Double(..)
@@ -1549,6 +1550,7 @@ fn clean_opcode(opcode: &Opcode) -> Opcode {
         | Opcode::ContValid
         | Opcode::CreateCont
         | Opcode::GetMemoAgnosticImplicitContext
+        | Opcode::GetWholeImplicitContext
         | Opcode::DblAsBits
         | Opcode::Dir
         | Opcode::Div

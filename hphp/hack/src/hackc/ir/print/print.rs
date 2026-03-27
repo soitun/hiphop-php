@@ -900,6 +900,9 @@ fn print_hhbc(w: &mut dyn Write, ctx: &FuncContext, func: &Func, hhbc: &Hhbc) ->
         Hhbc::GetMemoAgnosticImplicitContext(_) => {
             write!(w, "get_memo_agnostic_implicit_context",)?;
         }
+        Hhbc::GetWholeImplicitContext(_) => {
+            write!(w, "get_whole_implicit_context",)?;
+        }
         Hhbc::EnumClassLabelName(vid, _) => {
             write!(w, "enum_class_label_name {}", FmtVid(func, vid, verbose))?;
         }

@@ -1376,6 +1376,7 @@ impl FunctionParser<'_> {
             "create_class" => parse_instr!(tok, I::Hhbc(H::CreateCl{operands: operands.into(), clsid, loc}), <clsid:parse_class_name> "(" <operands:self.vid,*> ")"),
             "create_cont" => I::Hhbc(H::CreateCont(loc)),
             "get_memo_agnostic_implicit_context" => I::Hhbc(H::GetMemoAgnosticImplicitContext(loc)),
+            "get_whole_implicit_context" => I::Hhbc(H::GetWholeImplicitContext(loc)),
             "div" => I::Hhbc(H::Div(self.vid2(tok)?, loc)),
             "enter" => parse_instr!(tok, I::Terminator(T::Enter(p0, loc)), "to" <p0:parse_bid>),
             "enum_class_label_name" => I::Hhbc(H::EnumClassLabelName(self.vid(tok)?, loc)),

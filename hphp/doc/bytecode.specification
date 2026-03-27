@@ -3158,6 +3158,10 @@ GetMemoAgnosticImplicitContext [] -> [C:Obj]
 
   Returns the memo agnostic branch of the current IC.
 
+GetWholeImplicitContext [] -> [C:Obj]
+
+  Returns the current whole implicit context.
+
 14. Generator creation and execution
 ---------------------------------------
 

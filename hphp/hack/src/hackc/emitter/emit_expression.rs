@@ -3315,6 +3315,9 @@ fn get_call_builtin_func_info(e: &mut Emitter, id: impl AsRef<str>) -> Option<(u
         "HH\\ImplicitContext\\_Private\\get_memo_agnostic_implicit_context" if e.systemlib() => {
             Some((0, Instruct::Opcode(Opcode::GetMemoAgnosticImplicitContext)))
         }
+        "HH\\ImplicitContext\\_Private\\get_whole_implicit_context" if e.systemlib() => {
+            Some((0, Instruct::Opcode(Opcode::GetWholeImplicitContext)))
+        }
         // TODO: enforce that this returns readonly
         "HH\\global_readonly_get" => Some((1, Instruct::Opcode(Opcode::CGetG))),
         "HH\\global_get" => Some((1, Instruct::Opcode(Opcode::CGetG))),

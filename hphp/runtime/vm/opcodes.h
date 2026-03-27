@@ -252,6 +252,8 @@ namespace HPHP {
                      NA,               ONE(CV),         ONE(CV),    NF) \
   O(GetMemoAgnosticImplicitContext,                                     \
                      NA,               NOV,             ONE(CV),    NF) \
+  O(GetWholeImplicitContext,                                            \
+                     NA,               NOV,             ONE(CV),    NF) \
   O(Await,           NA,               ONE(CV),         ONE(CV),    CF) \
   O(AwaitAll,        ONE(LAR),         NOV,             ONE(CV),    CF) \
   O(AwaitLowPri,     NA,               NOV,             ONE(CV),    CF) \

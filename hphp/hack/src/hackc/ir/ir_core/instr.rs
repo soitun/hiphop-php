@@ -475,6 +475,7 @@ pub enum Hhbc {
     },
     CreateCont(LocId),
     GetMemoAgnosticImplicitContext(LocId),
+    GetWholeImplicitContext(LocId),
     Div([ValueId; 2], LocId),
     EnumClassLabelName(ValueId, LocId),
     GetClsRGProp(ValueId, LocId),

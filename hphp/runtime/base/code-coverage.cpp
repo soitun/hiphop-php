@@ -318,6 +318,7 @@ bool CodeCoverage::isCoverable(Op op) {
     case Op::ContCurrent:
     case Op::ContGetReturn:
     case Op::GetMemoAgnosticImplicitContext:
+    case Op::GetWholeImplicitContext:
     case Op::Idx:
     case Op::ArrayIdx:
     case Op::ArrayMarkLegacy:

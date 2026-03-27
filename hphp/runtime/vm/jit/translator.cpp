@@ -358,9 +358,11 @@ static const struct {
                    {Stack1,           Stack1,       OutClsMethLike  }},
   { OpResolveClass,{None,             Stack1,       OutClass        }},
   { OpSetImplicitContextByValue,
-                   {Stack1,           Stack1,       OutUnknown      }},
+                   {Stack1,           Stack1,       OutObject       }},
   { OpGetMemoAgnosticImplicitContext,
-                   {None,             Stack1,       OutUnknown      }},
+                   {None,             Stack1,       OutObject       }},
+  { OpGetWholeImplicitContext,
+                   {None,             Stack1,       OutObject       }},
   { OpReifiedInit, {Local|StackTop2,  None,         OutNone         }},
 
   /*** 14. Generator instructions ***/

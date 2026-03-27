@@ -2388,5 +2388,9 @@ void emitGetMemoAgnosticImplicitContext(IRGS& env) {
   pushIncRef(env, gen(env, LdMemoAgnosticIC, ic));
 }
 
+void emitGetWholeImplicitContext(IRGS& env) {
+  pushIncRef(env, gen(env, LdImplicitContext));
+}
+
 //////////////////////////////////////////////////////////////////////
 }

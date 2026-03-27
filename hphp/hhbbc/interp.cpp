@@ -5803,6 +5803,7 @@ void in(ISS& env, const bc::AwaitLowPri& /*op*/) {
 }
 
 void in(ISS& env, const bc::SetImplicitContextByValue&) {
+  nothrow(env);
   popC(env);
   push(env, TObj);
 }
@@ -5812,6 +5813,12 @@ const StaticString
   s_MemoizeLSB("__MemoizeLSB");
 
 void in(ISS& env, const bc::GetMemoAgnosticImplicitContext&) {
+  effect_free(env);
+  return push(env, TObj);
+}
+
+void in(ISS& env, const bc::GetWholeImplicitContext&) {
+  effect_free(env);
   return push(env, TObj);
 }
 

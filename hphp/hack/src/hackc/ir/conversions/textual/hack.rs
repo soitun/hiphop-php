@@ -149,6 +149,8 @@ pub(crate) enum Hhbc {
     GetMemoAgnosticImplicitContext,
     #[decl(fn hhbc_get_memo_key_l(*HackMixed) -> *HackMixed)]
     GetMemoKeyL,
+    #[decl(fn hhbc_get_whole_implicit_context() -> *HackMixed)]
+    GetWholeImplicitContext,
     #[decl(fn hhbc_has_reified_parent(*HackMixed) -> *HackMixed)]
     HasReifiedParent,
     #[decl(fn hhbc_idx(*HackMixed, *HackMixed) -> *HackMixed)]
