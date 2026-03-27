@@ -8010,7 +8010,7 @@ std::pair<Type, bool> array_like_newelem_impl(Type arr, const Type& val) {
 // information (and ArrLikeVal is dealt with specially already).
 bool array_like_set_can_be_undone(const Type& arr, const Type& k) {
   if (!k.subtypeOf(BArrKey) || k.is(BBottom)) return false;
-  if (!arr.subtypeAmong(BDictN, BArrLike)) return false;
+  if (!arr.subtypeAmong(BDictN | BKeysetN, BArrLike)) return false;
   if (arr.m_dataTag != DataTag::ArrLikeMap) return false;
   auto const& map = *arr.m_data.map;
   if (map.hasOptElements()) return false;
@@ -8025,7 +8025,7 @@ bool array_like_set_can_be_undone(const Type& arr, const Type& k) {
 Type undo_array_like_set(Type arr, const Type& k) {
   assertx(k.subtypeOf(BArrKey));
   assertx(!k.is(BBottom));
-  assertx(arr.subtypeAmong(BDictN, BArrLike));
+  assertx(arr.subtypeAmong(BDictN | BKeysetN, BArrLike));
   assertx(arr.m_dataTag == DataTag::ArrLikeMap);
   auto map = arr.m_data.map.mutate();
   assertx(!map->hasOptElements());

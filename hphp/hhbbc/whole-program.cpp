@@ -397,7 +397,7 @@ void analyze_iteratively(Index& index) {
  */
 template<typename F>
 void final_pass(Index& index, F emitUnit) {
-  trace_time _{"final pass"};
+  trace_time _{"final pass", index.sample()};
   _.ignore_client_stats();
   index.freeze();
   IndexAdaptor adaptor{ index };
@@ -870,7 +870,7 @@ using UnitEmitterRefs = RefVec<FinalPassJob::Output>;
 UnitEmitterRefs final_pass(Index& index,
                            AnalysisScheduler scheduler,
                            bool debugDump) {
-  trace_time tracer{"final-pass"};
+  trace_time tracer{"final-pass", index.sample()};
   tracer.ignore_client_stats();
 
   auto const run = [&] (AnalysisInput input) -> coro::Task<UnitEmitterRef> {
@@ -944,7 +944,11 @@ void emit_units(Index& index,
                 UnitEmitterRefs refs,
                 const EmitCallback& callback,
                 const std::string& debugDump) {
-  trace_time _{"emit-units", folly::sformat("{:,} units", refs.size())};
+  trace_time _{
+    "emit-units",
+    folly::sformat("{:,} units", refs.size()),
+    index.sample()
+  };
 
   std::atomic<uint64_t> next{0};
   auto const run = [&] (UnitEmitterRef r) -> coro::Task<void> {

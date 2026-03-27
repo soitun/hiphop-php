@@ -7791,7 +7791,7 @@ struct InterfaceConflicts {
 
 void compute_iface_vtables(IndexData& index,
                            std::vector<InterfaceConflicts> conflicts) {
-  trace_time tracer{"compute interface vtables"};
+  trace_time tracer{"compute interface vtables", index.sample};
   tracer.ignore_client_stats();
 
   if (conflicts.empty()) return;
@@ -8654,7 +8654,7 @@ void check_local_invariants(const IndexData& data, const FuncFamily& ff) {
 void check_local_invariants(const IndexData& data) {
   if (!debug) return;
 
-  trace_time timer{"check-local-invariants"};
+  trace_time timer{"check-local-invariants", data.sample};
 
   parallel::for_each(
     data.allClassInfos,
@@ -12825,7 +12825,7 @@ constexpr size_t kNumTypeMappingRounds = 20;
  */
 void flatten_type_mappings(IndexData& index,
                            IndexFlattenMetadata& meta) {
-  trace_time tracer{"flatten type mappings"};
+  trace_time tracer{"flatten type mappings", index.sample};
   tracer.ignore_client_stats();
 
   std::vector<const TypeMapping*> work;
@@ -18417,7 +18417,7 @@ ClassBundleAssignments find_class_bundles(IndexData& i) {
 }
 
 void bundle_classes(IndexData& index) {
-  trace_time tracer{"bundle classes"};
+  trace_time tracer{"bundle classes", index.sample};
   tracer.ignore_client_stats();
 
   auto assignments = find_class_bundles(index);
@@ -18569,7 +18569,7 @@ IndexFlattenMetadata make_remote(IndexData& index,
                                  std::unique_ptr<TicketExecutor> executor,
                                  std::unique_ptr<Client> client,
                                  DisposeCallback dispose) {
-  trace_time tracer("make remote");
+  trace_time tracer("make remote", index.sample);
   tracer.ignore_client_stats();
 
   assertx(input.classes.size() == input.classBC.size());
@@ -19482,7 +19482,7 @@ void make_class_infos_local(
 // larger aggregate blobs in external workers, then download the
 // larger blobs.
 void make_local(IndexData& index) {
-  trace_time tracer{"make local"};
+  trace_time tracer{"make local", index.sample};
   tracer.ignore_client_stats();
 
   using namespace folly::gen;
