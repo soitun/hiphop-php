@@ -1,0 +1,70 @@
+warning: Lint[5624] The generic parameter T is redundant because it only appears in a contravariant (input) position. Consider replacing uses of generic parameter with mixed or specifying <<__Explicit>> on the generic parameter [1]
+
+lint_into_override_06.php--bar.php:5:31
+    3 | // package pkg1
+    4 | class StaticHelper {
+[1] 5 |   public static function call<T>(T $_): void {}
+    6 | }
+    7 | 
+
+
+warning: Lint[5624] The generic parameter T is redundant because it only appears in a contravariant (input) position. Consider replacing uses of generic parameter with mixed or specifying <<__Explicit>> on the generic parameter [1]
+
+lint_into_override_06.php--bar.php:9:24
+    7 | 
+    8 | class InstanceHelper {
+[1] 9 |   public function call<T>(T $_): void {}
+   10 | }
+   11 | 
+
+
+warning: Lint[5655] This is a cross-boundary edge. Although the callee is already in the caller package pkg1 via __PackageOverride('pkg1'), cross-boundary edges contribute to the bloating of pkg1 and SHOULD BE REMOVED. Either move the callee into the caller's package via hg mv, use __RequirePackage (if the whole function should only be invoked from pkg2) or gate this reference via a package check (if this portion of the function is meant to be gated by an environment check). [1]
+
+lint_into_override_06.php--bar.php:15:24
+    13 |   public function bar(): void {
+    14 |     // Static method call with explicit generic arg
+[1] 15 |     StaticHelper::call<MyInternType>(new MyInternType());
+    16 |     // Instance method call with explicit generic arg
+    17 |     $obj = new InstanceHelper();
+
+
+warning: Lint[5655] This is a cross-boundary edge. Although the callee is already in the caller package pkg1 via __PackageOverride('pkg1'), cross-boundary edges contribute to the bloating of pkg1 and SHOULD BE REMOVED. Either move the callee into the caller's package via hg mv, use __RequirePackage (if the whole function should only be invoked from pkg2) or gate this reference via a package check (if this portion of the function is meant to be gated by an environment check). [1]
+
+lint_into_override_06.php--bar.php:15:42
+    13 |   public function bar(): void {
+    14 |     // Static method call with explicit generic arg
+[1] 15 |     StaticHelper::call<MyInternType>(new MyInternType());
+    16 |     // Instance method call with explicit generic arg
+    17 |     $obj = new InstanceHelper();
+
+
+warning: Lint[5655] This is a cross-boundary edge. Although the callee is already in the caller package pkg1 via __PackageOverride('pkg1'), cross-boundary edges contribute to the bloating of pkg1 and SHOULD BE REMOVED. Either move the callee into the caller's package via hg mv, use __RequirePackage (if the whole function should only be invoked from pkg2) or gate this reference via a package check (if this portion of the function is meant to be gated by an environment check). [1]
+
+lint_into_override_06.php--bar.php:18:16
+    16 |     // Instance method call with explicit generic arg
+    17 |     $obj = new InstanceHelper();
+[1] 18 |     $obj->call<MyInternType>(new MyInternType());
+    19 |     // Nested generic in method call
+    20 |     $obj->call<vec<MyInternType>>(vec[new MyInternType()]);
+
+
+warning: Lint[5655] This is a cross-boundary edge. Although the callee is already in the caller package pkg1 via __PackageOverride('pkg1'), cross-boundary edges contribute to the bloating of pkg1 and SHOULD BE REMOVED. Either move the callee into the caller's package via hg mv, use __RequirePackage (if the whole function should only be invoked from pkg2) or gate this reference via a package check (if this portion of the function is meant to be gated by an environment check). [1]
+
+lint_into_override_06.php--bar.php:18:34
+    16 |     // Instance method call with explicit generic arg
+    17 |     $obj = new InstanceHelper();
+[1] 18 |     $obj->call<MyInternType>(new MyInternType());
+    19 |     // Nested generic in method call
+    20 |     $obj->call<vec<MyInternType>>(vec[new MyInternType()]);
+
+
+warning: Lint[5655] This is a cross-boundary edge. Although the callee is already in the caller package pkg1 via __PackageOverride('pkg1'), cross-boundary edges contribute to the bloating of pkg1 and SHOULD BE REMOVED. Either move the callee into the caller's package via hg mv, use __RequirePackage (if the whole function should only be invoked from pkg2) or gate this reference via a package check (if this portion of the function is meant to be gated by an environment check). [1]
+
+lint_into_override_06.php--bar.php:20:43
+    18 |     $obj->call<MyInternType>(new MyInternType());
+    19 |     // Nested generic in method call
+[1] 20 |     $obj->call<vec<MyInternType>>(vec[new MyInternType()]);
+    21 |     // Deeply nested generic in method call
+    22 |     $obj->call<dict<string, vec<MyInternType>>>(dict[]);
+
+

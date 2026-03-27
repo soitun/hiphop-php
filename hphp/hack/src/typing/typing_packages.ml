@@ -49,6 +49,7 @@ type package_error_info = {
 
 type check_reason =
   [ `Yes of Typing_error.Primary.Package.target_symbol_spec
+  | `LintOnly
   | `ClassPtrLinterOnly
   | `No
   ]

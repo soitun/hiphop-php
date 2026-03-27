@@ -230,6 +230,19 @@ let check_package_access
                   included_packages;
                 }))
     end
+  | `LintOnly -> begin
+    match
+      Typing_packages.can_access_by_package_rules
+        ~env
+        ~target_package_membership
+        ~target_pos:def_pos
+        ~target_id
+    with
+    | `Yes -> Package_access_ok
+    | `YesWarning w -> Package_access_linter_error (use_pos, w)
+    | `PackageNotSatisfied _ -> Package_access_ok
+    | `PackageSoftIncludes _ -> Package_access_ok
+  end
   | `ClassPtrLinterOnly ->
     let current_package =
       Option.map ~f:(fun p -> p.Package.name) (Env.get_current_package env)

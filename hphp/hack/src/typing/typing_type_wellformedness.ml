@@ -463,7 +463,7 @@ let typeconsts env tcs cls_name =
           | None -> `No
           | Some reifiable_attr_pos ->
             if Env.package_allow_reifiable_tconst_violations env.tenv then
-              `No
+              `LintOnly
             else
               `Yes
                 (Reifiable_type_const
