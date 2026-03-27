@@ -1450,11 +1450,7 @@ let witness_decl_to_string prefix witness =
         "%s because the expression came from %s. The type might be a lie!"
         prefix
         missing_type_in_hierarchy )
-  | Enforced_type pos_or_decl ->
-    ( pos_or_decl,
-      Format.sprintf
-        "%s because the target type is enforced by the runtime"
-        prefix )
+  | Enforced_type pos_or_decl -> (pos_or_decl, prefix)
 
 (* ~~ Axiom ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ *)
 

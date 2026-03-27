@@ -173,22 +173,22 @@ let make_return_type
          * but add a like type even for non-enforced returns because these we pessimise anyway.
          * Never pessimise void.
          *)
-        let add_like =
-          if Env.get_no_auto_likes env then
-            match Typing_enforceability.get_enforcement ~this_class env dty with
-            | Unenforced -> false
-            | Enforced -> true
-          else
-            true
+        let add_like_reason =
+          match Typing_enforceability.get_enforcement ~this_class env dty with
+          | Enforced -> Some (Reason.enforced_type pos)
+          | Unenforced ->
+            if Env.get_no_auto_likes env then
+              None
+            else
+              Some (Reason.witness_from_decl pos)
         in
         let ty =
           match get_node ty with
           | Tprim Aast.Tvoid when not wrap -> ty
           | _ ->
-            if add_like then
-              TUtils.make_like ~reason:(Reason.witness_from_decl pos) env ty
-            else
-              ty
+            (match add_like_reason with
+            | Some reason -> TUtils.make_like ~reason env ty
+            | None -> ty)
         in
         let ty =
           if wrap then

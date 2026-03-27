@@ -67,12 +67,12 @@
              ([9:21-26],
               (Expr
                  ((string), [9:21-26],
-                  (Assign (((string), [9:21-26], (Obj_get (((this), [9:21-26], This), ((string), [9:21-26], (Id ([9:21-26], "file"))), Regular, Is_prop))), None,
+                  (Assign (((~string), [9:21-26], (Obj_get (((this), [9:21-26], This), ((~string), [9:21-26], (Id ([9:21-26], "file"))), Regular, Is_prop))), None,
                      ((string), [9:21-26], (Lvar ([9:21-26], $file))))))));
              ([10:18-23],
               (Expr
                  ((int), [10:18-23],
-                  (Assign (((int), [10:18-23], (Obj_get (((this), [10:18-23], This), ((int), [10:18-23], (Id ([10:18-23], "line"))), Regular, Is_prop))), None,
+                  (Assign (((~int), [10:18-23], (Obj_get (((this), [10:18-23], This), ((~int), [10:18-23], (Id ([10:18-23], "line"))), Regular, Is_prop))), None,
                      ((int), [10:18-23], (Lvar ([10:18-23], $line))))))));
              ([Pos.none], Noop)]
            };
@@ -194,12 +194,12 @@
               ([9:21-26],
                (Expr
                   ((string), [9:21-26],
-                   (Assign (((string), [9:21-26], (Obj_get ((((this & dynamic)), [9:21-26], This), ((string), [9:21-26], (Id ([9:21-26], "file"))), Regular, Is_prop))), None,
+                   (Assign (((~string), [9:21-26], (Obj_get ((((this & dynamic)), [9:21-26], This), ((~string), [9:21-26], (Id ([9:21-26], "file"))), Regular, Is_prop))), None,
                       ((string), [9:21-26], (Lvar ([9:21-26], $file))))))));
               ([10:18-23],
                (Expr
                   ((int), [10:18-23],
-                   (Assign (((int), [10:18-23], (Obj_get ((((this & dynamic)), [10:18-23], This), ((int), [10:18-23], (Id ([10:18-23], "line"))), Regular, Is_prop))), None,
+                   (Assign (((~int), [10:18-23], (Obj_get ((((this & dynamic)), [10:18-23], This), ((~int), [10:18-23], (Id ([10:18-23], "line"))), Regular, Is_prop))), None,
                       ((int), [10:18-23], (Lvar ([10:18-23], $line))))))));
               ([Pos.none], Noop)]
             };

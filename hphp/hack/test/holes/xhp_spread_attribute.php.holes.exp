@@ -72,12 +72,12 @@
              ([10:21-26],
               (Expr
                  ((string), [10:21-26],
-                  (Assign (((string), [10:21-26], (Obj_get (((this), [10:21-26], This), ((string), [10:21-26], (Id ([10:21-26], "file"))), Regular, Is_prop))), None,
+                  (Assign (((~string), [10:21-26], (Obj_get (((this), [10:21-26], This), ((~string), [10:21-26], (Id ([10:21-26], "file"))), Regular, Is_prop))), None,
                      ((string), [10:21-26], (Lvar ([10:21-26], $file))))))));
              ([11:18-23],
               (Expr
                  ((int), [11:18-23],
-                  (Assign (((int), [11:18-23], (Obj_get (((this), [11:18-23], This), ((int), [11:18-23], (Id ([11:18-23], "line"))), Regular, Is_prop))), None,
+                  (Assign (((~int), [11:18-23], (Obj_get (((this), [11:18-23], This), ((~int), [11:18-23], (Id ([11:18-23], "line"))), Regular, Is_prop))), None,
                      ((int), [11:18-23], (Lvar ([11:18-23], $line))))))));
              ([Pos.none], Noop)]
            };
@@ -168,12 +168,12 @@
               ([20:21-26],
                (Expr
                   ((string), [20:21-26],
-                   (Assign (((string), [20:21-26], (Obj_get (((this), [20:21-26], This), ((string), [20:21-26], (Id ([20:21-26], "file"))), Regular, Is_prop))), None,
+                   (Assign (((~string), [20:21-26], (Obj_get (((this), [20:21-26], This), ((~string), [20:21-26], (Id ([20:21-26], "file"))), Regular, Is_prop))), None,
                       ((string), [20:21-26], (Lvar ([20:21-26], $file))))))));
               ([21:18-23],
                (Expr
                   ((int), [21:18-23],
-                   (Assign (((int), [21:18-23], (Obj_get (((this), [21:18-23], This), ((int), [21:18-23], (Id ([21:18-23], "line"))), Regular, Is_prop))), None,
+                   (Assign (((~int), [21:18-23], (Obj_get (((this), [21:18-23], This), ((~int), [21:18-23], (Id ([21:18-23], "line"))), Regular, Is_prop))), None,
                       ((int), [21:18-23], (Lvar ([21:18-23], $line))))))));
               ([Pos.none], Noop)]
             };
@@ -297,12 +297,12 @@
               ([10:21-26],
                (Expr
                   ((string), [10:21-26],
-                   (Assign (((string), [10:21-26], (Obj_get ((((this & dynamic)), [10:21-26], This), ((string), [10:21-26], (Id ([10:21-26], "file"))), Regular, Is_prop))), None,
+                   (Assign (((~string), [10:21-26], (Obj_get ((((this & dynamic)), [10:21-26], This), ((~string), [10:21-26], (Id ([10:21-26], "file"))), Regular, Is_prop))), None,
                       ((string), [10:21-26], (Lvar ([10:21-26], $file))))))));
               ([11:18-23],
                (Expr
                   ((int), [11:18-23],
-                   (Assign (((int), [11:18-23], (Obj_get ((((this & dynamic)), [11:18-23], This), ((int), [11:18-23], (Id ([11:18-23], "line"))), Regular, Is_prop))), None,
+                   (Assign (((~int), [11:18-23], (Obj_get ((((this & dynamic)), [11:18-23], This), ((~int), [11:18-23], (Id ([11:18-23], "line"))), Regular, Is_prop))), None,
                       ((int), [11:18-23], (Lvar ([11:18-23], $line))))))));
               ([Pos.none], Noop)]
             };
@@ -394,12 +394,12 @@
               ([20:21-26],
                (Expr
                   ((string), [20:21-26],
-                   (Assign (((string), [20:21-26], (Obj_get ((((this & dynamic)), [20:21-26], This), ((string), [20:21-26], (Id ([20:21-26], "file"))), Regular, Is_prop))), None,
+                   (Assign (((~string), [20:21-26], (Obj_get ((((this & dynamic)), [20:21-26], This), ((~string), [20:21-26], (Id ([20:21-26], "file"))), Regular, Is_prop))), None,
                       ((string), [20:21-26], (Lvar ([20:21-26], $file))))))));
               ([21:18-23],
                (Expr
                   ((int), [21:18-23],
-                   (Assign (((int), [21:18-23], (Obj_get ((((this & dynamic)), [21:18-23], This), ((int), [21:18-23], (Id ([21:18-23], "line"))), Regular, Is_prop))), None,
+                   (Assign (((~int), [21:18-23], (Obj_get ((((this & dynamic)), [21:18-23], This), ((~int), [21:18-23], (Id ([21:18-23], "line"))), Regular, Is_prop))), None,
                       ((int), [21:18-23], (Lvar ([21:18-23], $line))))))));
               ([Pos.none], Noop)]
             };

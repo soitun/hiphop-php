@@ -816,10 +816,10 @@ and obj_get_concrete_class_with_member_info
         (Pos_or_decl.unsafe_to_raw_pos mem_pos)
         id_str
   in
-  let (env, coerce_ty_err_opt, rval_mismatch) =
+  let (env, member_ty, coerce_ty_err_opt, rval_mismatch) =
     Option.value_map
       args.coerce_from_ty
-      ~default:(env, None, dflt_rval_mismatch)
+      ~default:(env, member_ty, None, dflt_rval_mismatch)
       ~f:(fun (p, ur, ty) ->
         let err =
           Typing_error.Callback.(
@@ -834,7 +834,7 @@ and obj_get_concrete_class_with_member_info
           | None -> Ok ty
           | _ -> Error (ty, member_ty)
         in
-        (env, coerce_ty_err_opt, Some coerce_ty_mismatch))
+        (env, lty, coerce_ty_err_opt, Some coerce_ty_mismatch))
   in
   let ty_err_opt =
     Typing_error.multiple_opt
