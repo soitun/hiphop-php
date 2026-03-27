@@ -1007,11 +1007,27 @@ let type_check_core
   HackEventLogger.TypingErrors.log_errors
     ~type_check_end_id
     ~data:
-      (Diagnostics.as_telemetry
-         ~limit:1000
-         ~with_context_limit:10
-         ~error_to_string:Contextual_diagnostic_formatter.to_string
-         env.diagnostics);
+      (let telemetry =
+         Diagnostics.as_telemetry
+           ~limit:1000
+           ~with_context_limit:10
+           ~error_to_string:Contextual_diagnostic_formatter.to_string
+           env.diagnostics
+       in
+       let warning_counts =
+         Diagnostics.warning_counts_by_code env.diagnostics
+       in
+       let warning_counts_telemetry =
+         IMap.fold
+           (fun code count acc ->
+             Telemetry.int_ acc ~key:(string_of_int code) ~value:count)
+           warning_counts
+           (Telemetry.create ())
+       in
+       telemetry
+       |> Telemetry.object_
+            ~key:"warning_counts_by_code"
+            ~value:warning_counts_telemetry);
   ( env,
     {
       CheckStats.reparse_count;

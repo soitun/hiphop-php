@@ -1016,6 +1016,18 @@ let warning_count : t -> int =
   Relative_path.Map.fold errors ~init:0 ~f:(fun _path errors count ->
       count + per_file_warning_count ~drop_fixmed:true errors)
 
+let warning_counts_by_code : t -> int IMap.t =
+ fun errors ->
+  let errors = drop_fixmed_errors_in_files errors in
+  Relative_path.Map.fold errors ~init:IMap.empty ~f:(fun _path errors acc ->
+      List.fold errors ~init:acc ~f:(fun acc (diag : diagnostic) ->
+          match diag.User_diagnostic.severity with
+          | User_diagnostic.Warning ->
+            let code = diag.User_diagnostic.code in
+            let count = IMap.find_opt code acc |> Option.value ~default:0 in
+            IMap.add code (count + 1) acc
+          | User_diagnostic.Err -> acc))
+
 exception Done of ISet.t
 
 (** This ignores warnings. *)

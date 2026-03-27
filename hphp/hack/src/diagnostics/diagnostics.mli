@@ -217,6 +217,9 @@ val fold_errors :
 (** Get paths that have errors which haven't been HH_FIXME'd. *)
 val get_failed_files : t -> Relative_path.Set.t
 
+(** Count of warnings by error code, excluding fixme'd diagnostics. *)
+val warning_counts_by_code : t -> int IMap.t
+
 val as_telemetry_summary : t -> Telemetry.t
 
 (** Get a [Telemetry.t] representation of errors.
