@@ -1446,9 +1446,10 @@ void fullDCE(IRUnit& unit) {
             rcInsts[srcCanonicalInst].passthroughs.emplace_back(inst);
             break;
           default:
-            if (inst->isPassthrough()) {
-              // keep track of passthroughs since if this source
-              // instruction is killed later, passthroughs die too
+            if (inst->isPassthrough() && canDCE(*inst)) {
+              // Only DCEable passthroughs can be killed along with their
+              // source. Non-DCEable passthroughs (for example CheckType) are
+              // real uses and must keep the source alive.
               rcInsts[srcCanonicalInst].passthroughs.emplace_back(inst);
             }
         }
