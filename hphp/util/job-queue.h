@@ -369,16 +369,11 @@ struct JobQueue<TJob,true,Policy> : JobQueue<TJob,false,Policy> {
                                 dropStack,
                                 lifoSwitchThreshold,
                                 maxJobQueuing,
-                                numPriorities) {
-    pthread_cond_init(&m_cond, nullptr);
-  }
-  ~JobQueue() override {
-    pthread_cond_destroy(&m_cond);
-  }
+                                numPriorities) {}
   void waitEmpty() {
     Lock lock(this);
     while (this->getActiveWorker() || this->getQueuedJobs()) {
-      pthread_cond_wait(&m_cond, &this->getMutex().getRaw());
+      m_cond.wait(this->getMutex());
     }
   }
   bool pollEmpty() {
@@ -386,10 +381,10 @@ struct JobQueue<TJob,true,Policy> : JobQueue<TJob,false,Policy> {
     return !(this->getActiveWorker() || this->getQueuedJobs());
   }
   void signalEmpty() {
-    pthread_cond_signal(&m_cond);
+    m_cond.notify_one();
   }
 private:
-  pthread_cond_t m_cond;
+  std::condition_variable_any m_cond;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

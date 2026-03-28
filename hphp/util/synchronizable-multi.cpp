@@ -18,9 +18,6 @@
 #include "hphp/util/lock.h"
 #include "hphp/util/rank.h"
 
-#include <sys/errno.h>
-#include <time.h>
-
 namespace HPHP {
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -45,25 +42,17 @@ bool SynchronizableMulti::waitImpl(
 
   cond_list.push(cond, pri);
 
-  int ret;
   if (timeout) {
-    struct timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);
-    static_assert(sizeof(ts.tv_nsec) == 8);
-    ts.tv_nsec += timeout->count();
-    ts.tv_sec += ts.tv_nsec / 1000000000L;
-    ts.tv_nsec %= 1000000000L;
-    ret = pthread_cond_timedwait(cond, &m_mutex.getRaw(), &ts);
+    auto status = cond.m_cond.wait_for(m_mutex, *timeout);
+    if (status == std::cv_status::timeout) {
+      cond.unlink();
+      return false;
+    }
   } else {
-    ret = pthread_cond_wait(cond, &m_mutex.getRaw());
-  }
-  assert(ret != EPERM); // did you lock the mutex?
-
-  if (ret) {
-    cond.unlink();
+    cond.m_cond.wait(m_mutex);
   }
 
-  return ret != ETIMEDOUT;
+  return true;
 }
 
 void SynchronizableMulti::wait(int id, int q, Priority pri) {
@@ -86,7 +75,7 @@ void SynchronizableMulti::setNumGroups(int num_groups) {
 void SynchronizableMulti::notifySpecific(int id) {
   assert(id >= 0 && id < m_conds.size());
   auto& cond = m_conds[id];
-  pthread_cond_signal(cond);
+  cond.m_cond.notify_one();
   cond.unlink();
 }
 
@@ -96,8 +85,7 @@ void SynchronizableMulti::notify() {
     auto& cond_list = m_cond_list_vec[m_group++];
     if (m_group == s) m_group = 0;
     if (!cond_list.empty()) {
-      auto& cond = cond_list.front();
-      pthread_cond_signal(cond);
+      cond_list.front().m_cond.notify_one();
       cond_list.pop_front();
       break;
     }
@@ -107,7 +95,7 @@ void SynchronizableMulti::notify() {
 void SynchronizableMulti::notifyAll() {
   for (auto& cond_list : m_cond_list_vec) {
     while (!cond_list.empty()) {
-      pthread_cond_signal(cond_list.front());
+      cond_list.front().m_cond.notify_one();
       cond_list.pop_front();
     }
   }

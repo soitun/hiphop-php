@@ -19,10 +19,9 @@
 #include "hphp/util/mutex.h"
 
 #include <chrono>
+#include <condition_variable>
 #include <optional>
 #include <vector>
-
-#include <pthread.h>
 #include <folly/IntrusiveList.h>
 
 namespace HPHP {
@@ -66,18 +65,9 @@ struct SynchronizableMulti {
   int m_group;
 
   struct alignas(64) CondVarNode {
-    pthread_cond_t m_cond;
+    std::condition_variable_any m_cond;
     folly::IntrusiveListHook m_listHook;
 
-    CondVarNode() {
-      pthread_cond_init(&m_cond, nullptr);
-    }
-    ~CondVarNode() {
-      pthread_cond_destroy(&m_cond);
-    }
-    /* implicit */ operator pthread_cond_t*() {
-      return &m_cond;
-    }
     void unlink() {
       if (m_listHook.is_linked()) m_listHook.unlink();
     }
