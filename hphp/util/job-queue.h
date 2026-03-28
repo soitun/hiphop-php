@@ -244,7 +244,7 @@ public:
         // the thread immediately to reduce resource pressure.
         if (!ableToDequeue ||
             !wait(id, q, (highPri ? Priority::Highest : Priority::Normal),
-                  m_dropCacheTimeout)) {
+                  std::chrono::steady_clock::now() + m_dropCacheTimeout)) {
           // since we timed out, maybe we can turn idle without holding memory
           if (m_jobCount == 0 || !ableToDequeue) {
             ScopedUnlock unlock(this);
@@ -316,12 +316,12 @@ public:
     Lock lock(this);
     while (!m_stopped) {
       auto const now = std::chrono::steady_clock::now();
-      auto waitTime = m_maxJobQueuing;
+      auto deadline = now + m_maxJobQueuing;
 
       for (auto& jobs : boost::adaptors::reverse(m_jobQueues)) {
         if (!jobs.empty()) {
-          auto const queuedTime = now - jobs.front().second;
-          if (queuedTime > m_maxJobQueuing) {
+          auto const expiry = jobs.front().second + m_maxJobQueuing;
+          if (now >= expiry) {
             if (inc) incActiveWorker();
             --m_jobCount;
 
@@ -330,11 +330,10 @@ public:
             return job;
           }
           // oldest job hasn't expired yet. wake us up when it will.
-          auto const waitTimeForQueue = m_maxJobQueuing - queuedTime;
-          waitTime = std::min(waitTime, waitTimeForQueue);
+          deadline = std::min(deadline, expiry);
         }
       }
-      if (wait(id, q, Priority::Low, waitTime)) {
+      if (wait(id, q, Priority::Low, deadline)) {
         // We got woken up by somebody calling notify (as opposed to timeout),
         // then some work might be on the queue. We only expire things here,
         // so let's notify somebody else as well.

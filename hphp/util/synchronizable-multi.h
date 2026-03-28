@@ -52,7 +52,7 @@ struct SynchronizableMulti {
    */
   void wait(int id, int q, Priority pri);
   bool wait(int id, int q, Priority pri,
-            std::chrono::nanoseconds timeout); // false if timed out
+            std::chrono::steady_clock::time_point deadline); // false if timed out
   void notifySpecific(int id);
   void notify();
   void notifyAll();
@@ -114,7 +114,7 @@ struct SynchronizableMulti {
   std::vector<CondVarList> m_cond_list_vec;
 
   bool waitImpl(int id, int q, Priority pri,
-                std::optional<std::chrono::nanoseconds> timeout);
+                std::optional<std::chrono::steady_clock::time_point> deadline);
 };
 
 ///////////////////////////////////////////////////////////////////////////////

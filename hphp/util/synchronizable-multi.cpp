@@ -29,7 +29,7 @@ SynchronizableMulti::SynchronizableMulti(int size) :
 inline
 bool SynchronizableMulti::waitImpl(
     int id, int q, Priority pri,
-    std::optional<std::chrono::nanoseconds> timeout) {
+    std::optional<std::chrono::steady_clock::time_point> deadline) {
   assert(id >= 0 && id < m_conds.size());
   auto& cond = m_conds[id];
 
@@ -42,8 +42,8 @@ bool SynchronizableMulti::waitImpl(
 
   cond_list.push(cond, pri);
 
-  if (timeout) {
-    auto status = cond.m_cond.wait_for(m_mutex, *timeout);
+  if (deadline) {
+    auto status = cond.m_cond.wait_until(m_mutex, *deadline);
     if (status == std::cv_status::timeout) {
       cond.unlink();
       return false;
@@ -60,8 +60,8 @@ void SynchronizableMulti::wait(int id, int q, Priority pri) {
 }
 
 bool SynchronizableMulti::wait(int id, int q, Priority pri,
-                               std::chrono::nanoseconds timeout) {
-  return waitImpl(id, q, pri, timeout);
+                               std::chrono::steady_clock::time_point deadline) {
+  return waitImpl(id, q, pri, deadline);
 }
 
 void SynchronizableMulti::setNumGroups(int num_groups) {
