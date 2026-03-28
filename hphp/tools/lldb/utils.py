@@ -1001,7 +1001,6 @@ def string_data_val(val: lldb.SBValue, keep_case: bool = True) -> str:
     )
     addr += val.size
     m_len = val.children[1].GetChildMemberWithName("m_len").unsigned
-    # pyre-fixme[6]: For 2nd argument expected `str` but got `int`.
     return read_cstring(addr, m_len + 1, val.process)
 
 
