@@ -1,0 +1,10 @@
+warning: Lint[5656] This is a potential cross-boundary edge from package pkg1 into package pkg2. If this value isn't used to load the class via new $cls(), $cls::meth(), etc, please change this to a nameof expression. Otherwise, move the callee into the caller's package via hg mv, use __RequirePackage (if the whole function should only be invoked from pkg2) or gate this reference via a package check (if this portion of the function is meant to be gated by an environment check). [1]
+
+lint_classptr_07.php--ptr7b.php:10:10
+     8 | class SourceClass7 {
+     9 |   public function test(): void {
+[1] 10 |     $c = TargetClass7::class; // should raise lint 5656
+    11 |   }
+    12 | }
+
+

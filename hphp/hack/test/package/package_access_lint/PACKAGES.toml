@@ -15,6 +15,8 @@ include_paths=[
     "//warning_cc_04.php",
     "//ptr5a.php",
     "//ptr5b.php",
+    "//ptr7a.php",
+    "//ptr7b.php",
 ]
 includes = ["pkg1"]
 

@@ -248,24 +248,37 @@ let check_package_access
       Option.map ~f:(fun p -> p.Package.name) (Env.get_current_package env)
     in
     let current_package_membership = Env.get_current_package_membership env in
-    (match current_package_membership with
-    | Some (Aast_defs.PackageConfigAssignment _) ->
+    let check_classptr_access () =
       let (_, target_package, _) =
         Typing_packages.get_package_profile env target_package_membership
       in
-      (match
-         Typing_packages.can_access_ignoring_package_override
-           ~env
-           ~current_package
-           ~target_package
-           ~target_file:(Pos_or_decl.filename def_pos)
-           ~classptr_reference_warning:true
-       with
+      match
+        Typing_packages.can_access_ignoring_package_override
+          ~env
+          ~current_package
+          ~target_package
+          ~target_file:(Pos_or_decl.filename def_pos)
+          ~classptr_reference_warning:true
+      with
       | `Yes -> Package_access_ok
-      | `YesWarning w -> Package_access_linter_error (use_pos, w))
-    | Some (Aast_defs.PackageOverride _)
-    | None ->
-      Package_access_ok)
+      | `YesWarning w -> Package_access_linter_error (use_pos, w)
+    in
+    (match current_package_membership with
+    | Some (Aast_defs.PackageConfigAssignment _) -> check_classptr_access ()
+    | Some (Aast_defs.PackageOverride (_, current_override_pkg)) ->
+      (* When source has PackageOverride, only warn if target does NOT have
+         PackageOverride to the same package. If target also overrides to the
+         same package, both are effectively in the same package. *)
+      (match target_package_membership with
+      | Some (Aast_defs.PackageOverride (_, target_override_pkg))
+        when String.equal current_override_pkg target_override_pkg ->
+        (* Both override to the same package, no lint needed *)
+        Package_access_ok
+      | _ ->
+        (* Target has no override, or overrides to a different package.
+           Check if source's override package includes target's original package. *)
+        check_classptr_access ())
+    | None -> Package_access_ok)
 
 let is_visible_for_obj ~is_method ~is_receiver_interface env vis =
   let member_ty =
