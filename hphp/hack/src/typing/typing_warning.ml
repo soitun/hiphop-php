@@ -198,6 +198,7 @@ module Uninstantiable_class_via_static = struct
     usage_pos: Pos.t;
     class_name: string;
     decl_pos: Pos_or_decl.t;
+    containing_method_pos: Pos.t option;
   }
 end
 

@@ -187,6 +187,7 @@ let check_instantiation
                        instantiation_pos;
                      class_name = Folded_class.name class_;
                      decl_pos = Folded_class.pos class_;
+                     containing_method_pos = Some env.genv.function_pos;
                    } )
                in
                add_warning env warning)
