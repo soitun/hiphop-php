@@ -542,27 +542,19 @@ let refresh_locals renv =
   let on_error = renv.on_error in
   Local_id.Map.fold
     (fun local
-         Typing_local_types.
-           { ty = lty; defined; pos; eid = _; macro_splice_vars = _ }
+         Typing_local_types.{ ty = lty; pos; eid = _; macro_splice_vars = _ }
          renv ->
-      if defined then
-        let on_error =
-          let pos = Pos_or_decl.of_raw_pos pos in
-          let name = Markdown_lite.md_codify (Local_id.to_string local) in
-          let reason = lazy (pos, "in the type of local " ^ name) in
-          Typing_error.Reasons_callback.append_reason on_error ~reason
-        in
-        let renv = { renv with on_error } in
-        let (renv, lty, changed) = refresh_type renv Ast_defs.Covariant lty in
-        match changed with
-        | Elim _ ->
-          {
-            renv with
-            env = Env.set_local ~is_defined:true renv.env local lty pos;
-          }
-        | Unchanged -> renv
-      else
-        renv)
+      let on_error =
+        let pos = Pos_or_decl.of_raw_pos pos in
+        let name = Markdown_lite.md_codify (Local_id.to_string local) in
+        let reason = lazy (pos, "in the type of local " ^ name) in
+        Typing_error.Reasons_callback.append_reason on_error ~reason
+      in
+      let renv = { renv with on_error } in
+      let (renv, lty, changed) = refresh_type renv Ast_defs.Covariant lty in
+      match changed with
+      | Elim _ -> { renv with env = Env.set_local renv.env local lty pos }
+      | Unchanged -> renv)
     locals
     renv
 

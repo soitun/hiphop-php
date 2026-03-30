@@ -1204,8 +1204,7 @@ module M = struct
    * that the local currently has, and an expression_id generated from
    * the last assignment to this local.
    *)
-  let set_local
-      ?(immutable = false) ?macro_splice_vars ~is_defined env x new_type pos =
+  let set_local ?(immutable = false) ?macro_splice_vars env x new_type pos =
     let new_type =
       match get_node new_type with
       | Tunion [ty] -> ty
@@ -1227,13 +1226,7 @@ module M = struct
       in
       let local =
         Typing_local_types.
-          {
-            ty = new_type;
-            defined = is_defined;
-            pos;
-            eid = expr_id;
-            macro_splice_vars;
-          }
+          { ty = new_type; pos; eid = expr_id; macro_splice_vars }
       in
       set_local_ env x local
 
@@ -1295,7 +1288,7 @@ module M = struct
         let all_locals =
           LID.Map.fold
             (fun k v acc ->
-              if LID.is_user_denotable k && v.Typing_local_types.defined then
+              if LID.is_user_denotable k then
                 (k, v, None) :: acc
               else
                 acc)
@@ -1341,27 +1334,20 @@ module M = struct
         Typing_local_types.
           {
             ty = Typing_make_type.nothing Reason.none;
-            defined = false;
             pos = Pos.none;
             eid = make_expression_id env;
             macro_splice_vars = None;
           }
     | Some ctx ->
       let lcl = LID.Map.find_opt x ctx.LEnvC.local_types in
-      let error () =
-        if not_found_is_ok x ctx then
-          ()
-        else
-          undefined_err_fun x ctx
-      in
       begin
         match lcl with
-        | None -> error ()
-        | Some local ->
-          if local.Typing_local_types.defined then
+        | None ->
+          if not_found_is_ok x ctx then
             ()
           else
-            error ()
+            undefined_err_fun x ctx
+        | Some _ -> ()
       end;
       lcl
 
@@ -1372,20 +1358,11 @@ module M = struct
         Typing_local_types.
           {
             ty = Typing_make_type.nothing Reason.none;
-            defined = false;
             pos = Pos.none;
             eid = make_expression_id env;
             macro_splice_vars = None;
           } )
-    | Some local ->
-      let open Typing_local_types in
-      let ty =
-        if local.defined then
-          local.ty
-        else
-          Typing_make_type.nothing Reason.none
-      in
-      (true, { local with ty })
+    | Some local -> (true, local)
 
   let get_local_in_next_continuation ?error_if_undef_at_pos:p env x =
     let undefined_err_fun = local_undefined_error ~env p in
@@ -1416,9 +1393,7 @@ module M = struct
   let set_locals env locals =
     LID.Map.fold (fun lid ty env -> set_local_ env lid ty) locals env
 
-  (* If the local is present in the local environment. It might be defined, or
-     it might have a bound (or both). *)
-  let is_local_present env x =
+  let is_local_defined env x =
     let next_cont = next_cont_opt env in
     Option.is_some next_cont && fst (get_local_ env x)
 
@@ -1432,9 +1407,9 @@ module M = struct
     | Some next_cont -> begin
       let open Typing_local_types in
       match LID.Map.find_opt x next_cont.LEnvC.local_types with
-      | Some Typing_local_types.{ ty; defined; pos; eid; macro_splice_vars }
+      | Some Typing_local_types.{ ty; pos; eid; macro_splice_vars }
         when not (Expression_id.equal eid new_eid) ->
-        let local = { ty; defined; pos; eid = new_eid; macro_splice_vars } in
+        let local = { ty; pos; eid = new_eid; macro_splice_vars } in
         let per_cont_env = LEnvC.add_to_cont C.Next x local per_cont_env in
         let env = { env with lenv = { env.lenv with per_cont_env } } in
         if Expression_id.is_immutable eid then
@@ -2148,7 +2123,6 @@ module M = struct
                 Typing_local_types.
                   {
                     ty;
-                    defined = true;
                     pos;
                     eid = Expression_id.make env.expression_id_provider;
                     macro_splice_vars = None;

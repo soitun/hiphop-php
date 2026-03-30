@@ -401,7 +401,6 @@ val all_continuations : env -> Typing_continuations.t list
 val set_local :
   ?immutable:bool ->
   ?macro_splice_vars:(Pos.t * Typing_defs.locl_ty) Local_id.Map.t ->
-  is_defined:bool ->
   env ->
   Local_id.t ->
   locl_ty ->
@@ -427,7 +426,7 @@ val set_fake_members : env -> Typing_fake_members.t -> env
 
 val set_loaded_packages : env -> Typing_local_packages.t -> env
 
-val is_local_present : env -> Local_id.t -> bool
+val is_local_defined : env -> Local_id.t -> bool
 
 val get_local_check_defined : env -> Aast.lid -> Typing_local_types.local
 

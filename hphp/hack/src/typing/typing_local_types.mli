@@ -9,8 +9,6 @@
 
 type local = {
   ty: Typing_defs.locl_ty;  (** The type of the local *)
-  defined: bool;
-      (** True if the variable is definitely defined. False if it might not be. *)
   pos: Pos.t;  (** The position at which the variable got its type. *)
   eid: Expression_id.t;
       (** Along with a type, each local variable has a expression id associated with

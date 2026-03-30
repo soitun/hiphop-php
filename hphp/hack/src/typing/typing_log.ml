@@ -385,9 +385,7 @@ let continuations_map_as_value f m =
        SMap.empty)
 
 let local_as_value
-    env
-    Typing_local_types.{ ty; defined = _; pos = _; eid; macro_splice_vars = _ }
-    =
+    env Typing_local_types.{ ty; pos = _; eid; macro_splice_vars = _ } =
   Atom
     (Printf.sprintf
        "%s [expr_id=%s]"

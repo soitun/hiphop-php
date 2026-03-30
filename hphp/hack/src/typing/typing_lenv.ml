@@ -31,7 +31,6 @@ let union
     Typing_local_types.
       {
         ty = ty1;
-        defined = defined1;
         pos = pos1;
         eid = eid1;
         macro_splice_vars = macro_splice_vars1;
@@ -39,7 +38,6 @@ let union
     Typing_local_types.
       {
         ty = ty2;
-        defined = defined2;
         pos = pos2;
         eid = eid2;
         macro_splice_vars = macro_splice_vars2;
@@ -81,8 +79,7 @@ let union
       in
       (env, Some map)
   in
-  Typing_local_types.
-    (env, { ty; defined = defined1 && defined2; pos; eid; macro_splice_vars })
+  Typing_local_types.(env, { ty; pos; eid; macro_splice_vars })
 
 let get_cont_option env cont =
   let local_types = get_all_locals env in

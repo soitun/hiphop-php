@@ -59,7 +59,7 @@ let method_dynamically_callable env cls m params_decl_ty return =
           (Reason.support_dynamic_type Pos_or_decl.none)
           [this_local.Typing_local_types.ty; make_dynamic Pos_or_decl.none]
       in
-      Env.set_local ~is_defined:true env this this_ty Pos.none
+      Env.set_local env this this_ty Pos.none
     else
       env
   in
@@ -209,12 +209,7 @@ let method_def ~is_disposable env cls m =
   let env =
     match Env.get_self_ty env with
     | Some ty when not (Env.is_static env) ->
-      Env.set_local
-        ~is_defined:true
-        env
-        this
-        (MakeType.this (get_reason ty))
-        Pos.none
+      Env.set_local env this (MakeType.this (get_reason ty)) Pos.none
     | _ -> env
   in
   let env =

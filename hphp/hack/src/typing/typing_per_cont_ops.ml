@@ -33,10 +33,8 @@ let union union_types env context1 context2 =
           let (env, ty) = union_types !env_ref ty1 ty2 in
           env_ref := env;
           Some ty
-        | (Some local, None)
-        | (None, Some local) ->
-          Some { local with Typing_local_types.defined = false }
-        | (None, None) -> None)
+        | _ -> None)
+      (* TODO: we could do better here in case only in one side. *)
       context1.local_types
       context2.local_types
   in
@@ -72,26 +70,11 @@ let is_sub_entry is_subtype env ctx1 ctx2 =
   LMap.for_all2
     ~f:(fun _k tyopt1 tyopt2 ->
       match (tyopt1, tyopt2) with
-      | (None, None) -> true
-      | (Some _, None) -> true
+      | (_, None) -> true
       | (None, Some _) -> false
-      | ( Some
-            {
-              ty = ty1;
-              defined = defined1;
-              pos = _;
-              eid = _;
-              macro_splice_vars = _;
-            },
-          Some
-            {
-              ty = ty2;
-              defined = defined2;
-              pos = _;
-              eid = _;
-              macro_splice_vars = _;
-            } ) ->
-        (not defined2) || (defined1 && is_subtype env ty1 ty2))
+      | ( Some { ty = ty1; pos = _; eid = _; macro_splice_vars = _ },
+          Some { ty = ty2; pos = _; eid = _; macro_splice_vars = _ } ) ->
+        is_subtype env ty1 ty2)
     ctx1.local_types
     ctx2.local_types
   && Typing_fake_members.sub ctx1.fake_members ctx2.fake_members
