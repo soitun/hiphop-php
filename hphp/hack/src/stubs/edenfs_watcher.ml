@@ -10,9 +10,7 @@ open Hh_prelude
 
 type clock = string [@@deriving show, eq]
 
-type instance_handle_ffi
-
-type instance = { handle: instance_handle_ffi }
+type instance = unit
 
 type edenfs_watcher_error = Edenfs_watcher_types.edenfs_watcher_error
 [@@deriving show]
@@ -40,4 +38,9 @@ let get_all_files (_instance : instance) :
 
 module Standalone = struct
   let get_changes_since _settings _clock = failwith "not implemented"
+end
+
+module Mocking = struct
+  let get_changes_async_returns (_ : Edenfs_watcher_types.changes list) =
+    failwith "not implemented"
 end

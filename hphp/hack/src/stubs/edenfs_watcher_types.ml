@@ -43,3 +43,58 @@ type edenfs_watcher_error =
         The string is just a description of what happened. *)
   | NonEdenWWW  (** The root directory is not inside an EdenFS mount. *)
 [@@deriving show]
+
+module type Edenfs_watcher_sig = sig
+  type clock
+
+  val pp_clock : Format.formatter -> clock -> unit
+
+  val show_clock : clock -> string
+
+  val equal_clock : clock -> clock -> bool
+
+  type edenfs_watcher_error
+
+  val pp_edenfs_watcher_error : Format.formatter -> edenfs_watcher_error -> unit
+
+  val show_edenfs_watcher_error : edenfs_watcher_error -> string
+
+  type changes
+
+  val pp_changes : Format.formatter -> changes -> unit
+
+  val show_changes : changes -> string
+
+  type instance
+
+  val init : settings -> (instance * clock, edenfs_watcher_error) result
+
+  val get_changes_sync :
+    instance ->
+    (changes list * clock * Telemetry.t option, edenfs_watcher_error) result
+
+  val get_changes_async :
+    instance ->
+    (changes list * clock * Telemetry.t option, edenfs_watcher_error) result
+
+  val get_notification_fd :
+    instance -> (Caml_unix.file_descr, edenfs_watcher_error) result
+
+  val get_all_files :
+    instance -> (string list * Telemetry.t option, edenfs_watcher_error) result
+
+  module Standalone : sig
+    val get_changes_since :
+      settings ->
+      clock ->
+      (changes list * clock * Telemetry.t option, edenfs_watcher_error) result
+  end
+
+  module Mocking : sig
+    val init_returns : (instance * clock, edenfs_watcher_error) result -> unit
+
+    val get_changes_sync_returns :
+      (changes list * clock * Telemetry.t option, edenfs_watcher_error) result ->
+      unit
+  end
+end
