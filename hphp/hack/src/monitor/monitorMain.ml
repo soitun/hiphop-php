@@ -898,52 +898,7 @@ let update_status (env : env msg_update) monitor_config : env msg_update =
   end;
   msg_update
 
-let rec check_and_run_loop
-    ?(consecutive_throws = 0)
-    (env : env msg_update)
-    monitor_config
-    (socket : Unix.file_descr) : 'a =
-  let (env, consecutive_throws) =
-    try (check_and_run_loop_ env monitor_config socket, 0) with
-    | Unix.Unix_error (Unix.ECHILD, _, _) as exn ->
-      let e = Exception.wrap exn in
-      ignore
-        (Hh_logger.log
-           "check_and_run_loop_ threw with Unix.ECHILD. Exiting. - %s"
-           (Exception.get_backtrace_string e));
-      Exit.exit Exit_status.No_server_running_should_retry
-    | Watchman.Watchman_restarted ->
-      Exit.exit Exit_status.Watchman_fresh_instance
-    | Exit_status.Exit_with _ as exn ->
-      let e = Exception.wrap exn in
-      Exception.reraise e
-    | exn ->
-      let e = Exception.wrap exn in
-      if consecutive_throws > 500 then (
-        Hh_logger.log "Too many consecutive exceptions.";
-        Hh_logger.log
-          "Probably an uncaught exception rethrown each retry. Exiting. %s"
-          (Exception.to_string e);
-        HackEventLogger.monitor_giving_up_exception e;
-        Exit.exit (Exit_status.Uncaught_exception e)
-      );
-      Hh_logger.log
-        "check_and_run_loop_ threw with exception: %s"
-        (Exception.to_string e);
-      (env, consecutive_throws + 1)
-  in
-  let env =
-    match env with
-    | Error (e, msg) ->
-      Hh_logger.log
-        "Encountered error in check_and_run_loop: %s, starting new loop"
-        msg;
-      Ok e
-    | Ok e -> Ok e
-  in
-  check_and_run_loop ~consecutive_throws env monitor_config socket
-
-and check_and_run_loop_
+let check_and_run_loop_
     (env : env msg_update) monitor_config (socket : Unix.file_descr) :
     env msg_update =
   (* WARNING! Don't use the (slow) HackEventLogger here, in the inner loop non-failure path. *)
@@ -1011,6 +966,51 @@ and check_and_run_loop_
       Hh_logger.log "%s" msg;
       ensure_fd_closed fd;
       env >>= fun env -> Error (env, msg)
+
+let rec check_and_run_loop
+    ?(consecutive_throws = 0)
+    (env : env msg_update)
+    monitor_config
+    (socket : Unix.file_descr) : 'a =
+  let (env, consecutive_throws) =
+    try (check_and_run_loop_ env monitor_config socket, 0) with
+    | Unix.Unix_error (Unix.ECHILD, _, _) as exn ->
+      let e = Exception.wrap exn in
+      ignore
+        (Hh_logger.log
+           "check_and_run_loop_ threw with Unix.ECHILD. Exiting. - %s"
+           (Exception.get_backtrace_string e));
+      Exit.exit Exit_status.No_server_running_should_retry
+    | Watchman.Watchman_restarted ->
+      Exit.exit Exit_status.Watchman_fresh_instance
+    | Exit_status.Exit_with _ as exn ->
+      let e = Exception.wrap exn in
+      Exception.reraise e
+    | exn ->
+      let e = Exception.wrap exn in
+      if consecutive_throws > 500 then (
+        Hh_logger.log "Too many consecutive exceptions.";
+        Hh_logger.log
+          "Probably an uncaught exception rethrown each retry. Exiting. %s"
+          (Exception.to_string e);
+        HackEventLogger.monitor_giving_up_exception e;
+        Exit.exit (Exit_status.Uncaught_exception e)
+      );
+      Hh_logger.log
+        "check_and_run_loop_ threw with exception: %s"
+        (Exception.to_string e);
+      (env, consecutive_throws + 1)
+  in
+  let env =
+    match env with
+    | Error (e, msg) ->
+      Hh_logger.log
+        "Encountered error in check_and_run_loop: %s, starting new loop"
+        msg;
+      Ok e
+    | Ok e -> Ok e
+  in
+  check_and_run_loop ~consecutive_throws env monitor_config socket
 
 let check_and_run_loop_once (env, monitor_config, socket) =
   let env = check_and_run_loop_ (Ok env) monitor_config socket in
