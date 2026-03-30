@@ -240,7 +240,6 @@ end = struct
                   td_type_assignment = SimpleTypeDef (Aast.Opaque, td_type);
                   td_pos;
                   td_as_constraint;
-                  td_tparams;
                   _;
                 }) ->
             let transparent =
@@ -255,12 +254,7 @@ end = struct
                 (SSet.add name visited)
                 td_type
             in
-            if not (Int.equal (List.length td_tparams) (List.length tyl)) then
-              (* If there is an arity error then assume enforced because this is
-                 * used to fake a Tany at localization time
-              *)
-              Enforced td_type
-            else if transparent then
+            if transparent then
               (* When transparent, look through to the RHS. But if the RHS
                * resolves to an opaque type (PRopaque), don't expose its
                * enforcement - that would leak the inner type's constraint
