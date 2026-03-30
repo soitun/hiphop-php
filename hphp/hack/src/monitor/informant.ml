@@ -8,6 +8,7 @@
  *)
 
 open Hh_prelude
+open InformantNotifier
 
 type report =
   | Move_along  (** Nothing to see here. *)
@@ -121,16 +122,10 @@ end
 module Revision_tracker = struct
   type timestamp = float
 
-  type repo_transition =
-    | State_enter of Hg.Rev.t
-    | State_leave of Hg.Rev.t
-    | Changed_merge_base of Hg.Rev.t * Watchman.clock
-  [@@deriving show]
-
-  let _ = show_repo_transition (* allow unused show *)
+  type repo_transition = InformantNotifier.repo_transition
 
   type init_settings = {
-    watchman: Watchman.watchman_instance ref;
+    notifier: InformantNotifier.t;
     root: Path.t;
     min_distance_restart: int;
     is_saved_state_precomputed: bool;
@@ -180,14 +175,9 @@ module Revision_tracker = struct
   let is_hg_updating env =
     !(env.is_in_hg_update_state) || !(env.is_in_hg_transaction_state)
 
-  let init ~min_distance_restart ~is_saved_state_precomputed watchman root =
+  let init ~min_distance_restart ~is_saved_state_precomputed notifier root =
     let init_settings =
-      {
-        watchman = ref watchman;
-        root;
-        min_distance_restart;
-        is_saved_state_precomputed;
-      }
+      { notifier; root; min_distance_restart; is_saved_state_precomputed }
     in
     ref
     @@ Initializing
@@ -350,44 +340,6 @@ module Revision_tracker = struct
       in
       List.fold_left ~f:select_relevant ~init:Move_along decisions
 
-  let get_change env =
-    let (watchman, change) = Watchman.get_changes !(env.inits.watchman) in
-    env.inits.watchman := watchman;
-    match change with
-    | Watchman.Watchman_unavailable
-    | Watchman.Watchman_synchronous _ ->
-      None
-    | Watchman.Watchman_pushed
-        (Watchman.Changed_merge_base (rev, _files, clock)) ->
-      let () = Hh_logger.log "Changed_merge_base: %s" (Hg.Rev.to_string rev) in
-      Some (Changed_merge_base (rev, clock))
-    | Watchman.Watchman_pushed (Watchman.State_enter (state, json))
-      when String.equal state "hg.update" ->
-      env.is_in_hg_update_state := true;
-      Option.(
-        json >>= Watchman_utils.rev_in_state_change >>= fun hg_rev ->
-        Hh_logger.log "State_enter: %s" (Hg.Rev.to_string hg_rev);
-        Some (State_enter hg_rev))
-    | Watchman.Watchman_pushed (Watchman.State_leave (state, json))
-      when String.equal state "hg.update" ->
-      env.is_in_hg_update_state := false;
-      Option.(
-        json >>= Watchman_utils.rev_in_state_change >>= fun hg_rev ->
-        Hh_logger.log "State_leave: %s" (Hg.Rev.to_string hg_rev);
-        Some (State_leave hg_rev))
-    | Watchman.Watchman_pushed (Watchman.State_enter (state, _))
-      when String.equal state "hg.transaction" ->
-      env.is_in_hg_transaction_state := true;
-      None
-    | Watchman.Watchman_pushed (Watchman.State_leave (state, _))
-      when String.equal state "hg.transaction" ->
-      env.is_in_hg_transaction_state := false;
-      None
-    | Watchman.Watchman_pushed (Watchman.Files_changed _)
-    | Watchman.Watchman_pushed (Watchman.State_enter _)
-    | Watchman.Watchman_pushed (Watchman.State_leave _) ->
-      None
-
   let preprocess server_state transition env =
     make_decision (Unix.time ()) transition server_state env
 
@@ -404,11 +356,6 @@ module Revision_tracker = struct
     in
     churn_changes server_state env
 
-  let has_more_watchman_messages env =
-    match Watchman.get_reader !(env.inits.watchman) with
-    | None -> false
-    | Some reader -> Buffered_line_reader.is_readable reader
-
   (**
    * This must be a non-blocking call, so it creates Futures and consumes ready
    * Futures.
@@ -424,7 +371,12 @@ module Revision_tracker = struct
    *      queue of pending changes.
    * *)
   let process_once server_state env =
-    let change = get_change env in
+    let change =
+      InformantNotifier.get_change
+        env.inits.notifier
+        ~is_in_hg_update_state:env.is_in_hg_update_state
+        ~is_in_hg_transaction_state:env.is_in_hg_transaction_state
+    in
     let early_decision =
       match change with
       | None -> None
@@ -458,9 +410,11 @@ module Revision_tracker = struct
         handle_change_then_churn server_state change env
     in
     (* All the cases that `(change <> None)` cover should be also covered by
-     * has_more_watchman_messages, but this alternate method of pumping messages
+     * InformantNotifier.has_more_messages, but this alternate method of pumping messages
      * is heavily used in tests *)
-    (report, has_more_watchman_messages env || Option.is_some change)
+    ( report,
+      InformantNotifier.has_more_messages env.inits.notifier
+      || Option.is_some change )
 
   let rec process (server_state, env, reports_acc) =
     (* Sometimes Watchman pushes many file changes as many sequential
@@ -468,9 +422,9 @@ module Revision_tracker = struct
      * only called once per tick, we don't want to take many ticks
      * to consume this queue of notifications. So instead we repeatedly consume
      * the Watchman pipe here until it has no more changes. *)
-    let (report, had_watchman_changes) = process_once server_state env in
+    let (report, had_notifier_changes) = process_once server_state env in
     let reports_acc = report :: reports_acc in
-    if had_watchman_changes then
+    if had_notifier_changes then
       process (server_state, env, reports_acc)
     else
       reports_acc
@@ -593,40 +547,22 @@ let init
     let () = Printf.eprintf "Not using subscriptions - Informant resigning\n" in
     Resigned
   else
-    let watchman =
-      (* The informant is only interested in hg state changes and Changed_merge_base notifications,
-         but not actual files.
-         Therefore, we use an expression term for our subscription that matches no files. *)
-      let expression_terms =
-        [Hh_json_helpers.AdhocJsonHelpers.strlist ["false"]]
-      in
-      Watchman.init
-        {
-          Watchman.subscribe_mode = Some Watchman.Scm_aware;
-          init_timeout = Watchman.Explicit_timeout 30.;
-          expression_terms;
-          debug_logging = watchman_debug_logging;
-          (* Should also take an arg *)
-          sockname = None;
-          subscription_prefix = "hh_informant_watcher";
-          roots = [root];
-        }
-        ()
-    in
-    match watchman with
+    let notifier = InformantNotifier.init ~watchman_debug_logging root in
+    match notifier with
     | None ->
       let () =
-        Printf.eprintf "Watchman failed to init - Informant resigning\n"
+        Printf.eprintf
+          "InformantNotifier failed to init - Informant resigning\n"
       in
       Resigned
-    | Some watchman_env ->
+    | Some notifier ->
       Active
         {
           revision_tracker =
             Revision_tracker.init
               ~min_distance_restart
               ~is_saved_state_precomputed
-              (Watchman.Watchman_alive watchman_env)
+              notifier
               root;
           watchman_event_watcher = WatchmanEventWatcherClient.init root;
         }
