@@ -29,6 +29,7 @@ type options = {
   use_dummy: bool;
   min_distance_restart: int;
   watchman_debug_logging: bool;
+  use_eden: bool;
   ignore_hh_version: bool;
   is_saved_state_precomputed: bool;
 }
@@ -83,7 +84,7 @@ end
  * the corresponding global revisions of Hg revisions, and the sequence of
  * revision changes (from hg update). See record type "env" below.
  *
- * This machinery is necessary because Watchman state change events give
+ * This machinery is necessary because InformantNotifier events give
  * us only the HG Revisions of hg updates, but we need to make decisions
  * on their global Revision numbers.
  *
@@ -111,13 +112,15 @@ end
  * 100 result, the restart would be delayed by seconds. With a cache, the
  * restart is triggered immediately.
  *
- * We use an SCM Aware Watchman subscription to follow when the merge base
- * changes. We use State Enter and Leave events (which appear before the
- * slower SCM Aware notification) to kick off asynchronous computation. In
- * particular, we kick off prefetching of a saved state, and shelling out
- * to mercurial for mapping the HG Revision to its corresponding global revision
- * (since our "distance" measure uses global_revs which are
- * monotonically increasing)..
+ * When using Watchman, we use an SCM Aware Watchman subscription to follow
+ * when the merge base changes. We use State Enter and Leave events (which
+ * appear before the slower SCM Aware notification) to kick off asynchronous
+ * computation. In particular, we kick off shelling out to mercurial for
+ * mapping the HG Revision to its corresponding global revision (since our
+ * "distance" measure uses global_revs which are monotonically increasing).
+ * When using Eden, we get notified every time we change commits in the repo
+ * (not just merge base changes), and kick off the same globalrev computations.
+ * If we just move around in our stack, the globalrev remains unchanged.
  *)
 module Revision_tracker = struct
   type timestamp = float
@@ -144,7 +147,7 @@ module Revision_tracker = struct
      * Timestamp and HG revision of state change events.
      *
      * Why do we keep the entire sequence? It seems like it would be sufficient
-     * to just consume from the Watchman subscription one-at-a-time,
+     * to just consume from the file watcher subscription one-at-a-time,
      * processing at most one state change at a time. But consider the case
      * of many sequential hg updates, the last of which is very distant
      * (i.e. significant), and we happen to have a cached value only for
@@ -156,7 +159,7 @@ module Revision_tracker = struct
      * seconds).
      *
      * By keeping a running queue of state changes and "preprocessing" new
-     * changes from the watchman subscription (before appending them to this
+     * changes from the file watcher subscription (before appending them to this
      * queue), we can catch that final hg update early on and proactively
      * trigger a server restart.
      *)
@@ -252,7 +255,8 @@ module Revision_tracker = struct
        * computations off the hg revisions when they arrive (during preprocess)
        * But actual actions are taken only on changed_merge_base below. *)
       Move_along
-    | (true, Changed_merge_base _, _) ->
+    | (true, Changed_merge_base _, _)
+    | (true, Changed_commit _, _) ->
       (* If the current server was started using a precomputed saved-state,
        * we don't want to relaunch the server. If we do, it'll reuse
        * the previously used saved-state for the new mergebase and more
@@ -276,7 +280,8 @@ module Revision_tracker = struct
       match transition with
       | State_enter hg_rev
       | State_leave hg_rev
-      | Changed_merge_base hg_rev ->
+      | Changed_merge_base hg_rev
+      | Changed_commit hg_rev ->
         hg_rev
     in
     match Revision_map.find_global_rev hg_rev env.rev_map with
@@ -306,7 +311,9 @@ module Revision_tracker = struct
       | State_enter _
       | State_leave _ ->
         ()
-      | Changed_merge_base _ -> set_base_revision global_rev env
+      | Changed_merge_base _
+      | Changed_commit _ ->
+        set_base_revision global_rev env
     in
     if Queue.is_empty env.state_changes then
       acc
@@ -351,7 +358,7 @@ module Revision_tracker = struct
         Queue.enqueue env.state_changes (State_enter hg_rev, Unix.time ())
       | Some (State_leave hg_rev) ->
         Queue.enqueue env.state_changes (State_leave hg_rev, Unix.time ())
-      | Some (Changed_merge_base _ as change) ->
+      | Some ((Changed_merge_base _ | Changed_commit _) as change) ->
         Queue.enqueue env.state_changes (change, Unix.time ())
     in
     churn_changes server_state env
@@ -361,7 +368,7 @@ module Revision_tracker = struct
    * Futures.
    *
    * The steps are:
-   *   1) Get state change event from Watchman.
+   *   1) Get state change event from InformantNotifier (= file watcher).
    *   3) Maybe add a needed query
    *      (if we don't already know the global rev for this hg rev)
    *   4) Preprocess new incoming change - this might result in an early
@@ -386,7 +393,7 @@ module Revision_tracker = struct
       | Some (State_leave hg_rev) ->
         let () = Revision_map.add_query ~hg_rev env.inits.root env.rev_map in
         preprocess server_state (State_leave hg_rev) env
-      | Some (Changed_merge_base hg_rev as change) ->
+      | Some ((Changed_merge_base hg_rev | Changed_commit hg_rev) as change) ->
         let () = Revision_map.add_query ~hg_rev env.inits.root env.rev_map in
         preprocess server_state change env
     in
@@ -417,11 +424,11 @@ module Revision_tracker = struct
       || Option.is_some change )
 
   let rec process (server_state, env, reports_acc) =
-    (* Sometimes Watchman pushes many file changes as many sequential
+    (* Sometimes InformantNotifier pushes many file changes as many sequential
      * notifications instead of all at once. Since make_report is
      * only called once per tick, we don't want to take many ticks
      * to consume this queue of notifications. So instead we repeatedly consume
-     * the Watchman pipe here until it has no more changes. *)
+     * the file watcher events until it has no more changes. *)
     let (report, had_notifier_changes) = process_once server_state env in
     let reports_acc = report :: reports_acc in
     if had_notifier_changes then
@@ -524,8 +531,8 @@ type env = {
 type t =
   (* Informant is active. *)
   | Active of env
-  (* We don't run the informant if Watchman fails to initialize,
-   * or if Watchman subscriptions are disabled in the local config,
+  (* We don't run the informant if InformantNotifier fails to initialize,
+   * or if file watcher subscriptions are disabled in the local config,
    * or if the informant is disabled in the hhconfig. *)
   | Resigned
 
@@ -536,6 +543,7 @@ let init
       use_dummy;
       min_distance_restart;
       watchman_debug_logging;
+      use_eden;
       ignore_hh_version = _;
       is_saved_state_precomputed;
     } =
@@ -547,7 +555,9 @@ let init
     let () = Printf.eprintf "Not using subscriptions - Informant resigning\n" in
     Resigned
   else
-    let notifier = InformantNotifier.init ~watchman_debug_logging root in
+    let notifier =
+      InformantNotifier.init ~use_eden ~watchman_debug_logging root
+    in
     match notifier with
     | None ->
       let () =

@@ -37,6 +37,8 @@ type options = {
             revisions we are moving between is less than this. *)
   min_distance_restart: int;
   watchman_debug_logging: bool;
+      (** If true, the informant uses Edenfs_watcher instead of Watchman. *)
+  use_eden: bool;
       (** Informant should ignore the hh_version when doing version checks. *)
   ignore_hh_version: bool;
       (** Was the server initialized with a precomputed saved-state? *)

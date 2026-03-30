@@ -22,12 +22,16 @@ type state_transition =
   | State_leave
   | State_enter
   | Changed_merge_base
+  | Commit_transition
 
-let set_hg_to_global_rev_map ?delay_rev_200 () =
+let set_hg_to_global_rev_map ?delay_rev_5 ?delay_rev_200 () =
   Hg.Mocking.closest_global_ancestor_bind_value hg_rev_1
   @@ Future.of_value global_rev_1;
-  Hg.Mocking.closest_global_ancestor_bind_value hg_rev_5
-  @@ Future.of_value global_rev_5;
+  Hg.Mocking.closest_global_ancestor_bind_value
+    hg_rev_5
+    (match delay_rev_5 with
+    | None -> Future.of_value global_rev_5
+    | Some i -> Future.delayed_value ~delays:i global_rev_5);
   Hg.Mocking.closest_global_ancestor_bind_value
     hg_rev_200
     (match delay_rev_200 with
@@ -48,5 +52,23 @@ let set_next_watchman_state_transition move (hg_rev : Hg.Rev.t) =
     | State_enter -> Watchman.State_enter ("hg.update", Some json)
     | Changed_merge_base ->
       Watchman.Changed_merge_base (hg_rev, SSet.empty, "dummy_clock")
+    | Commit_transition ->
+      failwith "Commit_transition not supported by Watchman-backed Informant"
   in
   Watchman.Mocking.get_changes_returns (Watchman.Watchman_pushed move)
+
+let set_next_eden_state_transitions moves (hg_rev : Hg.Rev.t) =
+  let change_of move =
+    match move with
+    | State_enter -> Edenfs_watcher_types.StateEnter "hg.update"
+    | State_leave -> Edenfs_watcher_types.StateLeave "hg.update"
+    | Changed_merge_base
+    | Commit_transition ->
+      Edenfs_watcher_types.CommitTransition
+        {
+          from_commit = "";
+          to_commit = Hg.Rev.to_string hg_rev;
+          file_changes = [];
+        }
+  in
+  Edenfs_watcher.Mocking.get_changes_async_returns (List.map change_of moves)

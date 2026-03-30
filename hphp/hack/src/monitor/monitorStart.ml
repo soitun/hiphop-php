@@ -36,7 +36,8 @@ let log_monitor_exit (finale_data : Exit_status.finale_data) =
     requests to the typechecker process. *)
 let monitor_daemon_main
     (options : ServerArgs.options) ~(proc_stack : string list) =
-  Folly.ensure_folly_init ();
+  (* This invokes fbinit logic, which subsumes Folly.ensure_folly_init () *)
+  Startup_initializer.init ();
 
   let www_root = ServerArgs.root options in
   Server_progress.set_root www_root;
@@ -130,6 +131,7 @@ let monitor_daemon_main
         use_dummy = local_config.ServerLocalConfig.use_dummy_informant;
         watchman_debug_logging =
           ServerArgs.watchman_debug_logging options || debug_logging;
+        use_eden = local_config.ServerLocalConfig.edenfs_informant_enabled;
         min_distance_restart =
           local_config.ServerLocalConfig.informant_min_distance_restart;
         ignore_hh_version = ServerArgs.ignore_hh_version options;
@@ -174,8 +176,8 @@ let start () =
     Daemon.check_entry_point ();
     (* This allows us to measure cgroups relative to what it was at startup: *)
     CgroupProfiler.get_initial_reading () |> CgroupProfiler.use_initial_reading;
-    (* Yet more initialization: *)
-    Folly.ensure_folly_init ();
+    (* This invokes fbinit logic, which subsumes Folly.ensure_folly_init () *)
+    Startup_initializer.init ();
     let proc_stack = Proc.get_proc_stack (Unix.getpid ()) in
     let options = ServerArgs.parse_options () in
     if ServerArgs.should_detach options then begin

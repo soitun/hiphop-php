@@ -48,6 +48,7 @@ let default =
     shm_cache_size = -1;
     max_workers = None;
     use_dummy_informant = true;
+    edenfs_informant_enabled = false;
     informant_min_distance_restart = 100;
     use_full_fidelity_parser = true;
     interrupt_on_file_changes = false;
@@ -380,6 +381,13 @@ let load_
     bool_if_min_version
       "use_dummy_informant"
       ~default:default.use_dummy_informant
+      ~current_version
+      config
+  in
+  let edenfs_informant_enabled =
+    bool_if_min_version
+      "edenfs_informant_enabled"
+      ~default:default.edenfs_informant_enabled
       ~current_version
       config
   in
@@ -1018,6 +1026,7 @@ let load_
     shm_cache_size;
     max_workers;
     use_dummy_informant;
+    edenfs_informant_enabled;
     informant_min_distance_restart;
     use_full_fidelity_parser;
     interrupt_on_file_changes;
@@ -1177,4 +1186,5 @@ let to_rollout_flags (options : t) : HackEventLogger.rollout_flags =
         options.edenfs_file_watcher.sync_queries_obey_deferral;
       edenfs_file_watcher_state_tracking =
         options.edenfs_file_watcher.state_tracking;
+      edenfs_informant_enabled = options.edenfs_informant_enabled;
     }

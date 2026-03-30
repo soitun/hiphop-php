@@ -240,6 +240,8 @@ type t = {
       If this is set to a negative value, eviction is disabled. *)
   max_workers: int option;
   use_dummy_informant: bool;  (** See Informant. *)
+  edenfs_informant_enabled: bool;
+      (** If true, the Informant uses Edenfs_watcher instead of Watchman *)
   informant_min_distance_restart: int;
   use_full_fidelity_parser: bool;
   interrupt_on_file_changes: bool;

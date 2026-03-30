@@ -7,9 +7,13 @@
  *)
 
 type repo_transition =
-  | State_enter of Hg.Rev.t
-  | State_leave of Hg.Rev.t
+  | State_enter of Hg.Rev.t  (** Watchman only: We have entered hg.update. *)
+  | State_leave of Hg.Rev.t  (** Watchman only: We have left hg.update. *)
   | Changed_merge_base of Hg.Rev.t
+      (** Watchman only: We moved to a different mergebase.*)
+  | Changed_commit of Hg.Rev.t
+      (** Eden only: We moved to a different commit. As a result, the mergebase may
+          or may not have changed. *)
 [@@deriving show]
 
 type t
@@ -26,4 +30,4 @@ val get_change :
     the next call of `get_change` returns `None` *)
 val has_more_messages : t -> bool
 
-val init : watchman_debug_logging:bool -> Path.t -> t option
+val init : use_eden:bool -> watchman_debug_logging:bool -> Path.t -> t option

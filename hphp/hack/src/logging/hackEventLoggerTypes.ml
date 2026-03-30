@@ -134,4 +134,6 @@ type rollout_flags = {
           file changes even when we are currently deferring changes (e.g. because meerkat is running). *)
   edenfs_file_watcher_state_tracking: bool;
       (** POC: @frankemrich - Whether to use Eden's state tracking API *)
+  edenfs_informant_enabled: bool;
+      (** POC: @frankemrich - If true, use Eden backend for InformantNotifier (= file watching in monitor process) *)
 }
