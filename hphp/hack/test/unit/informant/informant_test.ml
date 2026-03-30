@@ -61,7 +61,7 @@ let test_informant_restarts_significant_move temp_dir =
   let informant = basic_setup_rev_5_and_200_and_start_informant temp_dir in
 
   (**** Following tests all have a State_enter followed by a State_leave
-   * and then a Changed_merge_base. *)
+   * and then possibly a Changed_merge_base. *)
 
   (* Move base revisions insignificant distance away. *)
   Tools.test_transition
@@ -147,6 +147,23 @@ let test_informant_restarts_significant_move temp_dir =
     Informant.Server_alive
     Informant.Move_along
     "Changed_merge_base insignificant distance";
+
+  (* Moving to a local commit on top of 200 (same globalrev/merge base).
+     No Changed_merge_base! *)
+  Tools.test_transition
+    informant
+    Tools.State_enter
+    Tools.hg_rev_200_plus_local
+    Informant.Server_alive
+    Informant.Move_along
+    "state enter insignificant distance";
+  Tools.test_transition
+    informant
+    Tools.State_leave
+    Tools.hg_rev_200_plus_local
+    Informant.Server_alive
+    Informant.Move_along
+    "state leave insignificant distance";
 
   (* Moving back to SVN rev 5 (hg_rev_5) restarts. *)
   Tools.test_transition
