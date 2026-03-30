@@ -229,8 +229,6 @@ and ('ex, 'en) stmt_ =
        *     } finally {
        *       baz();
        *     } *)
-  | Declare_local of lid * hint * ('ex, 'en) expr option
-      (** Declare a local variable with the given type and optional initial value *)
   | Block of lid list option * ('ex, 'en) block
       (** Block, a list of statements in curly braces.
        *

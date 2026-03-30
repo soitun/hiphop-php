@@ -9,11 +9,11 @@ File "lvar_expr_dependent5.php", line 21, characters 7-24:
 File "lvar_expr_dependent5.php", line 24, characters 7-24:
   ~<expr#11>::T where <expr#11>::T as C::T
 File "lvar_expr_dependent5.php", line 27, characters 7-24:
-  ~<expr#18>::T where <expr#18>::T as C::T
+  ~<expr#17>::T where <expr#17>::T as C::T
 File "lvar_expr_dependent5.php", line 27, characters 7-24:[2]
   ~<expr#11>::T where <expr#11>::T as C::T
 File "lvar_expr_dependent5.php", line 27, characters 7-24:[3]
-  ~<expr#17>::T where <expr#17>::T as C::T
+  ~<expr#16>::T where <expr#16>::T as C::T
 File "lvar_expr_dependent5.php", line 31, characters 5-22:
-  ~<expr#17>::T where <expr#17>::T as C::T
+  ~<expr#16>::T where <expr#16>::T as C::T
 No errors

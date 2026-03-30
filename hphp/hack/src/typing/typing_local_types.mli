@@ -10,12 +10,7 @@
 type local = {
   ty: Typing_defs.locl_ty;  (** The type of the local *)
   defined: bool;
-      (** True if the variable is definitely defined. False if it might not be.
-        This will happen when there is a typed local declared along some control
-        paths but not others. In this case, using the variable is still an
-        error, but any assigning to it should still follow the bound. *)
-  bound_ty: Typing_defs.locl_ty option;
-      (** The bound on the variable if it is a typed local. *)
+      (** True if the variable is definitely defined. False if it might not be. *)
   pos: Pos.t;  (** The position at which the variable got its type. *)
   eid: Expression_id.t;
       (** Along with a type, each local variable has a expression id associated with

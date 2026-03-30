@@ -73,13 +73,12 @@ let is_sub_entry is_subtype env ctx1 ctx2 =
     ~f:(fun _k tyopt1 tyopt2 ->
       match (tyopt1, tyopt2) with
       | (None, None) -> true
-      | (Some local, None) -> not (Option.is_some local.bound_ty)
+      | (Some _, None) -> true
       | (None, Some _) -> false
       | ( Some
             {
               ty = ty1;
               defined = defined1;
-              bound_ty = _;
               pos = _;
               eid = _;
               macro_splice_vars = _;
@@ -88,7 +87,6 @@ let is_sub_entry is_subtype env ctx1 ctx2 =
             {
               ty = ty2;
               defined = defined2;
-              bound_ty = _;
               pos = _;
               eid = _;
               macro_splice_vars = _;

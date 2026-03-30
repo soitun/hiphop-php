@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<1f3b9a9fd8ac527ef57640bdfa98a66a>>
+// @generated SignedSource<<c1f19be164eb403c4d110753416c1a6d>>
 //
 // To regenerate this file, run:
 //   buck run @fbcode//mode/dev-nosan-lg fbcode//hphp/hack/src:oxidized_regen
@@ -287,9 +287,6 @@ impl Transform for Stmt_ {
             Stmt_::Match(ref mut __binding_0) => __binding_0.transform(env, &mut pass.clone()),
             Stmt_::Foreach(ref mut __binding_0) => __binding_0.transform(env, &mut pass.clone()),
             Stmt_::Try(ref mut __binding_0) => __binding_0.transform(env, &mut pass.clone()),
-            Stmt_::DeclareLocal(ref mut __binding_0) => {
-                __binding_0.transform(env, &mut pass.clone())
-            }
             Stmt_::Block(ref mut __binding_0) => __binding_0.transform(env, &mut pass.clone()),
             _ => {}
         }

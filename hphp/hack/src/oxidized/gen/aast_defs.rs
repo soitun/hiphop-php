@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<193bfeea394b6c23094652f92dc235ed>>
+// @generated SignedSource<<a3578c73c09f22912fd6c9188cb1fd39>>
 //
 // To regenerate this file, run:
 //   buck run @fbcode//mode/dev-nosan-lg fbcode//hphp/hack/src:oxidized_regen
@@ -299,10 +299,6 @@ pub enum Stmt_<Ex, En> {
     ///     }
     #[rust_to_ocaml(inline_tuple)]
     Try(Box<(Block<Ex, En>, Vec<Catch<Ex, En>>, FinallyBlock<Ex, En>)>),
-    /// Declare a local variable with the given type and optional initial value
-    #[rust_to_ocaml(name = "Declare_local")]
-    #[rust_to_ocaml(inline_tuple)]
-    DeclareLocal(Box<(Lid, Hint, Option<Expr<Ex, En>>)>),
     /// Block, a list of statements in curly braces.
     ///
     ///     { $foo = 42; }

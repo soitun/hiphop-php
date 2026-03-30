@@ -245,8 +245,6 @@ module Visitor_DEPRECATED : sig
 
       method on_continue : 'a -> 'a
 
-      method on_declare_local : 'a -> Aast.lid -> hint -> expr option -> 'a
-
       method on_def : 'a -> def -> 'a
 
       method on_default_case : 'a -> default_case -> 'a

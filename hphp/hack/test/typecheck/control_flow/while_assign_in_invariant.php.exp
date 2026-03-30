@@ -61,28 +61,28 @@ Invalid argument (Typing[4110])
   File "while_assign_in_invariant.php", line 21, characters 19-19:
   Expected `E`
   File "while_assign_in_invariant.php", line 28, characters 67-68:
-  But got `?<expr#13> as E`
+  But got `?<expr#12> as E`
 ERROR: File "while_assign_in_invariant.php", line 66, characters 14-15:
 Invalid argument (Typing[4110])
   File "while_assign_in_invariant.php", line 21, characters 19-19:
   Expected `E`
   File "while_assign_in_invariant.php", line 28, characters 67-68:
-  But got `?<expr#6> as E`
+  But got `?<expr#5> as E`
 ERROR: File "while_assign_in_invariant.php", line 78, characters 13-14:
 Invalid argument (Typing[4110])
   File "while_assign_in_invariant.php", line 27, characters 20-21:
   Expected `CE`
   File "while_assign_in_invariant.php", line 28, characters 67-68:
-  But got `?(<expr#23> as E | C)`
+  But got `?(<expr#22> as E | C)`
 ERROR: File "while_assign_in_invariant.php", line 79, characters 12-13:
 Invalid argument (Typing[4110])
   File "while_assign_in_invariant.php", line 20, characters 19-19:
   Expected `C`
   File "while_assign_in_invariant.php", line 28, characters 67-68:
-  But got `?(<expr#23> as E | C)`
+  But got `?(<expr#22> as E | C)`
 ERROR: File "while_assign_in_invariant.php", line 80, characters 12-13:
 Invalid argument (Typing[4110])
   File "while_assign_in_invariant.php", line 21, characters 19-19:
   Expected `E`
   File "while_assign_in_invariant.php", line 28, characters 67-68:
-  But got `?(<expr#23> as E | C)`
+  But got `?(<expr#22> as E | C)`

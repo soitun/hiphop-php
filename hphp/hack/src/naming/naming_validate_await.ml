@@ -269,12 +269,6 @@ let visitor =
         check_expr on_error expr;
         super#on_as_expr on_error as_expr;
         super#on_block on_error block
-      | Declare_local (_, _, expr_opt) ->
-        (match expr_opt with
-        | Some expr ->
-          super#on_expr on_error expr;
-          check_expr on_error expr
-        | None -> ())
       (* await cannot appear in expression in do or while (parse error) *)
       | Do _
       | While _
@@ -293,8 +287,7 @@ let visitor =
       | Concurrent stmts ->
         List.iter stmts ~f:(fun stmt ->
             match stmt with
-            | (_, Expr expr)
-            | (_, Declare_local (_, _, Some expr)) ->
+            | (_, Expr expr) ->
               super#on_expr on_error expr;
               (match check_await_usage expr with
               | Sequential
@@ -323,7 +316,6 @@ let visitor =
                            quickfixes = [];
                          }))
               | _ -> ())
-            | (_, Declare_local (_, _, None)) -> ()
             | _ ->
               failwith
                 ("Concurrent block contains a statement that is not an expression-statement. "

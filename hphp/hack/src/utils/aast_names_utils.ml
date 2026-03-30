@@ -28,7 +28,6 @@ let stmt_name = function
   | A.Foreach _ -> "Foreach"
   | A.Try _ -> "Try"
   | A.Noop -> "Noop"
-  | A.Declare_local _ -> "Declare_local"
   | A.Block _ -> "Block"
   | A.Markup _ -> "Markup"
 

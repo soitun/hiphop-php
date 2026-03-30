@@ -543,7 +543,7 @@ let refresh_locals renv =
   Local_id.Map.fold
     (fun local
          Typing_local_types.
-           { ty = lty; defined; bound_ty; pos; eid = _; macro_splice_vars = _ }
+           { ty = lty; defined; pos; eid = _; macro_splice_vars = _ }
          renv ->
       if defined then
         let on_error =
@@ -558,8 +558,7 @@ let refresh_locals renv =
         | Elim _ ->
           {
             renv with
-            env =
-              Env.set_local ~is_defined:true ~bound_ty renv.env local lty pos;
+            env = Env.set_local ~is_defined:true renv.env local lty pos;
           }
         | Unchanged -> renv
       else

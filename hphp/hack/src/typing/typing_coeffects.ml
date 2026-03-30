@@ -27,7 +27,6 @@ let register_capabilities env (cap_ty : locl_ty) (unsafe_cap_ty : locl_ty) =
   let env =
     Env.set_local
       ~is_defined:true
-      ~bound_ty:None
       env
       local_capability_id
       cap_ty
@@ -43,7 +42,6 @@ let register_capabilities env (cap_ty : locl_ty) (unsafe_cap_ty : locl_ty) =
   (* The implicit argument for ft_implicit_params.capability *)
   ( Env.set_local
       ~is_defined:true
-      ~bound_ty:None
       env
       capability_id
       ty

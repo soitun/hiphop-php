@@ -426,8 +426,6 @@ module Visitor_DEPRECATED = struct
     object
       method on_block : 'a -> block -> 'a
 
-      method on_declare_local : 'a -> lid -> hint -> expr option -> 'a
-
       method on_break : 'a -> 'a
 
       method on_case : 'a -> case -> 'a
@@ -756,13 +754,6 @@ module Visitor_DEPRECATED = struct
         let acc = this#on_block acc fb in
         acc
 
-      method on_declare_local acc id t e =
-        let acc = this#on_lvar acc id in
-        let acc = this#on_hint acc t in
-        match e with
-        | None -> acc
-        | Some e -> this#on_expr acc e
-
       method on_block acc b = List.fold_left b ~f:this#on_stmt ~init:acc
 
       method on_case acc (e, b) =
@@ -809,7 +800,6 @@ module Visitor_DEPRECATED = struct
         | Fallthrough -> this#on_fallthrough acc
         | Awaitall (el, b) -> this#on_awaitall acc el b
         | Concurrent b -> this#on_concurrent acc b
-        | Declare_local (id, t, e) -> this#on_declare_local acc id t e
         | Block (Some lids, b) ->
           let acc = List.fold_left lids ~init:acc ~f:this#on_lvar in
           this#on_block acc b

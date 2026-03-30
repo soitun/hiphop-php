@@ -2452,7 +2452,6 @@ impl LiveVars {
                 | aast::Stmt_::Match(_)
                 | aast::Stmt_::Foreach(_)
                 | aast::Stmt_::Try(_)
-                | aast::Stmt_::DeclareLocal(_)
                 | aast::Stmt_::Block(_)
                 | aast::Stmt_::Markup(_) => {}
             }

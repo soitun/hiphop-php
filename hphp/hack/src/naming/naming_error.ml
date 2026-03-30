@@ -233,12 +233,6 @@ type t =
       suggestion: string option;
     }
   | Dynamic_hint_disallowed of Pos.t
-  | Illegal_typed_local of {
-      join: bool;
-      id_pos: Pos.t;
-      id_name: string;
-      def_pos: Pos.t;
-    }
   | Toplevel_statement of Pos.t
   | Attribute_outside_allowed_files of Pos.t
   | Polymorphic_lambda_missing_return_hint of Pos.t

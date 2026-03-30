@@ -19,5 +19,4 @@ let find ~entry pos ctx =
   @ Extract_classish.find ~entry pos ctx
   @ Extract_shape_type.find ~entry pos ctx
   @ Flip_around_comma.find ~entry pos ctx
-  @ Add_local_type_hint.find ~entry pos ctx
   @ Add_doc_comment.find ~entry pos ctx

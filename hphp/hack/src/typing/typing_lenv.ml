@@ -32,7 +32,6 @@ let union
       {
         ty = ty1;
         defined = defined1;
-        bound_ty = bound_ty1;
         pos = pos1;
         eid = eid1;
         macro_splice_vars = macro_splice_vars1;
@@ -41,7 +40,6 @@ let union
       {
         ty = ty2;
         defined = defined2;
-        bound_ty = bound_ty2;
         pos = pos2;
         eid = eid2;
         macro_splice_vars = macro_splice_vars2;
@@ -49,22 +47,6 @@ let union
   (* TODO(mjt) Use a more specific reason here provided as an argument *)
   let reason = Some (Typing_reason.join_point join_pos) in
   let (env, ty) = Union.union ?reason ~approx_cancel_neg:true env ty1 ty2 in
-  let (env, bound_ty) =
-    match (bound_ty1, bound_ty2) with
-    | (None, None) -> (env, None)
-    | (Some ty, None)
-    | (None, Some ty) ->
-      (env, Some ty)
-    | (Some ty1, Some ty2) ->
-      let (env, ty) =
-        Typing_intersection.intersect
-          ~r:(Typing_defs_core.get_reason ty1)
-          env
-          ty1
-          ty2
-      in
-      (env, Some ty)
-  in
   (* TODO(mjt) Determin if this need updating to if the change to reasons will
      be sufficient*)
   let pos =
@@ -99,46 +81,8 @@ let union
       in
       (env, Some map)
   in
-  match bound_ty with
-  | None ->
-    Typing_local_types.
-      ( env,
-        {
-          ty;
-          defined = defined1 && defined2;
-          bound_ty;
-          pos;
-          eid;
-          macro_splice_vars;
-        } )
-  | Some bound_ty ->
-    let (env, err_opt) =
-      Typing_subtype.sub_type
-        env
-        ty
-        bound_ty
-        (Some (Typing_error.Reasons_callback.unify_error_at join_pos))
-    in
-    let ty =
-      match err_opt with
-      | None -> ty
-      | Some err ->
-        Typing_error_utils.add_typing_error ~env err;
-        (* If the new type or bound violates the old one, then we want to
-           check the remainder of the code with the type of the variable
-           set to the bound *)
-        bound_ty
-    in
-    Typing_local_types.
-      ( env,
-        {
-          ty;
-          defined = defined1 && defined2;
-          bound_ty = Some bound_ty;
-          pos;
-          eid;
-          macro_splice_vars;
-        } )
+  Typing_local_types.
+    (env, { ty; defined = defined1 && defined2; pos; eid; macro_splice_vars })
 
 let get_cont_option env cont =
   let local_types = get_all_locals env in

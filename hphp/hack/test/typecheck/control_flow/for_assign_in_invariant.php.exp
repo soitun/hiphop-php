@@ -61,28 +61,28 @@ Invalid argument (Typing[4110])
   File "for_assign_in_invariant.php", line 21, characters 19-19:
   Expected `E`
   File "for_assign_in_invariant.php", line 28, characters 70-71:
-  But got `?<expr#16> as E`
+  But got `?<expr#14> as E`
 ERROR: File "for_assign_in_invariant.php", line 68, characters 14-15:
 Invalid argument (Typing[4110])
   File "for_assign_in_invariant.php", line 21, characters 19-19:
   Expected `E`
   File "for_assign_in_invariant.php", line 28, characters 70-71:
-  But got `?<expr#9> as E`
+  But got `?<expr#7> as E`
 ERROR: File "for_assign_in_invariant.php", line 80, characters 13-14:
 Invalid argument (Typing[4110])
   File "for_assign_in_invariant.php", line 27, characters 20-21:
   Expected `CE`
   File "for_assign_in_invariant.php", line 28, characters 70-71:
-  But got `?(<expr#27> as E | C)`
+  But got `?(<expr#25> as E | C)`
 ERROR: File "for_assign_in_invariant.php", line 81, characters 12-13:
 Invalid argument (Typing[4110])
   File "for_assign_in_invariant.php", line 20, characters 19-19:
   Expected `C`
   File "for_assign_in_invariant.php", line 28, characters 70-71:
-  But got `?(<expr#27> as E | C)`
+  But got `?(<expr#25> as E | C)`
 ERROR: File "for_assign_in_invariant.php", line 82, characters 12-13:
 Invalid argument (Typing[4110])
   File "for_assign_in_invariant.php", line 21, characters 19-19:
   Expected `E`
   File "for_assign_in_invariant.php", line 28, characters 70-71:
-  But got `?(<expr#27> as E | C)`
+  But got `?(<expr#25> as E | C)`

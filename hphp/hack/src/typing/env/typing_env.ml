@@ -1205,14 +1205,7 @@ module M = struct
    * the last assignment to this local.
    *)
   let set_local
-      ?(immutable = false)
-      ?macro_splice_vars
-      ~is_defined
-      ~bound_ty
-      env
-      x
-      new_type
-      pos =
+      ?(immutable = false) ?macro_splice_vars ~is_defined env x new_type pos =
     let new_type =
       match get_node new_type with
       | Tunion [ty] -> ty
@@ -1237,7 +1230,6 @@ module M = struct
           {
             ty = new_type;
             defined = is_defined;
-            bound_ty;
             pos;
             eid = expr_id;
             macro_splice_vars;
@@ -1350,7 +1342,6 @@ module M = struct
           {
             ty = Typing_make_type.nothing Reason.none;
             defined = false;
-            bound_ty = None;
             pos = Pos.none;
             eid = make_expression_id env;
             macro_splice_vars = None;
@@ -1382,7 +1373,6 @@ module M = struct
           {
             ty = Typing_make_type.nothing Reason.none;
             defined = false;
-            bound_ty = None;
             pos = Pos.none;
             eid = make_expression_id env;
             macro_splice_vars = None;
@@ -1442,13 +1432,9 @@ module M = struct
     | Some next_cont -> begin
       let open Typing_local_types in
       match LID.Map.find_opt x next_cont.LEnvC.local_types with
-      | Some
-          Typing_local_types.
-            { ty; defined; bound_ty; pos; eid; macro_splice_vars }
+      | Some Typing_local_types.{ ty; defined; pos; eid; macro_splice_vars }
         when not (Expression_id.equal eid new_eid) ->
-        let local =
-          { ty; defined; bound_ty; pos; eid = new_eid; macro_splice_vars }
-        in
+        let local = { ty; defined; pos; eid = new_eid; macro_splice_vars } in
         let per_cont_env = LEnvC.add_to_cont C.Next x local per_cont_env in
         let env = { env with lenv = { env.lenv with per_cont_env } } in
         if Expression_id.is_immutable eid then
@@ -2163,7 +2149,6 @@ module M = struct
                   {
                     ty;
                     defined = true;
-                    bound_ty = None;
                     pos;
                     eid = Expression_id.make env.expression_id_provider;
                     macro_splice_vars = None;

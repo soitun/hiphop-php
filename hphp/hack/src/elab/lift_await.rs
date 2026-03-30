@@ -1379,14 +1379,6 @@ impl<'a> VisitorMut<'a> for LiftAwait {
                 sequentialise_stmt(&pos, elem, stmt_, con, seq, tmps);
                 Ok(())
             }
-            Stmt_::DeclareLocal(box (_, _, expr_opt)) => {
-                if let Some(expr) = expr_opt {
-                    expr.accept(env, self.object())?;
-                    self.check_and_extract_await(env, expr, &mut con, &mut seq, &mut tmps)
-                }
-                sequentialise_stmt(&pos, elem, stmt_, con, seq, tmps);
-                Ok(())
-            }
             Stmt_::Do(box (body, cond)) | Stmt_::While(box (cond, body)) => {
                 cond.accept(env, self.object())?;
                 self.extract_cond(env, &pos, cond);
@@ -1416,12 +1408,6 @@ impl<'a> VisitorMut<'a> for LiftAwait {
             {
                 let mut exprs = vec![];
                 for stmt in stmts.iter_mut() {
-                    let sval = std::mem::replace(stmt, Stmt(Pos::NONE, Stmt_::Noop));
-                    if let Stmt(_, Stmt_::DeclareLocal(box (Lid(_, id), _, Some(expr)))) = sval {
-                        *stmt = hack_stmt!(pos = pos.clone(), "#{lvar(id)} = #expr;");
-                    } else {
-                        *stmt = sval;
-                    }
                     match stmt {
                         Stmt(
                             _,
@@ -1445,7 +1431,6 @@ impl<'a> VisitorMut<'a> for LiftAwait {
                             expr.accept(env, self.object())?;
                             exprs.push(expr);
                         }
-                        Stmt(_, Stmt_::DeclareLocal(box (_, _, None))) => {}
                         _ => panic!(
                             "Concurrent block contains a statement that is not an expression-statement."
                         ),
@@ -1480,8 +1465,7 @@ impl<'a> VisitorMut<'a> for LiftAwait {
                                 quickfixes: vec![],
                             }))
                         }
-                        Stmt(_, Stmt_::Expr(box expr))
-                        | Stmt(_, Stmt_::DeclareLocal(box (_, _, Some(expr)))) => {
+                        Stmt(_, Stmt_::Expr(box expr)) => {
                             expr.accept(env, self.object())?;
                             let is_await = expr.2.is_await();
                             match check_await_usage(expr) {
@@ -1506,7 +1490,6 @@ impl<'a> VisitorMut<'a> for LiftAwait {
                                 }
                             }
                         }
-                        Stmt(_, Stmt_::DeclareLocal(box (_, _, None))) => {}
                         _ => panic!(
                             "Concurrent block contains a statement that is not an expression-statement."
                         ),

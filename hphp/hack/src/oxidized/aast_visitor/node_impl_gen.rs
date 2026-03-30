@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<5157c19289fc989402ef1c09fd7def95>>
+// @generated SignedSource<<91fa421e7a2015b637f065dbc19aae8e>>
 //
 // To regenerate this file, run:
 //   buck run @fbcode//mode/dev-nosan-lg fbcode//hphp/hack/src:oxidized_regen
@@ -2237,16 +2237,6 @@ impl<P: Params> Node<P> for Stmt_<P::Ex, P::En> {
         }
         #[inline]
         fn helper8<'node, P: Params + Params<Ex = Ex> + Params<En = En>, Ex, En>(
-            a: &'node Box<(Lid, Hint, Option<Expr<Ex, En>>)>,
-            c: &mut P::Context,
-            v: &mut dyn Visitor<'node, Params = P>,
-        ) -> Result<(), P::Error> {
-            a.0.accept(c, v)?;
-            a.1.accept(c, v)?;
-            a.2.accept(c, v)
-        }
-        #[inline]
-        fn helper9<'node, P: Params + Params<Ex = Ex> + Params<En = En>, Ex, En>(
             a: &'node Box<(Option<Vec<Lid>>, Block<Ex, En>)>,
             c: &mut P::Context,
             v: &mut dyn Visitor<'node, Params = P>,
@@ -2274,8 +2264,7 @@ impl<P: Params> Node<P> for Stmt_<P::Ex, P::En> {
             Stmt_::Match(a0) => a0.accept(c, v),
             Stmt_::Foreach(a) => helper6(a, c, v),
             Stmt_::Try(a) => helper7(a, c, v),
-            Stmt_::DeclareLocal(a) => helper8(a, c, v),
-            Stmt_::Block(a) => helper9(a, c, v),
+            Stmt_::Block(a) => helper8(a, c, v),
             Stmt_::Markup(a0) => a0.accept(c, v),
         }
     }

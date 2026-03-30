@@ -458,27 +458,6 @@ fn emit_fatal_naming_error(err: &NamingError) -> Result<Unit, Error> {
         NamingError::DeprecatedUse { .. } => todo!(),
         NamingError::UnnecessaryAttribute { .. } => todo!(),
         NamingError::DynamicHintDisallowed(_) => todo!(),
-        NamingError::IllegalTypedLocal {
-            join,
-            id_pos,
-            id_name,
-            def_pos: _,
-        } => {
-            // For now, we can only generate this particular error. All of the
-            // infrastructure for displaying naming errors is in OCaml, and until
-            // the naming phase is completely ported, we can just special case the
-            // ones that might come up.
-            let msg = if *join {
-                "It is assigned in another branch. Consider moving the definition to an enclosing block."
-            } else {
-                "It is already defined. Typed locals must have their type declared before they can be assigned."
-            };
-            emit_unit::emit_fatal_unit(
-                FatalOp::Parse,
-                id_pos.clone(),
-                format!("Illegal definition of typed local variable {id_name}. {msg}"),
-            )
-        }
         NamingError::ToplevelStatement(_) => todo!(),
         NamingError::InvalidTypeAccessInWhere(_) => todo!(),
         NamingError::InvalidRequireConstraint(_) => todo!(),

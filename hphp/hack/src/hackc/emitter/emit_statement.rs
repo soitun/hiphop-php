@@ -140,7 +140,6 @@ pub fn emit_stmt<'a>(e: &mut Emitter, env: &mut Env<'a>, stmt: &ast::Stmt) -> Re
         a::Stmt_::Concurrent(_) => panic!("Concurrent statement in emit_statement"),
         a::Stmt_::Markup(x) => emit_markup(e, env, x, false),
         a::Stmt_::Fallthrough | a::Stmt_::Noop => Ok(instr::empty()),
-        a::Stmt_::DeclareLocal(_) => panic!("DeclareLocal statement in emit_statement"),
         a::Stmt_::Match(..) => todo!("TODO(jakebailey): match statements"),
     }
 }

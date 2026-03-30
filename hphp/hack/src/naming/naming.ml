@@ -180,15 +180,9 @@ let ( elab_core_program,
   Naming_phase_pass.mk_visitor passes
 
 let elab_elem
-    elem
-    ~elab_ns
-    ~elab_capture
-    ~(elab_typed_locals : 'a -> 'a)
-    ~validate_await
-    ~elab_core
-    custom_err_config =
+    elem ~elab_ns ~elab_capture ~validate_await ~elab_core custom_err_config =
   reset_errors ();
-  let elem = elab_ns elem |> elab_capture |> elab_typed_locals in
+  let elem = elab_ns elem |> elab_capture in
   validate_await elem;
   let elem = elab_core elem in
   Naming_phase_error.emit (get_errors ()) ~custom_err_config;
@@ -219,13 +213,11 @@ let fun_def ctx fd =
   let filename = Pos.filename fd.Aast.fd_fun.Aast.f_span in
   let elab_ns = Naming_elaborate_namespaces_endo.elaborate_fun_def
   and elab_capture = Naming_captures.elab_fun_def ~custom_err_config
-  and elab_typed_locals = Naming_typed_locals.elab_fun_def ~custom_err_config
   and validate_await = Naming_validate_await.validate_fun_def on_error
   and elab_core = elab_core_fun_def (mk_env filename tcopt) in
   elab_elem
     ~elab_ns
     ~elab_capture
-    ~elab_typed_locals
     ~validate_await
     ~elab_core
     fd
@@ -237,13 +229,11 @@ let class_ ctx c =
   let filename = Pos.filename c.Aast.c_span in
   let elab_ns = Naming_elaborate_namespaces_endo.elaborate_class_
   and elab_capture = Naming_captures.elab_class ~custom_err_config
-  and elab_typed_locals = Naming_typed_locals.elab_class ~custom_err_config
   and validate_await = Naming_validate_await.validate_class on_error
   and elab_core = elab_core_class (mk_env filename tcopt) in
   elab_elem
     ~elab_ns
     ~elab_capture
-    ~elab_typed_locals
     ~validate_await
     ~elab_core
     c
@@ -255,13 +245,11 @@ let module_ ctx md =
   let filename = Pos.filename md.Aast.md_span in
   let elab_ns = Naming_elaborate_namespaces_endo.elaborate_module_def
   and elab_capture = Naming_captures.elab_module_def ~custom_err_config
-  and elab_typed_locals x = x
   and validate_await _ = ()
   and elab_core = elab_core_module_def (mk_env filename tcopt) in
   elab_elem
     ~elab_ns
     ~elab_capture
-    ~elab_typed_locals
     ~validate_await
     ~elab_core
     md
@@ -273,13 +261,11 @@ let global_const ctx cst =
   let filename = Pos.filename cst.Aast.cst_span in
   let elab_ns = Naming_elaborate_namespaces_endo.elaborate_gconst
   and elab_capture = Naming_captures.elab_gconst ~custom_err_config
-  and elab_typed_locals x = x
   and validate_await _ = ()
   and elab_core = elab_core_gconst (mk_env filename tcopt) in
   elab_elem
     ~elab_ns
     ~elab_capture
-    ~elab_typed_locals
     ~validate_await
     ~elab_core
     cst
@@ -291,13 +277,11 @@ let typedef ctx td =
   let filename = Pos.filename @@ td.Aast.t_span in
   let elab_ns = Naming_elaborate_namespaces_endo.elaborate_typedef
   and elab_capture = Naming_captures.elab_typedef ~custom_err_config
-  and elab_typed_locals x = x
   and validate_await _ = ()
   and elab_core = elab_core_typedef (mk_env filename tcopt) in
   elab_elem
     ~elab_ns
     ~elab_capture
-    ~elab_typed_locals
     ~validate_await
     ~elab_core
     td
@@ -418,13 +402,11 @@ let program ctx program =
   let program = adjust_toplevel_stmts ctx program in
   let elab_ns = Naming_elaborate_namespaces_endo.elaborate_program
   and elab_capture = Naming_captures.elab_program ~custom_err_config
-  and elab_typed_locals = Naming_typed_locals.elab_program ~custom_err_config
   and validate_await = Naming_validate_await.validate_program on_error
   and elab_core = elab_core_program (mk_env filename tcopt) in
   elab_elem
     ~elab_ns
     ~elab_capture
-    ~elab_typed_locals
     ~validate_await
     ~elab_core
     program

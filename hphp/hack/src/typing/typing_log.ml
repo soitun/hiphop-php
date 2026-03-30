@@ -386,26 +386,12 @@ let continuations_map_as_value f m =
 
 let local_as_value
     env
-    Typing_local_types.
-      { ty; defined; bound_ty; pos = _; eid; macro_splice_vars = _ } =
-  let bound =
-    match bound_ty with
-    | None -> ""
-    | Some ty ->
-      "(let"
-      ^ (if defined then
-          ""
-        else
-          " (undefined)")
-      ^ " : "
-      ^ Pr.debug env ty
-      ^ ")"
-  in
+    Typing_local_types.{ ty; defined = _; pos = _; eid; macro_splice_vars = _ }
+    =
   Atom
     (Printf.sprintf
-       "%s %s [expr_id=%s]"
+       "%s [expr_id=%s]"
        (Pr.debug env ty)
-       bound
        (Expression_id.debug eid))
 
 let per_cont_env_as_value env per_cont_env =

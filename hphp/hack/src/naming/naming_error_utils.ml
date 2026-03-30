@@ -139,18 +139,6 @@ let dynamic_hint_disallowed pos =
     (pos, "dynamic typehints are not allowed in this position")
     []
 
-let illegal_typed_local ~join id_pos name def_pos =
-  let desc =
-    if join then
-      "It is assigned in another branch. Consider moving the definition to an enclosing block."
-    else
-      "It is already defined. Typed locals must have their type declared before they can be assigned."
-  in
-  User_diagnostic.make_err
-    Error_code.(to_enum IllegalTypedLocal)
-    (id_pos, "Illegal definition of typed local variable " ^ name ^ ".")
-    [(def_pos, desc)]
-
 let wildcard_param_disallowed pos =
   User_diagnostic.make_err
     Error_code.(to_enum WildcardTypeParamDisallowed)
@@ -980,8 +968,6 @@ let to_user_diagnostic t custom_err_config =
     | Undefined_in_expr_tree { pos; var_name; dsl; did_you_mean } ->
       undefined_in_expr_tree pos var_name dsl did_you_mean
     | Dynamic_hint_disallowed pos -> dynamic_hint_disallowed pos
-    | Illegal_typed_local { join; id_pos; id_name; def_pos } ->
-      illegal_typed_local ~join id_pos id_name (Pos_or_decl.of_raw_pos def_pos)
     | Toplevel_statement pos -> toplevel_statement pos
     | Attribute_outside_allowed_files pos -> attribute_outside_allowed_files pos
     | Polymorphic_lambda_missing_return_hint pos ->

@@ -402,7 +402,6 @@ val set_local :
   ?immutable:bool ->
   ?macro_splice_vars:(Pos.t * Typing_defs.locl_ty) Local_id.Map.t ->
   is_defined:bool ->
-  bound_ty:locl_ty option ->
   env ->
   Local_id.t ->
   locl_ty ->

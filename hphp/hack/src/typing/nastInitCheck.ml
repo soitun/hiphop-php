@@ -462,8 +462,6 @@ and stmt env acc st =
     S.union acc c
   | Fallthrough -> S.empty
   | Noop -> acc
-  | Declare_local (_, _, Some e) -> expr acc e
-  | Declare_local (_, _, None) -> acc
   | Block (_, b) -> block acc b
   | Markup _ -> acc
 
