@@ -23,10 +23,10 @@
       "end": 20,
       "code": 5644,
       "bypass_changed_lines": false,
-      "original": "true || ",
-      "replacement": "",
+      "original": "true || $x > 3",
+      "replacement": "true",
       "start_offset": 143,
-      "width": 8
+      "width": 14
     },
     {
       "descr": "The boolean expression is pointless",
@@ -55,6 +55,62 @@
       "replacement": "",
       "start_offset": 381,
       "width": 9
+    },
+    {
+      "descr": "The boolean expression is always false",
+      "severity": "warning",
+      "path": "test_quickfix_lint_code_5644.php",
+      "line": 28,
+      "start": 7,
+      "end": 21,
+      "code": 5644,
+      "bypass_changed_lines": false,
+      "original": "$x > 3 && false",
+      "replacement": "false",
+      "start_offset": 497,
+      "width": 15
+    },
+    {
+      "descr": "In function \\foo5: This 'return' statement may be unreachable. It appears after a condition which is always false.",
+      "severity": "warning",
+      "path": "test_quickfix_lint_code_5644.php",
+      "line": 29,
+      "start": 5,
+      "end": 11,
+      "code": 6001,
+      "bypass_changed_lines": false,
+      "original": "",
+      "replacement": "",
+      "start_offset": null,
+      "width": null
+    },
+    {
+      "descr": "The boolean expression is always false",
+      "severity": "warning",
+      "path": "test_quickfix_lint_code_5644.php",
+      "line": 34,
+      "start": 7,
+      "end": 21,
+      "code": 5644,
+      "bypass_changed_lines": false,
+      "original": "false && $x > 3",
+      "replacement": "false",
+      "start_offset": 632,
+      "width": 15
+    },
+    {
+      "descr": "In function \\foo6: This 'return' statement may be unreachable. It appears after a condition which is always false.",
+      "severity": "warning",
+      "path": "test_quickfix_lint_code_5644.php",
+      "line": 35,
+      "start": 5,
+      "end": 11,
+      "code": 6001,
+      "bypass_changed_lines": false,
+      "original": "",
+      "replacement": "",
+      "start_offset": null,
+      "width": null
     }
   ],
   "version": ""

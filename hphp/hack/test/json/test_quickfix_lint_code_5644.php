@@ -23,3 +23,15 @@ function foo4(int $x): void {
     return;
   } //should provide quickfixes
 }
+
+function foo5(int $x): void {
+  if ($x > 3 && false) {
+    return;
+  } //should provide quickfixes - always false, literal on right
+}
+
+function foo6(int $x): void {
+  if (false && $x > 3) {
+    return;
+  } //should provide quickfixes - always false, literal on left
+}

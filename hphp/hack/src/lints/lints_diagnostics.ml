@@ -282,9 +282,9 @@ let switch_nonexhaustive p =
     ^ " If none of the cases match, an exception will be thrown."
     ^ " Consider adding a default case.")
 
-let calling_pointless_boolean p_lint p_quickfix txt =
+let calling_pointless_boolean p_lint p_quickfix replacement txt =
   Lints.add
-    ~autofix:(Some ("", p_quickfix))
+    ~autofix:(Some (replacement, p_quickfix))
     Codes.pointless_booleans_expression
     Lint_warning
     p_lint

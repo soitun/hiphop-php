@@ -28,13 +28,13 @@ let check_the_error logical_op boolean_literal =
   match logical_op with
   | Ast_defs.Ampamp ->
     (match boolean_literal with
-    | Aast.True -> Some "The boolean expression is pointless"
-    | Aast.False -> Some "The boolean expression is always false"
+    | Aast.True -> Some ("The boolean expression is pointless", None)
+    | Aast.False -> Some ("The boolean expression is always false", Some "false")
     | _ -> None)
   | Ast_defs.Barbar ->
     (match boolean_literal with
-    | Aast.True -> Some "The boolean expression is always true"
-    | Aast.False -> Some "The boolean expression is pointless"
+    | Aast.True -> Some ("The boolean expression is always true", Some "true")
+    | Aast.False -> Some ("The boolean expression is pointless", None)
     | _ -> None)
   | _ -> None
 
@@ -58,7 +58,7 @@ let send_to_lint_error pos str line1 line2 bol1 bol2 col1 col2 =
           pos_cnum = col2;
         }
   in
-  Lints_diagnostics.calling_pointless_boolean pos pos_quickfix str
+  Lints_diagnostics.calling_pointless_boolean pos pos_quickfix "" str
 
 let handler =
   object
@@ -76,7 +76,9 @@ let handler =
           (match checking_the_expression lhs rhs with
           | Some x ->
             (match check_the_error bop x with
-            | Some str ->
+            | Some (str, None) ->
+              (* exp1 is the boolean literal, expression is pointless *)
+              (* Remove from start of exp1 to start of exp2 *)
               (match (lhs, rhs) with
               | ((_, pos_exp1, _), (_, pos_exp2, _)) ->
                 let (line1, bol1, start_col1) = Pos.line_beg_offset pos_exp1 in
@@ -90,15 +92,23 @@ let handler =
                   bol2
                   start_col1
                   start_col2)
+            | Some (str, Some replacement) ->
+              (* exp1 is the boolean literal, expression is always true/false *)
+              (* Replace entire expression with the literal *)
+              Lints_diagnostics.calling_pointless_boolean
+                pos
+                pos
+                replacement
+                str
             | None -> ())
           | None ->
             (* exp2 is the boolean literal (it is of the type && true, || false etc)*)
-            (* The original string for quickfix starts from the
-               end of exp1 and ends at the end of exp2 *)
             (match checking_the_expression rhs lhs with
             | Some x ->
               (match check_the_error bop x with
-              | Some str ->
+              | Some (str, None) ->
+                (* exp2 is the boolean literal, expression is pointless *)
+                (* Remove from end of exp1 to end of exp2 *)
                 (match (lhs, rhs) with
                 | ((_, pos_exp1, _), (_, pos_exp2, _)) ->
                   let (line1, bol1, end_col1) =
@@ -116,6 +126,14 @@ let handler =
                     bol2
                     end_col1
                     end_col2)
+              | Some (str, Some replacement) ->
+                (* exp2 is the boolean literal, expression is always true/false *)
+                (* Replace entire expression with the literal *)
+                Lints_diagnostics.calling_pointless_boolean
+                  pos
+                  pos
+                  replacement
+                  str
               | None -> ())
             | None -> ()))
         | _ -> ())
