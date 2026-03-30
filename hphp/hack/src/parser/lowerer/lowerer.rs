@@ -3205,7 +3205,6 @@ fn p_stmt_<'a>(node: S<'a>, env: &mut Env<'a>) -> Result<ast::Stmt> {
         ContinueStatement(_) => Ok(new(pos, S_::Continue)),
         ConcurrentStatement(c) => p_concurrent_stmt(env, pos, c),
         MarkupSection(_) => p_markup(node, env),
-        DeclareLocalStatement(c) => p_declare_local_stmt(env, pos, c),
         _ => {
             raise_missing_syntax("statement", node, env);
             Ok(new(env.mk_none_pos(), S_::Noop))
@@ -3757,27 +3756,6 @@ fn p_markup<'a>(node: S<'a>, env: &mut Env<'a>) -> Result<ast::Stmt> {
             Ok(ast::Stmt::new(pos, stmt_))
         }
         _ => missing_syntax("XHP markup node", node, env),
-    }
-}
-
-fn p_declare_local_stmt<'a>(
-    env: &mut Env<'a>,
-    pos: Pos,
-    c: &'a DeclareLocalStatementChildren<'a, PositionedToken<'a>, PositionedValue<'a>>,
-) -> Result<ast::Stmt> {
-    use ast::Stmt;
-    use ast::Stmt_ as S_;
-    let var = lid_from_pos_name(p_pos(&c.variable, env), &c.variable, env)?;
-    let hint = p_hint(&c.type_, env)?;
-    if let SimpleInitializer(c) = c.initializer.children {
-        let expr_tmp = p_expr(&c.value, env)?;
-        Ok(Stmt::new(
-            pos,
-            S_::mk_declare_local(var, hint, Some(expr_tmp)),
-        ))
-    } else {
-        assert!(c.initializer.is_missing());
-        Ok(Stmt::new(pos, S_::mk_declare_local(var, hint, None)))
     }
 }
 

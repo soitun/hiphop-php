@@ -26,7 +26,6 @@ let is_statement =
     | WhileStatement _
     | UsingStatementFunctionScoped _
     | UsingStatementBlockScoped _
-    | DeclareLocalStatement _
     | UnsetStatement _
     | CompoundStatement _ ->
       true

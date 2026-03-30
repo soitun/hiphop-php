@@ -495,7 +495,6 @@ fn parse_aast_from_string(input: &str, internal_offset: usize, span: Span) -> Re
     let indexed_source_text = IndexedSourceText::new(source_text);
 
     let mut default_unstable_features = HashSet::default();
-    default_unstable_features.insert(FeatureName::TypedLocalVariables);
     default_unstable_features.insert(FeatureName::PipeAwait);
     default_unstable_features.insert(FeatureName::ExpressionTreeNestedBindings);
 
@@ -1647,36 +1646,6 @@ mod tests {
                                 .collect::<Vec<_>>(),
                         ))),
                     )))),
-                );
-                __hygienic_tmp
-            }),
-        );
-    }
-
-    #[test]
-    fn test_typed_local_stmt() {
-        assert_pat_eq(
-            hack_stmt_impl.parse2(quote!(EX pos = p, "let $x: t = #e;")),
-            quote!({
-                use EX::ast::*;
-                let __hygienic_pos: Pos = p;
-                #[allow(clippy::redundant_clone)]
-                let __hygienic_tmp = Stmt(
-                    __hygienic_pos.clone(),
-                    Stmt_::DeclareLocal(Box::new((
-                        Lid(__hygienic_pos.clone(), (0isize, "$x".to_owned())),
-                        Hint(
-                            __hygienic_pos.clone(),
-                            Box::new(Hint_::Happly(
-                                Id(__hygienic_pos.clone(), "t".to_owned()),
-                                vec![],
-                            )),
-                        ),
-                        Some({
-                            let tmp: Expr = e;
-                            tmp
-                        }),
-                    ))),
                 );
                 __hygienic_tmp
             }),

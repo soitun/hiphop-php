@@ -241,7 +241,6 @@ where
             TokenKind::Echo => self.parse_echo_statement(),
             TokenKind::Concurrent => self.parse_concurrent_statement(),
             TokenKind::Unset => self.parse_unset_statement(),
-            TokenKind::Let => self.parse_declare_local_statement(),
             TokenKind::Case => {
                 let result = self.parse_case_label();
                 // TODO: This puts the error in the wrong place. We should highlight
@@ -1042,35 +1041,6 @@ where
         let semi_token = self.require_semicolon();
         self.sc_mut()
             .make_yield_break_statement(yield_token, break_token, semi_token)
-    }
-
-    fn parse_simple_initializer_opt(&mut self) -> S::Output {
-        if let TokenKind::Equal = self.peek_token_kind() {
-            let token = self.assert_token(TokenKind::Equal);
-            let init = self.parse_expression();
-            self.sc_mut().make_simple_initializer(token, init)
-        } else {
-            let pos = self.pos();
-            self.sc_mut().make_missing(pos)
-        }
-    }
-
-    fn parse_declare_local_statement(&mut self) -> S::Output {
-        let let_token = self.assert_token(TokenKind::Let);
-        let variable = self.parse_expression();
-        let colon_token = self.require_colon();
-        let hint =
-            self.with_type_parser(|p: &mut TypeParser<'a, S>| p.parse_type_specifier(true, true));
-        let simple_init = self.parse_simple_initializer_opt();
-        let semi_token = self.require_semicolon();
-        self.sc_mut().make_declare_local_statement(
-            let_token,
-            variable,
-            colon_token,
-            hint,
-            simple_init,
-            semi_token,
-        )
     }
 
     fn parse_default_label(&mut self) -> S::Output {

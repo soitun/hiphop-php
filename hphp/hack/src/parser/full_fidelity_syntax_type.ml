@@ -506,14 +506,6 @@ struct
         unset_right_paren: t;
         unset_semicolon: t;
       }
-    | DeclareLocalStatement of {
-        declare_local_keyword: t;
-        declare_local_variable: t;
-        declare_local_colon: t;
-        declare_local_type: t;
-        declare_local_initializer: t;
-        declare_local_semicolon: t;
-      }
     | UsingStatementBlockScoped of {
         using_block_await_keyword: t;
         using_block_using_keyword: t;

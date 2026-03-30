@@ -113,7 +113,6 @@ module WithToken (Token : TokenType) = struct
       | MarkupSection _ -> SyntaxKind.MarkupSection
       | MarkupSuffix _ -> SyntaxKind.MarkupSuffix
       | UnsetStatement _ -> SyntaxKind.UnsetStatement
-      | DeclareLocalStatement _ -> SyntaxKind.DeclareLocalStatement
       | UsingStatementBlockScoped _ -> SyntaxKind.UsingStatementBlockScoped
       | UsingStatementFunctionScoped _ ->
         SyntaxKind.UsingStatementFunctionScoped
@@ -384,8 +383,6 @@ module WithToken (Token : TokenType) = struct
     let is_markup_suffix = has_kind SyntaxKind.MarkupSuffix
 
     let is_unset_statement = has_kind SyntaxKind.UnsetStatement
-
-    let is_declare_local_statement = has_kind SyntaxKind.DeclareLocalStatement
 
     let is_using_statement_block_scoped =
       has_kind SyntaxKind.UsingStatementBlockScoped
@@ -1365,22 +1362,6 @@ module WithToken (Token : TokenType) = struct
         let acc = f acc unset_variables in
         let acc = f acc unset_right_paren in
         let acc = f acc unset_semicolon in
-        acc
-      | DeclareLocalStatement
-          {
-            declare_local_keyword;
-            declare_local_variable;
-            declare_local_colon;
-            declare_local_type;
-            declare_local_initializer;
-            declare_local_semicolon;
-          } ->
-        let acc = f acc declare_local_keyword in
-        let acc = f acc declare_local_variable in
-        let acc = f acc declare_local_colon in
-        let acc = f acc declare_local_type in
-        let acc = f acc declare_local_initializer in
-        let acc = f acc declare_local_semicolon in
         acc
       | UsingStatementBlockScoped
           {
@@ -3226,23 +3207,6 @@ module WithToken (Token : TokenType) = struct
           unset_right_paren;
           unset_semicolon;
         ]
-      | DeclareLocalStatement
-          {
-            declare_local_keyword;
-            declare_local_variable;
-            declare_local_colon;
-            declare_local_type;
-            declare_local_initializer;
-            declare_local_semicolon;
-          } ->
-        [
-          declare_local_keyword;
-          declare_local_variable;
-          declare_local_colon;
-          declare_local_type;
-          declare_local_initializer;
-          declare_local_semicolon;
-        ]
       | UsingStatementBlockScoped
           {
             using_block_await_keyword;
@@ -5028,23 +4992,6 @@ module WithToken (Token : TokenType) = struct
           "unset_variables";
           "unset_right_paren";
           "unset_semicolon";
-        ]
-      | DeclareLocalStatement
-          {
-            declare_local_keyword;
-            declare_local_variable;
-            declare_local_colon;
-            declare_local_type;
-            declare_local_initializer;
-            declare_local_semicolon;
-          } ->
-        [
-          "declare_local_keyword";
-          "declare_local_variable";
-          "declare_local_colon";
-          "declare_local_type";
-          "declare_local_initializer";
-          "declare_local_semicolon";
         ]
       | UsingStatementBlockScoped
           {
@@ -6980,24 +6927,6 @@ module WithToken (Token : TokenType) = struct
             unset_variables;
             unset_right_paren;
             unset_semicolon;
-          }
-      | ( SyntaxKind.DeclareLocalStatement,
-          [
-            declare_local_keyword;
-            declare_local_variable;
-            declare_local_colon;
-            declare_local_type;
-            declare_local_initializer;
-            declare_local_semicolon;
-          ] ) ->
-        DeclareLocalStatement
-          {
-            declare_local_keyword;
-            declare_local_variable;
-            declare_local_colon;
-            declare_local_type;
-            declare_local_initializer;
-            declare_local_semicolon;
           }
       | ( SyntaxKind.UsingStatementBlockScoped,
           [
@@ -9180,27 +9109,6 @@ module WithToken (Token : TokenType) = struct
               unset_variables;
               unset_right_paren;
               unset_semicolon;
-            }
-        in
-        let value = ValueBuilder.value_from_syntax syntax in
-        make syntax value
-
-      let make_declare_local_statement
-          declare_local_keyword
-          declare_local_variable
-          declare_local_colon
-          declare_local_type
-          declare_local_initializer
-          declare_local_semicolon =
-        let syntax =
-          DeclareLocalStatement
-            {
-              declare_local_keyword;
-              declare_local_variable;
-              declare_local_colon;
-              declare_local_type;
-              declare_local_initializer;
-              declare_local_semicolon;
             }
         in
         let value = ValueBuilder.value_from_syntax syntax in

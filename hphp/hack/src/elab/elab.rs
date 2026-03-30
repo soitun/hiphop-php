@@ -12,7 +12,6 @@ mod lift_await;
 mod pass;
 mod passes;
 mod transform;
-mod typed_local;
 
 /// Private convenience module for simplifying imports in pass implementations.
 mod prelude {
@@ -81,7 +80,6 @@ pub fn elaborate_program_for_codegen(
     elaborate_package_expr(&env, program);
     elaborate_for_codegen(&env, program, opts);
     // Passes below here can emit errors
-    typed_local::elaborate_program(&mut env, program, tco.po.codegen);
     lift_await::elaborate_program(&mut env, program, tco.po.codegen);
     let errs = env.into_errors();
     match Vec1::try_from_vec(errs) {
@@ -101,7 +99,6 @@ pub fn elaborate_program(
     elaborate_common(&env, program);
     if !tco.po.codegen {
         lambda_captures::elaborate_program(&mut env, program);
-        typed_local::elaborate_program(&mut env, program, false);
         lift_await::elaborate_program(&mut env, program, false);
     }
     env.into_errors()
@@ -118,7 +115,6 @@ pub fn elaborate_fun_def(
     elaborate_common(&env, f);
     if !tco.po.codegen {
         lambda_captures::elaborate_fun_def(&mut env, f);
-        typed_local::elaborate_fun_def(&mut env, f, false);
         lift_await::elaborate_fun_def(&mut env, f, false);
     }
     env.into_errors()
@@ -135,7 +131,6 @@ pub fn elaborate_class_(
     elaborate_common(&env, c);
     if !tco.po.codegen {
         lambda_captures::elaborate_class_(&mut env, c);
-        typed_local::elaborate_class_(&mut env, c, false);
         lift_await::elaborate_class_(&mut env, c, false);
     }
     env.into_errors()
@@ -197,7 +192,6 @@ pub fn elaborate_stmt(
     elaborate_common(&env, t);
     if !tco.po.codegen {
         lambda_captures::elaborate_stmt(&mut env, t);
-        typed_local::elaborate_stmt(&mut env, t, false);
         lift_await::elaborate_stmt(&mut env, t, false);
     }
     env.into_errors()

@@ -48,7 +48,6 @@ type feature_name =
   | RecursiveCaseTypes
   | ModuleLevelTraits
   | ModuleLevelTraitsExtensions
-  | TypedLocalVariables
   | PipeAwait
   | MatchStatements
   | StrictSwitch
@@ -101,7 +100,6 @@ let feature_name_map =
       ("recursive_case_types", RecursiveCaseTypes);
       ("module_level_traits", ModuleLevelTraits);
       ("module_level_traits_extensions", ModuleLevelTraitsExtensions);
-      ("typed_local_variables", TypedLocalVariables);
       ("pipe_await", PipeAwait);
       ("match_statements", MatchStatements);
       ("strict_switch", StrictSwitch);

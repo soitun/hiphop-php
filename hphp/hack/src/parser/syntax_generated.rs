@@ -658,19 +658,6 @@ where
         Self::make(syntax, value)
     }
 
-    fn make_declare_local_statement(_: &C, declare_local_keyword: Self, declare_local_variable: Self, declare_local_colon: Self, declare_local_type: Self, declare_local_initializer: Self, declare_local_semicolon: Self) -> Self {
-        let syntax = SyntaxVariant::DeclareLocalStatement(Box::new(DeclareLocalStatementChildren {
-            declare_local_keyword,
-            declare_local_variable,
-            declare_local_colon,
-            declare_local_type,
-            declare_local_initializer,
-            declare_local_semicolon,
-        }));
-        let value = V::from_values(syntax.iter_children().map(|child| &child.value));
-        Self::make(syntax, value)
-    }
-
     fn make_using_statement_block_scoped(_: &C, using_block_await_keyword: Self, using_block_using_keyword: Self, using_block_left_paren: Self, using_block_expressions: Self, using_block_right_paren: Self, using_block_body: Self) -> Self {
         let syntax = SyntaxVariant::UsingStatementBlockScoped(Box::new(UsingStatementBlockScopedChildren {
             using_block_await_keyword,
@@ -2515,16 +2502,6 @@ where
                 let acc = f(unset_semicolon, acc);
                 acc
             },
-            SyntaxVariant::DeclareLocalStatement(x) => {
-                let DeclareLocalStatementChildren { declare_local_keyword, declare_local_variable, declare_local_colon, declare_local_type, declare_local_initializer, declare_local_semicolon } = *x;
-                let acc = f(declare_local_keyword, acc);
-                let acc = f(declare_local_variable, acc);
-                let acc = f(declare_local_colon, acc);
-                let acc = f(declare_local_type, acc);
-                let acc = f(declare_local_initializer, acc);
-                let acc = f(declare_local_semicolon, acc);
-                acc
-            },
             SyntaxVariant::UsingStatementBlockScoped(x) => {
                 let UsingStatementBlockScopedChildren { using_block_await_keyword, using_block_using_keyword, using_block_left_paren, using_block_expressions, using_block_right_paren, using_block_body } = *x;
                 let acc = f(using_block_await_keyword, acc);
@@ -3573,7 +3550,6 @@ where
             SyntaxVariant::MarkupSection {..} => SyntaxKind::MarkupSection,
             SyntaxVariant::MarkupSuffix {..} => SyntaxKind::MarkupSuffix,
             SyntaxVariant::UnsetStatement {..} => SyntaxKind::UnsetStatement,
-            SyntaxVariant::DeclareLocalStatement {..} => SyntaxKind::DeclareLocalStatement,
             SyntaxVariant::UsingStatementBlockScoped {..} => SyntaxKind::UsingStatementBlockScoped,
             SyntaxVariant::UsingStatementFunctionScoped {..} => SyntaxKind::UsingStatementFunctionScoped,
             SyntaxVariant::WhileStatement {..} => SyntaxKind::WhileStatement,
@@ -4111,15 +4087,6 @@ where
                  unset_variables: ts.pop().unwrap(),
                  unset_left_paren: ts.pop().unwrap(),
                  unset_keyword: ts.pop().unwrap(),
-                 
-             })),
-             (SyntaxKind::DeclareLocalStatement, 6) => SyntaxVariant::DeclareLocalStatement(Box::new(DeclareLocalStatementChildren {
-                 declare_local_semicolon: ts.pop().unwrap(),
-                 declare_local_initializer: ts.pop().unwrap(),
-                 declare_local_type: ts.pop().unwrap(),
-                 declare_local_colon: ts.pop().unwrap(),
-                 declare_local_variable: ts.pop().unwrap(),
-                 declare_local_keyword: ts.pop().unwrap(),
                  
              })),
              (SyntaxKind::UsingStatementBlockScoped, 6) => SyntaxVariant::UsingStatementBlockScoped(Box::new(UsingStatementBlockScopedChildren {
@@ -5045,7 +5012,6 @@ where
             SyntaxVariant::MarkupSection(x) => unsafe { std::slice::from_raw_parts(&x.markup_hashbang, 2) },
             SyntaxVariant::MarkupSuffix(x) => unsafe { std::slice::from_raw_parts(&x.markup_suffix_less_than_question, 2) },
             SyntaxVariant::UnsetStatement(x) => unsafe { std::slice::from_raw_parts(&x.unset_keyword, 5) },
-            SyntaxVariant::DeclareLocalStatement(x) => unsafe { std::slice::from_raw_parts(&x.declare_local_keyword, 6) },
             SyntaxVariant::UsingStatementBlockScoped(x) => unsafe { std::slice::from_raw_parts(&x.using_block_await_keyword, 6) },
             SyntaxVariant::UsingStatementFunctionScoped(x) => unsafe { std::slice::from_raw_parts(&x.using_function_await_keyword, 4) },
             SyntaxVariant::WhileStatement(x) => unsafe { std::slice::from_raw_parts(&x.while_keyword, 5) },
@@ -5235,7 +5201,6 @@ where
             SyntaxVariant::MarkupSection(x) => unsafe { std::slice::from_raw_parts_mut(&mut x.markup_hashbang, 2) },
             SyntaxVariant::MarkupSuffix(x) => unsafe { std::slice::from_raw_parts_mut(&mut x.markup_suffix_less_than_question, 2) },
             SyntaxVariant::UnsetStatement(x) => unsafe { std::slice::from_raw_parts_mut(&mut x.unset_keyword, 5) },
-            SyntaxVariant::DeclareLocalStatement(x) => unsafe { std::slice::from_raw_parts_mut(&mut x.declare_local_keyword, 6) },
             SyntaxVariant::UsingStatementBlockScoped(x) => unsafe { std::slice::from_raw_parts_mut(&mut x.using_block_await_keyword, 6) },
             SyntaxVariant::UsingStatementFunctionScoped(x) => unsafe { std::slice::from_raw_parts_mut(&mut x.using_function_await_keyword, 4) },
             SyntaxVariant::WhileStatement(x) => unsafe { std::slice::from_raw_parts_mut(&mut x.while_keyword, 5) },
@@ -5882,17 +5847,6 @@ pub struct UnsetStatementChildren<T, V> {
     pub unset_variables: Syntax<T, V>,
     pub unset_right_paren: Syntax<T, V>,
     pub unset_semicolon: Syntax<T, V>,
-}
-
-#[derive(Debug, Clone)]
-#[repr(C)]
-pub struct DeclareLocalStatementChildren<T, V> {
-    pub declare_local_keyword: Syntax<T, V>,
-    pub declare_local_variable: Syntax<T, V>,
-    pub declare_local_colon: Syntax<T, V>,
-    pub declare_local_type: Syntax<T, V>,
-    pub declare_local_initializer: Syntax<T, V>,
-    pub declare_local_semicolon: Syntax<T, V>,
 }
 
 #[derive(Debug, Clone)]
@@ -7065,7 +7019,6 @@ pub enum SyntaxVariant<T, V> {
     MarkupSection(Box<MarkupSectionChildren<T, V>>),
     MarkupSuffix(Box<MarkupSuffixChildren<T, V>>),
     UnsetStatement(Box<UnsetStatementChildren<T, V>>),
-    DeclareLocalStatement(Box<DeclareLocalStatementChildren<T, V>>),
     UsingStatementBlockScoped(Box<UsingStatementBlockScopedChildren<T, V>>),
     UsingStatementFunctionScoped(Box<UsingStatementFunctionScopedChildren<T, V>>),
     WhileStatement(Box<WhileStatementChildren<T, V>>),
@@ -7786,18 +7739,6 @@ impl<'a, T, V> SyntaxChildrenIterator<'a, T, V> {
                     2 => Some(&x.unset_variables),
                     3 => Some(&x.unset_right_paren),
                     4 => Some(&x.unset_semicolon),
-                        _ => None,
-                    }
-                })
-            },
-            DeclareLocalStatement(x) => {
-                get_index(6).and_then(|index| { match index {
-                        0 => Some(&x.declare_local_keyword),
-                    1 => Some(&x.declare_local_variable),
-                    2 => Some(&x.declare_local_colon),
-                    3 => Some(&x.declare_local_type),
-                    4 => Some(&x.declare_local_initializer),
-                    5 => Some(&x.declare_local_semicolon),
                         _ => None,
                     }
                 })

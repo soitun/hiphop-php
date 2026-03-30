@@ -33,7 +33,6 @@ impl FeatureName {
             RecursiveCaseTypes => Preview,
             ModuleLevelTraits => OngoingRelease,
             ModuleLevelTraitsExtensions => OngoingRelease,
-            TypedLocalVariables => Preview,
             PipeAwait => OngoingRelease,
             MatchStatements => Unstable,
             StrictSwitch => Unstable,

@@ -2979,8 +2979,7 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
                 | ReturnStatement(_)
                 | UnsetStatement(_)
                 | EchoStatement(_)
-                | ThrowStatement(_)
-                | DeclareLocalStatement(_) => break,
+                | ThrowStatement(_) => break,
                 IfStatement(x) if std::ptr::eq(node, &x.condition) => break,
                 ForStatement(x) if std::ptr::eq(node, &x.initializer) => break,
                 SwitchStatement(x) if std::ptr::eq(node, &x.expression) => break,
@@ -5469,14 +5468,6 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
                                 errors::statement_without_await_in_concurrent_block,
                             ))
                         }
-                    } else if let DeclareLocalStatement(x) = &n.children {
-                        if !self.node_has_await_child(&x.initializer) && !x.initializer.is_missing()
-                        {
-                            self.errors.push(make_error_from_node(
-                                n,
-                                errors::statement_without_await_in_concurrent_block,
-                            ))
-                        }
                     } else {
                         self.errors.push(make_error_from_node(
                             n,
@@ -5725,14 +5716,6 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
                     self.check_lvalue_and_inout(expr, LvalRoot::Unset, NestingContext::None);
                 }
             }
-            DeclareLocalStatement(x) => {
-                if self.text(&x.variable) == sn::special_idents::THIS {
-                    self.errors.push(make_error_from_node(
-                        node,
-                        Cow::Owned("You cannot declare $this as a typed local.".to_string()),
-                    ));
-                }
-            }
             ClassPtrTypeSpecifier(_) => {
                 self.check_can_use_feature(node, &FeatureName::ClassType);
             }
@@ -5779,9 +5762,6 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
             }
             LikeTypeSpecifier(_) if !self.env.hhi_mode => {
                 self.check_can_use_feature(node, &FeatureName::LikeTypeHints)
-            }
-            DeclareLocalStatement(_) => {
-                self.check_can_use_feature(node, &FeatureName::TypedLocalVariables)
             }
             UpcastExpression(_) => self.check_can_use_feature(node, &FeatureName::UpcastExpression),
             OldAttributeSpecification(x) => {

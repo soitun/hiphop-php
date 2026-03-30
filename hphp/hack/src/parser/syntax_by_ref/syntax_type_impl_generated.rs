@@ -664,19 +664,6 @@ where
         Self::make(syntax, value)
     }
 
-    fn make_declare_local_statement(ctx: &C, keyword: Self, variable: Self, colon: Self, type_: Self, initializer: Self, semicolon: Self) -> Self {
-        let syntax = SyntaxVariant::DeclareLocalStatement(ctx.get_arena().alloc(DeclareLocalStatementChildren {
-            keyword,
-            variable,
-            colon,
-            type_,
-            initializer,
-            semicolon,
-        }));
-        let value = V::from_values(syntax.iter_children().map(|child| &child.value));
-        Self::make(syntax, value)
-    }
-
     fn make_using_statement_block_scoped(ctx: &C, await_keyword: Self, using_keyword: Self, left_paren: Self, expressions: Self, right_paren: Self, body: Self) -> Self {
         let syntax = SyntaxVariant::UsingStatementBlockScoped(ctx.get_arena().alloc(UsingStatementBlockScopedChildren {
             await_keyword,

@@ -81,7 +81,6 @@ impl<T: LexableToken, V> Syntax<'_, T, V> {
             SyntaxVariant::MarkupSection {..} => SyntaxKind::MarkupSection,
             SyntaxVariant::MarkupSuffix {..} => SyntaxKind::MarkupSuffix,
             SyntaxVariant::UnsetStatement {..} => SyntaxKind::UnsetStatement,
-            SyntaxVariant::DeclareLocalStatement {..} => SyntaxKind::DeclareLocalStatement,
             SyntaxVariant::UsingStatementBlockScoped {..} => SyntaxKind::UsingStatementBlockScoped,
             SyntaxVariant::UsingStatementFunctionScoped {..} => SyntaxKind::UsingStatementFunctionScoped,
             SyntaxVariant::WhileStatement {..} => SyntaxKind::WhileStatement,

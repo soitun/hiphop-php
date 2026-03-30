@@ -140,7 +140,7 @@ pub fn emit_stmt<'a>(e: &mut Emitter, env: &mut Env<'a>, stmt: &ast::Stmt) -> Re
         a::Stmt_::Concurrent(_) => panic!("Concurrent statement in emit_statement"),
         a::Stmt_::Markup(x) => emit_markup(e, env, x, false),
         a::Stmt_::Fallthrough | a::Stmt_::Noop => Ok(instr::empty()),
-        a::Stmt_::DeclareLocal(x) => emit_declare_local(e, env, pos, &x.0, &x.2),
+        a::Stmt_::DeclareLocal(_) => panic!("DeclareLocal statement in emit_statement"),
         a::Stmt_::Match(..) => todo!("TODO(jakebailey): match statements"),
     }
 }
@@ -2024,25 +2024,5 @@ fn emit_if<'a>(
             alternative_instr,
             instr::label(done_label),
         ]))
-    }
-}
-
-// Treat the declaration of a local as a binop assignment.
-// TODO: clone less
-// TODO: Enforce the type hint from the declaration?
-fn emit_declare_local<'a>(
-    e: &mut Emitter,
-    env: &mut Env<'a>,
-    pos: &Pos,
-    id: &ast::Lid,
-    e_: &Option<ast::Expr>,
-) -> Result<InstrSeq> {
-    if let Some(e_) = e_ {
-        let lhs = ast::Expr::new((), pos.clone(), ast::Expr_::mk_lvar(id.clone()));
-        let assign = ast::Expr_::mk_assign(lhs.clone(), None, e_.clone());
-        let e2 = ast::Expr::new((), pos.clone(), assign);
-        emit_assign(e, env, &e2, pos, &lhs, &None, e_)
-    } else {
-        Ok(InstrSeq::gather(vec![]))
     }
 }

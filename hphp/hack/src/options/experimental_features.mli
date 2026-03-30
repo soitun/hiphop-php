@@ -42,7 +42,6 @@ type feature_name =
   | RecursiveCaseTypes
   | ModuleLevelTraits
   | ModuleLevelTraitsExtensions
-  | TypedLocalVariables
   | PipeAwait
   | MatchStatements
   | StrictSwitch

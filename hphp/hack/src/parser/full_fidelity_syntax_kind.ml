@@ -77,7 +77,6 @@ type t =
   | MarkupSection
   | MarkupSuffix
   | UnsetStatement
-  | DeclareLocalStatement
   | UsingStatementBlockScoped
   | UsingStatementFunctionScoped
   | WhileStatement
@@ -266,7 +265,6 @@ let to_string kind =
   | MarkupSection -> "markup_section"
   | MarkupSuffix -> "markup_suffix"
   | UnsetStatement -> "unset_statement"
-  | DeclareLocalStatement -> "declare_local_statement"
   | UsingStatementBlockScoped -> "using_statement_block_scoped"
   | UsingStatementFunctionScoped -> "using_statement_function_scoped"
   | WhileStatement -> "while_statement"

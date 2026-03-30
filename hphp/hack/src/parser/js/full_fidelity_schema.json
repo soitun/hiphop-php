@@ -1019,18 +1019,6 @@
         { "field_name" : "right_paren" },
         { "field_name" : "semicolon" }
       ] },
-    { "kind_name" : "DeclareLocalStatement",
-      "type_name" : "declare_local_statement",
-      "description" : "declare_local_statement",
-      "prefix" : "declare_local",
-      "fields" : [
-        { "field_name" : "keyword" },
-        { "field_name" : "variable" },
-        { "field_name" : "colon" },
-        { "field_name" : "type" },
-        { "field_name" : "initializer" },
-        { "field_name" : "semicolon" }
-      ] },
     { "kind_name" : "UsingStatementBlockScoped",
       "type_name" : "using_statement_block_scoped",
       "description" : "using_statement_block_scoped",
