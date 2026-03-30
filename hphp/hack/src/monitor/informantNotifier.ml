@@ -11,7 +11,7 @@ open Hh_prelude
 type repo_transition =
   | State_enter of Hg.Rev.t
   | State_leave of Hg.Rev.t
-  | Changed_merge_base of Hg.Rev.t * Watchman.clock
+  | Changed_merge_base of Hg.Rev.t
 [@@deriving show]
 
 type t = Watchman of Watchman.watchman_instance ref
@@ -24,10 +24,10 @@ let get_change_watchman
   | Watchman.Watchman_unavailable
   | Watchman.Watchman_synchronous _ ->
     None
-  | Watchman.Watchman_pushed (Watchman.Changed_merge_base (rev, _files, clock))
+  | Watchman.Watchman_pushed (Watchman.Changed_merge_base (rev, _files, _clock))
     ->
     let () = Hh_logger.log "Changed_merge_base: %s" (Hg.Rev.to_string rev) in
-    Some (Changed_merge_base (rev, clock))
+    Some (Changed_merge_base rev)
   | Watchman.Watchman_pushed (Watchman.State_enter (state, json))
     when String.equal state "hg.update" ->
     is_in_hg_update_state := true;

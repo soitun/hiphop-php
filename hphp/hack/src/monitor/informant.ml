@@ -276,7 +276,7 @@ module Revision_tracker = struct
       match transition with
       | State_enter hg_rev
       | State_leave hg_rev
-      | Changed_merge_base (hg_rev, _) ->
+      | Changed_merge_base hg_rev ->
         hg_rev
     in
     match Revision_map.find_global_rev hg_rev env.rev_map with
@@ -386,7 +386,7 @@ module Revision_tracker = struct
       | Some (State_leave hg_rev) ->
         let () = Revision_map.add_query ~hg_rev env.inits.root env.rev_map in
         preprocess server_state (State_leave hg_rev) env
-      | Some (Changed_merge_base (hg_rev, _) as change) ->
+      | Some (Changed_merge_base hg_rev as change) ->
         let () = Revision_map.add_query ~hg_rev env.inits.root env.rev_map in
         preprocess server_state change env
     in

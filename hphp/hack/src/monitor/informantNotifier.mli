@@ -9,7 +9,7 @@
 type repo_transition =
   | State_enter of Hg.Rev.t
   | State_leave of Hg.Rev.t
-  | Changed_merge_base of Hg.Rev.t * Watchman.clock
+  | Changed_merge_base of Hg.Rev.t
 [@@deriving show]
 
 type t
