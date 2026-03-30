@@ -404,8 +404,7 @@ let method_def ~is_disposable env cls m =
 
 (** Checks that extending the base class is legal, i.e.:
     - the parent is not final
-    - if the class is const, the parent should also be
-    - an abstract class cannot extend a nonabstract class that is __ConsistentConstruct. *)
+    - if the class is const, the parent should also be *)
 let check_parent env class_def class_type =
   match Env.get_parent_class env with
   | Decl_entry.Found parent_type ->
@@ -427,44 +426,69 @@ let check_parent env class_def class_type =
                  pos = position;
                  decl_pos = Cls.pos parent_type;
                  name = Cls.name parent_type;
-               });
-    if
-      TCO.strict_consistent_construct (Env.get_tcopt env)
-      && Cls.abstract class_type
-      && (match snd (Cls.construct parent_type) with
-         | ConsistentConstruct -> true
-         | _ -> false)
-      && not (Cls.abstract parent_type)
-    then begin
-      let inherited =
-        match
-          Decl_provider.get_shallow_class
-            (Env.get_ctx env)
-            (Cls.name parent_type)
-        with
-        | Some sc ->
-          not
-            (Attributes.mem
-               SN.UserAttributes.uaConsistentConstruct
-               sc.Shallow_decl_defs.sc_user_attributes)
-        | None -> false
-      in
-      Typing_error_utils.add_typing_error
-        ~env
-        Typing_error.(
-          primary
-          @@ Primary.Consistent_construct_abstract_extends_non_abstract
-               {
-                 pos = position;
-                 child_name = snd class_def.c_name;
-                 parent_name = Cls.name parent_type;
-                 decl_pos = Cls.pos parent_type;
-                 inherited;
                })
-    end
   | Decl_entry.DoesNotExist
   | Decl_entry.NotYetAvailable ->
     ()
+
+let check_consistent_construct_not_abstract_final env class_def class_type =
+  if
+    TCO.strict_consistent_construct (Env.get_tcopt env)
+    && Cls.abstract class_type
+    && class_def.c_final
+  then begin
+    (* Check the NAST directly for the attribute on the current class —
+       no decl lookup needed. *)
+    let has_cc_on_self =
+      Naming_attributes.mem
+        SN.UserAttributes.uaConsistentConstruct
+        class_def.c_user_attributes
+    in
+    (* For abstract final classes, the folded construct kind is FinalClass
+       rather than ConsistentConstruct, so we also check the NAST attribute. *)
+    let is_cc =
+      match snd (Env.get_construct env class_type) with
+      | ConsistentConstruct -> true
+      | _ -> has_cc_on_self
+    in
+    if is_cc then begin
+      let inherited_from =
+        if has_cc_on_self then
+          None
+        else
+          (* The error message would be better if we could
+             tell the user *which* ancestor has the explicit __ConsistentConstruct
+             attribute, but checking would be too expensive *)
+          let cc_parent =
+            List.find_map class_def.c_extends ~f:(function
+                | (_, Happly ((_, name), _)) -> begin
+                  match Env.get_class env name with
+                  | Decl_entry.Found parent_cls ->
+                    let consistent = snd (Env.get_construct env parent_cls) in
+                    (match consistent with
+                    | ConsistentConstruct -> Some name
+                    | _ -> None)
+                  | Decl_entry.DoesNotExist
+                  | Decl_entry.NotYetAvailable ->
+                    None
+                end
+                | _ -> None)
+          in
+          match cc_parent with
+          | Some name -> Some name
+          | None -> Some "an ancestor"
+      in
+      Typing_warning_utils.add
+        env
+        ( fst class_def.c_name,
+          Typing_warning.Consistent_construct_abstract_final,
+          {
+            Typing_warning.Consistent_construct_abstract_final.name =
+              snd class_def.c_name;
+            inherited_from;
+          } )
+    end
+  end
 
 (** If the class is sealed, check that the elements of the whitelist
     are descendants of the class and emit a warning if not. *)
@@ -1874,6 +1898,7 @@ let class_hierarchy_checks env c tc (parents : class_parents) =
         (c.c_implements @ c.c_extends @ c.c_uses)
     in
     check_parent env c tc;
+    check_consistent_construct_not_abstract_final env c tc;
     check_parents_sealed env c tc;
     check_sealed env c;
     let (_ : env) =

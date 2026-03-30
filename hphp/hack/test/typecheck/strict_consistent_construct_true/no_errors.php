@@ -16,9 +16,17 @@ abstract class AbstractCCParent {
 }
 abstract class AbstractChildOfAbstractCC extends AbstractCCParent {}
 
-// OK: abstract class extending a nonabstract class where the parent is NOT __ConsistentConstruct
 class ConcreteNoCC {
   public function __construct(public int $x) {}
 }
 <<__ConsistentConstruct>>
 abstract class AbstractCCChildOfNonCC extends ConcreteNoCC {}
+
+abstract class AbstractChildOfDirectCC extends ConcreteCCDirect {}
+
+<<__ConsistentConstruct>>
+abstract class AbstractCCRoot {}
+class ConcreteInheritsCC extends AbstractCCRoot {}
+abstract class AbstractChildOfInheritedCC extends ConcreteInheritsCC {}
+
+abstract final class AbstractFinalNoCC {}

@@ -797,7 +797,7 @@ module Typing = struct
     | NeedsConcreteInFinalClass [@value 4505]
     | NeedsConcreteOnInstanceMethod [@value 4506]
     | NeedsConcreteOnConstructor [@value 4507]
-    | ConsistentConstructAbstractExtendsNonAbstract [@value 4508]
+  (* | ConsistentConstructAbstractExtendsNonAbstract [@value 4508] *)
   (* Add new Typing codes here! Comment out when deprecating. *)
   [@@deriving enum, show { with_path = false }]
 
@@ -838,6 +838,7 @@ module Warning = struct
     | SetOrKeysetArrayGet [@value 12034]
     | SealedNotSubtype [@value 12035]
     | TanyFound [@value 12036]
+    | ConsistentConstructAbstractFinal [@value 12037]
       (* Add new Warning codes here! Comment out when deprecating. *)
   [@@deriving enum, ord, show { with_path = false }]
 end

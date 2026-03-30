@@ -1,8 +1,6 @@
-ERROR: File "errors_1.php", line 7, characters 16-38:
-An abstract class cannot extend a nonabstract class that is `__ConsistentConstruct`. `AbstractChildOfDirectCC` is abstract and `ConcreteCCDirect` is `__ConsistentConstruct`. (Typing[4508])
-  File "errors_1.php", line 3, characters 7-22:
-  Declaration is here
-ERROR: File "errors_1.php", line 14, characters 16-41:
-An abstract class cannot extend a nonabstract class that is `__ConsistentConstruct`. `AbstractChildOfInheritedCC` is abstract and `ConcreteInheritsCC` is `__ConsistentConstruct` (inherited attribute). (Typing[4508])
-  File "errors_1.php", line 11, characters 7-24:
-  Declaration is here
+WARN: File "errors_1.php", line 3, characters 22-42:
+An `abstract final` class cannot be `__ConsistentConstruct`. `AbstractFinalCCDirect` is `__ConsistentConstruct`. (Warn[12037])
+WARN: File "errors_1.php", line 7, characters 22-43:
+An `abstract final` class cannot be `__ConsistentConstruct`. Class `AbstractFinalChildOfCC` inherits `__ConsistentConstruct` from `AbstractCCRoot`. (Warn[12037])
+WARN: File "errors_1.php", line 12, characters 22-44:
+An `abstract final` class cannot be `__ConsistentConstruct`. Class `AbstractFinalGrandchild` inherits `__ConsistentConstruct` from `MiddleClass`. (Warn[12037])

@@ -940,6 +940,38 @@ module Tany_found = struct
   let quickfixes _ = []
 end
 
+module Consistent_construct_abstract_final = struct
+  type t = Typing_warning.Consistent_construct_abstract_final.t
+
+  let code = Codes.ConsistentConstructAbstractFinal
+
+  let codes = [code]
+
+  let code _ = code
+
+  let claim
+      {
+        Typing_warning.Consistent_construct_abstract_final.name;
+        inherited_from;
+      } =
+    let name = Render.strip_ns name in
+    match inherited_from with
+    | Some ancestor ->
+      "An `abstract final` class cannot be `__ConsistentConstruct`. Class "
+      ^ Markdown_lite.md_codify name
+      ^ " inherits `__ConsistentConstruct` from "
+      ^ Markdown_lite.md_codify (Render.strip_ns ancestor)
+      ^ "."
+    | None ->
+      "An `abstract final` class cannot be `__ConsistentConstruct`. "
+      ^ Markdown_lite.md_codify name
+      ^ " is `__ConsistentConstruct`."
+
+  let reasons _ = []
+
+  let quickfixes _ = []
+end
+
 let module_of (type a x) (kind : (x, a) Typing_warning.kind) :
     (module Warning with type t = x) =
   match kind with
@@ -972,6 +1004,8 @@ let module_of (type a x) (kind : (x, a) Typing_warning.kind) :
   | Typing_warning.Set_or_keyset_array_get -> (module Set_or_keyset_array_get)
   | Typing_warning.Sealed_not_subtype -> (module Sealed_not_subtype)
   | Typing_warning.Tany_found -> (module Tany_found)
+  | Typing_warning.Consistent_construct_abstract_final ->
+    (module Consistent_construct_abstract_final)
 
 let module_of_migrated
     (type x) (kind : (x, Typing_warning.migrated) Typing_warning.kind) :

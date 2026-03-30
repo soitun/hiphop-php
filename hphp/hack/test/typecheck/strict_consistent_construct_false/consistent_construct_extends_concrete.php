@@ -11,11 +11,13 @@ class ConcreteCCDirect {
   public function __construct(public int $x) {}
 }
 abstract class AbstractChildOfDirectCC extends ConcreteCCDirect {}
+abstract final class AbstractFinalChildOfDirectCC extends ConcreteCCDirect {}
 
 <<__ConsistentConstruct>>
 abstract class AbstractCCRoot {}
 class ConcreteInheritsCC extends AbstractCCRoot {}
 abstract class AbstractChildOfInheritedCC extends ConcreteInheritsCC {}
+abstract final class AbstractFinalChildOfInheritedCC extends ConcreteInheritsCC {}
 
 class ConcreteChildOfCC extends ConcreteCCDirect {}
 
@@ -30,3 +32,6 @@ class ConcreteNoCC {
 }
 <<__ConsistentConstruct>>
 abstract class AbstractCCChildOfNonCC extends ConcreteNoCC {}
+
+<<__ConsistentConstruct>>
+abstract final class AbstractFinalCCDirect {}

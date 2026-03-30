@@ -289,7 +289,7 @@ type t = {
   needs_concrete_override_check: bool;
       (** Enable override check for __NeedsConcrete methods https://fburl.com/hack-needs-concrete *)
   strict_consistent_construct: bool;
-      (** When true, ban abstract classes from extending nonabstract __ConsistentConstruct classes *)
+      (** When true, ban abstract final classes from extending nonabstract __ConsistentConstruct classes *)
   allow_class_string_cast: bool;  (** Admits (string)$c when $c: class<T>  *)
   class_pointer_ban_classname_new: int;
       (** Error on new $c() when $c: classname<T>  *)

@@ -270,6 +270,13 @@ module Tany_found = struct
   type t = unit
 end
 
+module Consistent_construct_abstract_final = struct
+  type t = {
+    name: string;
+    inherited_from: string option;
+  }
+end
+
 type (_, _) kind =
   | Sketchy_equality : (Sketchy_equality.t, warn) kind
   | Is_as_always : (Is_as_always.t, migrated) kind
@@ -297,5 +304,7 @@ type (_, _) kind =
   | Set_or_keyset_array_get : (Set_or_keyset_array_get.t, warn) kind
   | Sealed_not_subtype : (Sealed_not_subtype.t, warn) kind
   | Tany_found : (Tany_found.t, warn) kind
+  | Consistent_construct_abstract_final
+      : (Consistent_construct_abstract_final.t, warn) kind
 
 type ('x, 'a) t = Pos.t * ('x, 'a) kind * 'x
