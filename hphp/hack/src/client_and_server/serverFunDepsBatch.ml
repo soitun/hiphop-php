@@ -33,6 +33,7 @@ let process_method_cid n cid =
       type_ = SymbolOccurrence.Method (SymbolOccurrence.ClassName cid, snd n);
       is_declaration = None;
       pos = fst n;
+      affects_prod_build = true;
     }
 
 let process_method env ty n =
@@ -47,6 +48,7 @@ let process_function id =
       type_ = SymbolOccurrence.Function;
       is_declaration = None;
       pos = fst id;
+      affects_prod_build = true;
     }
 
 let process_local id =
@@ -56,6 +58,7 @@ let process_local id =
       type_ = SymbolOccurrence.LocalVar;
       is_declaration = None;
       pos = fst id;
+      affects_prod_build = true;
     }
 
 let collect_in_decl =

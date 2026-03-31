@@ -600,7 +600,13 @@ let make_hover_info
     in
     Tast_env.print_ty_with_identity env ty occurrence def_opt
   in
-  let { SymbolOccurrence.name; type_; is_declaration = _; pos = _ } =
+  let {
+    SymbolOccurrence.name;
+    type_;
+    is_declaration = _;
+    pos = _;
+    affects_prod_build = _;
+  } =
     occurrence
   in
   let (defined_in, snippet, instantiation_section) =

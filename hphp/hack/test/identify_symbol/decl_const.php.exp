@@ -1,4 +1,5 @@
 name: \C::FOO, kind: member_const, span: line 4, characters 9-11, is_declaration: true
+affects_prod_build: true
 definition:
  FOO
    kind: class constant

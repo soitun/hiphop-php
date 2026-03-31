@@ -10,6 +10,7 @@ definition:
 
 
 name: \Foo::__construct, kind: method, span: line 10, characters 7-9, is_declaration: false
+affects_prod_build: true
 definition:
  __construct
    kind: method

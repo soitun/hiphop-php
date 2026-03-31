@@ -93,14 +93,8 @@ type receiver =
     }
 [@@deriving eq]
 
-type class_kind = {
-  class_id_type: class_id_type;
-  affects_prod_build: bool;
-}
-[@@deriving ord, eq, show]
-
 type kind =
-  | Class of class_kind
+  | Class of class_id_type
   | BuiltInType of built_in_type_hint
   | Function
   | Method of receiver_class * string
@@ -136,6 +130,10 @@ type 'a t = {
   is_declaration: 'a Pos.pos option;
       (** If this is a declaration, the span of the full declaration, or None otherwise *)
   pos: 'a Pos.pos;  (** Span of the symbol name itself *)
+  affects_prod_build: bool;
+      (** Whether this symbol occurrence affects the production build.  Currently
+          symbols inside __RequirePackage("intern") scopes, nameof expressions,
+          attributes, and class pointers are marked as not affecting the prod build. *)
 }
 [@@deriving ord, show]
 

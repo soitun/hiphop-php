@@ -1,4 +1,5 @@
 name: \foo, kind: function, span: line 6, characters 3-5, is_declaration: false
+affects_prod_build: true
 definition:
  foo
    kind: function

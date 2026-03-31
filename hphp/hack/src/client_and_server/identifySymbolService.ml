@@ -54,9 +54,10 @@ let process_class_id
   Result_set.singleton
     {
       name = cid;
-      type_ = Class { class_id_type; affects_prod_build };
+      type_ = Class class_id_type;
       is_declaration;
       pos;
+      affects_prod_build;
     }
 
 let process_attribute (pos, name) class_name method_ =
@@ -67,7 +68,8 @@ let process_attribute (pos, name) class_name method_ =
       Attribute (Some { class_name; method_name; is_static })
     | _ -> Attribute None
   in
-  Result_set.singleton { name; type_; is_declaration = None; pos }
+  Result_set.singleton
+    { name; type_; is_declaration = None; pos; affects_prod_build = true }
 
 let process_xml_attrs class_name attrs =
   List.fold attrs ~init:Result_set.empty ~f:(fun acc attr ->
@@ -79,6 +81,7 @@ let process_xml_attrs class_name attrs =
             type_ = XhpLiteralAttr (class_name, Utils.add_xhp_ns name);
             is_declaration = None;
             pos;
+            affects_prod_build = true;
           }
           acc
       | _ -> acc)
@@ -123,6 +126,7 @@ let process_member ?is_declaration recv_class id ~kind =
         type_;
         is_declaration;
         pos = fst id;
+        affects_prod_build = true;
       }
 
 (* If there's an exact class name can find for this type, return its name. *)
@@ -162,6 +166,7 @@ let process_arg_names recv (args : Tast.expr list) : Result_set.t =
           type_ = BestEffortArgument (recv_name, i);
           is_declaration = None;
           pos;
+          affects_prod_build = true;
         })
     |> Result_set.of_list
   | None -> Result_set.empty
@@ -216,15 +221,33 @@ let process_constructor_arg_names
 
 let process_fun_id ?is_declaration id =
   Result_set.singleton
-    { name = snd id; type_ = Function; is_declaration; pos = fst id }
+    {
+      name = snd id;
+      type_ = Function;
+      is_declaration;
+      pos = fst id;
+      affects_prod_build = true;
+    }
 
 let process_global_const ?is_declaration id =
   Result_set.singleton
-    { name = snd id; type_ = GConst; is_declaration; pos = fst id }
+    {
+      name = snd id;
+      type_ = GConst;
+      is_declaration;
+      pos = fst id;
+      affects_prod_build = true;
+    }
 
 let process_lvar_id id =
   Result_set.singleton
-    { name = snd id; type_ = LocalVar; is_declaration = None; pos = fst id }
+    {
+      name = snd id;
+      type_ = LocalVar;
+      is_declaration = None;
+      pos = fst id;
+      affects_prod_build = true;
+    }
 
 let process_typeconst ?is_declaration (class_name, tconst_name, pos) =
   Result_set.singleton
@@ -233,6 +256,7 @@ let process_typeconst ?is_declaration (class_name, tconst_name, pos) =
       type_ = Typeconst (class_name, tconst_name);
       is_declaration;
       pos;
+      affects_prod_build = true;
     }
 
 let process_class class_ =
@@ -351,6 +375,21 @@ let remove_apostrophes_from_function_eval (mid : Ast_defs.pstring) :
   let new_pos = Pos.shrink_by_one_char_both_sides pos in
   (new_pos, member_name)
 
+let has_require_package_intern (attrs : ('a, 'b) Aast.user_attribute list) :
+    bool =
+  List.exists attrs ~f:(fun ua ->
+      String.equal (snd ua.Aast.ua_name) SN.UserAttributes.uaRequirePackage
+      && List.exists ua.Aast.ua_params ~f:(fun (_, _, e) ->
+             match e with
+             | Aast.String pkg -> String.equal pkg "intern"
+             | _ -> false))
+
+let set_affects_prod_build_false result_set =
+  Result_set.fold
+    (fun occ acc -> Result_set.add { occ with affects_prod_build = false } acc)
+    result_set
+    Result_set.empty
+
 let visitor =
   let class_name = ref None in
   let parent_class_hint = ref None in
@@ -359,6 +398,7 @@ let visitor =
   let in_nameof = ref false in
   let in_class_ptr = ref false in
   let in_attribute = ref false in
+  let in_require_package_intern = ref false in
 
   object (self)
     inherit [_] Tast_visitor.reduce as super
@@ -433,6 +473,7 @@ let visitor =
                   type_ = EnumClassLabel (enum_name, label_name);
                   is_declaration = None;
                   pos;
+                  affects_prod_build = true;
                 }
         end
         | _ -> self#zero
@@ -615,7 +656,13 @@ let visitor =
       let (pos, name) = tp.Aast.tp_name in
       let acc =
         Result_set.singleton
-          { name; type_ = TypeVar; is_declaration = Some pos; pos }
+          {
+            name;
+            type_ = TypeVar;
+            is_declaration = Some pos;
+            pos;
+            affects_prod_build = true;
+          }
       in
       self#plus acc (super#on_tparam env tp)
 
@@ -632,84 +679,37 @@ let visitor =
       process_lvar_id (pos, Local_id.get_name id)
 
     method! on_hint env h =
+      let mk_hint name type_ pos =
+        { name; type_; is_declaration = None; pos; affects_prod_build = true }
+      in
       let acc =
         match h with
         | (pos, Aast.Habstr name) ->
-          Result_set.singleton
-            { name; type_ = TypeVar; is_declaration = None; pos }
+          Result_set.singleton (mk_hint name TypeVar pos)
         | (pos, Aast.Hprim prim) ->
           let name = Aast_defs.string_of_tprim prim in
           Result_set.singleton
-            {
-              name;
-              type_ = BuiltInType (BIprimitive prim);
-              is_declaration = None;
-              pos;
-            }
+            (mk_hint name (BuiltInType (BIprimitive prim)) pos)
         | (pos, Aast.Happly ((_, name), _))
           when String.equal SN.Classes.cString name ->
-          let name = "string" in
-          Result_set.singleton
-            { name; type_ = BuiltInType BIstring; is_declaration = None; pos }
+          Result_set.singleton (mk_hint "string" (BuiltInType BIstring) pos)
         | (pos, Aast.Hnothing) ->
-          Result_set.singleton
-            {
-              name = "nothing";
-              type_ = BuiltInType BInothing;
-              is_declaration = None;
-              pos;
-            }
+          Result_set.singleton (mk_hint "nothing" (BuiltInType BInothing) pos)
         | (pos, Aast.Hmixed) ->
-          Result_set.singleton
-            {
-              name = "mixed";
-              type_ = BuiltInType BImixed;
-              is_declaration = None;
-              pos;
-            }
+          Result_set.singleton (mk_hint "mixed" (BuiltInType BImixed) pos)
         | (pos, Aast.Hnonnull) ->
-          Result_set.singleton
-            {
-              name = "nonnull";
-              type_ = BuiltInType BInonnull;
-              is_declaration = None;
-              pos;
-            }
+          Result_set.singleton (mk_hint "nonnull" (BuiltInType BInonnull) pos)
         | (pos, Aast.Hdynamic) ->
-          Result_set.singleton
-            {
-              name = "dynamic";
-              type_ = BuiltInType BIdynamic;
-              is_declaration = None;
-              pos;
-            }
+          Result_set.singleton (mk_hint "dynamic" (BuiltInType BIdynamic) pos)
         | (pos, Aast.Hshape _) ->
-          Result_set.singleton
-            {
-              name = "shape";
-              type_ = BuiltInType BIshape;
-              is_declaration = None;
-              pos;
-            }
+          Result_set.singleton (mk_hint "shape" (BuiltInType BIshape) pos)
         | (pos, Aast.Hthis) ->
-          Result_set.singleton
-            {
-              name = "this";
-              type_ = BuiltInType BIthis;
-              is_declaration = None;
-              pos;
-            }
+          Result_set.singleton (mk_hint "this" (BuiltInType BIthis) pos)
         | (pos, Aast.Hoption _) ->
           (* Narrow the position to just the '?', not the whole ?Foo<Complicated<Bar>>. *)
           let (_start_line, start_column) = Pos.line_column pos in
           let qmark_pos = Pos.set_col_end (start_column + 1) pos in
-          Result_set.singleton
-            {
-              name = "?";
-              type_ = BuiltInType BIoption;
-              is_declaration = None;
-              pos = qmark_pos;
-            }
+          Result_set.singleton (mk_hint "?" (BuiltInType BIoption) qmark_pos)
         | _ -> Result_set.empty
       in
       self#plus acc (super#on_hint env h)
@@ -846,10 +846,21 @@ let visitor =
       acc
 
     method! on_fun_def env fd =
-      let acc =
-        process_fun_id ~is_declaration:(fst fd.Aast.fd_name) fd.Aast.fd_name
+      let open Aast in
+      assert (not !in_require_package_intern);
+      in_require_package_intern :=
+        has_require_package_intern fd.fd_fun.f_user_attributes;
+      let acc = process_fun_id ~is_declaration:(fst fd.fd_name) fd.fd_name in
+      let result = self#plus acc (super#on_fun_def env fd) in
+      let result =
+        (* rather than checking in_require_package_intern everywhere, postprocess the results *)
+        if !in_require_package_intern then
+          set_affects_prod_build_false result
+        else
+          result
       in
-      self#plus acc (super#on_fun_def env fd)
+      in_require_package_intern := false;
+      result
 
     method! on_fun_ env fun_ =
       super#on_fun_ env { fun_ with Aast.f_unsafe_ctxs = None }
@@ -886,9 +897,21 @@ let visitor =
       + super#on_SFclass_const env cid mid
 
     method! on_method_ env m =
-      method_name := Some (m.Aast.m_name, m.Aast.m_static);
-      let acc = super#on_method_ env { m with Aast.m_unsafe_ctxs = None } in
+      let open Aast in
+      assert (not !in_require_package_intern);
+      in_require_package_intern :=
+        has_require_package_intern m.m_user_attributes;
+      method_name := Some (m.m_name, m.m_static);
+      let acc = super#on_method_ env { m with m_unsafe_ctxs = None } in
       method_name := None;
+      let acc =
+        (* rather than checking in_require_package_intern everywhere, postprocess the results *)
+        if !in_require_package_intern then
+          set_affects_prod_build_false acc
+        else
+          acc
+      in
+      in_require_package_intern := false;
       acc
 
     method! on_user_attribute env ua =
@@ -918,7 +941,13 @@ let visitor =
       let (pos, id) = sm in
       let acc =
         Result_set.singleton
-          { name = id; type_ = Module; is_declaration = None; pos }
+          {
+            name = id;
+            type_ = Module;
+            is_declaration = None;
+            pos;
+            affects_prod_build = true;
+          }
       in
       self#plus acc (super#on_SetModule env sm)
 
@@ -926,7 +955,13 @@ let visitor =
       let (pos, id) = md.Aast.md_name in
       let acc =
         Result_set.singleton
-          { name = id; type_ = Module; is_declaration = None; pos }
+          {
+            name = id;
+            type_ = Module;
+            is_declaration = None;
+            pos;
+            affects_prod_build = true;
+          }
       in
       self#plus acc (super#on_module_def env md)
   end
@@ -964,10 +999,24 @@ let fixme_elt (t : Full_fidelity_positioned_trivia.t) : Result_set.elt option =
   match t.Full_fidelity_positioned_trivia.kind with
   | Full_fidelity_trivia_kind.FixMe ->
     let pos = trivia_pos t in
-    Some { name = "HH_FIXME"; type_ = HhFixme; is_declaration = None; pos }
+    Some
+      {
+        name = "HH_FIXME";
+        type_ = HhFixme;
+        is_declaration = None;
+        pos;
+        affects_prod_build = true;
+      }
   | Full_fidelity_trivia_kind.Ignore ->
     let pos = trivia_pos t in
-    Some { name = "HH_IGNORE"; type_ = HhIgnore; is_declaration = None; pos }
+    Some
+      {
+        name = "HH_IGNORE";
+        type_ = HhIgnore;
+        is_declaration = None;
+        pos;
+        affects_prod_build = true;
+      }
   | _ -> None
 
 let fixmes (tree : Full_fidelity_positioned_syntax.t) : Result_set.elt list =
@@ -1002,276 +1051,123 @@ let syntax_pos (s : FFP.t) : Pos.t =
     documentation. **)
 let keywords (tree : FFP.t) : Result_set.elt list =
   let open Full_fidelity_positioned_syntax in
+  let make_kw name type_ pos =
+    { name; type_; is_declaration = None; pos; affects_prod_build = true }
+  in
   let elt_of_token (ctx : keyword_context option) (t : FFP.Token.t) :
       Result_set.elt option =
     match t.Token.kind with
     | Token.TokenKind.Class ->
       (match ctx with
       | Some (ClassishDecl DKenumclass) ->
-        Some
-          {
-            name = "enum class";
-            type_ = Keyword EnumClass;
-            is_declaration = None;
-            pos = token_pos t;
-          }
+        Some (make_kw "enum class" (Keyword EnumClass) (token_pos t))
       | Some ClassType ->
-        Some
-          {
-            name = "class pointer";
-            type_ = BuiltInType BIclass_ptr;
-            is_declaration = None;
-            pos = token_pos t;
-          }
-      | _ ->
-        Some
-          {
-            name = "class";
-            type_ = Keyword Class;
-            is_declaration = None;
-            pos = token_pos t;
-          })
+        Some (make_kw "class pointer" (BuiltInType BIclass_ptr) (token_pos t))
+      | _ -> Some (make_kw "class" (Keyword Class) (token_pos t)))
     | Token.TokenKind.Interface ->
-      Some
-        {
-          name = "interface";
-          type_ = Keyword Interface;
-          is_declaration = None;
-          pos = token_pos t;
-        }
+      Some (make_kw "interface" (Keyword Interface) (token_pos t))
     | Token.TokenKind.Trait ->
-      Some
-        {
-          name = "trait";
-          type_ = Keyword Trait;
-          is_declaration = None;
-          pos = token_pos t;
-        }
+      Some (make_kw "trait" (Keyword Trait) (token_pos t))
     | Token.TokenKind.Enum ->
       (match ctx with
       | Some (ClassishDecl DKenumclass) ->
-        Some
-          {
-            name = "enum class";
-            type_ = Keyword EnumClass;
-            is_declaration = None;
-            pos = token_pos t;
-          }
-      | _ ->
-        Some
-          {
-            name = "enum";
-            type_ = Keyword Enum;
-            is_declaration = None;
-            pos = token_pos t;
-          })
+        Some (make_kw "enum class" (Keyword EnumClass) (token_pos t))
+      | _ -> Some (make_kw "enum" (Keyword Enum) (token_pos t)))
     | Token.TokenKind.Type ->
-      Some
-        {
-          name = "type";
-          type_ =
-            Keyword
-              (match ctx with
-              | Some TypeConst -> ConstType
-              | _ -> Type);
-          is_declaration = None;
-          pos = token_pos t;
-        }
+      let kw =
+        match ctx with
+        | Some TypeConst -> ConstType
+        | _ -> Type
+      in
+      Some (make_kw "type" (Keyword kw) (token_pos t))
     | Token.TokenKind.Newtype ->
-      Some
-        {
-          name = "newtype";
-          type_ = Keyword Newtype;
-          is_declaration = None;
-          pos = token_pos t;
-        }
+      Some (make_kw "newtype" (Keyword Newtype) (token_pos t))
     | Token.TokenKind.Attribute ->
-      Some
-        {
-          name = "attribute";
-          type_ = Keyword XhpAttribute;
-          is_declaration = None;
-          pos = token_pos t;
-        }
+      Some (make_kw "attribute" (Keyword XhpAttribute) (token_pos t))
     | Token.TokenKind.Children ->
-      Some
-        {
-          name = "children";
-          type_ = Keyword XhpChildren;
-          is_declaration = None;
-          pos = token_pos t;
-        }
+      Some (make_kw "children" (Keyword XhpChildren) (token_pos t))
     | Token.TokenKind.Const ->
-      Some
-        {
-          name = "const";
-          type_ =
-            Keyword
-              (match ctx with
-              | None -> ConstGlobal
-              | Some TypeConst -> ConstType
-              | _ -> ConstOnClass);
-          is_declaration = None;
-          pos = token_pos t;
-        }
+      let kw =
+        match ctx with
+        | None -> ConstGlobal
+        | Some TypeConst -> ConstType
+        | _ -> ConstOnClass
+      in
+      Some (make_kw "const" (Keyword kw) (token_pos t))
     | Token.TokenKind.Static ->
-      Some
-        {
-          name = "static";
-          type_ =
-            Keyword
-              (match ctx with
-              | Some Method -> StaticOnMethod
-              | _ -> StaticOnProperty);
-          is_declaration = None;
-          pos = token_pos t;
-        }
-    | Token.TokenKind.Use ->
-      Some
-        {
-          name = "use";
-          type_ = Keyword Use;
-          is_declaration = None;
-          pos = token_pos t;
-        }
+      let kw =
+        match ctx with
+        | Some Method -> StaticOnMethod
+        | _ -> StaticOnProperty
+      in
+      Some (make_kw "static" (Keyword kw) (token_pos t))
+    | Token.TokenKind.Use -> Some (make_kw "use" (Keyword Use) (token_pos t))
     | Token.TokenKind.Function ->
-      Some
-        {
-          name = "function";
-          type_ =
-            Keyword
-              (match ctx with
-              | Some Method -> FunctionOnMethod
-              | _ -> FunctionGlobal);
-          is_declaration = None;
-          pos = token_pos t;
-        }
+      let kw =
+        match ctx with
+        | Some Method -> FunctionOnMethod
+        | _ -> FunctionGlobal
+      in
+      Some (make_kw "function" (Keyword kw) (token_pos t))
     | Token.TokenKind.Extends ->
-      Some
-        {
-          name = "extends";
-          type_ =
-            Keyword
-              (match ctx with
-              | Some (ClassishDecl DKclass) -> ExtendsOnClass
-              | Some (ClassishDecl DKinterface) -> ExtendsOnInterface
-              | _ -> ExtendsOnClass);
-          is_declaration = None;
-          pos = token_pos t;
-        }
+      let kw =
+        match ctx with
+        | Some (ClassishDecl DKclass) -> ExtendsOnClass
+        | Some (ClassishDecl DKinterface) -> ExtendsOnInterface
+        | _ -> ExtendsOnClass
+      in
+      Some (make_kw "extends" (Keyword kw) (token_pos t))
     | Token.TokenKind.Abstract ->
-      Some
-        {
-          name = "abstract";
-          type_ =
-            Keyword
-              (match ctx with
-              | Some Method -> AbstractOnMethod
-              | _ -> AbstractOnClass);
-          is_declaration = None;
-          pos = token_pos t;
-        }
+      let kw =
+        match ctx with
+        | Some Method -> AbstractOnMethod
+        | _ -> AbstractOnClass
+      in
+      Some (make_kw "abstract" (Keyword kw) (token_pos t))
     | Token.TokenKind.Final ->
-      Some
-        {
-          name = "final";
-          type_ =
-            Keyword
-              (match ctx with
-              | Some Method -> FinalOnMethod
-              | _ -> FinalOnClass);
-          is_declaration = None;
-          pos = token_pos t;
-        }
+      let kw =
+        match ctx with
+        | Some Method -> FinalOnMethod
+        | _ -> FinalOnClass
+      in
+      Some (make_kw "final" (Keyword kw) (token_pos t))
     | Token.TokenKind.Public ->
-      Some
-        {
-          name = "public";
-          type_ = Keyword Public;
-          is_declaration = None;
-          pos = token_pos t;
-        }
+      Some (make_kw "public" (Keyword Public) (token_pos t))
     | Token.TokenKind.Protected ->
-      Some
-        {
-          name = "protected";
-          type_ = Keyword Protected;
-          is_declaration = None;
-          pos = token_pos t;
-        }
+      Some (make_kw "protected" (Keyword Protected) (token_pos t))
     | Token.TokenKind.Private ->
-      Some
-        {
-          name = "private";
-          type_ = Keyword Private;
-          is_declaration = None;
-          pos = token_pos t;
-        }
+      Some (make_kw "private" (Keyword Private) (token_pos t))
     | Token.TokenKind.Async ->
-      Some
-        {
-          name = "async";
-          type_ =
-            Keyword
-              (match ctx with
-              | Some AsyncBlockHeader -> AsyncBlock
-              | _ -> Async);
-          is_declaration = None;
-          pos = token_pos t;
-        }
+      let kw =
+        match ctx with
+        | Some AsyncBlockHeader -> AsyncBlock
+        | _ -> Async
+      in
+      Some (make_kw "async" (Keyword kw) (token_pos t))
     | Token.TokenKind.Await ->
-      Some
-        {
-          name = "await";
-          type_ = Keyword Await;
-          is_declaration = None;
-          pos = token_pos t;
-        }
+      Some (make_kw "await" (Keyword Await) (token_pos t))
     | Token.TokenKind.Concurrent ->
-      Some
-        {
-          name = "concurrent";
-          type_ = Keyword Concurrent;
-          is_declaration = None;
-          pos = token_pos t;
-        }
+      Some (make_kw "concurrent" (Keyword Concurrent) (token_pos t))
     | Token.TokenKind.Readonly ->
-      Some
-        {
-          name = "readonly";
-          type_ =
-            Keyword
-              (match ctx with
-              | Some Method -> ReadonlyOnMethod
-              | Some Parameter -> ReadonlyOnParameter
-              | Some ReturnType -> ReadonlyOnReturnType
-              | _ -> ReadonlyOnExpression);
-          is_declaration = None;
-          pos = token_pos t;
-        }
+      let kw =
+        match ctx with
+        | Some Method -> ReadonlyOnMethod
+        | Some Parameter -> ReadonlyOnParameter
+        | Some ReturnType -> ReadonlyOnReturnType
+        | _ -> ReadonlyOnExpression
+      in
+      Some (make_kw "readonly" (Keyword kw) (token_pos t))
     | Token.TokenKind.Internal ->
-      Some
-        {
-          name = "internal";
-          type_ = Keyword Internal;
-          is_declaration = None;
-          pos = token_pos t;
-        }
+      Some (make_kw "internal" (Keyword Internal) (token_pos t))
     | Token.TokenKind.Module ->
-      Some
-        {
-          name = "module";
-          type_ =
-            Keyword
-              (match ctx with
-              | Some (ModuleDecl DKModuleDeclaration) ->
-                ModuleInModuleDeclaration
-              | Some (ModuleDecl DKModuleMembershipDeclaration) ->
-                ModuleInModuleMembershipDeclaration
-              | _ -> ModuleInModuleDeclaration);
-          is_declaration = None;
-          pos = token_pos t;
-        }
+      let kw =
+        match ctx with
+        | Some (ModuleDecl DKModuleDeclaration) -> ModuleInModuleDeclaration
+        | Some (ModuleDecl DKModuleMembershipDeclaration) ->
+          ModuleInModuleMembershipDeclaration
+        | _ -> ModuleInModuleDeclaration
+      in
+      Some (make_kw "module" (Keyword kw) (token_pos t))
     | _ -> None
   in
 
@@ -1359,13 +1255,7 @@ let keywords (tree : FFP.t) : Result_set.elt list =
         | _ -> false
       in
       if is_empty then
-        {
-          name = "pure function";
-          type_ = PureFunctionContext;
-          is_declaration = None;
-          pos = syntax_pos s;
-        }
-        :: acc
+        make_kw "pure function" PureFunctionContext (syntax_pos s) :: acc
       else
         acc
     | Token t ->

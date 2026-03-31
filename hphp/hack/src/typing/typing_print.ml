@@ -1546,7 +1546,7 @@ module Full = struct
     let (prefix, x) = add_supportdyn_prefix env x occurrence prefix in
     let (fuel, body_doc) =
       match (occurrence, get_node x) with
-      | ({ type_ = Class { class_id_type; _ }; name; _ }, _) ->
+      | ({ type_ = Class class_id_type; name; _ }, _) ->
         let keyword =
           match
             Decl_provider.get_class

@@ -26,6 +26,7 @@ module Make (LangService : LanguageServiceProvider) = struct
               (SymbolOccurrence.ClassName class_name, method_name);
           is_declaration = None;
           pos = dummy_pos;
+          affects_prod_build = true;
         }
 
     (* Format a method or constructor description directly from class_elt *)

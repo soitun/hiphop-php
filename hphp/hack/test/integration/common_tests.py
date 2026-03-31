@@ -933,6 +933,7 @@ class CommonTests(BarebonesTests):
             [
                 "name: \\bar, kind: function, span: line 1, characters 42-44,"
                 " is_declaration: false",
+                "affects_prod_build: true",
                 "definition:",
                 " bar",
                 "   kind: function",
@@ -1003,6 +1004,7 @@ class CommonTests(BarebonesTests):
             [
                 "name: \\ClassToBeIdentified::methodToBeIdentified, kind: method,"
                 " span: line 1, characters 45-64, is_declaration: false",
+                "affects_prod_build: true",
                 "definition:",
                 " methodToBeIdentified",
                 "   kind: method",

@@ -392,15 +392,12 @@ let process_xrefs ~path ctx symbols fa : Xrefs.t * Fact_acc.t =
             | _ -> process_def_xref ctx occ pos def (xrefs, fa)
           in
           let xrefs =
-            match occ.type_ with
-            | Class { affects_prod_build; _ } ->
-              (match Xrefs.PosMap.find_opt pos xrefs.Xrefs.pos_map with
-              | Some (Xrefs.{ fact_id; _ } :: _) ->
-                Xrefs.mark_target_used_in_prod_build
-                  xrefs
-                  fact_id
-                  affects_prod_build
-              | _ -> xrefs)
+            match Xrefs.PosMap.find_opt pos xrefs.Xrefs.pos_map with
+            | Some (Xrefs.{ fact_id; _ } :: _) ->
+              Xrefs.mark_target_used_in_prod_build
+                xrefs
+                fact_id
+                occ.affects_prod_build
             | _ -> xrefs
           in
           (xrefs, fa))

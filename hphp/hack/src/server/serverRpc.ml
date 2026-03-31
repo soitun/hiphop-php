@@ -195,7 +195,14 @@ let handle :
       ServerSymbolDefinition.go
         ctx
         None
-        SO.{ type_; name; is_declaration = None; pos = Pos.none }
+        SO.
+          {
+            type_;
+            name;
+            is_declaration = None;
+            pos = Pos.none;
+            affects_prod_build = true;
+          }
       |> Option.to_list
       |> List.map ~f:SymbolDefinition.to_absolute
     in
@@ -217,10 +224,7 @@ let handle :
         let name = Utils.add_ns name in
         List.concat
           [
-            get_def_opt
-              (SO.Class
-                 { SO.class_id_type = SO.ClassId; SO.affects_prod_build = true })
-              name;
+            get_def_opt (SO.Class SO.ClassId) name;
             (* SO.Record and Class find the same things *)
             get_def_opt SO.Function name;
             get_def_opt SO.GConst name;
@@ -323,6 +327,7 @@ let handle :
                       old_name );
                 is_declaration = None;
                 pos = Pos.none;
+                affects_prod_build = true;
               }
           | ServerRenameTypes.FunctionRename { old_name; _ } ->
             ServerSymbolDefinition.go
@@ -333,6 +338,7 @@ let handle :
                 type_ = SymbolOccurrence.Function;
                 is_declaration = None;
                 pos = Pos.none;
+                affects_prod_build = true;
               }
         in
         ServerRename.go ctx rename_action genv env ~definition_for_wrapper)

@@ -1,4 +1,5 @@
 name: TFoo, kind: generic_type_var, span: line 5, characters 27-30, is_declaration: false
+affects_prod_build: true
 definition:
  TFoo
    kind: type_var

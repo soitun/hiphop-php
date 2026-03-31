@@ -259,10 +259,10 @@ let fold_one_tast ctx target acc symbol =
     in
     process_member_id ctx classes member c_name mid ~is_method ~is_const
   | (IFunction fun_name, SO.Function) -> process_fun_id fun_name (pos, name)
-  | (IClass c, SO.Class { class_id_type; _ }) ->
+  | (IClass c, SO.Class class_id_type) ->
     let include_all_ci_types = true in
     process_class_id c (pos, name) class_id_type include_all_ci_types
-  | (IExplicitClass c, SO.Class { class_id_type; _ }) ->
+  | (IExplicitClass c, SO.Class class_id_type) ->
     let include_all_ci_types = false in
     process_class_id c (pos, name) class_id_type include_all_ci_types
   | (IGConst cst_name, SO.GConst) -> process_gconst_id cst_name (pos, name)

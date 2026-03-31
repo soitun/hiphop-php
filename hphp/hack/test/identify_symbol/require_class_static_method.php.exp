@@ -1,4 +1,5 @@
 name: \T::static_meth, kind: method, span: line 12, characters 11-21, is_declaration: false
+affects_prod_build: true
 definition:
  static_meth
    kind: method

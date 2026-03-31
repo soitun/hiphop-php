@@ -1,0 +1,11 @@
+name: \Baz, kind: class, span: line 7, characters 30-32, is_declaration: false
+affects_prod_build: false
+definition:
+ Baz
+   kind: class
+   id: type_id::Baz
+   position: line 3, characters 7-9
+   span: line 3, character 1 - line 3, character 12
+   modifiers: 
+
+

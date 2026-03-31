@@ -16,17 +16,16 @@ let print_json res =
 let print_readable ?(short_pos = false) x =
   List.iter x ~f:(function (occurrence, definition) ->
       SymbolOccurrence.(
-        let { name; type_; pos; is_declaration } = occurrence in
+        let { name; type_; pos; is_declaration; affects_prod_build } =
+          occurrence
+        in
         Printf.printf
           "name: %s, kind: %s, span: %s, is_declaration: %b\n"
           name
           (kind_to_string type_)
           (Pos.string_no_file pos)
           (Option.is_some is_declaration);
-        (match type_ with
-        | Class { affects_prod_build; _ } ->
-          Printf.printf "affects_prod_build: %b\n" affects_prod_build
-        | _ -> ());
+        Printf.printf "affects_prod_build: %b\n" affects_prod_build;
         Printf.printf "definition:";
         begin
           match definition with
