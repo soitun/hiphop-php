@@ -1,5 +1,5 @@
 <?hh
-<<file: __EnableUnstableFeatures('named_parameters_use', 'named_parameters')>>
+<<file: __EnableUnstableFeatures('named_parameters')>>
 
 function test_named_invariant(): void {
   // Error: invariant does not accept named arguments

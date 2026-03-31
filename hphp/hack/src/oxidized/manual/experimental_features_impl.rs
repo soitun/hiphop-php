@@ -54,7 +54,7 @@ impl FeatureName {
             ExpressionTreeCoalesceOperator => OngoingRelease,
             ExpressionTreeNullsafeObjGet => OngoingRelease,
             NamedParameters => Unstable,
-            NamedParametersUse => Unstable,
+            NamedParametersUse => OngoingRelease,
             XhpTypeConstants => OngoingRelease,
             CapturePipeVariables => Unstable,
             AllowExtendedAwaitSyntax => Unstable,

@@ -1,5 +1,5 @@
 <?hh
-<<file: __EnableUnstableFeatures('named_parameters', 'named_parameters_use')>>
+<<file: __EnableUnstableFeatures('named_parameters')>>
 
 function foo(int $x, int $y, named int $a, named int $b) {
     var_dump($x);

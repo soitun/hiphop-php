@@ -1,7 +1,7 @@
 > lines and columns in ranges are 1-indexed
 received code:
 1 <?hh
-2 <<file: __EnableUnstableFeatures('named_parameters', 'named_parameters_use')>>
+2 <<file: __EnableUnstableFeatures('named_parameters')>>
 3 
 4 function test1((function(int,
 5 named                       int       $x    , optional       named   int  $y ): void) $f): void {}
@@ -43,7 +43,7 @@ function main(): void {
 
 Code after applying language server edits:
 '<?hh
-<<file: __EnableUnstableFeatures('named_parameters', 'named_parameters_use')>>
+<<file: __EnableUnstableFeatures('named_parameters')>>
 
 function test1(
   (function(int, named int $x, optional named int $y): void) $f,

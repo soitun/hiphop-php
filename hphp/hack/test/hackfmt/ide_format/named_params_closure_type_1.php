@@ -1,5 +1,5 @@
 <?hh
-<<file: __EnableUnstableFeatures('named_parameters', 'named_parameters_use')>>
+<<file: __EnableUnstableFeatures('named_parameters')>>
 
 function test1((function(int,
 named                       int       $x    , optional       named   int  $y ): void) $f): void {}

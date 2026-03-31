@@ -1,5 +1,5 @@
 <?hh
-<<file: __EnableUnstableFeatures('named_parameters', 'named_parameters_use')>>
+<<file: __EnableUnstableFeatures('named_parameters')>>
 
 class C {
     public function __construct(named int $x, named int $y) {

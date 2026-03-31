@@ -1,5 +1,5 @@
 <?hh
-<<file:__EnableUnstableFeatures('named_parameters', 'named_parameters_use')>>
+<<file:__EnableUnstableFeatures('named_parameters')>>
 
 function take_err1((function (named int $x, named string $y): void) $_): void {}
 function test_err1(): void {

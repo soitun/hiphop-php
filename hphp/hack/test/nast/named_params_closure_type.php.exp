@@ -4,7 +4,7 @@
         ns_fun_uses = <opaque>; ns_const_uses = <opaque>; ns_name = None; 
         ns_mode = Namespace_env.ForTypecheck; ns_disable_xhp_element_mangling = false };
       fd_file_attributes =
-      [{ fa_user_attributes = [{ ua_name = ([2:9-33], "__EnableUnstableFeatures"); ua_params = [((), [2:34-52], (String "named_parameters")); ((), [2:54-76], (String "named_parameters_use"))] }];
+      [{ fa_user_attributes = [{ ua_name = ([2:9-33], "__EnableUnstableFeatures"); ua_params = [((), [2:34-52], (String "named_parameters"))] }];
          fa_namespace =
          { Namespace_env.ns_ns_uses = <opaque>; ns_class_uses = <opaque>; 
            ns_fun_uses = <opaque>; ns_const_uses = <opaque>; ns_name = None; 
@@ -48,7 +48,7 @@
          ns_fun_uses = <opaque>; ns_const_uses = <opaque>; ns_name = None; 
          ns_mode = Namespace_env.ForTypecheck; ns_disable_xhp_element_mangling = false };
        fd_file_attributes =
-       [{ fa_user_attributes = [{ ua_name = ([2:9-33], "__EnableUnstableFeatures"); ua_params = [((), [2:34-52], (String "named_parameters")); ((), [2:54-76], (String "named_parameters_use"))] }];
+       [{ fa_user_attributes = [{ ua_name = ([2:9-33], "__EnableUnstableFeatures"); ua_params = [((), [2:34-52], (String "named_parameters"))] }];
           fa_namespace =
           { Namespace_env.ns_ns_uses = <opaque>; ns_class_uses = <opaque>; 
             ns_fun_uses = <opaque>; ns_const_uses = <opaque>; ns_name = None; 
@@ -115,7 +115,7 @@
          ns_fun_uses = <opaque>; ns_const_uses = <opaque>; ns_name = None; 
          ns_mode = Namespace_env.ForTypecheck; ns_disable_xhp_element_mangling = false };
        fd_file_attributes =
-       [{ fa_user_attributes = [{ ua_name = ([2:9-33], "__EnableUnstableFeatures"); ua_params = [((), [2:34-52], (String "named_parameters")); ((), [2:54-76], (String "named_parameters_use"))] }];
+       [{ fa_user_attributes = [{ ua_name = ([2:9-33], "__EnableUnstableFeatures"); ua_params = [((), [2:34-52], (String "named_parameters"))] }];
           fa_namespace =
           { Namespace_env.ns_ns_uses = <opaque>; ns_class_uses = <opaque>; 
             ns_fun_uses = <opaque>; ns_const_uses = <opaque>; ns_name = None; 

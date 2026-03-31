@@ -1,5 +1,4 @@
 <?hh
-<<file:__EnableUnstableFeatures('named_parameters_use')>>
 
 function main(): void {
     // Basic named argument calls - following the exact pattern from named_args_enabled.php

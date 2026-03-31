@@ -1,5 +1,5 @@
 <?hh
-<<file:__EnableUnstableFeatures('named_parameters', 'named_parameters_use')>>
+<<file:__EnableUnstableFeatures('named_parameters')>>
 
 // Exact match - same named parameter
 function take1((function (named int $x): void) $_): void {}

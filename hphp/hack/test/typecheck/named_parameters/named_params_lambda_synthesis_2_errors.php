@@ -1,5 +1,5 @@
 <?hh
-<<file:__EnableUnstableFeatures('named_parameters', 'named_parameters_use')>>
+<<file:__EnableUnstableFeatures('named_parameters')>>
 
 function test_type_mismatch(): void {
   // Type mismatch: passing string where int is expected

@@ -1,6 +1,6 @@
 <?hh
 
-<<file: __EnableUnstableFeatures('named_parameters', 'named_parameters_use')>>
+<<file: __EnableUnstableFeatures('named_parameters')>>
 
 class A {
   public function example(int $x, named int $y, int $z): void {}

@@ -1,5 +1,5 @@
 <?hh
-<<file: __EnableUnstableFeatures('named_parameters', 'named_parameters_use')>>
+<<file: __EnableUnstableFeatures('named_parameters')>>
 
 function foo<reify T>(named int $a, named int $b, int $opt = 100, int ...$args) {
     $v = vec[];

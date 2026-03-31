@@ -1,5 +1,5 @@
 <?hh
-<<file:__EnableUnstableFeatures('named_parameters', 'named_parameters_use')>>
+<<file:__EnableUnstableFeatures('named_parameters')>>
 
 function test_immediately_called_lambda(): void {
   ((named int $x, named string $y) ==> $x)(x=42, y="hello");
