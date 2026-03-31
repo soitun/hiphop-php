@@ -94,11 +94,11 @@ class C {
 // CHECK:   this: .public *HackMixed;
 // CHECK:   params: .private *HackMixed;
 // CHECK:   param_map: .private *HackMixed;
-// CHECK:   _: .private *HackMixed
+// CHECK:   mangled:::_: .private *HackMixed
 // CHECK: }
 
 // TEST-CHECK-BAL: define Closure$closure_underscore.__construct
-// CHECK: define Closure$closure_underscore.__construct($this: .notnull *Closure$closure_underscore, this: *HackMixed, params: *HackMixed, param_map: *HackMixed, _: *HackMixed) : *HackMixed {
+// CHECK: define Closure$closure_underscore.__construct($this: .notnull *Closure$closure_underscore, this: *HackMixed, params: *HackMixed, param_map: *HackMixed, mangled:::_: *HackMixed) : *HackMixed {
 // CHECK: #b0:
 // CHECK:   n0: *HackMixed = load &this
 // CHECK:   n1: *HackMixed = load &$this
@@ -109,9 +109,9 @@ class C {
 // CHECK:   n4: *HackMixed = load &param_map
 // CHECK:   n5: *HackMixed = load &$this
 // CHECK:   store n5.?.param_map <- n4: *HackMixed
-// CHECK:   n6: *HackMixed = load &_
+// CHECK:   n6: *HackMixed = load &mangled:::_
 // CHECK:   n7: *HackMixed = load &$this
-// CHECK:   store n7.?._ <- n6: *HackMixed
+// CHECK:   store n7.?.mangled:::_ <- n6: *HackMixed
 // CHECK:   ret null
 // CHECK: }
 
@@ -120,7 +120,7 @@ class C {
 // CHECK: local $_: *void, $param_map: *void, $params: *void, iter0: *void, $0: *void
 // CHECK: #b0:
 // CHECK:   n0: *HackMixed = load &$this
-// CHECK:   n1: *HackMixed = load n0.?._
+// CHECK:   n1: *HackMixed = load n0.?.mangled:::_
 // CHECK:   store &$_ <- n1: *HackMixed
 // CHECK:   n2: *HackMixed = load &$this
 // CHECK:   n3: *HackMixed = load n2.?.param_map
