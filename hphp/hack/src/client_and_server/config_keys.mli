@@ -7,317 +7,598 @@
  *)
 
 (**
- * Configuration keys that can appear in:
- * - .hhconfig
- * - --config command-line options (which override .hhconfig values)
+ * Configuration keys organized by which config file they belong to.
+ *
+ * - [Hhconfig]: keys for .hhconfig files
+ * - [Hhconf]: keys for hh.conf (ServerLocalConfig)
+ *
+ * All tools (hh_server, hh_client, hh_single_type_check) accept both
+ * .hhconfig and hh.conf keys via [--config KEY=VALUE].
  *
  * To add a new config option:
- * 1. Add a new key definition in config_keys.ml using the [key] function
- * 2. Use the key constant in serverConfig.ml instead of a raw string literal
- *
+ * 1. Add a new key in the appropriate submodule
+ *    using [key] (for .hhconfig) or [hhconf_key] (for hh.conf)
+ * 2. Use the key constant (e.g. [Config_keys.Hhconfig.timeout]) in
+ *    serverConfig.ml or serverLocalConfigLoad.ml instead of a raw string
  *)
 
-(* parser options *)
+(** Keys valid in .hhconfig files. *)
+module Hhconfig : sig
+  (* parser options *)
 
-val is_systemlib : string
+  val abstract_static_props : string
 
-val disable_lval_as_an_expression : string
+  val allowed_decl_fixme_codes : string
 
-val const_default_func_args : string
+  val auto_namespace_map : string
 
-val const_default_lambda_args : string
+  val const_default_func_args : string
 
-val const_static_props : string
+  val const_default_lambda_args : string
 
-val abstract_static_props : string
+  val const_static_props : string
 
-val disallow_func_ptrs_in_constants : string
+  val deregister_php_stdlib : string
 
-val disable_xhp_element_mangling : string
+  val disable_hh_ignore_error : string
 
-val disable_xhp_children_declarations : string
+  val disable_lval_as_an_expression : string
 
-val enable_xhp_class_modifier : string
+  val disable_xhp_children_declarations : string
 
-val interpret_soft_types_as_like_types : string
+  val disable_xhp_element_mangling : string
 
-val disallow_static_constants_in_default_func_args : string
+  val disallow_bool_cast : string
 
-val auto_namespace_map : string
+  val disallow_func_ptrs_in_constants : string
 
-val everything_sdt : string
+  val disallow_non_annotated_memoize : string
 
-val keep_user_attributes : string
+  val disallow_silence : string
 
-val deregister_php_stdlib : string
+  val disallow_static_constants_in_default_func_args : string
 
-val union_intersection_type_hints : string
+  val enable_class_pointer_hint : string
 
-val disallow_silence : string
+  val enable_experimental_stx_features : string
 
-val disallow_bool_cast : string
+  val enable_xhp_class_modifier : string
 
-val allowed_decl_fixme_codes : string
+  val everything_sdt : string
 
-val disable_hh_ignore_error : string
+  val ignore_string_methods : string
 
-val enable_experimental_stx_features : string
+  val interpret_soft_types_as_like_types : string
 
-val package_support_multifile_tests : string
+  val is_systemlib : string
 
-val enable_class_pointer_hint : string
+  val keep_user_attributes : string
 
-val disallow_non_annotated_memoize : string
+  val package_support_multifile_tests : string
 
-val treat_non_annotated_memoize_as_kbic : string
+  val treat_non_annotated_memoize_as_kbic : string
 
-val ignore_string_methods : string
+  val union_intersection_type_hints : string
 
-(* global options and typechecker options *)
+  (* global options and typechecker options *)
 
-val language_feature_logging : string
+  val allow_all_files_for_module_declarations : string
 
-val timeout : string
+  val allow_class_string_cast : string
 
-val constraint_array_index_assign : string
+  val allowed_expression_tree_visitors : string
 
-val constraint_method_call : string
+  val allowed_files_for_ignore_readonly : string
 
-val code_agnostic_fixme : string
+  val allowed_files_for_module_declarations : string
 
-val allowed_fixme_codes_strict : string
+  val allowed_fixme_codes_strict : string
 
-val enable_experimental_tc_features : string
+  val call_coeffects : string
 
-val enable_tc_migration_flags : string
+  val check_attribute_locations : string
 
-val call_coeffects : string
+  val check_bool_for_condition : string
 
-val local_coeffects : string
+  val check_redundant_generics : string
 
-val like_casts : string
+  val check_xhp_attribute : string
 
-val check_xhp_attribute : string
+  val class_class_type : string
 
-val check_redundant_generics : string
+  val class_pointer_ban_class_array_key : string
 
-val disallow_unresolved_type_variables : string
+  val class_pointer_ban_classname_class_const : string
 
-val locl_cache_capacity : string
+  val class_pointer_ban_classname_new : string
 
-val locl_cache_node_threshold : string
+  val class_pointer_ban_classname_static_meth : string
 
-val disallow_toplevel_requires : string
+  val class_pointer_ban_classname_type_structure : string
 
-val const_attribute : string
+  val class_sub_classname : string
 
-val check_attribute_locations : string
+  val code_agnostic_fixme : string
 
-val glean_reponame : string
+  val const_attribute : string
 
-val symbol_write_index_inherited_members : string
+  val constraint_array_index_assign : string
 
-val symbol_write_ownership : string
+  val constraint_method_call : string
 
-val symbol_write_root_path : string
+  val disable_physical_equality : string
 
-val symbol_write_hhi_path : string
+  val disallow_discarded_nullable_awaitables : string
 
-val symbol_write_ignore_paths : string
+  val disallow_toplevel_requires : string
 
-val symbol_write_index_paths : string
+  val disallow_unresolved_type_variables : string
 
-val symbol_write_index_paths_file : string
+  val dump_tast_hashes : string
 
-val symbol_write_index_paths_file_output : string
+  val enable_abstract_method_optional_parameters : string
 
-val symbol_write_include_hhi : string
+  val enable_experimental_tc_features : string
 
-val symbol_write_sym_hash_in : string
+  val enable_function_references : string
 
-val symbol_write_exclude_out : string
+  val enable_no_auto_dynamic : string
 
-val symbol_write_referenced_out : string
+  val enable_tc_migration_flags : string
 
-val symbol_write_reindexed_out : string
+  val enforce_sealed_subclasses : string
 
-val symbol_write_sym_hash_out : string
+  val error_php_lambdas : string
 
-val error_php_lambdas : string
+  val explicit_consistent_constructors : string
 
-val disallow_discarded_nullable_awaitables : string
+  val extended_reasons : string
 
-val typecheck_sample_rate : string
+  val glean_reponame : string
 
-val pessimise_builtins : string
+  val hack_warnings : string
 
-val enable_no_auto_dynamic : string
+  val hh_distc_exponential_backoff_num_retries : string
 
-val skip_check_under_dynamic : string
+  val hh_distc_should_disable_trace_store : string
 
-val enable_function_references : string
+  val ignore_unsafe_cast : string
 
-val ignore_unsafe_cast : string
+  val implicit_inherit_sdt : string
 
-val allowed_expression_tree_visitors : string
+  val language_feature_logging : string
 
-val typeconst_concrete_concrete_error : string
+  val like_casts : string
 
-val meth_caller_only_public_visibility : string
+  val local_coeffects : string
 
-val require_extends_implements_ancestors : string
+  val locl_cache_capacity : string
 
-val strict_value_equality : string
+  val locl_cache_node_threshold : string
 
-val enforce_sealed_subclasses : string
+  val log_levels : string
 
-val implicit_inherit_sdt : string
+  val meth_caller_only_public_visibility : string
 
-val repo_stdlib_path : string
+  val needs_concrete : string
 
-val explicit_consistent_constructors : string
+  val needs_concrete_override_check : string
 
-val require_types_tco_require_types_class_consts : string
+  val package_allow_all_generics_violations : string
 
-val check_bool_for_condition : string
+  val package_allow_as_expression_violations : string
 
-val type_printer_fuel : string
+  val package_allow_all_tconst_violations : string
 
-val profile_top_level_definitions : string
+  val package_allow_classconst_violations : string
 
-val typecheck_if_name_matches_regexp : string
+  val package_allow_reifiable_tconst_violations : string
 
-val log_levels : string
+  val package_allow_typedef_violations : string
 
-val allowed_files_for_module_declarations : string
+  val package_exclude_patterns : string
 
-val allow_all_files_for_module_declarations : string
+  val pessimise_builtins : string
 
-val populate_dead_unsafe_cast_heap : string
+  val poly_function_pointers : string
 
-val dump_tast_hashes : string
+  val populate_dead_unsafe_cast_heap : string
 
-val warnings_default_all : string
+  val profile_top_level_definitions : string
 
-val allowed_files_for_ignore_readonly : string
+  val re_no_cache : string
 
-val package_allow_typedef_violations : string
+  val recursive_case_types : string
 
-val package_allow_classconst_violations : string
+  val repo_stdlib_path : string
 
-val package_allow_reifiable_tconst_violations : string
+  val require_extends_implements_ancestors : string
 
-val package_allow_all_tconst_violations : string
+  val require_types_tco_require_types_class_consts : string
 
-val package_allow_all_generics_violations : string
+  val silence_errors_under_dynamic : string
 
-val package_allow_as_expression_violations : string
+  val skip_check_under_dynamic : string
 
-val package_exclude_patterns : string
+  val strict_consistent_construct : string
 
-val extended_reasons : string
+  val strict_value_equality : string
 
-val disable_physical_equality : string
+  val symbol_write_exclude_out : string
 
-val re_no_cache : string
+  val symbol_write_hhi_path : string
 
-val hh_distc_should_disable_trace_store : string
+  val symbol_write_ignore_paths : string
 
-val hh_distc_exponential_backoff_num_retries : string
+  val symbol_write_include_hhi : string
 
-val enable_abstract_method_optional_parameters : string
+  val symbol_write_index_inherited_members : string
 
-val hack_warnings : string
+  val symbol_write_index_paths : string
 
-val recursive_case_types : string
+  val symbol_write_index_paths_file : string
 
-val class_sub_classname : string
+  val symbol_write_index_paths_file_output : string
 
-val class_class_type : string
+  val symbol_write_ownership : string
 
-val needs_concrete : string
+  val symbol_write_referenced_out : string
 
-val needs_concrete_override_check : string
+  val symbol_write_reindexed_out : string
 
-val strict_consistent_construct : string
+  val symbol_write_root_path : string
 
-val allow_class_string_cast : string
+  val symbol_write_sym_hash_in : string
 
-val class_pointer_ban_classname_new : string
+  val symbol_write_sym_hash_out : string
 
-val class_pointer_ban_classname_type_structure : string
+  val timeout : string
 
-val class_pointer_ban_classname_static_meth : string
+  val typecheck_if_name_matches_regexp : string
 
-val class_pointer_ban_classname_class_const : string
+  val typecheck_sample_rate : string
 
-val class_pointer_ban_class_array_key : string
+  val typeconst_concrete_concrete_error : string
 
-val poly_function_pointers : string
+  val type_printer_fuel : string
 
-(* server options *)
+  val warnings_default_all : string
 
-val version : string
+  val warnings_in_sandcastle : string
 
-val packages_config_path : string
+  (* server options *)
 
-val gc_minor_heap_size : string
+  val current_saved_state_rollout_flag_index : string
 
-val gc_space_overhead : string
+  val deactivate_saved_state_rollout : string
 
-val sharedmem_global_size : string
+  val disabled_warnings : string
 
-val sharedmem_heap_size : string
+  val extra_paths : string
 
-val sharedmem_hash_table_pow : string
+  val formatter_override : string
 
-val sharedmem_log_level : string
+  val gc_minor_heap_size : string
 
-val sharedmem_sample_rate : string
+  val gc_space_overhead : string
 
-val sharedmem_compression : string
+  val ide_fall_back_to_full_index : string
 
-val sharedmem_dirs : string
+  val ignored_paths : string
 
-val shm_use_sharded_hashtbl : string
+  val load_script_timeout : string
 
-val shm_cache_size : string
+  val naming_table_compression_level : string
 
-val sharedmem_minimum_available : string
+  val naming_table_compression_threads : string
 
-val ignored_paths : string
+  val override_hhconfig_hash : string
 
-val extra_paths : string
+  val packages_config_path : string
 
-val untrusted_mode : string
+  val sharedmem_compression : string
 
-val formatter_override : string
+  val sharedmem_dirs : string
 
-val load_script_timeout : string
+  val sharedmem_global_size : string
 
-val warn_on_non_opt_build : string
+  val sharedmem_hash_table_pow : string
 
-val ide_fall_back_to_full_index : string
+  val sharedmem_heap_size : string
 
-val naming_table_compression_level : string
+  val sharedmem_log_level : string
 
-val naming_table_compression_threads : string
+  val sharedmem_minimum_available : string
 
-val warnings_generated_files : string
+  val sharedmem_sample_rate : string
 
-val disabled_warnings : string
+  val shm_cache_size : string
 
-val current_saved_state_rollout_flag_index : string
+  val shm_use_sharded_hashtbl : string
 
-val deactivate_saved_state_rollout : string
+  val untrusted_mode : string
 
-val override_hhconfig_hash : string
+  val version : string
 
-val silence_errors_under_dynamic : string
+  val warn_on_non_opt_build : string
+
+  val warnings_generated_files : string
+end
+
+(** Keys valid in hh.conf (ServerLocalConfig). *)
+module Hhconf : sig
+  (* distc *)
+
+  val distc_avoid_unnecessary_saved_state_work : string
+
+  val enable_fanout_aware_distc : string
+
+  val hh_distc_fanout_full_init_threshold : string
+
+  val hh_distc_fanout_threshold : string
+
+  val use_compressed_dep_graph : string
+
+  val use_distc : string
+
+  val use_distc_crawl_dircache : string
+
+  (* edenfs file watcher *)
+
+  val edenfs_file_watcher_debug_logging : string
+
+  val edenfs_file_watcher_enabled : string
+
+  val edenfs_file_watcher_report_telemetry : string
+
+  val edenfs_file_watcher_state_tracking : string
+
+  val edenfs_file_watcher_sync_queries_obey_deferral : string
+
+  val edenfs_file_watcher_throttle_time_ms : string
+
+  val edenfs_file_watcher_timeout_secs : string
+
+  val edenfs_file_watcher_tracked_states : string
+
+  (* experiments / infrastructure *)
+
+  val experiments : string
+
+  val experiments_config_enabled : string
+
+  val experiments_config_path : string
+
+  val experiments_config_source : string
+
+  val experiments_config_ttl_seconds : string
+
+  val experiments_config_update : string
+
+  val log_categories : string
+
+  val log_inference_constraints : string
+
+  val log_init_proc_stack_also_on_absent_from : string
+
+  val log_large_fanouts_threshold : string
+
+  val min_log_level : string
+
+  val use_justknobs : string
+
+  (* IDE *)
+
+  val autocomplete_sort_text : string
+
+  val go_to_implementation : string
+
+  val ide_load_naming_table_on_disk : string
+
+  val ide_naming_table_update_threshold : string
+
+  val ide_parser_cache : string
+
+  val ide_symbolindex_search_provider : string
+
+  val lsp_invalidation : string
+
+  val lsp_sticky_quarantine : string
+
+  val symbolindex_quiet : string
+
+  (* misc *)
+
+  val dump_tasts : string
+
+  val eden_fetch_parallelism : string
+
+  val hackfmt_version : string
+
+  val package_config_strict_validation : string
+
+  val rollout_group : string
+
+  val sharedmem_dep_table_pow : string
+
+  val workload_quantile : string
+
+  val zstd_decompress_by_file : string
+
+  (* profiling *)
+
+  val memtrace_dir : string
+
+  val profile_decling : string
+
+  val profile_desc : string
+
+  val profile_log : string
+
+  val profile_owner : string
+
+  val profile_slow_threshold : string
+
+  val profile_type_check_duration_threshold : string
+
+  val profile_type_check_memory_threshold_mb : string
+
+  val profile_type_check_twice : string
+
+  (* provider backend *)
+
+  val allow_unstable_features : string
+
+  val cache_remote_decls : string
+
+  val rust_elab : string
+
+  val rust_provider_backend : string
+
+  (* saved state *)
+
+  val load_state_natively_dirty_files_timeout : string
+
+  val load_state_natively_download_timeout : string
+
+  val load_state_natively_v4 : string
+
+  val log_saved_state_age_and_distance : string
+
+  val project_metadata_w_flags : string
+
+  val require_saved_state : string
+
+  val saved_state_cache_limit : string
+
+  val saved_state_manifold_api_key : string
+
+  val specify_manifold_api_key : string
+
+  val ss_force : string
+
+  val store_decls_in_saved_state : string
+
+  val use_manifold_cython_client : string
+
+  val use_mini_state : string
+
+  val use_mini_state_when_indexing : string
+
+  (* server operations *)
+
+  val attempt_fix_credentials : string
+
+  val consume_streaming_errors : string
+
+  val cpu_priority : string
+
+  val defer_class_declaration_threshold : string
+
+  val disable_naming_table_fallback_loading : string
+
+  val enable_fuzzy_search : string
+
+  val enable_global_access_check : string
+
+  val enable_naming_table_fallback : string
+
+  val enable_on_nfs : string
+
+  val enable_type_check_filter_files : string
+
+  val extend_defs_per_file_bucket_size : string
+
+  val fetch_remote_old_decls : string
+
+  val hg_aware : string
+
+  val hg_aware_parsing_restart_threshold : string
+
+  val hg_aware_redecl_restart_threshold : string
+
+  val hg_aware_recheck_restart_threshold : string
+
+  val idle_gc_slice : string
+
+  val informant_min_distance_restart : string
+
+  val interrupt_on_client : string
+
+  val interrupt_on_file_changes : string
+
+  val interrupt_on_watchman : string
+
+  val io_priority : string
+
+  val longlived_workers : string
+
+  val max_purgatory_clients : string
+
+  val max_workers : string
+
+  val naming_sqlite_path : string
+
+  val num_local_workers : string
+
+  val populate_member_heaps : string
+
+  val prechecked_files : string
+
+  val predeclare_ide : string
+
+  val produce_streaming_errors : string
+
+  val remote_old_decls_no_limit : string
+
+  val search_chunk_size : string
+
+  val shm_dirs : string
+
+  val skip_hierarchy_checks : string
+
+  val skip_tast_checks : string
+
+  val tico_invalidate_files : string
+
+  val tico_invalidate_smart : string
+
+  val trace_parsing : string
+
+  val type_decl_bucket_size : string
+
+  val use_dummy_informant : string
+
+  val use_full_fidelity_parser : string
+
+  (* watchman *)
+
+  val use_watchman : string
+
+  val watchman_debug_logging : string
+
+  val watchman_enabled : string
+
+  val watchman_init_timeout : string
+
+  val watchman_sockname : string
+
+  val watchman_subscribe_v2 : string
+
+  val watchman_synchronous_timeout : string
+end
 
 (* validation *)
 
 (** When a configuration key looks like a typo, we make a suggestion *)
 type did_you_mean = Did_you_mean of string option
 
+(** Validate a key against hhconfig keys only *)
+val validate_hhconfig_key : config_key:string -> (unit, did_you_mean) result
+
+(** Validate a key against hhconf keys only *)
+val validate_hhconf_key : config_key:string -> (unit, did_you_mean) result
+
+(** Validate a --config CLI override key against all known keys
+    (both .hhconfig and hh.conf). *)
 val validate : config_key:string -> (unit, did_you_mean) result

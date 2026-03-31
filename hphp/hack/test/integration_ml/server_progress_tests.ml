@@ -27,6 +27,16 @@ let assert_substring (s : string) ~(substring : string) : unit =
     in
     failwith msg
 
+let assert_no_substring (s : string) ~(substring : string) : unit =
+  if String.is_substring s ~substring then
+    let msg =
+      Printf.sprintf
+        "Expected NOT to find substring '%s' but found it in:\n%s"
+        substring
+        s
+    in
+    failwith msg
+
 (** Shell out to HH_CLIENT_PATH and return its results once it's finished.
 In case of success return stdout; in case of failure return a human-readable
 representation that includes exit signal and stderr. *)
@@ -57,6 +67,37 @@ let hh ~(tmp : Path.t) ~(root : Path.t) (args : string array) : string Lwt.t =
     Printf.eprintf "<error> %s\n%!" e;
     Lwt.return e
   | Ok { Lwt_utils.Process_success.stdout; _ } -> Lwt.return stdout
+
+(** Like [hh] but returns both stdout and stderr on success. *)
+let hh_with_stderr ~(tmp : Path.t) ~(root : Path.t) (args : string array) :
+    (string * string) Lwt.t =
+  Sys.chdir (Path.to_string root);
+  let hh_client_path = Sys.getenv "HH_CLIENT_PATH" in
+  let env =
+    Array.append [| "HH_TMPDIR=" ^ Path.to_string tmp |] (Unix.environment ())
+  in
+  Printf.eprintf
+    "[%s] EXECUTE: hh %s\n%!"
+    (Utils.timestring (Unix.gettimeofday ()))
+    (Array.to_list args |> String.concat ~sep:" ");
+  let (cancel, canceller) = Lwt.wait () in
+  let _ =
+    Lwt_unix.sleep 120.0 |> Lwt.map (fun () -> Lwt.wakeup_later canceller ())
+  in
+  let%lwt result =
+    Lwt_utils.exec_checked
+      (Exec_command.For_use_in_testing_only hh_client_path)
+      ~cancel
+      ~env
+      args
+  in
+  match result with
+  | Error e ->
+    let e = Lwt_utils.Process_failure.to_string e in
+    Printf.eprintf "<error> %s\n%!" e;
+    Lwt.return (e, e)
+  | Ok { Lwt_utils.Process_success.stdout; stderr; _ } ->
+    Lwt.return (stdout, stderr)
 
 (** This spawns hh, so you can await output. *)
 let hh_open ~(tmp : Path.t) ~(root : Path.t) (args : string array) :
@@ -901,6 +942,156 @@ let test_client_jsonl_streaming () : bool Lwt.t =
   in
   Lwt.return_true
 
+let test_client_invalid_config_key () : bool Lwt.t =
+  let%lwt () =
+    try_with_server [a_php] (fun ~tmp ~root ~hhi ->
+        (* Start the server with valid config *)
+        let%lwt _stdout =
+          hh
+            ~root
+            ~tmp
+            [|
+              "start";
+              "--no-load";
+              "--config";
+              "max_workers=1";
+              "--custom-hhi-path";
+              Path.to_string hhi;
+            |]
+        in
+        let%lwt () =
+          wait_for_progress
+            ~deadline:(Unix.gettimeofday () +. 60.0)
+            ~expected:"[DReady] ready"
+        in
+        (* Run hh check with an unrecognized config key *)
+        let%lwt (stdout, stderr) =
+          hh_with_stderr
+            ~root
+            ~tmp
+            [| "check"; "--config"; "nonexistent_option=value" |]
+        in
+        (* Verify the warning does NOT appear on stdout or stderr *)
+        assert_no_substring
+          stdout
+          ~substring:"Unrecognized --config config option";
+        assert_no_substring
+          stderr
+          ~substring:"Unrecognized --config config option";
+        (* Verify the warning IS in the client log file *)
+        let client_log_file = ServerFiles.client_log root in
+        let client_log =
+          try Sys_utils.cat client_log_file with
+          | _ -> failwith "could not read client log"
+        in
+        assert_substring
+          client_log
+          ~substring:"Unrecognized --config config option: nonexistent_option";
+        Lwt.return_unit)
+  in
+  Lwt.return_true
+
+let test_client_invalid_config_key_did_you_mean () : bool Lwt.t =
+  let%lwt () =
+    try_with_server [a_php] (fun ~tmp ~root ~hhi ->
+        (* Start the server with valid config *)
+        let%lwt _stdout =
+          hh
+            ~root
+            ~tmp
+            [|
+              "start";
+              "--no-load";
+              "--config";
+              "max_workers=1";
+              "--custom-hhi-path";
+              Path.to_string hhi;
+            |]
+        in
+        let%lwt () =
+          wait_for_progress
+            ~deadline:(Unix.gettimeofday () +. 60.0)
+            ~expected:"[DReady] ready"
+        in
+        (* Run hh check with a config key that is close to a known one *)
+        let%lwt (stdout, stderr) =
+          hh_with_stderr ~root ~tmp [| "check"; "--config"; "timeeout=10" |]
+        in
+        (* Verify the warning does NOT appear on stdout or stderr *)
+        assert_no_substring
+          stdout
+          ~substring:"Unrecognized --config config option";
+        assert_no_substring
+          stderr
+          ~substring:"Unrecognized --config config option";
+        (* Verify the warning with suggestion IS in the client log file *)
+        let client_log_file = ServerFiles.client_log root in
+        let client_log =
+          try Sys_utils.cat client_log_file with
+          | _ -> failwith "could not read client log"
+        in
+        assert_substring
+          client_log
+          ~substring:
+            "Unrecognized --config config option: timeeout. Did you mean timeout?";
+        Lwt.return_unit)
+  in
+  Lwt.return_true
+
+(** Test that valid local config keys (from hh.conf / ServerLocalConfig) do NOT
+    produce false positive "Unrecognized --config config option" warnings when passed to
+    hh_client via --config. These keys are valid for hh_server/hh_client but
+    not for hh_single_type_check. *)
+let test_client_valid_local_config_key () : bool Lwt.t =
+  let%lwt () =
+    try_with_server [a_php] (fun ~tmp ~root ~hhi ->
+        (* Start the server with a local config key *)
+        let%lwt _stdout =
+          hh
+            ~root
+            ~tmp
+            [|
+              "start";
+              "--no-load";
+              "--config";
+              "max_workers=1";
+              "--custom-hhi-path";
+              Path.to_string hhi;
+            |]
+        in
+        let%lwt () =
+          wait_for_progress
+            ~deadline:(Unix.gettimeofday () +. 60.0)
+            ~expected:"[DReady] ready"
+        in
+        (* Run hh check with produce_streaming_errors — a valid local config
+           key that should NOT produce a warning *)
+        let%lwt (stdout, stderr) =
+          hh_with_stderr
+            ~root
+            ~tmp
+            [| "check"; "--config"; "produce_streaming_errors=true" |]
+        in
+        assert_no_substring
+          stdout
+          ~substring:"Unrecognized --config config option";
+        assert_no_substring
+          stderr
+          ~substring:"Unrecognized --config config option";
+        (* Also verify the client log does NOT contain any warning about this key *)
+        let client_log_file = ServerFiles.client_log root in
+        let client_log =
+          try Sys_utils.cat client_log_file with
+          | _ -> failwith "could not read client log"
+        in
+        assert_no_substring
+          client_log
+          ~substring:
+            "Unrecognized --config config option: produce_streaming_errors";
+        Lwt.return_unit)
+  in
+  Lwt.return_true
+
 let () =
   Printexc.record_backtrace true;
   EventLogger.init_fake ();
@@ -922,6 +1113,10 @@ let () =
       ("test_hhi_error", test_hhi_error);
       ("test_interrupt", test_interrupt);
       ("test_client_jsonl_streaming", test_client_jsonl_streaming);
+      ("test_client_invalid_config_key", test_client_invalid_config_key);
+      ( "test_client_invalid_config_key_did_you_mean",
+        test_client_invalid_config_key_did_you_mean );
+      ("test_client_valid_local_config_key", test_client_valid_local_config_key);
     ]
     |> List.map ~f:(fun (name, f) ->
            ( name,

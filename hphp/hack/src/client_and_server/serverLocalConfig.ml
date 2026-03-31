@@ -35,38 +35,41 @@ module Watchman = struct
   let load ~current_version ~default config =
     let use_watchman =
       bool_if_min_version
-        "use_watchman"
+        Config_keys.Hhconf.use_watchman
         ~default:default.enabled
         ~current_version
         config
     in
     let enabled =
       bool_if_min_version
-        "watchman_enabled"
+        Config_keys.Hhconf.watchman_enabled
         ~default:use_watchman
         ~current_version
         config
     in
     let init_timeout =
-      int_ "watchman_init_timeout" ~default:default.init_timeout config
+      int_
+        Config_keys.Hhconf.watchman_init_timeout
+        ~default:default.init_timeout
+        config
     in
-    let sockname = string_opt "watchman_sockname" config in
+    let sockname = string_opt Config_keys.Hhconf.watchman_sockname config in
     let subscribe =
       bool_if_min_version
-        "watchman_subscribe_v2"
+        Config_keys.Hhconf.watchman_subscribe_v2
         ~default:default.subscribe
         ~current_version
         config
     in
     let synchronous_timeout =
       int_
-        "watchman_synchronous_timeout"
+        Config_keys.Hhconf.watchman_synchronous_timeout
         ~default:default.synchronous_timeout
         config
     in
     let debug_logging =
       bool_if_min_version
-        "watchman_debug_logging"
+        Config_keys.Hhconf.watchman_debug_logging
         ~default:default.debug_logging
         ~current_version
         config
@@ -118,52 +121,52 @@ module EdenfsFileWatcher = struct
   let load ~current_version ~default config =
     let enabled =
       bool_if_min_version
-        "edenfs_file_watcher_enabled"
+        Config_keys.Hhconf.edenfs_file_watcher_enabled
         ~default:default.enabled
         ~current_version
         config
     in
     let debug_logging =
       bool_if_min_version
-        "edenfs_file_watcher_debug_logging"
+        Config_keys.Hhconf.edenfs_file_watcher_debug_logging
         ~default:default.debug_logging
         ~current_version
         config
     in
     let timeout_secs =
       int_
-        "edenfs_file_watcher_timeout_secs"
+        Config_keys.Hhconf.edenfs_file_watcher_timeout_secs
         ~default:default.timeout_secs
         config
     in
     let sync_queries_obey_deferral =
       bool_if_min_version
-        "edenfs_file_watcher_sync_queries_obey_deferral"
+        Config_keys.Hhconf.edenfs_file_watcher_sync_queries_obey_deferral
         ~default:default.sync_queries_obey_deferral
         ~current_version
         config
     in
     let throttle_time_ms =
       int_
-        "edenfs_file_watcher_throttle_time_ms"
+        Config_keys.Hhconf.edenfs_file_watcher_throttle_time_ms
         ~default:default.throttle_time_ms
         config
     in
     let report_telemetry =
       bool_
-        "edenfs_file_watcher_report_telemetry"
+        Config_keys.Hhconf.edenfs_file_watcher_report_telemetry
         ~default:default.report_telemetry
         config
     in
     let state_tracking =
       bool_
-        "edenfs_file_watcher_state_tracking"
+        Config_keys.Hhconf.edenfs_file_watcher_state_tracking
         ~default:default.state_tracking
         config
     in
     let tracked_states =
       string_list
-        "edenfs_file_watcher_tracked_states"
+        Config_keys.Hhconf.edenfs_file_watcher_tracked_states
         ~default:default.tracked_states
         config
     in

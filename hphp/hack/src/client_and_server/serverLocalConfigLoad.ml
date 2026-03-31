@@ -137,6 +137,23 @@ let system_config_path =
   in
   Filename.concat dir "hh.conf"
 
+let warn_on_invalid_hhconf_keys (config : Config_file_common.t) : unit =
+  let config_keys = Config_file_common.keys config in
+  List.iter config_keys ~f:(fun key ->
+      match Config_keys.validate_hhconf_key ~config_key:key with
+      | Ok () -> ()
+      | Error (Config_keys.Did_you_mean suggestion) ->
+        let msg =
+          match suggestion with
+          | None -> Printf.sprintf "Unrecognized hh.conf config option: %s" key
+          | Some s ->
+            Printf.sprintf
+              "Unrecognized hh.conf config option: %s. Did you mean %s?"
+              key
+              s
+        in
+        Hh_logger.warn "%s" msg)
+
 (** Apply the following overrides in order:
   * JuskKnobs
   * Experiments
@@ -152,7 +169,7 @@ let apply_overrides ~silent ~current_version ~config ~from ~overrides =
     Config_file.apply_overrides ~config ~overrides ~log_reason:None
   in
   (* Now is the time for JustKnobs *)
-  let use_justknobs = bool_opt "use_justknobs" config in
+  let use_justknobs = bool_opt Config_keys.Hhconf.use_justknobs config in
   let config =
     match (use_justknobs, Sys_utils.deterministic_behavior_for_tests ()) with
     | (Some false, _)
@@ -171,7 +188,7 @@ let apply_overrides ~silent ~current_version ~config ~from ~overrides =
   (* Now is the time for experiments_config overrides *)
   let experiments_enabled =
     bool_if_min_version
-      "experiments_config_enabled"
+      Config_keys.Hhconf.experiments_config_enabled
       ~default:false
       ~current_version
       config
@@ -180,7 +197,10 @@ let apply_overrides ~silent ~current_version ~config ~from ~overrides =
     if experiments_enabled then begin
       Disk.mkdir_p GlobalConfig.tmp_dir;
       let dir =
-        string_ "experiments_config_path" ~default:GlobalConfig.tmp_dir config
+        string_
+          Config_keys.Hhconf.experiments_config_path
+          ~default:GlobalConfig.tmp_dir
+          config
       in
       let owner = Sys_utils.get_primary_owner () in
       let file =
@@ -188,16 +208,21 @@ let apply_overrides ~silent ~current_version ~config ~from ~overrides =
       in
       let update =
         bool_if_min_version
-          "experiments_config_update"
+          Config_keys.Hhconf.experiments_config_update
           ~default:false
           ~current_version
           config
       in
       let ttl =
         float_of_int
-          (int_ "experiments_config_ttl_seconds" ~default:86400 config)
+          (int_
+             Config_keys.Hhconf.experiments_config_ttl_seconds
+             ~default:86400
+             config)
       in
-      let source = string_opt "experiments_config_source" config in
+      let source =
+        string_opt Config_keys.Hhconf.experiments_config_source config
+      in
       let meta =
         if update then
           match Experiments_config_file.update ~silent ~file ~source ~ttl with
@@ -247,6 +272,7 @@ let load_
       ("", c)
     | None ->
       let parsed = Config_file.parse_local_config system_config_path in
+      warn_on_invalid_hhconf_keys parsed;
       apply_overrides ~silent ~current_version ~config:parsed ~from ~overrides
   in
   (if not silent then
@@ -254,24 +280,30 @@ let load_
     Config_file.print_to_stderr config);
 
   let experiments =
-    string_list "experiments" ~default:default.experiments config
+    string_list
+      Config_keys.Hhconf.experiments
+      ~default:default.experiments
+      config
   in
 
   let log_categories =
-    string_list "log_categories" ~default:default.log_categories config
+    string_list
+      Config_keys.Hhconf.log_categories
+      ~default:default.log_categories
+      config
   in
   let log_large_fanouts_threshold =
-    int_opt "log_large_fanouts_threshold" config
+    int_opt Config_keys.Hhconf.log_large_fanouts_threshold config
   in
   let log_init_proc_stack_also_on_absent_from =
     bool_
-      "log_init_proc_stack_also_on_absent_from"
+      Config_keys.Hhconf.log_init_proc_stack_also_on_absent_from
       ~default:default.log_init_proc_stack_also_on_absent_from
       config
   in
   let log_inference_constraints =
     bool_
-      "log_inference_constraints"
+      Config_keys.Hhconf.log_inference_constraints
       ~default:default.log_inference_constraints
       config
   in
@@ -280,7 +312,7 @@ let load_
       Hh_logger.Level.of_enum_string
         (String.lowercase
            (string_
-              "min_log_level"
+              Config_keys.Hhconf.min_log_level
               ~default:(Hh_logger.Level.to_enum_string default.min_log_level)
               config))
     with
@@ -290,21 +322,21 @@ let load_
 
   let use_saved_state =
     bool_if_min_version
-      "use_mini_state"
+      Config_keys.Hhconf.use_mini_state
       ~default:default.use_saved_state
       ~current_version
       config
   in
   let use_saved_state_when_indexing =
     bool_if_min_version
-      "use_mini_state_when_indexing"
+      Config_keys.Hhconf.use_mini_state_when_indexing
       ~default:default.use_saved_state_when_indexing
       ~current_version
       config
   in
   let require_saved_state =
     bool_if_min_version
-      "require_saved_state"
+      Config_keys.Hhconf.require_saved_state
       ~default:default.require_saved_state
       ~current_version
       config
@@ -314,72 +346,78 @@ let load_
       ~get_default:(fun name -> bool_ name ~default:false config)
       ~current_rolled_out_flag_idx
       ~deactivate_saved_state_rollout
-      ~force_flag_value:(string_opt "ss_force" config)
+      ~force_flag_value:(string_opt Config_keys.Hhconf.ss_force config)
   in
   (if not silent then
     output_config_section "Saved state rollout flags" @@ fun () ->
     Saved_state_rollouts.output saved_state_flags);
   let project_metadata_w_flags =
     bool_
-      "project_metadata_w_flags"
+      Config_keys.Hhconf.project_metadata_w_flags
       ~default:default.saved_state.GlobalOptions.project_metadata_w_flags
       config
   in
   let attempt_fix_credentials =
     bool_if_min_version
-      "attempt_fix_credentials"
+      Config_keys.Hhconf.attempt_fix_credentials
       ~default:default.attempt_fix_credentials
       ~current_version
       config
   in
   let enable_on_nfs =
     bool_if_min_version
-      "enable_on_nfs"
+      Config_keys.Hhconf.enable_on_nfs
       ~default:default.enable_on_nfs
       ~current_version
       config
   in
   let enable_fuzzy_search =
     bool_if_min_version
-      "enable_fuzzy_search"
+      Config_keys.Hhconf.enable_fuzzy_search
       ~default:default.enable_fuzzy_search
       ~current_version
       config
   in
   let enable_global_access_check =
     bool_
-      "enable_global_access_check"
+      Config_keys.Hhconf.enable_global_access_check
       ~default:default.enable_global_access_check
       config
   in
   let max_purgatory_clients =
-    int_ "max_purgatory_clients" ~default:default.max_purgatory_clients config
+    int_
+      Config_keys.Hhconf.max_purgatory_clients
+      ~default:default.max_purgatory_clients
+      config
   in
   let search_chunk_size =
-    int_ "search_chunk_size" ~default:default.search_chunk_size config
+    int_
+      Config_keys.Hhconf.search_chunk_size
+      ~default:default.search_chunk_size
+      config
   in
   let load_state_natively =
     bool_if_min_version
-      "load_state_natively_v4"
+      Config_keys.Hhconf.load_state_natively_v4
       ~default:default.load_state_natively
       ~current_version
       config
   in
   let load_state_natively_download_timeout =
     int_
-      "load_state_natively_download_timeout"
+      Config_keys.Hhconf.load_state_natively_download_timeout
       ~default:default.load_state_natively_download_timeout
       config
   in
   let load_state_natively_dirty_files_timeout =
     int_
-      "load_state_natively_dirty_files_timeout"
+      Config_keys.Hhconf.load_state_natively_dirty_files_timeout
       ~default:default.load_state_natively_dirty_files_timeout
       config
   in
   let use_dummy_informant =
     bool_if_min_version
-      "use_dummy_informant"
+      Config_keys.Hhconf.use_dummy_informant
       ~default:default.use_dummy_informant
       ~current_version
       config
@@ -393,190 +431,200 @@ let load_
   in
   let informant_min_distance_restart =
     int_
-      "informant_min_distance_restart"
+      Config_keys.Hhconf.informant_min_distance_restart
       ~default:default.informant_min_distance_restart
       config
   in
   let type_decl_bucket_size =
-    int_ "type_decl_bucket_size" ~default:default.type_decl_bucket_size config
+    int_
+      Config_keys.Hhconf.type_decl_bucket_size
+      ~default:default.type_decl_bucket_size
+      config
   in
   let extend_defs_per_file_bucket_size =
     int_
-      "extend_defs_per_file_bucket_size"
+      Config_keys.Hhconf.extend_defs_per_file_bucket_size
       ~default:default.extend_defs_per_file_bucket_size
       config
   in
-  let io_priority = int_ "io_priority" ~default:default.io_priority config in
-  let cpu_priority = int_ "cpu_priority" ~default:default.cpu_priority config in
+  let io_priority =
+    int_ Config_keys.Hhconf.io_priority ~default:default.io_priority config
+  in
+  let cpu_priority =
+    int_ Config_keys.Hhconf.cpu_priority ~default:default.cpu_priority config
+  in
   let shm_dirs =
-    string_list "shm_dirs" ~default:default.shm_dirs config
+    string_list Config_keys.Hhconf.shm_dirs ~default:default.shm_dirs config
     |> List.map ~f:(fun dir -> Path.(to_string @@ make dir))
   in
   let shm_use_sharded_hashtbl =
     bool_if_min_version
-      "shm_use_sharded_hashtbl"
+      Config_keys.Hhconfig.shm_use_sharded_hashtbl
       ~default:default.shm_use_sharded_hashtbl
       ~current_version
       config
   in
   let shm_cache_size =
-    int_ "shm_cache_size" ~default:default.shm_cache_size config
+    int_
+      Config_keys.Hhconfig.shm_cache_size
+      ~default:default.shm_cache_size
+      config
   in
-  let max_workers = int_opt "max_workers" config in
+  let max_workers = int_opt Config_keys.Hhconf.max_workers config in
   (* interrupt_on_watchman is a deprecated alias of interrupt_on_file_changes *)
   let interrupt_on_file_changes =
     bool_if_min_version
-      "interrupt_on_watchman"
+      Config_keys.Hhconf.interrupt_on_watchman
       ~default:default.interrupt_on_file_changes
       ~current_version
       config
   in
   let interrupt_on_file_changes =
     bool_if_min_version
-      "interrupt_on_file_changes"
+      Config_keys.Hhconf.interrupt_on_file_changes
       ~default:interrupt_on_file_changes
       ~current_version
       config
   in
   let interrupt_on_client =
     bool_if_min_version
-      "interrupt_on_client"
+      Config_keys.Hhconf.interrupt_on_client
       ~default:default.interrupt_on_client
       ~current_version
       config
   in
   let use_full_fidelity_parser =
     bool_if_min_version
-      "use_full_fidelity_parser"
+      Config_keys.Hhconf.use_full_fidelity_parser
       ~default:default.use_full_fidelity_parser
       ~current_version
       config
   in
   let trace_parsing =
     bool_if_min_version
-      "trace_parsing"
+      Config_keys.Hhconf.trace_parsing
       ~default:default.trace_parsing
       ~current_version
       config
   in
   let prechecked_files =
     bool_if_min_version
-      "prechecked_files"
+      Config_keys.Hhconf.prechecked_files
       ~default:default.prechecked_files
       ~current_version
       config
   in
   let enable_type_check_filter_files =
     bool_if_min_version
-      "enable_type_check_filter_files"
+      Config_keys.Hhconf.enable_type_check_filter_files
       ~default:default.enable_type_check_filter_files
       ~current_version
       config
   in
   let predeclare_ide =
     bool_if_min_version
-      "predeclare_ide"
+      Config_keys.Hhconf.predeclare_ide
       ~default:default.predeclare_ide
       ~current_version
       config
   in
   let longlived_workers =
     bool_if_min_version
-      "longlived_workers"
+      Config_keys.Hhconf.longlived_workers
       ~default:default.longlived_workers
       ~current_version
       config
   in
   let hg_aware =
     bool_if_min_version
-      "hg_aware"
+      Config_keys.Hhconf.hg_aware
       ~default:default.hg_aware
       ~current_version
       config
   in
   let store_decls_in_saved_state =
     bool_if_min_version
-      "store_decls_in_saved_state"
+      Config_keys.Hhconf.store_decls_in_saved_state
       ~default:default.store_decls_in_saved_state
       ~current_version
       config
   in
   let hg_aware_parsing_restart_threshold =
     int_
-      "hg_aware_parsing_restart_threshold"
+      Config_keys.Hhconf.hg_aware_parsing_restart_threshold
       ~default:default.hg_aware_parsing_restart_threshold
       config
   in
   let hg_aware_redecl_restart_threshold =
     int_
-      "hg_aware_redecl_restart_threshold"
+      Config_keys.Hhconf.hg_aware_redecl_restart_threshold
       ~default:default.hg_aware_redecl_restart_threshold
       config
   in
   let hg_aware_recheck_restart_threshold =
     int_
-      "hg_aware_recheck_restart_threshold"
+      Config_keys.Hhconf.hg_aware_recheck_restart_threshold
       ~default:default.hg_aware_recheck_restart_threshold
       config
   in
   let ide_parser_cache =
     bool_if_min_version
-      "ide_parser_cache"
+      Config_keys.Hhconf.ide_parser_cache
       ~default:default.ide_parser_cache
       ~current_version
       config
   in
   let idle_gc_slice =
-    int_ "idle_gc_slice" ~default:default.idle_gc_slice config
+    int_ Config_keys.Hhconf.idle_gc_slice ~default:default.idle_gc_slice config
   in
   let populate_member_heaps =
     bool_if_min_version
-      "populate_member_heaps"
+      Config_keys.Hhconf.populate_member_heaps
       ~default:default.populate_member_heaps
       ~current_version
       config
   in
   let fetch_remote_old_decls =
     bool_if_min_version
-      "fetch_remote_old_decls"
+      Config_keys.Hhconf.fetch_remote_old_decls
       ~default:default.fetch_remote_old_decls
       ~current_version
       config
   in
   let skip_hierarchy_checks =
     bool_if_min_version
-      "skip_hierarchy_checks"
+      Config_keys.Hhconf.skip_hierarchy_checks
       ~default:default.skip_hierarchy_checks
       ~current_version
       config
   in
   let skip_tast_checks =
     bool_if_min_version
-      "skip_tast_checks"
+      Config_keys.Hhconf.skip_tast_checks
       ~default:default.skip_tast_checks
       ~current_version
       config
   in
   let silence_errors_under_dynamic =
     bool_if_min_version
-      "silence_errors_under_dynamic"
+      Config_keys.Hhconfig.silence_errors_under_dynamic
       ~default:default.silence_errors_under_dynamic
       ~current_version
       config
   in
-  let num_local_workers = int_opt "num_local_workers" config in
+  let num_local_workers = int_opt Config_keys.Hhconf.num_local_workers config in
   let defer_class_declaration_threshold =
-    int_opt "defer_class_declaration_threshold" config
+    int_opt Config_keys.Hhconf.defer_class_declaration_threshold config
   in
   let produce_streaming_errors =
     bool_
-      "produce_streaming_errors"
+      Config_keys.Hhconf.produce_streaming_errors
       ~default:default.produce_streaming_errors
       config
   in
   let consume_streaming_errors =
     bool_
-      "consume_streaming_errors"
+      Config_keys.Hhconf.consume_streaming_errors
       ~default:default.consume_streaming_errors
       config
   in
@@ -591,54 +639,54 @@ let load_
   in
   let enable_naming_table_fallback =
     bool_if_min_version
-      "enable_naming_table_fallback"
+      Config_keys.Hhconf.enable_naming_table_fallback
       ~default:default.enable_naming_table_fallback
       ~current_version
       config
   in
   let naming_sqlite_path =
     if enable_naming_table_fallback then
-      string_opt "naming_sqlite_path" config
+      string_opt Config_keys.Hhconf.naming_sqlite_path config
     else
       None
   in
   let ide_symbolindex_search_provider =
     string_
-      "ide_symbolindex_search_provider"
+      Config_keys.Hhconf.ide_symbolindex_search_provider
       ~default:default.ide_symbolindex_search_provider
       config
   in
   let symbolindex_quiet =
     bool_if_min_version
-      "symbolindex_quiet"
+      Config_keys.Hhconf.symbolindex_quiet
       ~default:default.symbolindex_quiet
       ~current_version
       config
   in
   let tico_invalidate_files =
     bool_if_min_version
-      "tico_invalidate_files"
+      Config_keys.Hhconf.tico_invalidate_files
       ~default:default.tico_invalidate_files
       ~current_version
       config
   in
   let tico_invalidate_smart =
     bool_if_min_version
-      "tico_invalidate_smart"
+      Config_keys.Hhconf.tico_invalidate_smart
       ~default:default.tico_invalidate_smart
       ~current_version
       config
   in
   let profile_log =
     bool_if_min_version
-      "profile_log"
+      Config_keys.Hhconf.profile_log
       ~default:HackEventLogger.PerFileProfilingConfig.(default.profile_log)
       ~current_version
       config
   in
   let profile_type_check_duration_threshold =
     float_
-      "profile_type_check_duration_threshold"
+      Config_keys.Hhconf.profile_type_check_duration_threshold
       ~default:
         HackEventLogger.PerFileProfilingConfig.(
           default.profile_type_check_duration_threshold)
@@ -646,7 +694,7 @@ let load_
   in
   let profile_type_check_memory_threshold_mb =
     int_
-      "profile_type_check_memory_threshold_mb"
+      Config_keys.Hhconf.profile_type_check_memory_threshold_mb
       ~default:
         HackEventLogger.PerFileProfilingConfig.(
           default.profile_type_check_memory_threshold_mb)
@@ -654,7 +702,7 @@ let load_
   in
   let profile_type_check_twice =
     bool_if_min_version
-      "profile_type_check_twice"
+      Config_keys.Hhconf.profile_type_check_twice
       ~default:
         HackEventLogger.PerFileProfilingConfig.(
           default.profile_type_check_twice)
@@ -662,7 +710,7 @@ let load_
       config
   in
   let profile_decling =
-    match string_opt "profile_decling" config with
+    match string_opt Config_keys.Hhconf.profile_decling config with
     | None ->
       default.per_file_profiling
         .HackEventLogger.PerFileProfilingConfig.profile_decling
@@ -678,33 +726,33 @@ let load_
              "Unrecognized value %s for profile_decling. Allowed values ar 'off', 'top_counts', 'all_telemetry', 'all_telemetry_callstacks'"
              value_s)
   in
-  let profile_owner = string_opt "profile_owner" config in
-  let profile_desc = string_opt "profile_desc" config in
+  let profile_owner = string_opt Config_keys.Hhconf.profile_owner config in
+  let profile_desc = string_opt Config_keys.Hhconf.profile_desc config in
   let profile_slow_threshold =
     float_
-      "profile_slow_threshold"
+      Config_keys.Hhconf.profile_slow_threshold
       ~default:
         HackEventLogger.PerFileProfilingConfig.(default.profile_slow_threshold)
       config
   in
-  let memtrace_dir = string_opt "memtrace_dir" config in
+  let memtrace_dir = string_opt Config_keys.Hhconf.memtrace_dir config in
   let go_to_implementation =
     bool_if_min_version
-      "go_to_implementation"
+      Config_keys.Hhconf.go_to_implementation
       ~default:default.go_to_implementation
       ~current_version
       config
   in
   let allow_unstable_features =
     bool_if_min_version
-      "allow_unstable_features"
+      Config_keys.Hhconf.allow_unstable_features
       ~default:default.allow_unstable_features
       ~current_version
       config
   in
   let log_saved_state_age_and_distance =
     bool_if_min_version
-      "log_saved_state_age_and_distance"
+      Config_keys.Hhconf.log_saved_state_age_and_distance
       ~default:
         GlobalOptions.(
           default_saved_state_loading.log_saved_state_age_and_distance)
@@ -713,14 +761,14 @@ let load_
   in
   let use_manifold_cython_client =
     bool_if_min_version
-      "use_manifold_cython_client"
+      Config_keys.Hhconf.use_manifold_cython_client
       ~default:
         GlobalOptions.(default_saved_state_loading.use_manifold_cython_client)
       ~current_version
       config
   in
   let workload_quantile =
-    int_list_opt "workload_quantile" config >>= fun l ->
+    int_list_opt Config_keys.Hhconf.workload_quantile config >>= fun l ->
     match l with
     | [m; n] ->
       if 0 <= m && m <= n then
@@ -731,17 +779,17 @@ let load_
         None
     | _ -> None
   in
-  let rollout_group = string_opt "rollout_group" config in
+  let rollout_group = string_opt Config_keys.Hhconf.rollout_group config in
   let specify_manifold_api_key =
     bool_if_min_version
-      "specify_manifold_api_key"
+      Config_keys.Hhconf.specify_manifold_api_key
       ~default:default.specify_manifold_api_key
       ~current_version
       config
   in
   let remote_old_decls_no_limit =
     bool_if_min_version
-      "remote_old_decls_no_limit"
+      Config_keys.Hhconf.remote_old_decls_no_limit
       ~default:default.remote_old_decls_no_limit
       ~current_version
       config
@@ -751,20 +799,20 @@ let load_
        * don't need to explicitly check for specify_manifold_api_key.
     *)
     if specify_manifold_api_key then
-      string_opt "saved_state_manifold_api_key" config
+      string_opt Config_keys.Hhconf.saved_state_manifold_api_key config
     else
       None
   in
   let rust_elab =
     bool_if_min_version
-      "rust_elab"
+      Config_keys.Hhconf.rust_elab
       ~default:default.rust_elab
       ~current_version
       config
   in
   let rust_provider_backend =
     bool_if_min_version
-      "rust_provider_backend"
+      Config_keys.Hhconf.rust_provider_backend
       ~default:default.rust_provider_backend
       ~current_version
       config
@@ -787,185 +835,218 @@ let load_
   in
   let cache_remote_decls =
     bool_if_min_version
-      "cache_remote_decls"
+      Config_keys.Hhconf.cache_remote_decls
       ~default:default.cache_remote_decls
       ~current_version
       config
   in
   let disable_naming_table_fallback_loading =
     bool_if_min_version
-      "disable_naming_table_fallback_loading"
+      Config_keys.Hhconf.disable_naming_table_fallback_loading
       ~default:default.disable_naming_table_fallback_loading
       ~current_version
       config
   in
   let use_distc =
     bool_if_min_version
-      "use_distc"
+      Config_keys.Hhconf.use_distc
       ~default:default.use_distc
       ~current_version
       config
   in
   let enable_fanout_aware_distc =
     bool_if_min_version
-      "enable_fanout_aware_distc"
+      Config_keys.Hhconf.enable_fanout_aware_distc
       ~default:default.enable_fanout_aware_distc
       ~current_version
       config
   in
   let use_compressed_dep_graph =
     bool_if_min_version
-      "use_compressed_dep_graph"
+      Config_keys.Hhconf.use_compressed_dep_graph
       ~default:default.use_compressed_dep_graph
       ~current_version
       config
   in
   let hh_distc_fanout_threshold =
     int_
-      "hh_distc_fanout_threshold"
+      Config_keys.Hhconf.hh_distc_fanout_threshold
       ~default:default.hh_distc_fanout_threshold
       config
   in
   let hh_distc_fanout_full_init_threshold =
     int_
-      "hh_distc_fanout_full_init_threshold"
+      Config_keys.Hhconf.hh_distc_fanout_full_init_threshold
       ~default:default.hh_distc_fanout_full_init_threshold
       config
   in
   let hh_distc_exponential_backoff_num_retries =
     int_
-      "hh_distc_exponential_backoff_num_retries"
+      Config_keys.Hhconfig.hh_distc_exponential_backoff_num_retries
       ~default:default.hh_distc_exponential_backoff_num_retries
       config
   in
   let ide_load_naming_table_on_disk =
     bool_if_min_version
-      "ide_load_naming_table_on_disk"
+      Config_keys.Hhconf.ide_load_naming_table_on_disk
       ~default:default.ide_load_naming_table_on_disk
       ~current_version
       config
   in
   let ide_naming_table_update_threshold =
     int_
-      "ide_naming_table_update_threshold"
+      Config_keys.Hhconf.ide_naming_table_update_threshold
       ~default:default.ide_naming_table_update_threshold
       config
   in
   let dump_tast_hashes =
-    bool_ "dump_tast_hashes" ~default:default.dump_tast_hashes config
+    bool_
+      Config_keys.Hhconfig.dump_tast_hashes
+      ~default:default.dump_tast_hashes
+      config
   in
   let dump_tasts =
-    let path_opt = string_opt "dump_tasts" config in
+    let path_opt = string_opt Config_keys.Hhconf.dump_tasts config in
     match path_opt with
     | None -> default.dump_tasts
     | Some path -> In_channel.read_lines path
   in
   let lsp_sticky_quarantine =
-    bool_ "lsp_sticky_quarantine" ~default:default.lsp_sticky_quarantine config
+    bool_
+      Config_keys.Hhconf.lsp_sticky_quarantine
+      ~default:default.lsp_sticky_quarantine
+      config
   in
   let lsp_invalidation =
-    bool_ "lsp_invalidation" ~default:default.lsp_invalidation config
+    bool_
+      Config_keys.Hhconf.lsp_invalidation
+      ~default:default.lsp_invalidation
+      config
   in
   let autocomplete_sort_text =
     bool_
-      "autocomplete_sort_text"
+      Config_keys.Hhconf.autocomplete_sort_text
       ~default:default.autocomplete_sort_text
       config
   in
   let hack_warnings =
-    bool_ "hack_warnings" ~default:default.hack_warnings config
+    bool_
+      Config_keys.Hhconfig.hack_warnings
+      ~default:default.hack_warnings
+      config
   in
   let zstd_decompress_by_file =
     bool_
-      "zstd_decompress_by_file"
+      Config_keys.Hhconf.zstd_decompress_by_file
       ~default:
         GlobalOptions.(default_saved_state_loading.zstd_decompress_by_file)
       config
   in
   let saved_state_cache_limit =
     int_
-      "saved_state_cache_limit"
+      Config_keys.Hhconf.saved_state_cache_limit
       ~default:
         GlobalOptions.(default_saved_state_loading.saved_state_cache_limit)
       config
   in
   let warnings_default_all =
-    bool_ "warnings_default_all" ~default:default.warnings_default_all config
+    bool_
+      Config_keys.Hhconfig.warnings_default_all
+      ~default:default.warnings_default_all
+      config
   in
   let warnings_in_sandcastle =
     bool_
-      "warnings_in_sandcastle"
+      Config_keys.Hhconfig.warnings_in_sandcastle
       ~default:default.warnings_in_sandcastle
       config
   in
   let package_config_strict_validation =
     bool_
-      "package_config_strict_validation"
+      Config_keys.Hhconf.package_config_strict_validation
       ~default:default.package_config_strict_validation
       config
   in
   (* Fields primarily for hh_conf equivalence testing *)
   let hackfmt_version =
-    int_ "hackfmt.version" ~default:default.hackfmt_version config
+    int_
+      Config_keys.Hhconf.hackfmt_version
+      ~default:default.hackfmt_version
+      config
   in
   let sharedmem_dep_table_pow =
     int_
-      "sharedmem_dep_table_pow"
+      Config_keys.Hhconf.sharedmem_dep_table_pow
       ~default:default.sharedmem_dep_table_pow
       config
   in
   let sharedmem_global_size =
-    int_ "sharedmem_global_size" ~default:default.sharedmem_global_size config
+    int_
+      Config_keys.Hhconfig.sharedmem_global_size
+      ~default:default.sharedmem_global_size
+      config
   in
   let sharedmem_hash_table_pow =
     int_
-      "sharedmem_hash_table_pow"
+      Config_keys.Hhconfig.sharedmem_hash_table_pow
       ~default:default.sharedmem_hash_table_pow
       config
   in
   let sharedmem_heap_size =
-    int_ "sharedmem_heap_size" ~default:default.sharedmem_heap_size config
+    int_
+      Config_keys.Hhconfig.sharedmem_heap_size
+      ~default:default.sharedmem_heap_size
+      config
   in
   let eden_fetch_parallelism =
-    int_ "eden_fetch_parallelism" ~default:default.eden_fetch_parallelism config
+    int_
+      Config_keys.Hhconf.eden_fetch_parallelism
+      ~default:default.eden_fetch_parallelism
+      config
   in
   let use_distc_crawl_dircache =
     bool_
-      "use_distc_crawl_dircache"
+      Config_keys.Hhconf.use_distc_crawl_dircache
       ~default:default.use_distc_crawl_dircache
       config
   in
   let distc_avoid_unnecessary_saved_state_work =
     bool_
-      "distc_avoid_unnecessary_saved_state_work"
+      Config_keys.Hhconf.distc_avoid_unnecessary_saved_state_work
       ~default:default.distc_avoid_unnecessary_saved_state_work
       config
   in
   let gc_minor_heap_size =
-    int_ "gc_minor_heap_size" ~default:default.gc_minor_heap_size config
+    int_
+      Config_keys.Hhconfig.gc_minor_heap_size
+      ~default:default.gc_minor_heap_size
+      config
   in
   let gc_space_overhead =
-    int_ "gc_space_overhead" ~default:default.gc_space_overhead config
+    int_
+      Config_keys.Hhconfig.gc_space_overhead
+      ~default:default.gc_space_overhead
+      config
   in
   let ide_fall_back_to_full_index =
     bool_
-      "ide_fall_back_to_full_index"
+      Config_keys.Hhconfig.ide_fall_back_to_full_index
       ~default:default.ide_fall_back_to_full_index
       config
   in
   let naming_table_compression_level =
     int_
-      "naming_table_compression_level"
+      Config_keys.Hhconfig.naming_table_compression_level
       ~default:default.naming_table_compression_level
       config
   in
   let naming_table_compression_threads =
     int_
-      "naming_table_compression_threads"
+      Config_keys.Hhconfig.naming_table_compression_threads
       ~default:default.naming_table_compression_threads
       config
   in
-  let config_version = string_opt "version" config in
+  let config_version = string_opt Config_keys.Hhconfig.version config in
   let parse_string_list s =
     try
       match Yojson.Safe.from_string s with
@@ -979,7 +1060,7 @@ let load_
     | _ -> []
   in
   let ignored_paths =
-    match string_opt "ignored_paths" config with
+    match string_opt Config_keys.Hhconfig.ignored_paths config with
     | None -> default.ignored_paths
     | Some s -> parse_string_list s
   in

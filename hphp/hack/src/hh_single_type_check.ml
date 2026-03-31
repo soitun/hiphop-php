@@ -227,6 +227,8 @@ let load_and_parse_custom_error_config path =
       msg;
     None
 
+(* Fatal on invalid keys: hh_single_type_check has no release/rollback
+   concerns, so we fail fast to catch typos immediately. *)
 let exit_if_invalid_config_keys (config : Config_file_common.t) : unit =
   let config_keys = Config_file_common.keys config in
   List.iter config_keys ~f:(fun key ->

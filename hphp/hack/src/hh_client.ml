@@ -137,12 +137,16 @@ let exec_command_with_config
     "[hh_client] %s"
     (String.concat ~sep:" " (Array.to_list Sys.argv));
 
+  let cli_config_overrides =
+    ClientArgs.config command |> Option.value ~default:[]
+  in
+  ServerConfig.warn_on_invalid_config_keys cli_config_overrides;
+
   let (config, local_config) =
     ServerConfig.load
       ~silent:(not @@ ClientArgs.dump_config command)
       ~from
-      ~cli_config_overrides:
-        (ClientArgs.config command |> Option.value ~default:[])
+      ~cli_config_overrides
   in
   init_event_logger root command ~init_id ~from config local_config;
 

@@ -78,3 +78,12 @@ val make_sharedmem_config :
 
 val update_config_with_ai_options :
   t -> ServerLocalConfig.t -> Ai_options.t option -> t * ServerLocalConfig.t
+
+(** Validate CLI --config key=value overrides. Logs a warning via Hh_logger
+    for each key that is not a recognized config option, with a "did you mean?"
+    suggestion when there is a close match. Does not fail. *)
+val warn_on_invalid_config_keys : (string * string) list -> unit
+
+(** Validate keys in a parsed .hhconfig file. Logs a warning via Hh_logger
+    for each key that is not a recognized .hhconfig option. Does not fail. *)
+val warn_on_invalid_hhconfig_keys : Config_file_common.t -> unit
