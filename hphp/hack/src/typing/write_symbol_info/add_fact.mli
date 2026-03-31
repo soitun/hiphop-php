@@ -126,6 +126,13 @@ val func_defn :
   Fact_acc.t ->
   Fact_id.t * Fact_acc.t
 
+val closure_defn :
+  Full_fidelity_source_text.t ->
+  ('a, 'b) Aast.fun_ ->
+  Fact_id.t ->
+  Fact_acc.t ->
+  Fact_id.t * Fact_acc.t
+
 val typedef_decl : string -> Fact_acc.t -> Fact_id.t * Fact_acc.t
 
 val typedef_defn :

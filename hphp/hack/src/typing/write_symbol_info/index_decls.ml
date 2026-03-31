@@ -65,6 +65,40 @@ let process_loc_span
   let (_, fa) = Add_fact.decl_span ~path span ref fa in
   fa
 
+let closure_name pos =
+  let (line, col, _) = Pos.info_pos pos in
+  Printf.sprintf "(closure)$%d_%d" line col
+
+let process_closure ~path source_text pos fun_ (xrefs, all_decls, fa) =
+  let name = closure_name pos in
+  let (decl_id, fa) = Add_fact.func_decl name fa in
+  let (_, fa) = Add_fact.closure_defn source_text fun_ decl_id fa in
+  let decl_ref = Declaration.Function_ (FunctionDeclaration.Id decl_id) in
+  let fa = process_loc_span path pos fun_.f_span decl_ref fa in
+  (xrefs, all_decls @ [decl_ref], fa)
+
+let collect_and_process_closures ctx ~path source_text tast acc =
+  let closures_ref = ref [] in
+  let handler =
+    object (_self)
+      inherit Tast_visitor.handler_base
+
+      method! at_expr _env expr =
+        match expr with
+        | (_, pos, Efun efun) ->
+          closures_ref := (pos, efun.ef_fun) :: !closures_ref
+        | (_, pos, Lfun (fun_, _captures)) ->
+          closures_ref := (pos, fun_) :: !closures_ref
+        | _ -> ()
+    end
+  in
+  let visitor = Tast_visitor.iter_with [handler] in
+  let tast_defs = List.map ~f:fst tast in
+  visitor#go ctx tast_defs;
+  let closures = List.rev !closures_ref in
+  List.fold closures ~init:acc ~f:(fun acc (pos, fun_) ->
+      process_closure ~path source_text pos fun_ acc)
+
 let process_decl_loc
     (decl_fun : string -> Fact_acc.t -> Fact_id.t * Fact_acc.t)
     (defn_fun : 'elem -> Fact_id.t -> Fact_acc.t -> Fact_id.t * Fact_acc.t)
@@ -468,21 +502,27 @@ let process_tast_decls ctx ~path tast source_text root_path (decls, fa) =
       let thrift_path = Filename.concat root_path thrift_path in
       Some (Thrift.empty ~thrift_path)
   in
-  List.fold tast ~init:(Xrefs.empty, decls, fa) ~f:(fun acc (def, im) ->
-      match def with
-      | Class en when Util.is_enum_or_enum_class en.c_kind ->
-        process_enum_decl thrift_ctx path source_text en acc
-      | Class cd ->
-        process_container_decl ctx thrift_ctx path source_text cd im acc
-      | Constant gd -> process_gconst_decl path source_text gd acc
-      | Fun fd -> process_func_decl path source_text fd acc
-      | Typedef td -> process_typedef_decl path source_text td acc
-      | Module md -> process_module_decl path source_text md acc
-      | SetModule sm ->
-        let (xrefs, _, fa) = acc in
-        let (xrefs, fa) = process_mod_xref fa xrefs sm in
-        (xrefs, decls, fa)
-      | _ -> acc)
+  let acc =
+    List.fold tast ~init:(Xrefs.empty, decls, fa) ~f:(fun acc (def, im) ->
+        match def with
+        | Class en when Util.is_enum_or_enum_class en.c_kind ->
+          process_enum_decl thrift_ctx path source_text en acc
+        | Class cd ->
+          process_container_decl ctx thrift_ctx path source_text cd im acc
+        | Constant gd -> process_gconst_decl path source_text gd acc
+        | Fun fd -> process_func_decl path source_text fd acc
+        | Typedef td -> process_typedef_decl path source_text td acc
+        | Module md -> process_module_decl path source_text md acc
+        | SetModule sm ->
+          let (xrefs, _, fa) = acc in
+          let (xrefs, fa) = process_mod_xref fa xrefs sm in
+          (xrefs, decls, fa)
+        | _ -> acc)
+  in
+  (* Walk the TAST to find closures (Efun/Lfun) and emit declaration/span
+     facts for each, so that closure bodies get their own line ranges
+     rather than being lumped into the enclosing function/method. *)
+  collect_and_process_closures ctx ~path source_text tast acc
 
 let process_decls
     ctx fa File_info.{ path; tast; source_text; cst; root_path; _ } =

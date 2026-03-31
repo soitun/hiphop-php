@@ -554,6 +554,28 @@ let func_defn source_text fd decl_id fa =
   in
   Fact_acc.add_fact Predicate.(Hack FunctionDefinition) json fa
 
+let closure_defn source_text elem decl_id fa =
+  let (signature, fa) =
+    build_signature source_text elem.f_params elem.f_ctxs elem.f_ret fa
+  in
+  let readonly_ret =
+    Option.map elem.f_readonly_ret ~f:(fun _ -> ReadonlyKind.Readonly)
+  in
+  let json =
+    FunctionDefinition.(
+      {
+        declaration = FunctionDeclaration.Id decl_id;
+        signature;
+        is_async = is_async elem.f_fun_kind;
+        attributes = Build_fact.attributes source_text elem.f_user_attributes;
+        type_params = [];
+        readonly_ret;
+        module_ = None;
+      }
+      |> to_json_key)
+  in
+  Fact_acc.add_fact Predicate.(Hack FunctionDefinition) json fa
+
 let module_defn source_text elem decl_id fa =
   let json =
     ModuleDefinition.(
