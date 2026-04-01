@@ -228,12 +228,13 @@ bool process(CompilerOptions &po) {
   }
 
   for (auto extension : ExtensionRegistry::getExtensions()) {
-    for (auto file : extension->hackFiles()) {
-      if (!files.contains(file)) {
+    for (const auto& file : extension->hackFiles()) {
+      auto ext_file = "ext_" + file;
+      if (!files.contains(ext_file)) {
         Logger::Error(
-          "Error while compiling stdlib: %s not found in input files - did you add an extension without any hack files? If so, override hackFiles to return an empty vector.", file.c_str());
+          "Error while compiling stdlib: %s not found in input files - did you add an extension without any hack files? If so, override hackFiles to return an empty vector.", ext_file.c_str());
       }
-      auto path = files.at("ext_" + file);
+      auto path = files.at(ext_file);
       if (!compile_systemlib(path.string(), po.outputDir, extension)) {
         return false;
       }
