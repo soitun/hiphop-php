@@ -601,10 +601,6 @@ let load_config (config : Config_file_common.t) (options : GlobalOptions.t) :
       (int_opt
          Config_keys.Hhconfig.hh_distc_exponential_backoff_num_retries
          config)
-    ?tco_enable_abstract_method_optional_parameters:
-      (bool_opt
-         Config_keys.Hhconfig.enable_abstract_method_optional_parameters
-         config)
     ?hack_warnings:
       (bool_opt Config_keys.Hhconfig.hack_warnings config
       |> Option.map ~f:(function

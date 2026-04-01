@@ -114,7 +114,7 @@ let where_constraint env (ty1, ck, ty2) =
 (* It's not completely trivial because of optional arguments  *)
 
 (** Check for `optional` keyword where it isn't allowed. Example: `function foo(optional int $x): void {}` (should be a default arg instead) *)
-let check_params_for_bad_optional_keyword ~from_abstract_method env paraml :
+let check_params_for_bad_optional_keyword ~from_abstract_method paraml :
     Typing_error.t list =
   List.filter_map paraml ~f:(fun param ->
       let is_optional_not_default =
@@ -122,16 +122,7 @@ let check_params_for_bad_optional_keyword ~from_abstract_method env paraml :
         && Option.is_none (Aast_utils.get_param_default param)
       in
       if is_optional_not_default then
-        if
-          not
-            (TypecheckerOptions.enable_abstract_method_optional_parameters
-               (Decl_env.tcopt env))
-        then
-          Some
-            Typing_error.(
-              primary
-              @@ Primary.Optional_parameter_not_supported param.param_pos)
-        else if not from_abstract_method then
+        if not from_abstract_method then
           Some
             Typing_error.(
               primary @@ Primary.Optional_parameter_not_abstract param.param_pos)
@@ -183,11 +174,11 @@ let check_params_for_required_after_optional ~from_abstract_method paraml :
   | Found_required_after_optional_or_default param ->
     Some Typing_error.(primary @@ Primary.Previous_default param.param_pos)
 
-let check_params ~from_abstract_method env paraml : Typing_error.t list =
+let check_params ~from_abstract_method paraml : Typing_error.t list =
   let err =
     check_params_for_required_after_optional ~from_abstract_method paraml
   in
   Option.to_list err
-  @ check_params_for_bad_optional_keyword ~from_abstract_method env paraml
+  @ check_params_for_bad_optional_keyword ~from_abstract_method paraml
 
 let make_params env paraml = List.map paraml ~f:(make_param_ty env)

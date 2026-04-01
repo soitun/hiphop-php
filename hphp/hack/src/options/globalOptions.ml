@@ -188,7 +188,6 @@ type t = {
   re_no_cache: bool;
   hh_distc_should_disable_trace_store: bool;
   hh_distc_exponential_backoff_num_retries: int;
-  tco_enable_abstract_method_optional_parameters: bool;
   recursive_case_types: bool;
   class_sub_classname: bool;
   class_class_type: bool;
@@ -306,7 +305,6 @@ let default =
     re_no_cache = false;
     hh_distc_should_disable_trace_store = false;
     hh_distc_exponential_backoff_num_retries = 10;
-    tco_enable_abstract_method_optional_parameters = false;
     recursive_case_types = false;
     class_sub_classname = true;
     class_class_type = true;
@@ -421,7 +419,6 @@ let set
     ?re_no_cache
     ?hh_distc_should_disable_trace_store
     ?hh_distc_exponential_backoff_num_retries
-    ?tco_enable_abstract_method_optional_parameters
     ?recursive_case_types
     ?class_sub_classname
     ?class_class_type
@@ -708,10 +705,6 @@ let set
       setting
         hh_distc_exponential_backoff_num_retries
         options.hh_distc_exponential_backoff_num_retries;
-    tco_enable_abstract_method_optional_parameters =
-      setting
-        tco_enable_abstract_method_optional_parameters
-        options.tco_enable_abstract_method_optional_parameters;
     recursive_case_types =
       setting recursive_case_types options.recursive_case_types;
     class_sub_classname =

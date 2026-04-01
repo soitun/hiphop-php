@@ -274,9 +274,6 @@ let tco_lsp_invalidation t = t.GlobalOptions.tco_lsp_invalidation
 
 let tco_extended_reasons t = t.GlobalOptions.tco_extended_reasons
 
-let enable_abstract_method_optional_parameters t =
-  t.GlobalOptions.tco_enable_abstract_method_optional_parameters
-
 let disable_physical_equality t = t.GlobalOptions.tco_disable_physical_equality
 
 let hack_warnings t = t.GlobalOptions.hack_warnings

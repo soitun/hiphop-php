@@ -35,10 +35,7 @@ val where_constraint :
   Typing_defs.decl_ty * 'a * Typing_defs.decl_ty
 
 val check_params :
-  from_abstract_method:bool ->
-  Decl_env.env ->
-  Nast.fun_param list ->
-  Typing_error.t list
+  from_abstract_method:bool -> Nast.fun_param list -> Typing_error.t list
 
 val make_params :
   Decl_env.env ->

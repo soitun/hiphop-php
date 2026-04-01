@@ -140,7 +140,6 @@ impl Default for GlobalOptions {
             re_no_cache: false,
             hh_distc_should_disable_trace_store: false,
             hh_distc_exponential_backoff_num_retries: 10,
-            tco_enable_abstract_method_optional_parameters: false,
             recursive_case_types: false,
             class_sub_classname: true,
             class_class_type: true,

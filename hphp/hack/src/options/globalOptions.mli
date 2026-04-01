@@ -276,8 +276,6 @@ type t = {
         Corresponds to the `--trace-store-mode local` options of hh_distc.*)
   hh_distc_exponential_backoff_num_retries: int;
       (** Number of retries when uploading/download/executing with hh_distc *)
-  tco_enable_abstract_method_optional_parameters: bool;
-      (** Enable use of optional on parameters in abstract methods *)
   recursive_case_types: bool;  (** Enable recursive case types *)
   class_sub_classname: bool;  (** Whether class<T> <: classname<T> *)
   class_class_type: bool;  (** When true, C::class : class<C> *)
@@ -402,7 +400,6 @@ val set :
   ?re_no_cache:bool ->
   ?hh_distc_should_disable_trace_store:bool ->
   ?hh_distc_exponential_backoff_num_retries:int ->
-  ?tco_enable_abstract_method_optional_parameters:bool ->
   ?recursive_case_types:bool ->
   ?class_sub_classname:bool ->
   ?class_class_type:bool ->

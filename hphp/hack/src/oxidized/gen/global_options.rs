@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<dbae16b8f99ea33bddca4dc1ea1c3d39>>
+// @generated SignedSource<<7f3cf0fb3397a7655bdf71b9544be53b>>
 //
 // To regenerate this file, run:
 //   buck run @fbcode//mode/dev-nosan-lg fbcode//hphp/hack/src:oxidized_regen
@@ -381,8 +381,6 @@ pub struct GlobalOptions {
     pub hh_distc_should_disable_trace_store: bool,
     /// Number of retries when uploading/download/executing with hh_distc
     pub hh_distc_exponential_backoff_num_retries: isize,
-    /// Enable use of optional on parameters in abstract methods
-    pub tco_enable_abstract_method_optional_parameters: bool,
     /// Enable recursive case types
     pub recursive_case_types: bool,
     /// Whether class<T> <: classname<T>

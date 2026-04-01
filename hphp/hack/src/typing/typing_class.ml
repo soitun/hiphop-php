@@ -134,10 +134,7 @@ let method_def ~is_disposable env cls m =
   Diagnostics.run_with_span m.m_span @@ fun () ->
   with_timeout env m.m_name @@ fun env ->
   let errs =
-    FunUtils.check_params
-      ~from_abstract_method:m.m_abstract
-      env.decl_env
-      m.m_params
+    FunUtils.check_params ~from_abstract_method:m.m_abstract m.m_params
   in
   List.iter ~f:(Typing_error_utils.add_typing_error ~env) errs;
   let method_name = Ast_defs.get_id m.m_name in

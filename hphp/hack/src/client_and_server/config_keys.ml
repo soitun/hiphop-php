@@ -427,6 +427,7 @@ module Hhconf = struct
   let use_justknobs = hhconf_key "use_justknobs"
 
   (* IDE *)
+  let hack_warnings = key "hack_warnings"
 
   let autocomplete_sort_text = hhconf_key "autocomplete_sort_text"
 

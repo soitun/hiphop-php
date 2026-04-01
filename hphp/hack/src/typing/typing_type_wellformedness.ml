@@ -406,7 +406,7 @@ let fun_ tenv f =
   Option.iter ~f:(Typing_error_utils.add_typing_error ~env:tenv) ty_err_opt;
   let env = { typedef_tparams = []; tenv } in
   let errs =
-    FunUtils.check_params ~from_abstract_method:false tenv.decl_env f.f_params
+    FunUtils.check_params ~from_abstract_method:false f.f_params
     @ check_splat_is_tuple env f.f_params
   in
   List.iter ~f:(Typing_error_utils.add_typing_error ~env:tenv) errs;

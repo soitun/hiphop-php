@@ -591,10 +591,6 @@ impl HhConfig {
                 "hh_distc_exponential_backoff_num_retries",
                 default.hh_distc_exponential_backoff_num_retries,
             )?,
-            tco_enable_abstract_method_optional_parameters: hhconfig.get_bool_or(
-                "enable_abstract_method_optional_parameters",
-                default.tco_enable_abstract_method_optional_parameters,
-            )?,
             recursive_case_types: hhconfig
                 .get_bool_or("recursive_case_types", default.recursive_case_types)?,
             class_sub_classname: hhconfig

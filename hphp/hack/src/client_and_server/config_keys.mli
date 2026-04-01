@@ -367,6 +367,8 @@ module Hhconf : sig
 
   val experiments_config_enabled : string
 
+  val hack_warnings : string
+
   val experiments_config_path : string
 
   val experiments_config_source : string
