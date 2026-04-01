@@ -270,6 +270,7 @@ type flow_kind =
   | Flow_return_expr
   | Flow_instantiate of string
   | Flow_elab
+  | Flow_unsafe_cast
 [@@deriving hash]
 
 let flow_kind_to_json = function
@@ -284,6 +285,7 @@ let flow_kind_to_json = function
   | Flow_return_expr -> `String "Flow_return_expr"
   | Flow_instantiate str -> `Assoc [("Flow_instantiate", `String str)]
   | Flow_elab -> `String "Flow_elab"
+  | Flow_unsafe_cast -> `String "Flow_unsafe_cast"
 (* ~~ Witnesses ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ *)
 
 (** Witness the reason for a type during typing using the position of a hint or
@@ -2165,6 +2167,8 @@ let flag_origin_is_captured_like = 0x10
 
 let flag_contains_tyvar = 0x20
 
+let flag_went_through_unsafe_cast = 0x40
+
 let rec extract_origin = function
   | Wrapped { origin; _ } -> origin
   | Def (pos, t) -> Def (pos, extract_origin t)
@@ -2193,6 +2197,11 @@ let rec compute_origin_flags origin =
   | _ -> 0
 
 let make_wrapped ~origin ~reason ~from_flags ~into_flags =
+  let inherited_flags =
+    from_flags
+    lor into_flags
+    land (flag_contains_tyvar lor flag_went_through_unsafe_cast)
+  in
   let tyvar_flag =
     (* Note: OCaml, weirdly, lets you use `lor` and `land` as though they were
        infix operators. However, they seem to behave like functions so they have
@@ -2217,7 +2226,7 @@ let make_wrapped ~origin ~reason ~from_flags ~into_flags =
     else
       0
   in
-  let flags = compute_origin_flags origin lor tyvar_flag in
+  let flags = compute_origin_flags origin lor tyvar_flag lor inherited_flags in
   Wrapped { flags; origin; reason }
 
 let rec flow_contains_tyvar = function
@@ -2291,6 +2300,7 @@ let rec to_string_help :
     | Flow_array_get ->
       to_string_help prefix solutions into
       @ to_string_help "  from this definition" solutions from
+    | Flow_unsafe_cast -> to_string_help prefix solutions into
     | _ -> to_string_help prefix solutions from)
   (* otherwise, follow the flow until we reach the type variable *)
   | Flow { from; into; kind } ->
@@ -2797,7 +2807,12 @@ module Constructors = struct
 
   let flow ~from ~into ~kind =
     let origin = extract_origin from in
-    let from_flags = extract_flags from in
+    let from_flags =
+      let f = extract_flags from in
+      match kind with
+      | Flow_unsafe_cast -> f lor flag_went_through_unsafe_cast
+      | _ -> f
+    in
     let into_flags = extract_flags into in
     let from_raw = unwrap from in
     let into_raw = unwrap into in
@@ -3054,6 +3069,8 @@ module Constructors = struct
 
   let flow_elab ~from ~into = flow ~from ~into ~kind:Flow_elab
 
+  let flow_unsafe_cast ~from ~into = flow ~from ~into ~kind:Flow_unsafe_cast
+
   let missing_type_in_hierarchy pos =
     from_witness_decl @@ Missing_type_in_hierarchy pos
 
@@ -3225,6 +3242,11 @@ module Predicates = struct
         | _ -> false
       in
       on_outermost r p
+
+  let went_through_unsafe_cast r =
+    match r with
+    | Wrapped { flags; _ } -> flags land flag_went_through_unsafe_cast <> 0
+    | _ -> false
 
   (* Should be used only for diagnostics *)
   let outer_constructor_string r = on_outermost r to_constructor_string
@@ -4324,6 +4346,7 @@ module Derivation = struct
       | Flow_instantiate nm ->
         Format.sprintf "as the instantiation of the generic `%s`" nm
       | Flow_elab -> "as the elaboration of"
+      | Flow_unsafe_cast -> "through an `UNSAFE_CAST`"
 
     let rec explain t ~st ~cfg ~ctxt =
       match t with

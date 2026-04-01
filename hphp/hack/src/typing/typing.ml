@@ -5924,8 +5924,14 @@ end = struct
               match Typing_dynamic_utils.try_strip_dynamic env ty with
               | (env, None) -> (env, ty)
               | (env, Some ty) ->
-                let r = Reason.unsafe_cast p in
-                (env, MakeType.locl_like r (Typing_defs.with_reason ty r))
+                let r =
+                  let into = Reason.unsafe_cast p in
+                  let (ty, _, _) = el in
+                  let from = get_reason ty in
+                  Typing_reason.flow_unsafe_cast ~from ~into
+                in
+
+                (env, MakeType.locl_like r (with_reason ty r))
             in
             make_result env p te ty
         in
