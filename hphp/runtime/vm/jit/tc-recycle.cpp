@@ -192,7 +192,7 @@ void clearTCMaps(TCA start, TCA end) {
   while (start < end) {
     bool isBranch, isNop, isCall;
     size_t instSz;
-    switch (arch()) {
+    switch (arch::get()) {
       case Arch::ARM: {
         using namespace vixl;
         Instruction* instr = Instruction::Cast(start);
@@ -284,7 +284,7 @@ void clearRange(TCA start, size_t len, const char* info) {
     // In general, fixups should be empty at this point. However, a fallthru
     // instruction is appended to any empty block and, on ARM, fallthru
     // instructions add address immediates in the fixups.addressImmediates.
-    assertx(arch() == Arch::ARM || fixups.empty());
+    assertx(arch::get() == Arch::ARM || fixups.empty());
   };
 
   DataBlock db;

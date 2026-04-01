@@ -52,7 +52,7 @@ struct Env {
 };
 
 bool isMultiword(int64_t imm) {
-  switch (arch()) {
+  switch (arch::get()) {
   case Arch::X64:
     break;
   case Arch::ARM:

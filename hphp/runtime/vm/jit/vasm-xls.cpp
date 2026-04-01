@@ -310,7 +310,7 @@ struct VxlsContext {
     : abi(abi)
     , sp(rsp())
   {
-    switch (arch()) {
+    switch (arch::get()) {
       case Arch::X64:
         tmp = reg::xmm15; // reserve xmm15 to break shuffle cycles
         break;

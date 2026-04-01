@@ -62,7 +62,7 @@ void freeBlocks() {
  *     br $tmp
  */
 TEST(Relocation, RelocateBccImm2MovzMovkBccReg) {
-  if (arch() != Arch::ARM) {
+  if (arch::get() != Arch::ARM) {
     SUCCEED();
     return;
   }
@@ -127,7 +127,7 @@ TEST(Relocation, RelocateBccImm2MovzMovkBccReg) {
  *     br $tmp
  */
 TEST(Relocation, RelocateCbz2MovzMovkCbnzReg) {
-  if (arch() != Arch::ARM) {
+  if (arch::get() != Arch::ARM) {
     SUCCEED();
     return;
   }
@@ -192,7 +192,7 @@ TEST(Relocation, RelocateCbz2MovzMovkCbnzReg) {
  *     br $tmp
  */
 TEST(Relocation, RelocateTbz2MovzMovkTbnzReg) {
-  if (arch() != Arch::ARM) {
+  if (arch::get() != Arch::ARM) {
     SUCCEED();
     return;
   }
@@ -252,7 +252,7 @@ TEST(Relocation, RelocateTbz2MovzMovkTbnzReg) {
  */
 TEST(Relocation, RelocateMovzMovkLdr2LdrLiteral) {
 
-  if (arch() != Arch::ARM) {
+  if (arch::get() != Arch::ARM) {
     SUCCEED();
     return;
   }
@@ -298,7 +298,7 @@ TEST(Relocation, RelocateMovzMovkLdr2LdrLiteral) {
  * movz/movk is relocated. See arm::relocateImmediateHelper().
  */
 TEST(Relocation, RelocateAdjustedMovzMovk) {
-  if (arch() != Arch::ARM) {
+  if (arch::get() != Arch::ARM) {
     SUCCEED();
     return;
   }
@@ -349,7 +349,7 @@ TEST(Relocation, RelocateAdjustedMovzMovk) {
  * relocateImpl().
  */
 TEST(Relocation, RelocateInternalAdjustedMovzMovk) {
-  if (arch() != Arch::ARM) {
+  if (arch::get() != Arch::ARM) {
     SUCCEED();
     return;
   }
@@ -397,7 +397,7 @@ TEST(Relocation, RelocateInternalAdjustedMovzMovk) {
  * is relocated. See arm::adjustInstruction().
  */
 TEST(Relocation, AdjustMovzMovk) {
-  if (arch() != Arch::ARM) {
+  if (arch::get() != Arch::ARM) {
     SUCCEED();
     return;
   }

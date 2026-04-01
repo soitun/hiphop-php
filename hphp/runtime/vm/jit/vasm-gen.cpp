@@ -124,7 +124,7 @@ Vauto::~Vauto() {
 
         SCOPE_ASSERT_DETAIL("vasm unit") { return show(unit()); };
         auto const abi = jit::abi(m_kind);
-        switch (arch()) {
+        switch (arch::get()) {
           case Arch::X64:
             optimizeX64(unit(), abi, true /* regalloc */);
             emitX64(unit(), text, m_fixups, nullptr);
@@ -152,7 +152,7 @@ Vauto::~Vauto() {
       if (!main().closed()) main() << fallthru{};
       if (!cold().closed()) cold() << fallthru{};
 
-      switch (arch()) {
+      switch (arch::get()) {
         case Arch::X64:
           emitX64(unit(), m_text, m_fixups, nullptr);
           break;

@@ -675,7 +675,7 @@ static inline bool hugePagesSoundNice() {
 
 static inline uint32_t hotTextHugePagesDefault() {
   if (!hugePagesSoundNice()) return 0;
-  return arch() == Arch::ARM ? 12 : 8;
+  return arch::get() == Arch::ARM ? 12 : 8;
 }
 
 static inline std::string reorderPropsDefault() {

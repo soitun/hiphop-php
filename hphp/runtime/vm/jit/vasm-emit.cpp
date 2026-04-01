@@ -108,7 +108,7 @@ void bindDataPtrs(Vunit& vunit, DataBlock& data) {
 }
 
 void emit(Vunit& vunit, Vtext& vtext, CGMeta& meta, AsmInfo* ai) {
-  switch (arch()) {
+  switch (arch::get()) {
     case Arch::X64:
       emitX64(vunit, vtext, meta, ai);
       break;
@@ -154,7 +154,7 @@ void emitVunit(Vunit& vunit, const IRUnit* unit,
     // emitted cold code.
     static unsigned seed = 42;
     auto code_alignment = [](void) -> uint8_t {
-      switch (arch()) {
+      switch (arch::get()) {
         case Arch::X64:
           return 1;
         case Arch::ARM:

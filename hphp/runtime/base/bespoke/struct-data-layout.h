@@ -26,7 +26,7 @@ struct StructDict;
 struct StructLayout;
 namespace detail_struct_data_layout {
 
-auto constexpr stores_utv = (arch() == Arch::X64 || arch() == Arch::ARM);
+auto constexpr stores_utv = arch::any(Arch::X64, Arch::ARM);
 
 template<bool is_const, typename T> using maybe_const_t =
   typename std::conditional<is_const, const T, T>::type;

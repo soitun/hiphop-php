@@ -37,7 +37,7 @@ int PhysReg::getNumSIMD() {
 }
 
 std::string show(PhysReg r) {
-  switch (arch()) {
+  switch (arch::get()) {
     case Arch::X64:
       return r.type() == PhysReg::GP   ? reg::regname(Reg64(r)) :
              r.type() == PhysReg::SIMD ? reg::regname(RegXMM(r)) :

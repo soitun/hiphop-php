@@ -644,7 +644,7 @@ void disasmRange(std::ostream& os,
   bool const printEncoding = dumpIREnabled(kind, kAsmEncodingLevel);
   char const* colorStr = useColor ? color(ANSI_COLOR_BROWN) : "";
 
-  switch (arch()) {
+  switch (arch::get()) {
     case Arch::X64: {
       Disasm disasm(Disasm::Options().indent(indent)
                     .printEncoding(printEncoding)

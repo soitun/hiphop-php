@@ -264,7 +264,7 @@ std::string show(const VregList& l) {
 
 std::string show(Vptr p) {
   std::string str;
-  switch(arch()) {
+  switch(arch::get()) {
     case Arch::X64:
     case Arch::ARM: {
       // [%fs + %base + disp + %index * scale]

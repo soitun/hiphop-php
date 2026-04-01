@@ -43,7 +43,7 @@ namespace {
  */
 bool loadsCell(const IRInstruction& inst) {
   auto const arch_allows = [] {
-    switch (arch()) {
+    switch (arch::get()) {
     case Arch::X64: return true;
     case Arch::ARM: return true;
     }
@@ -89,11 +89,6 @@ bool loadsCell(const IRInstruction& inst) {
  * clobber TypedValue.m_aux)
  */
 bool storesCell(const IRInstruction& inst, uint32_t srcIdx) {
-  switch (arch()) {
-  case Arch::X64: break;
-  case Arch::ARM: break;
-  }
-
   // If this function returns true for an operand, then the register allocator
   // may give it an XMM register, and the instruction will store the whole 16
   // bytes into memory.  Therefore it's important *not* to return true if the

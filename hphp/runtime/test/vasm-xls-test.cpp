@@ -77,10 +77,10 @@ template<class T> uint64_t test_const(T val) {
   v << ret{RegSet{xmm0}};
 
   CGMeta meta;
-  if (arch() == Arch::ARM) {
+  if (arch::get() == Arch::ARM) {
     optimizeARM(vasm.unit(), test_abi_arm, true /* regalloc */);
     emitARM(unit, text, meta, nullptr);
-  } else if (arch() == Arch::X64) {
+  } else if (arch::get() == Arch::X64) {
     optimizeX64(vasm.unit(), test_abi_x64, true /* regalloc */);
     emitX64(unit, text, meta, nullptr);
   }

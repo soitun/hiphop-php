@@ -648,7 +648,7 @@ bool flip_operands_helper(Env& env, const Op& op, Vlabel b, size_t i) {
 }
 
 bool simplify(Env& env, const addq& vadd, Vlabel b, size_t i) {
-  if (arch_any(Arch::ARM)) return false;
+  if (arch::any(Arch::ARM)) return false;
 
   auto stPair = storeq(env, vadd.d, b, i);
   auto const vptrs = stPair.first;
@@ -686,7 +686,7 @@ bool simplify(Env& env, const addq& vadd, Vlabel b, size_t i) {
 // first, try to simplify lea (%r1), %r2 into copy %r1,%r2
 bool simplify(Env& env, const lea& vlea, Vlabel b, size_t i) {
   if (vlea.s.disp == 0 && !vlea.s.index.isValid() &&
-      arch() != Arch::ARM && vlea.s.base.isValid()) {
+      arch::get() != Arch::ARM && vlea.s.base.isValid()) {
     simplify_impl(env, b, i, copy { vlea.s.base, vlea.d });
     return true;
   }
@@ -739,7 +739,7 @@ bool simplify(Env& env, const lea& vlea, Vlabel b, size_t i) {
   // On ARM, we're careful lowering Vptrs upfront, and we need to make sure we
   // don't recreate Vptrs that can't be emitted.  See lowerVptr() for validity
   // conditions.
-  if (arch() == Arch::ARM) {
+  if (arch::get() == Arch::ARM) {
     // We can't have both a disp and an index.
     if (newDisp != 0 && vlea.s.index.isValid()) return false;
 
@@ -767,7 +767,7 @@ bool simplify(Env& env, const cmpq& vcmp, Vlabel b, size_t i) {
   if (simplify_dead_cmp(env, vcmp, b, i)) return true;
   if (flip_operands_helper(env, vcmp, b, i)) return true;
 
-  if (!arch_any(Arch::ARM)) {
+  if (!arch::any(Arch::ARM)) {
     if (auto const vptr = foldable_load(env, vcmp.s1, b, i)) {
       return simplify_impl(env, b, i, cmpqm { vcmp.s0, *vptr, vcmp.sf });
     }
@@ -795,7 +795,7 @@ bool simplify(Env& env, const cmpq& vcmp, Vlabel b, size_t i) {
 bool simplify(Env& env, const cmpl& vcmp, Vlabel b, size_t i) {
   if (simplify_dead_cmp(env, vcmp, b, i)) return true;
   if (flip_operands_helper(env, vcmp, b, i)) return true;
-  if (arch_any(Arch::ARM)) return false;
+  if (arch::any(Arch::ARM)) return false;
 
   if (auto const vptr = foldable_load(env, vcmp.s1, b, i)) {
     return simplify_impl(env, b, i,
@@ -807,7 +807,7 @@ bool simplify(Env& env, const cmpl& vcmp, Vlabel b, size_t i) {
 bool simplify(Env& env, const cmpw& vcmp, Vlabel b, size_t i) {
   if (simplify_dead_cmp(env, vcmp, b, i))  return true;
   if (flip_operands_helper(env, vcmp, b, i)) return true;
-  if (arch_any(Arch::ARM)) return false;
+  if (arch::any(Arch::ARM)) return false;
 
   if (auto const vptr = foldable_load(env, vcmp.s1, b, i)) {
     return simplify_impl(env, b, i,
@@ -819,7 +819,7 @@ bool simplify(Env& env, const cmpw& vcmp, Vlabel b, size_t i) {
 bool simplify(Env& env, const cmpb& vcmp, Vlabel b, size_t i) {
   if (flip_operands_helper(env, vcmp, b, i)) return true;
   if (simplify_dead_cmp(env, vcmp, b, i)) return true;
-  if (arch_any(Arch::ARM)) return false;
+  if (arch::any(Arch::ARM)) return false;
 
   if (auto const vptr = foldable_load(env, vcmp.s1, b, i)) {
     return simplify_impl(env, b, i,
@@ -830,7 +830,7 @@ bool simplify(Env& env, const cmpb& vcmp, Vlabel b, size_t i) {
 
 bool simplify(Env& env, const cmpqi& vcmp, Vlabel b, size_t i) {
   if (simplify_dead_cmp(env, vcmp, b, i)) return true;
-  if (arch_any(Arch::ARM)) return false;
+  if (arch::any(Arch::ARM)) return false;
   if (auto const vptr = foldable_load(env, vcmp.s1, b, i)) {
     return simplify_impl(env, b, i,
                          cmpqim { vcmp.s0, *vptr, vcmp.sf });
@@ -840,7 +840,7 @@ bool simplify(Env& env, const cmpqi& vcmp, Vlabel b, size_t i) {
 
 bool simplify(Env& env, const cmpli& vcmp, Vlabel b, size_t i) {
   if (simplify_dead_cmp(env, vcmp, b, i)) return true;
-  if (arch_any(Arch::ARM)) return false;
+  if (arch::any(Arch::ARM)) return false;
   if (auto const vptr = foldable_load(env, vcmp.s1, b, i)) {
     return simplify_impl(env, b, i,
                          cmplim { vcmp.s0, *vptr, vcmp.sf });
@@ -850,7 +850,7 @@ bool simplify(Env& env, const cmpli& vcmp, Vlabel b, size_t i) {
 
 bool simplify(Env& env, const cmpwi& vcmp, Vlabel b, size_t i) {
   if (simplify_dead_cmp(env, vcmp, b, i)) return true;
-  if (arch_any(Arch::ARM)) return false;
+  if (arch::any(Arch::ARM)) return false;
   if (auto const vptr = foldable_load(env, vcmp.s1, b, i)) {
     return simplify_impl(env, b, i,
                          cmpwim { vcmp.s0, *vptr, vcmp.sf });
@@ -860,7 +860,7 @@ bool simplify(Env& env, const cmpwi& vcmp, Vlabel b, size_t i) {
 
 bool simplify(Env& env, const cmpbi& vcmp, Vlabel b, size_t i) {
   if (simplify_dead_cmp(env, vcmp, b, i)) return true;
-  if (arch_any(Arch::ARM)) return false;
+  if (arch::any(Arch::ARM)) return false;
   if (auto const vptr = foldable_load(env, vcmp.s1, b, i)) {
     return simplify_impl(env, b, i,
                          cmpbim { vcmp.s0, *vptr, vcmp.sf });
@@ -1095,7 +1095,7 @@ bool simplify_signed_test(Env& env, const In& test, uint32_t val,
 
 template<typename testm, typename test>
 bool simplify_testi(Env& env, const test& vtest, Vlabel b, size_t i) {
-  if (arch_any(Arch::ARM)) return false;
+  if (arch::any(Arch::ARM)) return false;
 
   if (auto const vptr = foldable_load(env, vtest.s1, b, i)) {
     return simplify_impl(env, b, i, testm { vtest.s0, *vptr, vtest.sf });
@@ -1106,7 +1106,7 @@ bool simplify_testi(Env& env, const test& vtest, Vlabel b, size_t i) {
 
 template<typename testm, typename cmpm, typename test>
 bool simplify_test(Env& env, const test& vtest, Vlabel b, size_t i) {
-  if (arch_any(Arch::ARM)) return false;
+  if (arch::any(Arch::ARM)) return false;
   if (vtest.s0 == vtest.s1 && env.use_counts[vtest.s0] == 2) {
     env.use_counts[vtest.s0]--;
     auto const vptr = foldable_load(env, vtest.s0, b, i);
@@ -1497,7 +1497,7 @@ bool simplify(Env& env, const cmovq& inst, Vlabel b, size_t i) {
  *  loadzlq{s, tmp}; movtql{tmp, d} -> loadl{s, d}
  */
 bool simplify_load_jmpr(Env& env, const load& load, Vlabel b, size_t i) {
-  if (arch() == Arch::ARM) return false;
+  if (arch::get() == Arch::ARM) return false;
   if (env.use_counts[load.d] != 1) return false;
   auto const& code = env.unit.blocks[b].code;
   if (i + 1 >= code.size()) return false;

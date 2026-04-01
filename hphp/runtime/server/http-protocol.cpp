@@ -160,7 +160,7 @@ static void PrepareEnv(Array& env, Transport *transport) {
   if (Cfg::Jit::Enabled) {
     env.set(s_HHVM_JIT, 1);
   }
-  switch (arch()) {
+  switch (arch::get()) {
   case Arch::X64:
     env.set(s_HHVM_ARCH, "x64");
     break;

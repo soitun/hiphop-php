@@ -23,7 +23,9 @@ namespace HPHP {
 
 enum class Arch { X64, ARM, };
 
-constexpr Arch arch() {
+namespace arch {
+
+constexpr Arch get() {
 #if defined(__aarch64__)
   return Arch::ARM;
 #else
@@ -31,14 +33,16 @@ constexpr Arch arch() {
 #endif
 }
 
-constexpr bool arch_any() { return false; }
+constexpr bool any() { return false; }
 
 /*
  * Convenience helper for guarding on a set of architectures.
  */
 template<class... Tail>
-bool arch_any(Arch a, Tail&&... archs) {
-  return arch() == a || arch_any(archs...);
+constexpr bool any(Arch a, Tail&&... archs) {
+  return get() == a || any(archs...);
+}
+
 }
 
 /*
@@ -55,7 +59,7 @@ bool arch_any(Arch a, Tail&&... archs) {
  */
 #define ARCH_SWITCH_CALL(func, ...)                                   \
   ([&]() -> decltype(x64::func(__VA_ARGS__)) {                        \
-    switch (arch()) {                                                 \
+    switch (arch::get()) {                                            \
       case Arch::X64:                                                 \
         return x64::MSVC_GLUE(func, (__VA_ARGS__));                   \
       case Arch::ARM:                                                 \
@@ -67,4 +71,3 @@ bool arch_any(Arch a, Tail&&... archs) {
 ///////////////////////////////////////////////////////////////////////////////
 
 }
-

@@ -1014,7 +1014,7 @@ TCA emitDecRefGeneric(CodeBlock& cb, DataBlock& data, const char* /*name*/) {
   auto const start = vwrap(cb, data, meta, [] (Vout& v) {
     v << vregrestrict{};
     auto const fullFrame = [&] {
-      switch (arch()) {
+      switch (arch::get()) {
         case Arch::ARM:
           return true;
         case Arch::X64:
@@ -1070,7 +1070,7 @@ TCA emitDecRefGeneric(CodeBlock& cb, DataBlock& data, const char* /*name*/) {
 namespace {
 
 void alignNativeStack(Vout& v, bool exit) {
-  switch (arch()) {
+  switch (arch::get()) {
     case Arch::X64:
       v << lea{rsp()[exit ? 8 : -8], rsp()};
       break;

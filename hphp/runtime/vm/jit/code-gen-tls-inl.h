@@ -32,7 +32,7 @@ namespace HPHP::jit {
 
 template<typename T>
 inline Vptr emitTLSAddr(Vout& v, TLSDatum<T> datum) {
-  switch (arch()) {
+  switch (arch::get()) {
     case Arch::X64:
       return x64::detail::emitTLSAddr(v, datum);
     case Arch::ARM:
@@ -43,7 +43,7 @@ inline Vptr emitTLSAddr(Vout& v, TLSDatum<T> datum) {
 
 template<typename T>
 inline Vreg emitTLSLea(Vout& v, TLSDatum<T> datum, int offset) {
-  switch (arch()) {
+  switch (arch::get()) {
     case Arch::X64:
       return x64::detail::emitTLSLea(v, datum, offset);
     case Arch::ARM:

@@ -760,7 +760,7 @@ init_command_line_globals(
     if (Cfg::Jit::Enabled) {
       envArr.set(s_HHVM_JIT, 1);
     }
-    switch (arch()) {
+    switch (arch::get()) {
     case Arch::X64:
       envArr.set(s_HHVM_ARCH, "x64");
       break;
