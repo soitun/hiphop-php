@@ -1354,8 +1354,6 @@ module UnstableFeatures = struct
 
   let expression_trees = "expression_trees"
 
-  let function_references = "function_references"
-
   let recursive_case_types = "recursive_case_types"
 end
 

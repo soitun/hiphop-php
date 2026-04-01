@@ -1,5 +1,5 @@
 <?hh
-<<file: __EnableUnstableFeatures('function_references')>>
+
 function top_id<T>(T $x): T {
   return $x;
 }

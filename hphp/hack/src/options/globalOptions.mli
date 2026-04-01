@@ -181,8 +181,6 @@ type t = {
       (** Ignores unsafe_cast and retains the original type of the expression *)
   tco_enable_expression_trees: bool;
       (** Enable expression trees via unstable features flag *)
-  tco_enable_function_references: bool;
-      (** Enable unstable feature: function references *)
   tco_allowed_expression_tree_visitors: string list;
       (** Allowed expression tree visitors when not enabled via unstable features flag *)
   tco_typeconst_concrete_concrete_error: bool;
@@ -363,7 +361,6 @@ val set :
   ?tco_global_access_check_enabled:bool ->
   ?tco_ignore_unsafe_cast:bool ->
   ?tco_enable_expression_trees:bool ->
-  ?tco_enable_function_references:bool ->
   ?tco_allowed_expression_tree_visitors:string list ->
   ?tco_typeconst_concrete_concrete_error:bool ->
   ?tco_meth_caller_only_public_visibility:bool ->

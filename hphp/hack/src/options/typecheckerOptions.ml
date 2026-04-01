@@ -176,12 +176,6 @@ let set_tco_enable_expression_trees t b =
 
 let expression_trees_enabled t = t.GlobalOptions.tco_enable_expression_trees
 
-let enable_function_references t =
-  t.GlobalOptions.tco_enable_function_references
-
-let set_function_references t b =
-  GlobalOptions.{ t with tco_enable_function_references = b }
-
 let allowed_expression_tree_visitors t =
   t.GlobalOptions.tco_allowed_expression_tree_visitors
 

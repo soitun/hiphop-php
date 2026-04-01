@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<8e135e0ad069fe68ee40d111e4f8469d>>
+// @generated SignedSource<<dbae16b8f99ea33bddca4dc1ea1c3d39>>
 //
 // To regenerate this file, run:
 //   buck run @fbcode//mode/dev-nosan-lg fbcode//hphp/hack/src:oxidized_regen
@@ -283,8 +283,6 @@ pub struct GlobalOptions {
     pub tco_ignore_unsafe_cast: bool,
     /// Enable expression trees via unstable features flag
     pub tco_enable_expression_trees: bool,
-    /// Enable unstable feature: function references
-    pub tco_enable_function_references: bool,
     /// Allowed expression tree visitors when not enabled via unstable features flag
     pub tco_allowed_expression_tree_visitors: Vec<String>,
     /// Raise an error when a concrete type constant is overridden by a concrete type constant

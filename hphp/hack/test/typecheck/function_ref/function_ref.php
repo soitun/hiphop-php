@@ -1,5 +1,4 @@
 <?hh
-<<file: __EnableUnstableFeatures('function_references')>>
 
 class C {
   public static function static_meth(arraykey $x): arraykey {
@@ -53,9 +52,9 @@ function applyFunRef(
 function expectAK(arraykey $_): void {}
 
 class MockFunction<Tfun> {
-  public function __construct(public HH\FunctionRef<Tfun> $fun) { }
-  public function mock(<<__IgnoreReadonlyError>> Tfun $mock):void { }
-  public function mockStrict(Tfun $mock):void { }
+  public function __construct(public HH\FunctionRef<Tfun> $fun) {}
+  public function mock(<<__IgnoreReadonlyError>> Tfun $mock): void {}
+  public function mockStrict(Tfun $mock): void {}
 }
 
 <<__EntryPoint>>

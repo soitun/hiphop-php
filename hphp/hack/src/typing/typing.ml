@@ -486,8 +486,6 @@ let set_tcopt_unstable_features env { fa_user_attributes; _ } =
     let ( = ) = String.equal in
     List.fold ua_params ~init:env ~f:(fun env (_, _, feature) ->
         match feature with
-        | Aast.String s when s = SN.UnstableFeatures.function_references ->
-          Env.map_tcopt ~f:(fun t -> TCO.set_function_references t true) env
         | Aast.String s when s = SN.UnstableFeatures.expression_trees ->
           Env.map_tcopt
             ~f:(fun t -> TCO.set_tco_enable_expression_trees t true)
@@ -2025,11 +2023,8 @@ let rec make_a_local_of ~include_this env e =
     make_a_local_of ~include_this env e
   | _ -> (env, None)
 
-let make_function_ref ~contains_generics env p ty =
-  if
-    (not contains_generics)
-    && TCO.enable_function_references (Env.get_tcopt env)
-  then
+let make_function_ref ~contains_generics p ty =
+  if not contains_generics then
     MakeType.function_ref (Reason.witness p) ty
   else
     ty
@@ -3703,7 +3698,6 @@ end = struct
           let ty =
             make_function_ref
               ~contains_generics:(not (List.is_empty fty.ft_tparams))
-              env
               p
               ty
           in
@@ -8962,9 +8956,7 @@ end = struct
     in
     let (env, method_ty) = set_function_pointer env method_ty in
     let (env, method_ty) = set_capture_only_readonly env method_ty in
-    let method_ty =
-      make_function_ref ~contains_generics:false env pos method_ty
-    in
+    let method_ty = make_function_ref ~contains_generics:false pos method_ty in
     let expr =
       FunctionPointer (FP_class_const (tclass_id, method_name), ty_args, source)
     in
@@ -8982,7 +8974,7 @@ end = struct
     let (env, ty) = set_capture_only_readonly env ty in
     let ty =
       let contains_generics = not (List.is_empty ty_args) in
-      make_function_ref ~contains_generics env pos ty
+      make_function_ref ~contains_generics pos ty
     and expr = FunctionPointer (FP_id fun_id, ty_args, source) in
     make_result env pos expr ty
 
@@ -9015,11 +9007,7 @@ end = struct
       (* All function pointers are readonly since they don't capture any values *)
       let (env, fpty) = set_capture_only_readonly env fpty in
       let fpty =
-        make_function_ref
-          ~contains_generics:(not (List.is_empty tal))
-          env
-          pos
-          fpty
+        make_function_ref ~contains_generics:(not (List.is_empty tal)) pos fpty
       in
       make_result
         env
@@ -9034,7 +9022,6 @@ end = struct
       let ty =
         make_function_ref
           ~contains_generics:(not (List.is_empty ty_args))
-          env
           pos
           ty
       in
@@ -9297,7 +9284,7 @@ end = struct
           let expr = Method_caller (class_name, method_name) in
           let ty =
             if build_function_ref_type then
-              make_function_ref ~contains_generics:false env pos ty
+              make_function_ref ~contains_generics:false pos ty
             else
               ty
           in

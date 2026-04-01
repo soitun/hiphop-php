@@ -147,7 +147,6 @@ type t = {
   tco_global_access_check_enabled: bool;
   tco_ignore_unsafe_cast: bool;
   tco_enable_expression_trees: bool;
-  tco_enable_function_references: bool;
   tco_allowed_expression_tree_visitors: string list;
   tco_typeconst_concrete_concrete_error: bool;
   tco_meth_caller_only_public_visibility: bool;
@@ -265,7 +264,6 @@ let default =
     tco_global_access_check_enabled = false;
     tco_ignore_unsafe_cast = false;
     tco_enable_expression_trees = false;
-    tco_enable_function_references = true;
     tco_allowed_expression_tree_visitors = [];
     tco_typeconst_concrete_concrete_error = false;
     tco_meth_caller_only_public_visibility = true;
@@ -382,7 +380,6 @@ let set
     ?tco_global_access_check_enabled
     ?tco_ignore_unsafe_cast
     ?tco_enable_expression_trees
-    ?tco_enable_function_references
     ?tco_allowed_expression_tree_visitors
     ?tco_typeconst_concrete_concrete_error
     ?tco_meth_caller_only_public_visibility
@@ -587,10 +584,6 @@ let set
       setting tco_ignore_unsafe_cast options.tco_ignore_unsafe_cast;
     tco_enable_expression_trees =
       setting tco_enable_expression_trees options.tco_enable_expression_trees;
-    tco_enable_function_references =
-      setting
-        tco_enable_function_references
-        options.tco_enable_function_references;
     tco_allowed_expression_tree_visitors =
       setting
         tco_allowed_expression_tree_visitors

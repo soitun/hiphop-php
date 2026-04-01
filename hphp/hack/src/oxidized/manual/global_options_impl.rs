@@ -96,7 +96,6 @@ impl Default for GlobalOptions {
             tco_skip_check_under_dynamic: false,
             tco_global_access_check_enabled: false,
             tco_ignore_unsafe_cast: false,
-            tco_enable_function_references: true,
             tco_enable_expression_trees: false,
             tco_allowed_expression_tree_visitors: vec![],
             tco_typeconst_concrete_concrete_error: false,

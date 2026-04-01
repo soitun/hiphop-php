@@ -447,10 +447,6 @@ impl HhConfig {
             )?,
             tco_ignore_unsafe_cast: default.tco_ignore_unsafe_cast,
             tco_enable_expression_trees: default.tco_enable_expression_trees,
-            tco_enable_function_references: hhconfig.get_bool_or(
-                "enable_function_references",
-                default.tco_enable_function_references,
-            )?,
             tco_allowed_expression_tree_visitors: hhconfig
                 .get_str("allowed_expression_tree_visitors")
                 .map_or(default.tco_allowed_expression_tree_visitors, |s| {

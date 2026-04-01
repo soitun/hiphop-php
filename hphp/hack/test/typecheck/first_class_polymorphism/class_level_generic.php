@@ -1,5 +1,4 @@
 <?hh
-<<file: __EnableUnstableFeatures('function_references')>>
 
 function mockFunction<Tfun>(HH\FunctionRef<Tfun> $_): void {}
 
