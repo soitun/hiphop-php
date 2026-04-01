@@ -2169,13 +2169,22 @@ let flag_contains_tyvar = 0x20
 
 let flag_went_through_unsafe_cast = 0x40
 
+let flag_is_missing_type_in_hierarchy = 0x80
+
+let has_mth_in_into into =
+  match into with
+  | From_witness_decl (Missing_type_in_hierarchy _) -> true
+  | Flow { from = From_witness_decl (Missing_type_in_hierarchy _); _ } -> true
+  | _ -> false
+
 let rec extract_origin = function
   | Wrapped { origin; _ } -> origin
   | Def (pos, t) -> Def (pos, extract_origin t)
   | r -> r
 
-let extract_flags = function
+let rec extract_flags = function
   | Wrapped { flags; _ } -> flags
+  | Type_access (Typeconst (r, _, _, _), _) -> extract_flags r
   | _ -> 0
 
 let unwrap = function
@@ -2191,16 +2200,62 @@ let rec compute_origin_flags origin =
   | Def (_, t) -> compute_origin_flags t
   | No_reason -> flag_origin_is_none
   | From_witness_decl (Hint _) -> flag_origin_is_hint
+  | From_witness_decl (Missing_type_in_hierarchy _) ->
+    flag_is_missing_type_in_hierarchy
   | Instantiate _ -> flag_origin_is_instantiate
   | Opaque_type_from_module _ -> flag_origin_is_opaque_type_from_module
   | From_witness_locl (Captured_like _) -> flag_origin_is_captured_like
   | _ -> 0
 
+(* Bounded traversal of the raw reason chain to detect whether it contains
+   a [Missing_type_in_hierarchy] witness. Returns [flag_is_missing_type_in_hierarchy]
+   if found, 0 otherwise. When encountering a [Wrapped] node inside the chain,
+   we check its flag directly (O(1)) rather than re-traversing. *)
+let compute_mth_flag reason =
+  let rec aux depth r =
+    if depth > 10 then
+      0
+    else
+      match r with
+      | Wrapped { flags; _ } -> flags land flag_is_missing_type_in_hierarchy
+      | Flow { kind = Flow_elab; into; _ } when has_mth_in_into into ->
+        flag_is_missing_type_in_hierarchy
+      | Type_access (Typeconst (Flow { kind = Flow_elab; into; _ }, _, _, _), _)
+        when has_mth_in_into into ->
+        flag_is_missing_type_in_hierarchy
+      | Type_access
+          ( Typeconst
+              ( Wrapped { reason = Flow { kind = Flow_elab; into; _ }; _ },
+                _,
+                _,
+                _ ),
+            _ )
+        when has_mth_in_into into ->
+        flag_is_missing_type_in_hierarchy
+      | From_witness_decl (Missing_type_in_hierarchy _) ->
+        flag_is_missing_type_in_hierarchy
+      | Type_access (Typeconst (r, _, _, _), _) -> aux (depth + 1) r
+      | Instantiate { type_ = t; _ }
+      | Flow { from = t; _ }
+      | Lower_bound { bound = t; _ }
+      | Axiom { next = t; _ }
+      | Prj_both { sub_prj = t; _ }
+      | Prj_one { part = t; _ }
+      | Def (_, t) ->
+        aux (depth + 1) t
+      | Solved { solution; in_; _ } ->
+        aux (depth + 1) solution lor aux (depth + 1) in_
+      | _ -> 0
+  in
+  aux 0 reason
+
 let make_wrapped ~origin ~reason ~from_flags ~into_flags =
   let inherited_flags =
     from_flags
     lor into_flags
-    land (flag_contains_tyvar lor flag_went_through_unsafe_cast)
+    land (flag_contains_tyvar
+         lor flag_went_through_unsafe_cast
+         lor flag_is_missing_type_in_hierarchy)
   in
   let tyvar_flag =
     (* Note: OCaml, weirdly, lets you use `lor` and `land` as though they were
@@ -2226,7 +2281,18 @@ let make_wrapped ~origin ~reason ~from_flags ~into_flags =
     else
       0
   in
-  let flags = compute_origin_flags origin lor tyvar_flag lor inherited_flags in
+
+  let origin_flags = compute_origin_flags origin in
+  let mth_flag =
+    if
+      inherited_flags lor origin_flags land flag_is_missing_type_in_hierarchy
+      <> 0
+    then
+      0
+    else
+      compute_mth_flag reason
+  in
+  let flags = origin_flags lor tyvar_flag lor inherited_flags lor mth_flag in
   Wrapped { flags; origin; reason }
 
 let rec flow_contains_tyvar = function
@@ -2813,7 +2879,13 @@ module Constructors = struct
       | Flow_unsafe_cast -> f lor flag_went_through_unsafe_cast
       | _ -> f
     in
-    let into_flags = extract_flags into in
+    let into_flags =
+      let f = extract_flags into in
+      match kind with
+      | Flow_elab when has_mth_in_into (unwrap into) ->
+        f lor flag_is_missing_type_in_hierarchy
+      | _ -> f
+    in
     let from_raw = unwrap from in
     let into_raw = unwrap into in
     let reason = flow_raw ~from:from_raw ~into:into_raw ~kind in
@@ -2859,7 +2931,11 @@ module Constructors = struct
         if is_solved_tyvar then
           let origin = extract_origin solution in
           let flags =
-            compute_origin_flags origin lor (flags land flag_contains_tyvar)
+            compute_origin_flags origin
+            lor (flags
+                land (flag_contains_tyvar
+                     lor flag_went_through_unsafe_cast
+                     lor flag_is_missing_type_in_hierarchy))
           in
           Wrapped { flags; origin; reason }
         else
@@ -3294,60 +3370,45 @@ module Predicates = struct
     in
     on_outermost r f
 
-  (* This predicate needs to go under [Instantiate] so we can't use
-     [on_outermost].
-
-     Due to [flow] restructuring, [Flow_elab] is always the outermost [Flow]
-     (since it is applied first at localization). [Missing_type_in_hierarchy]
-     appears as either [into] directly (before any subsequent flows) or as
-     the first [from] in the [into] chain (after subsequent flows have been
-     appended by [flow] restructuring).
-
-     The [Flow_elab] may be wrapped in a small number of [Instantiate],
-     [Solved], etc. nodes, so we search with a depth limit to avoid
-     traversing arbitrarily large reason trees. *)
   let is_missing_type_in_hierarchy t =
-    let has_mth_in_into into =
-      match into with
-      | From_witness_decl (Missing_type_in_hierarchy _) -> true
-      | Flow { from = From_witness_decl (Missing_type_in_hierarchy _); _ } ->
-        true
-      | _ -> false
-    in
-    let rec aux depth t =
-      if depth > 10 then
-        false
-      else
-        match t with
-        | Wrapped { reason; _ } -> aux depth reason
-        | Type_access
-            (Typeconst (Flow { kind = Flow_elab; into; _ }, _, _, _), _)
-          when has_mth_in_into into ->
-          true
-        | Type_access
-            ( Typeconst
-                ( Wrapped { reason = Flow { kind = Flow_elab; into; _ }; _ },
-                  _,
-                  _,
-                  _ ),
-              _ )
-          when has_mth_in_into into ->
-          true
-        | Flow { kind = Flow_elab; into; _ } when has_mth_in_into into -> true
-        | From_witness_decl (Missing_type_in_hierarchy _) -> true
-        | Instantiate { type_ = t; _ } -> aux (depth + 1) t
-        | Flow { from = t; _ }
-        | Lower_bound { bound = t; _ }
-        | Axiom { next = t; _ }
-        | Prj_both { sub_prj = t; _ }
-        | Prj_one { part = t; _ }
-        | Def (_, t) ->
-          aux (depth + 1) t
-        | Solved { in_; solution; _ } ->
-          aux (depth + 1) solution || aux (depth + 1) in_
-        | _ -> false
-    in
-    aux 0 t
+    match t with
+    | Wrapped { flags; _ } -> flags land flag_is_missing_type_in_hierarchy <> 0
+    | _ ->
+      let rec aux depth t =
+        if depth > 10 then
+          false
+        else
+          match t with
+          | Wrapped { flags; _ } ->
+            flags land flag_is_missing_type_in_hierarchy <> 0
+          | Type_access
+              (Typeconst (Flow { kind = Flow_elab; into; _ }, _, _, _), _)
+            when has_mth_in_into into ->
+            true
+          | Type_access
+              ( Typeconst
+                  ( Wrapped { reason = Flow { kind = Flow_elab; into; _ }; _ },
+                    _,
+                    _,
+                    _ ),
+                _ )
+            when has_mth_in_into into ->
+            true
+          | Flow { kind = Flow_elab; into; _ } when has_mth_in_into into -> true
+          | From_witness_decl (Missing_type_in_hierarchy _) -> true
+          | Instantiate { type_ = t; _ } -> aux (depth + 1) t
+          | Flow { from = t; _ }
+          | Lower_bound { bound = t; _ }
+          | Axiom { next = t; _ }
+          | Prj_both { sub_prj = t; _ }
+          | Prj_one { part = t; _ }
+          | Def (_, t) ->
+            aux (depth + 1) t
+          | Solved { in_; solution; _ } ->
+            aux (depth + 1) solution || aux (depth + 1) in_
+          | _ -> false
+      in
+      aux 0 t
 end
 
 (* ~~ Aliases ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ *)
