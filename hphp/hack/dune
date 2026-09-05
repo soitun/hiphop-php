@@ -1,5 +1,12 @@
 (data_only_dirs bin doc facebook man tools)
 
+;; Exclude the redirected build directory so --watch does not treat Dune's own
+;; outputs as source changes.
+
+(subdir
+ facebook
+ (dirs :standard \ redirect))
+
 (alias
  (name all-hack)
  (deps
