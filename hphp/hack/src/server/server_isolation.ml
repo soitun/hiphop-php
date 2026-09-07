@@ -8,27 +8,26 @@
 
 open Hh_prelude
 
-(* For a file [f], let [defs(f)] be the symbols it defines and [rdeps(s)] the
-   files referencing a symbol [s]. [f] is a seed when
+(** For a file [f], let [defs(f)] be the dep hashes of the symbols it defines.
+    [f] is a seed when nothing outside [f] depends on any of them:
 
-     (U_{s in defs(f)} rdeps(s)) \ {f}  =  {}
+      add_typing_deps(defs(f)) \ defs(f)  =  {}
 
-   that is, when every reference to everything [f] defines comes from [f]
-   itself.
+    [add_typing_deps] grows a set by its direct dependents, and comparing hashes
+    this way needs no naming-table lookup to resolve a dependent back to a file.
 
-   [List.exists] stops at the first [s] whose [rdeps(s)] escapes [f], which for
-   most files is the first one, so the usual cost is a single reverse-dep
-   lookup rather than one per symbol. *)
-let has_external_dependents ctx deps_mode path file_info =
-  Typing_deps.deps_of_file_info file_info
-  |> List.exists ~f:(fun dep ->
-         let dependents =
-           Typing_deps.get_ideps_from_hash deps_mode dep
-           |> Naming_provider.get_files ctx
-         in
-         not
-           (Relative_path.Set.is_empty
-              (Relative_path.Set.remove dependents path)))
+    [defs(f)] holds only top-level hashes, so that difference is every dependent
+    hash that is not a top-level definition of [f] — a superset of the dependents
+    living outside [f], since one recorded at member granularity inside [f] is
+    not in [defs(f)] either. The test is conservative in the safe direction: it
+    can withhold seed status from a file that deserves it, never grant it to one
+    that does not. *)
+let has_external_dependents deps_mode file_info =
+  let own =
+    Typing_deps.deps_of_file_info file_info |> Typing_deps.DepSet.of_list
+  in
+  let dependents = Typing_deps.add_typing_deps deps_mode own in
+  not (Typing_deps.DepSet.is_empty (Typing_deps.DepSet.diff dependents own))
 
 let go (_genv : ServerEnv.genv) (env : ServerEnv.env) : Relative_path.t list =
   let ctx = Provider_utils.ctx_from_server_env env in
@@ -44,7 +43,7 @@ let go (_genv : ServerEnv.genv) (env : ServerEnv.env) : Relative_path.t list =
     ~f:(fun path file_info seeds ->
       if
         Relative_path.is_root (Relative_path.prefix path)
-        && not (has_external_dependents ctx deps_mode path file_info)
+        && not (has_external_dependents deps_mode file_info)
       then
         path :: seeds
       else
