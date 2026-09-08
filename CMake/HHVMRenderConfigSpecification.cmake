@@ -26,7 +26,7 @@ function (HHVM_RENDER_CONFIG_SPECIFICATION TARGET)
       APPEND HHVM_RENDER_CONFIG_SPEC_CONFIG_HEADERS
       ${HHVM_RENDER_CONFIG_SPEC_OUTPUT_PATH}/repo-global-data-generated.h
       ${HHVM_RENDER_CONFIG_SPEC_OUTPUT_PATH}/unit-cache-generated.h
-      ${HHVM_RENDER_CONFIG_SPEC_OUTPUT_PATH}/repo-option-flags-generated.h
+      ${HHVM_RENDER_CONFIG_SPEC_OUTPUT_PATH}/repo-options-flags-generated.h
     )
 
     list(APPEND HHVM_RENDER_CONFIG_SPEC_CONFIG_SOURCES ${HHVM_RENDER_CONFIG_SPEC_OUTPUT_PATH}/configs-generated.cpp)

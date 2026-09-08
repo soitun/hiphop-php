@@ -1555,7 +1555,7 @@ namespace HPHP::Cfg {{
     unit_cache_file.push("unit-cache-generated.h");
     fs::write(unit_cache_file, unit_cache_content).unwrap();
 
-    // repo-option-flags-generated.h
+    // repo-options-flags-generated.h
     let repo_options_flags_content = format!(
         r#"#pragma once
 
