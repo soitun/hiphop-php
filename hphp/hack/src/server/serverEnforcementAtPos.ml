@@ -129,7 +129,7 @@ let resolve_shallow_constructor_type env ctx class_name :
     Typing_defs.decl_ty Typing_defs.fun_type option =
   let cls = Tast_env.get_class env class_name |> Decl_entry.to_option in
   Option.bind cls ~f:(fun c ->
-      let (ce_opt, _) = Folded_class.construct c in
+      let (ce_opt, _) = Tast_env.get_construct env c in
       Option.bind ce_opt ~f:(fun ce ->
           let origin = ce.Typing_defs.ce_origin in
           let shallow = Decl_provider_internals.get_shallow_class ctx origin in
