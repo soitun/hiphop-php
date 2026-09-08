@@ -15,6 +15,7 @@ type subtype_prop =
   | IsSubtype of bool * internal_type * internal_type
   | Conj of subtype_prop list
   | Disj of Typing_error.t option * subtype_prop list
+  | AmbiguousShapeSplat of Tvid.t list
 [@@deriving show]
 
 let rec print print_ty = function
@@ -24,6 +25,10 @@ let rec print print_ty = function
   | Conj l -> String.concat ~sep:" & " @@ List.map l ~f:(print print_ty)
   | Disj (_, []) -> "false"
   | Disj (_, l) -> String.concat ~sep:" | " @@ List.map l ~f:(print print_ty)
+  | AmbiguousShapeSplat vars ->
+    Printf.sprintf
+      "ambiguous_shape_splat(%s)"
+      (String.concat ~sep:", " @@ List.map vars ~f:Tvid.show)
 
 let rec equal_subtype_prop p1 p2 =
   match (p1, p2) with
@@ -35,11 +40,15 @@ let rec equal_subtype_prop p1 p2 =
   | (Disj (_, ps1), Disj (_, ps2)) ->
     Int.equal (List.length ps1) (List.length ps2)
     && List.for_all2_exn ps1 ps2 ~f:equal_subtype_prop
-  | (_, (IsSubtype _ | Conj _ | Disj _)) -> false
+  | (AmbiguousShapeSplat vars1, AmbiguousShapeSplat vars2) ->
+    List.equal Tvid.equal vars1 vars2
+  | (_, (IsSubtype _ | Conj _ | Disj _ | AmbiguousShapeSplat _)) -> false
 
 let rec size (p : subtype_prop) : int =
   match p with
-  | IsSubtype _ -> 1
+  | IsSubtype _
+  | AmbiguousShapeSplat _ ->
+    1
   | Conj l
   | Disj (_, l) ->
     let sizes = List.map l ~f:size in
@@ -48,7 +57,9 @@ let rec size (p : subtype_prop) : int =
 (** Sum of the sizes of the disjunctions. *)
 let rec n_disj (p : subtype_prop) : int =
   match p with
-  | IsSubtype _ -> 0
+  | IsSubtype _
+  | AmbiguousShapeSplat _ ->
+    0
   | Conj l ->
     let n_disjs = List.map l ~f:n_disj in
     List.fold ~init:0 ~f:( + ) n_disjs
@@ -59,7 +70,9 @@ let rec n_disj (p : subtype_prop) : int =
 (** Sum of the sizes of the conjunctions. *)
 let rec n_conj (p : subtype_prop) : int =
   match p with
-  | IsSubtype _ -> 0
+  | IsSubtype _
+  | AmbiguousShapeSplat _ ->
+    0
   | Disj (_, l) ->
     let n_conjs = List.map l ~f:n_conj in
     List.fold ~init:0 ~f:( + ) n_conjs
@@ -78,7 +91,9 @@ let rec is_valid p =
   match p with
   | Conj ps -> List.for_all ps ~f:is_valid
   | Disj (_, ps) -> List.exists ps ~f:is_valid
-  | IsSubtype _ -> false
+  | IsSubtype _
+  | AmbiguousShapeSplat _ ->
+    false
 
 (* Is this proposition always false? e.g. Unsat _ but also Conj [Conj []; Disj (_, [])]
    * if not simplified
@@ -87,7 +102,9 @@ and is_unsat p =
   match p with
   | Conj ps -> List.exists ps ~f:is_unsat
   | Disj (_, ps) -> List.for_all ps ~f:is_unsat
-  | IsSubtype _ -> false
+  | IsSubtype _
+  | AmbiguousShapeSplat _ ->
+    false
 
 let rec get_error_if_unsat p =
   match p with
@@ -97,7 +114,9 @@ let rec get_error_if_unsat p =
     else
       None
   | Conj ps -> List.find_map ps ~f:get_error_if_unsat
-  | IsSubtype _ -> None
+  | IsSubtype _
+  | AmbiguousShapeSplat _ ->
+    None
 
 (* Smart constructor for binary conjunction *)
 let conj p1 p2 =
@@ -188,3 +207,4 @@ let rec force_lazy_values (prop : subtype_prop) =
     Disj
       ( (* TODO force lazy values in error *) None,
         List.map props ~f:force_lazy_values )
+  | AmbiguousShapeSplat _ -> prop

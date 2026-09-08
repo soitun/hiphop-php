@@ -1,0 +1,6 @@
+ERROR: File "infer_sub_right_multi_tvar_incompatible_shared_lambda_bounds.php", line 15, characters 8-119:
+Invalid argument (Typing[4110])
+  File "infer_sub_right_multi_tvar_incompatible_shared_lambda_bounds.php", line 4, characters 28-30:
+  Expected `num`
+  File "infer_sub_right_multi_tvar_incompatible_shared_lambda_bounds.php", line 17, characters 25-38:
+  But got `string`

@@ -1,0 +1,6 @@
+ERROR: File "infer_sub_right_multi_tvar_invalid_lambda_masking.php", line 14, characters 8-99:
+Invalid argument (Typing[4110])
+  File "infer_sub_right_multi_tvar_invalid_lambda_masking.php", line 4, characters 28-30:
+  Expected `int`
+  File "infer_sub_right_multi_tvar_invalid_lambda_masking.php", line 16, characters 25-36:
+  But got `string`

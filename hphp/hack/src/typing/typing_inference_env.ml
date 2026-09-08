@@ -1184,6 +1184,7 @@ let replace_var_by_ty_in_prop prop v ty =
     | TL.Conj props ->
       let props = List.map props ~f:replace in
       TL.Conj props
+    | TL.AmbiguousShapeSplat _ -> prop
   in
   replace prop
 

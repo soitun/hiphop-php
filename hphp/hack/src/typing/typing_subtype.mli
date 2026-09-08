@@ -53,6 +53,10 @@ val sub_type :
   Typing_error.Reasons_callback.t option ->
   env * Typing_error.t option
 
+(** Like [sub_type], but reports an ambiguous multi-spread shape relation
+    without retaining speculative subtype constraints. *)
+val sub_type_against_expected_type : Typing_utils.sub_type_against_expected_type
+
 (**
  * As above, but with a simpler error handler that doesn't make use of the
  * code and message list provided by subtyping.

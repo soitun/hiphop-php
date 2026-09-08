@@ -54,6 +54,10 @@ type newable_class_info =
   * Tast.class_id
   * [ `Class of pos_id * Cls.t * locl_ty | `Dynamic ] list
 
+type expected_type_check =
+  | Expected_checked of (env, env) result
+  | Expected_ambiguous_shape_splat of Tvid.Set.t
+
 module Log = struct
   let should_log_check_expected_ty env =
     Typing_log.should_log env ~category:"typing" ~level:1
@@ -68,8 +72,9 @@ module Log = struct
           ("expected_ty", Typing_print.debug env ty);
         ]
       ~result:(function
-        | Ok _ -> Some "ok"
-        | Error _ -> Some "error")
+        | Expected_checked (Ok _) -> Some "ok"
+        | Expected_checked (Error _) -> Some "error"
+        | Expected_ambiguous_shape_splat _ -> Some "ambiguous_shape_splat")
 end
 
 (*****************************************************************************)
@@ -475,27 +480,33 @@ let is_return_disposable_fun_type env ty =
     get_ft_return_disposable ft
     || Option.is_some (Typing_disposable.is_disposable_type env ft.ft_ret)
 
-let check_expected_ty_res
-    ~(coerce_for_op : bool)
+let finish_expected_ty_check
+    (checked_env : env) (ty_err_opt : Typing_error.t option) :
+    expected_type_check =
+  Option.iter
+    ty_err_opt
+    ~f:(Typing_error_utils.add_typing_error ~env:checked_env);
+  Expected_checked
+    (Option.value_map ty_err_opt ~default:(Ok checked_env) ~f:(fun _ ->
+         Error checked_env))
+
+let check_expected_ty_res_with
+    (message : string)
     (env : env)
     (inferred_ty : locl_ty)
-    (ExpectedTy.{ pos = p; reason = ur; ty; is_dynamic_aware; ignore_readonly } :
-      ExpectedTy.t) : (env, env) result =
-  let (env, ty_err_opt) =
-    Typing_coercion.coerce_type
-      ~coerce_for_op
-      ~is_dynamic_aware
-      ~ignore_readonly
-      p
-      ur
-      env
-      inferred_ty
-      ty
-      Enforced (* TODO AKENN: flow this in *)
-      Typing_error.Callback.unify_error
+    (ExpectedTy.{ pos = p; ty; _ } : ExpectedTy.t)
+    check : expected_type_check =
+  let check () =
+    match check () with
+    | Typing_utils.Ambiguous_shape_splat vars ->
+      Expected_ambiguous_shape_splat vars
+    | Typing_utils.Subtyping_result (checked_env, ty_err_opt) ->
+      finish_expected_ty_check checked_env ty_err_opt
   in
-  Option.iter ty_err_opt ~f:(Typing_error_utils.add_typing_error ~env);
-  Option.value_map ~default:(Ok env) ~f:(fun _ -> Error env) ty_err_opt
+  if Log.should_log_check_expected_ty env then
+    Log.log_check_expected_ty env p ~message ~inferred_ty ~ty check
+  else
+    check ()
 
 let check_expected_ty_res
     ~(coerce_for_op : bool)
@@ -503,15 +514,30 @@ let check_expected_ty_res
     (env : env)
     (inferred_ty : locl_ty)
     (expected_ty : ExpectedTy.t) : (env, env) result =
-  if Log.should_log_check_expected_ty env then
-    let ExpectedTy.
-          { pos; ty; reason = _; is_dynamic_aware = _; ignore_readonly = _ } =
-      expected_ty
+  let ExpectedTy.{ pos = p; reason = ur; ty; is_dynamic_aware; ignore_readonly }
+      =
+    expected_ty
+  in
+  match
+    check_expected_ty_res_with message env inferred_ty expected_ty @@ fun () ->
+    let (checked_env, ty_err_opt) =
+      Typing_coercion.coerce_type
+        ~coerce_for_op
+        ~is_dynamic_aware
+        ~ignore_readonly
+        p
+        ur
+        env
+        inferred_ty
+        ty
+        Enforced (* TODO AKENN: flow this in *)
+        Typing_error.Callback.unify_error
     in
-    Log.log_check_expected_ty env pos ~message ~inferred_ty ~ty @@ fun () ->
-    check_expected_ty_res ~coerce_for_op env inferred_ty expected_ty
-  else
-    check_expected_ty_res ~coerce_for_op env inferred_ty expected_ty
+    Typing_utils.Subtyping_result (checked_env, ty_err_opt)
+  with
+  | Expected_checked result -> result
+  | Expected_ambiguous_shape_splat _ ->
+    failwith "Unexpected ambiguous shape splat"
 
 (** Do a subtype check of inferred type against expected type.
     The optional coerce_for_op parameter controls whether any arguments of type
@@ -537,6 +563,26 @@ let check_expected_ty message env inferred_ty expected =
        env
        inferred_ty
        expected
+
+let check_call_result_against_expected_type message env inferred_ty expected =
+  match expected with
+  | None -> Expected_checked (Ok env)
+  | Some
+      (ExpectedTy.
+         { pos = p; reason = ur; ty; is_dynamic_aware; ignore_readonly } as
+      expected_ty) ->
+    check_expected_ty_res_with message env inferred_ty expected_ty @@ fun () ->
+    Typing_coercion.coerce_type_against_expected_type
+      ~coerce_for_op:false
+      ~is_dynamic_aware
+      ~ignore_readonly
+      p
+      ur
+      env
+      inferred_ty
+      ty
+      Enforced
+      Typing_error.Callback.unify_error
 
 (* Set a local; must not be already assigned if it is a using variable *)
 let set_local ?(is_using_clause = false) env (pos, x) ty =
@@ -7394,6 +7440,15 @@ end = struct
            *)
           let pos_def = Reason.to_pos r2 in
           let (env, ft) = Typing_exts.retype_magic_func env ft el in
+          let (env, positive_return_vars, negative_return_vars) =
+            Env.get_tyvars env ft.ft_ret
+          in
+          let covariant_return_vars =
+            Tvid.Set.diff positive_return_vars negative_return_vars
+          in
+          let current_call_vars =
+            Tvid.Set.of_list (Env.get_current_tyvars env)
+          in
           (* Split off the named-variadic (if any) so it doesn't get treated
              as either a positional variadic or a required named parameter.
              Unmatched named arguments will fall through to it below. *)
@@ -7428,9 +7483,103 @@ end = struct
                 | Some name -> SMap.add name (idx, fp) named_params
                 | None -> named_params)
           in
-          (* Force subtype with expected result *)
-          let env = check_expected_ty "Call result" env ft.ft_ret expected in
+          let relevant_ambiguous_shape_splat_vars vars =
+            Tvid.Set.inter
+              vars
+              (Tvid.Set.inter covariant_return_vars current_call_vars)
+          in
+          (* Our use of bidirectional typing can interact badly with functions
+             returning shape splats involving multiple type variables causing
+             incompleteness. To avoid this we detect ambiguous cases and
+             defer propagating expected type information inwards *)
+          let (env, initial_deferred_spread_vars) =
+            let check_result =
+              check_call_result_against_expected_type
+                "Call result"
+                env
+                ft.ft_ret
+                expected
+            in
+            match check_result with
+            | Expected_checked result ->
+              (Result.fold result ~ok:Fn.id ~error:Fn.id, None)
+            | Expected_ambiguous_shape_splat vars ->
+              let vars = relevant_ambiguous_shape_splat_vars vars in
+              if Tvid.Set.is_empty vars then
+                (check_expected_ty "Call result" env ft.ft_ret expected, None)
+              else
+                (env, Some vars)
+          in
           let env = Env.set_tyvar_variance env ft.ft_ret in
+          let deferred_spread_vars = ref initial_deferred_spread_vars in
+          let solve_deferred_spread_vars ~final env spread_vars =
+            let (env, ty_err_opts) =
+              Tvid.Set.fold
+                (fun var (env, errs) ->
+                  let lower_bounds = Env.get_tyvar_lower_bounds env var in
+                  if Internal_type_set.is_empty lower_bounds then
+                    (env, errs)
+                  else
+                    let var_pos = Env.get_tyvar_pos env var in
+                    let var_reason = Reason.witness var_pos in
+                    let (env, err) =
+                      if final then
+                        let ((env, err), _) =
+                          Typing_solver.expand_type_and_solve
+                            ~freshen:false
+                            ~description_of_expected:
+                              "a shape spread inferred from call arguments"
+                            env
+                            var_pos
+                            (mk (var_reason, Tvar var))
+                        in
+                        (env, err)
+                      else
+                        Typing_solver.solve_to_equal_bound_or_wrt_variance
+                          env
+                          var_reason
+                          var
+                    in
+                    (env, err :: errs))
+                spread_vars
+                (env, [])
+            in
+            Option.iter
+              ~f:(Typing_error_utils.add_typing_error ~env)
+              (Typing_error.multiple_opt (List.filter_opt ty_err_opts));
+            env
+          in
+          let check_deferred_expected ~final env =
+            match !deferred_spread_vars with
+            | None -> env
+            | Some spread_vars ->
+              let env = solve_deferred_spread_vars ~final env spread_vars in
+              if final then begin
+                deferred_spread_vars := None;
+                check_expected_ty "Call result" env ft.ft_ret expected
+              end else
+                (* A pass-2 lambda may make the next probe unambiguous. *)
+                let check_result =
+                  check_call_result_against_expected_type
+                    "Call result"
+                    env
+                    ft.ft_ret
+                    expected
+                in
+                (match check_result with
+                | Expected_checked result ->
+                  deferred_spread_vars := None;
+                  Result.fold result ~ok:Fn.id ~error:Fn.id
+                | Expected_ambiguous_shape_splat vars ->
+                  let vars = relevant_ambiguous_shape_splat_vars vars in
+                  if Tvid.Set.is_empty vars then begin
+                    deferred_spread_vars := None;
+                    check_expected_ty "Call result" env ft.ft_ret expected
+                  end else begin
+                    deferred_spread_vars := Some vars;
+                    env
+                  end)
+          in
           let set_tyvar_variance_from_lambda_param env opt_param =
             match opt_param with
             | Some param ->
@@ -7711,6 +7860,14 @@ end = struct
                  *)
                 let (env, check_on_this_pass) =
                   check_pass_and_set_tyvar_variance pass env arg opt_param
+                in
+                let env =
+                  (* Earlier arguments can make the expected-type relation
+                     unambiguous before an inferred lambda needs its context. *)
+                  if pass >= 2 && check_on_this_pass then
+                    check_deferred_expected ~final:false env
+                  else
+                    env
                 in
                 if check_on_this_pass then
                   check_arg env arg opt_param ~arg_idx ~param_idx ~is_variadic
@@ -8087,6 +8244,7 @@ end = struct
                   Option.is_some d_variadic,
                   used_dynamic_info ))
           in
+          let env = check_deferred_expected ~final:true env in
           let used_dynamic_info =
             combine_dynamic_info used_dynamic_info1 used_dynamic_info2
           in
@@ -8317,6 +8475,7 @@ end = struct
       | Typing_logic.IsSubtype _ ->
         (* Assume nothing if coercion is required or if requirement comes from a constraint type *)
         env
+      | Typing_logic.AmbiguousShapeSplat _ -> env
     in
     (* Helper do to a combo of operations wildcards for a predicate, *)
     let instantiate_predicate_with_assumptions env predicate p assumptions_f =

@@ -1,0 +1,6 @@
+ERROR: File "infer_sub_right_multi_tvar_lambda_producers_missing_field.php", line 14, characters 8-67:
+Invalid argument (Typing[4057])
+  File "infer_sub_right_multi_tvar_lambda_producers_missing_field.php", line 9, characters 4-22:
+  The field `y` is missing
+  File "infer_sub_right_multi_tvar_lambda_producers_missing_field.php", line 4, characters 33-35:
+  The field `y` is required here

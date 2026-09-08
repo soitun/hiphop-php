@@ -1,0 +1,6 @@
+ERROR: File "infer_sub_right_multi_tvar_invalid_masking.php", line 14, characters 8-85:
+Invalid argument (Typing[4110])
+  File "infer_sub_right_multi_tvar_invalid_masking.php", line 4, characters 28-30:
+  Expected `int`
+  File "infer_sub_right_multi_tvar_invalid_masking.php", line 16, characters 18-29:
+  But got `string`

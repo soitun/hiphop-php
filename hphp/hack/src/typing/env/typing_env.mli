@@ -602,6 +602,14 @@ val save : TPEnv.t -> env -> Tast.saved_env
 
 val add_subtype_prop : env -> Typing_logic.subtype_prop -> env
 
+(** Compute the type variables appearing covariantly (positively) resp.
+    contravariantly (negatively) in a given type ty.
+    Return a (possibly updated) environment, the set of type variables appearing
+    in positive positions and the set of type variables appearing in negative
+    positions. Note that type variables may appear both positively and
+    negatively in a given type so may appear in both sets. *)
+val get_tyvars : env -> Typing_defs.locl_ty -> env * Tvid.Set.t * Tvid.Set.t
+
 val set_tyvar_variance_i :
   env ->
   ?flip:bool ->

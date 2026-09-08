@@ -237,6 +237,7 @@ module Subtype_env = struct
         (** is_dynamic_aware indicates whether subtyping should allow
           types that implement dynamic are considered sub-types of dynamic. *)
     on_error: Typing_error.Reasons_callback.t option;
+    report_ambiguous_shape_splat: bool;
     has_member_arg_posl: Pos.t list option;
     tparam_constraint_candidates: tparam_constraint_candidate list;
         (** The reason pairs along this subtype path. They are inspected only
@@ -285,6 +286,7 @@ module Subtype_env = struct
       ?(in_transitive_closure = false)
       ?(ignore_likes = false)
       ?(has_member_arg_posl = None)
+      ?(report_ambiguous_shape_splat = false)
       ~class_sub_classname
       ~(log_level : int)
       on_error =
@@ -298,6 +300,7 @@ module Subtype_env = struct
       is_dynamic_aware;
       is_coeffect;
       on_error;
+      report_ambiguous_shape_splat;
       has_member_arg_posl;
       tparam_constraint_candidates = [];
       log_level;
@@ -3063,6 +3066,9 @@ end = struct
         let sv_sub = Typing_corners.spread_tyvar_ids norm_sub
         and sv_super = Typing_corners.spread_tyvar_ids norm_super in
         (match (sv_sub, sv_super) with
+        | (_ :: _ :: _, _)
+          when subtype_env.Subtype_env.report_ambiguous_shape_splat ->
+          (env, TL.AmbiguousShapeSplat sv_sub)
         | ([], []) ->
           (match (simple_sub, simple_super) with
           | ( Some
@@ -11345,6 +11351,14 @@ and Subtype_trans : sig
     TL.subtype_prop ->
     Typing_error.Reasons_callback.t option ->
     Typing_env_types.env * Typing_error.t option
+
+  val prop_to_env_against_expected_type :
+    Typing_defs_constraints.internal_type ->
+    Typing_defs_constraints.internal_type ->
+    Typing_env_types.env ->
+    TL.subtype_prop ->
+    Typing_error.Reasons_callback.t option ->
+    Typing_env_types.env * Typing_error.t option * Tvid.Set.t
 end = struct
   let add_non_subtype_constraint
       ~is_dynamic_aware
@@ -11699,7 +11713,9 @@ end = struct
       | [] -> []
       | d :: disj ->
         (match d with
-        | TL.Conj _ -> d :: fill_bound_map disj
+        | TL.Conj _
+        | TL.AmbiguousShapeSplat _ ->
+          d :: fill_bound_map disj
         | TL.Disj (_, props) -> fill_bound_map (props @ disj)
         | TL.IsSubtype (is_dynamic_aware, ty_sub, ty_super) ->
           (match get_tyvar_opt ty_super with
@@ -11757,6 +11773,18 @@ end = struct
     in
     aux props
 
+  let partition_ambiguous_shape_splat_vars props =
+    let (vars, props) =
+      List.fold props ~init:(Tvid.Set.empty, []) ~f:(fun (vars, props) prop ->
+          match prop with
+          | TL.AmbiguousShapeSplat new_vars ->
+            ( List.fold new_vars ~init:vars ~f:(fun vars var ->
+                  Tvid.Set.add var vars),
+              props )
+          | _ -> (vars, prop :: props))
+    in
+    (vars, List.rev props)
+
   let rec tell ty_sub ty_super env prop on_error =
     match prop with
     | TL.Conj props ->
@@ -11780,9 +11808,18 @@ end = struct
         prop
         props;
       let ty_errs = Option.to_list inf_err_opt in
-      tell_exists ty_sub ty_super env ~ty_errs ~remain:[] props on_error
+      tell_exists
+        ty_sub
+        ty_super
+        env
+        ~ty_errs
+        ~remain:[]
+        ~ambiguous_shape_splat_vars:Tvid.Set.empty
+        props
+        on_error
     | TL.IsSubtype (coerce, ty_sub, ty_super) ->
       tell_cstr env (coerce, ty_sub, ty_super) on_error
+    | TL.AmbiguousShapeSplat _ -> (env, None, [prop])
 
   and tell_cstr env (is_dynamic_aware, ty_sub, ty_super) on_error =
     let (env, ty_sub) = Env.expand_internal_type env ty_sub in
@@ -11927,25 +11964,69 @@ end = struct
       in
       tell_all ty_sub ty_super env ~ty_errs ~remain props on_error
 
-  and tell_exists ty_sub ty_super env ~ty_errs ~remain props on_error =
+  and tell_exists
+      ty_sub
+      ty_super
+      env
+      ~ty_errs
+      ~remain
+      ~ambiguous_shape_splat_vars
+      props
+      on_error =
     (* For now, just find the first prop in the disjunction that works *)
     match props with
-    | [] ->
+    | [] when Tvid.Set.is_empty ambiguous_shape_splat_vars ->
       let inf_err_opt = Typing_error.intersect_opt ty_errs in
       (env, inf_err_opt, List.rev remain)
+    | [] ->
+      ( env,
+        None,
+        TL.AmbiguousShapeSplat (Tvid.Set.elements ambiguous_shape_splat_vars)
+        :: List.rev remain )
     | prop :: props ->
       let (prop_env, prop_inf_err, prop_remain) =
         tell ty_sub ty_super env prop on_error
       in
+      let (prop_ambiguous_shape_splat_vars, prop_remain) =
+        partition_ambiguous_shape_splat_vars prop_remain
+      in
       (match prop_inf_err with
       | Some ty_err ->
         let ty_errs = ty_err :: ty_errs and remain = prop_remain @ remain in
-        tell_exists ty_sub ty_super env ~ty_errs ~remain props on_error
-      | _ -> (prop_env, None, List.rev remain))
+        tell_exists
+          ty_sub
+          ty_super
+          env
+          ~ty_errs
+          ~remain
+          ~ambiguous_shape_splat_vars
+          props
+          on_error
+      | None when not (Tvid.Set.is_empty prop_ambiguous_shape_splat_vars) ->
+        tell_exists
+          ty_sub
+          ty_super
+          env
+          ~ty_errs
+          ~remain
+          ~ambiguous_shape_splat_vars:
+            (Tvid.Set.union
+               ambiguous_shape_splat_vars
+               prop_ambiguous_shape_splat_vars)
+          props
+          on_error
+      | None -> (prop_env, None, List.rev remain))
 
   let prop_to_env ty_sub ty_super env prop on_error =
     let (env, ty_err_opt, _props') = tell ty_sub ty_super env prop on_error in
     (env, ty_err_opt)
+
+  let prop_to_env_against_expected_type ty_sub ty_super env prop on_error =
+    let (env, ty_err_opt, props) = tell ty_sub ty_super env prop on_error in
+    let (ambiguous_shape_splat_vars, _) =
+      partition_ambiguous_shape_splat_vars props
+    in
+    (env, ty_err_opt, ambiguous_shape_splat_vars)
 end
 
 and Subtype_tell : sig
@@ -11960,6 +12041,8 @@ and Subtype_tell : sig
     locl_ty ->
     Typing_error.Reasons_callback.t option ->
     env * Typing_error.t option
+
+  val sub_type_against_expected_type : TUtils.sub_type_against_expected_type
 
   val sub_type_or_fail :
     env ->
@@ -11976,13 +12059,13 @@ and Subtype_tell : sig
     Typing_error.Reasons_callback.t option ->
     env * Typing_error.t option
 end = struct
-  let sub_type_inner
+  let sub_type_inner_with_ambiguity
       (env : env)
       ~(subtype_env : Subtype_env.t)
       ~(sub_supportdyn : Reason.t option)
       ~(this_ty : locl_ty option)
       (ity_sub : internal_type)
-      (ity_super : internal_type) : env * Typing_error.t option =
+      (ity_super : internal_type) : env * Typing_error.t option * Tvid.Set.t =
     let (env, prop) =
       Common.dispatch_constraint
         ~subtype_env
@@ -11999,20 +12082,20 @@ end = struct
         "sub_type_inner"
         env
         prop;
-    Subtype_trans.prop_to_env
+    Subtype_trans.prop_to_env_against_expected_type
       ity_sub
       ity_super
       env
       prop
       subtype_env.Subtype_env.on_error
 
-  let sub_type_inner
+  let sub_type_inner_with_ambiguity
       (env : env)
       ~(subtype_env : Subtype_env.t)
       ~(sub_supportdyn : Reason.t option)
       ~(this_ty : locl_ty option)
       (ity_sub : internal_type)
-      (ity_super : internal_type) : env * Typing_error.t option =
+      (ity_super : internal_type) : env * Typing_error.t option * Tvid.Set.t =
     if Logging.should_log_subtype_i env ~level:1 ity_sub ity_super then
       Logging.log_subtype_i
         ~this_ty
@@ -12026,9 +12109,44 @@ end = struct
         ity_sub
         ity_super
       @@ fun () ->
-      sub_type_inner env ~subtype_env ~sub_supportdyn ~this_ty ity_sub ity_super
+      sub_type_inner_with_ambiguity
+        env
+        ~subtype_env
+        ~sub_supportdyn
+        ~this_ty
+        ity_sub
+        ity_super
     else
-      sub_type_inner env ~subtype_env ~sub_supportdyn ~this_ty ity_sub ity_super
+      sub_type_inner_with_ambiguity
+        env
+        ~subtype_env
+        ~sub_supportdyn
+        ~this_ty
+        ity_sub
+        ity_super
+
+  let sub_type_inner env ~subtype_env ~sub_supportdyn ~this_ty ity_sub ity_super
+      =
+    let (env, ty_err_opt, _) =
+      sub_type_inner_with_ambiguity
+        env
+        ~subtype_env
+        ~sub_supportdyn
+        ~this_ty
+        ity_sub
+        ity_super
+    in
+    (env, ty_err_opt)
+
+  let sub_type_inner_against_expected_type
+      env ~subtype_env ~sub_supportdyn ~this_ty ity_sub ity_super =
+    sub_type_inner_with_ambiguity
+      env
+      ~subtype_env
+      ~sub_supportdyn
+      ~this_ty
+      ity_sub
+      ity_super
 
   (* == Tell API ============================================================ *)
 
@@ -12102,6 +12220,41 @@ end = struct
         old_env
     in
     (env, ty_err_opt)
+
+  let sub_type_against_expected_type
+      env
+      ?(is_dynamic_aware = false)
+      ?(ignore_readonly = false)
+      (ty_sub : locl_ty)
+      (ty_super : locl_ty)
+      on_error =
+    let subtype_env =
+      Subtype_env.create
+        ~log_level:2
+        ~is_dynamic_aware
+        ~report_ambiguous_shape_splat:true
+        ~class_sub_classname:(should_cls_sub_cn env)
+        on_error
+    in
+    let subtype_env = Subtype_env.{ subtype_env with ignore_readonly } in
+    let old_env = env in
+    let (env, ty_err_opt, ambiguous_shape_splat_vars) =
+      sub_type_inner_against_expected_type
+        ~subtype_env
+        ~sub_supportdyn:None
+        env
+        ~this_ty:None
+        (LoclType ty_sub)
+        (LoclType ty_super)
+    in
+    if Option.is_some ty_err_opt then
+      let env = Env.log_env_change "sub_type" old_env @@ old_env in
+      TUtils.Subtyping_result (env, ty_err_opt)
+    else if Tvid.Set.is_empty ambiguous_shape_splat_vars then
+      let env = Env.log_env_change "sub_type" old_env env in
+      TUtils.Subtyping_result (env, None)
+    else
+      TUtils.Ambiguous_shape_splat ambiguous_shape_splat_vars
 
   (* Entry point *)
   let sub_type_or_fail env ty1 ty2 err_opt =
@@ -12406,6 +12559,9 @@ let rec decompose_subtype_add_prop env prop =
     failwith
       ("Subtyping locl types in completeness mode should yield "
       ^ "propositions involving locl types only.")
+  | TL.AmbiguousShapeSplat _ ->
+    failwith
+      "Ambiguous shape-splat propositions are not produced in completeness mode"
 
 let decompose_subtype_add_bound_err
     ~is_dynamic_aware (env : env) (ty_sub : locl_ty) (ty_super : locl_ty) =
@@ -12481,6 +12637,9 @@ let rec decompose_subtype_add_prop_err env prop =
     failwith
       ("Subtyping locl types in completeness mode should yield "
       ^ "propositions involving locl types only.")
+  | TL.AmbiguousShapeSplat _ ->
+    failwith
+      "Ambiguous shape-splat propositions are not produced in completeness mode"
 
 (* Given two types that we know are in a subtype relationship
  *   ty_sub <: ty_super
@@ -13179,6 +13338,7 @@ let instantiate_fun_type pos fun_ty ~env =
 (* -- Set function references ----------------------------------------------- *)
 let set_fun_refs () =
   TUtils.sub_type_ref := sub_type;
+  TUtils.sub_type_against_expected_type_ref := sub_type_against_expected_type;
   TUtils.sub_type_i_ref := sub_type_i;
   TUtils.add_constraint_ref := add_constraint;
   TUtils.is_sub_type_ref := is_sub_type;

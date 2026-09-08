@@ -55,10 +55,27 @@ module Log = struct
           (match err_opt with
           | None -> "ok"
           | Some _ -> "error"))
+
+  let log_coerce_type_against_expected_type env p ~ty_have ~ty_expect =
+    Typing_log.log_function
+      (Pos_or_decl.of_raw_pos p)
+      ~function_name:"Typing_coercion.coerce_type_against_expected_type"
+      ~arguments:
+        [
+          ("ty_expect", Typing_print.debug env ty_expect);
+          ("ty_have", Typing_print.debug env ty_have);
+        ]
+      ~result:(fun result ->
+        Some
+          (match result with
+          | Typing_utils.Subtyping_result (_, None) -> "ok"
+          | Typing_utils.Subtyping_result (_, Some _) -> "error"
+          | Typing_utils.Ambiguous_shape_splat _ -> "ambiguous_shape_splat"))
 end
 
 (* does coercion, including subtyping *)
-let coerce_type_impl
+let coerce_type_impl_with_sub_type
+    ~sub_type
     ~coerce_for_op
     ~is_dynamic_aware
     ~ignore_readonly
@@ -76,7 +93,7 @@ let coerce_type_impl
         (Reason.dynamic_coercion (get_reason ty_expect))
         ty_expect
     in
-    Typing_utils.sub_type
+    sub_type
       ~is_dynamic_aware:false
       ~ignore_readonly
       env
@@ -87,7 +104,7 @@ let coerce_type_impl
     let (env, ety_expect) = Typing_env.expand_type env ty_expect in
     match get_node ety_expect with
     | Tdynamic _ ->
-      Typing_utils.sub_type
+      sub_type
         ~is_dynamic_aware:true
         ~ignore_readonly
         env
@@ -95,13 +112,25 @@ let coerce_type_impl
         ty_expect
         on_error
     | _ ->
+      sub_type ~is_dynamic_aware ~ignore_readonly env ty_have ty_expect on_error
+
+let coerce_type_impl =
+  coerce_type_impl_with_sub_type
+    ~sub_type:(fun
+                ~is_dynamic_aware
+                ~ignore_readonly
+                env
+                ty_have
+                ty_expect
+                on_error
+              ->
       Typing_utils.sub_type
         ~is_dynamic_aware
         ~ignore_readonly
         env
         ty_have
         ty_expect
-        on_error
+        on_error)
 
 let coerce_type
     ~coerce_for_op
@@ -163,6 +192,45 @@ let coerce_type
       ty_expect
       ty_expect_enforced
       on_error
+
+let coerce_type_against_expected_type
+    ?(coerce_for_op = false)
+    ?(is_dynamic_aware = false)
+    ?(ignore_readonly = false)
+    p
+    ur
+    env
+    ty_have
+    ty_expect
+    ty_expect_enforced
+    (on_error : Typing_error.Callback.t) =
+  let check () =
+    coerce_type_impl_with_sub_type
+      ~sub_type:
+        (fun ~is_dynamic_aware ~ignore_readonly env ty_have ty_expect on_error ->
+        Typing_utils.sub_type_against_expected_type
+          ~is_dynamic_aware
+          ~ignore_readonly
+          env
+          ty_have
+          ty_expect
+          on_error)
+      ~coerce_for_op
+      ~is_dynamic_aware
+      ~ignore_readonly
+      env
+      ty_have
+      ty_expect
+      ty_expect_enforced
+    @@ Some
+         (Typing_error.Reasons_callback.with_claim
+            on_error
+            ~claim:(lazy (p, Reason.string_of_ureason ur)))
+  in
+  if Log.should_log_coerce_type env then
+    Log.log_coerce_type_against_expected_type env p ~ty_have ~ty_expect check
+  else
+    check ()
 
 let coerce_type_like_strip
     p ur env ty_have ty_expect (on_error : Typing_error.Callback.t) =

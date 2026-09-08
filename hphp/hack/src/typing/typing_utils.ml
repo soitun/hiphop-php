@@ -41,6 +41,24 @@ let (sub_type_ref : sub_type ref) = ref (not_implemented "sub_type")
 
 let sub_type x = !sub_type_ref x
 
+type expected_subtyping_result =
+  | Subtyping_result of env * Typing_error.t option
+  | Ambiguous_shape_splat of Tvid.Set.t
+
+type sub_type_against_expected_type =
+  env ->
+  ?is_dynamic_aware:bool ->
+  ?ignore_readonly:bool ->
+  locl_ty ->
+  locl_ty ->
+  Typing_error.Reasons_callback.t option ->
+  expected_subtyping_result
+
+let (sub_type_against_expected_type_ref : sub_type_against_expected_type ref) =
+  ref (not_implemented "sub_type_against_expected_type")
+
+let sub_type_against_expected_type x = !sub_type_against_expected_type_ref x
+
 type sub_type_i =
   env ->
   ?is_coeffect:bool ->

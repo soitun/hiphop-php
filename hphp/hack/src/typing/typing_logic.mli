@@ -20,6 +20,10 @@ type subtype_prop =
   | Disj of Typing_error.t option * subtype_prop list
       (** Disjunction. Disj f [] means "false".  The error message function f
         wraps the error that should be produced in this case. *)
+  | AmbiguousShapeSplat of Tvid.t list
+      (** A shape-splat relation that the expected-type subtyping entry point
+          must defer. This is kept in the proposition so discarded disjuncts
+          do not affect the selected subtype branch. *)
 [@@deriving show]
 
 val print : (internal_type -> string) -> subtype_prop -> string

@@ -2184,6 +2184,10 @@ let subtype_prop env prop =
       "(" ^ String.concat ~sep:" || " (List.map ~f:subtype_prop ps) ^ ")"
     | IsSubtype (false, ty1, ty2) -> debug_i env ty1 ^ " <: " ^ debug_i env ty2
     | IsSubtype (true, ty1, ty2) -> debug_i env ty1 ^ " <D: " ^ debug_i env ty2
+    | AmbiguousShapeSplat vars ->
+      "ambiguous_shape_splat("
+      ^ String.concat ~sep:", " (List.map vars ~f:Tvid.show)
+      ^ ")"
   in
   let p_str = subtype_prop prop in
   p_str

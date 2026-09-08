@@ -1,0 +1,6 @@
+ERROR: File "infer_sub_right_multi_tvar_discarded_disjunct.php", line 33, characters 5-16:
+Invalid argument (Typing[4110])
+  File "infer_sub_right_multi_tvar_discarded_disjunct.php", line 19, characters 16-36:
+  Expected `(function(int): ~void)`
+  File "infer_sub_right_multi_tvar_discarded_disjunct.php", line 33, characters 5-16:
+  But got `string`

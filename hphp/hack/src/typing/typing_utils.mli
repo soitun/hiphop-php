@@ -22,6 +22,26 @@ val sub_type_ref : sub_type ref
 
 val sub_type : sub_type
 
+type expected_subtyping_result =
+  | Subtyping_result of Typing_env_types.env * Typing_error.t option
+      (** The ordinary result of asserting the subtype relation. *)
+  | Ambiguous_shape_splat of Tvid.Set.t
+      (** The normalized subtype contains multiple unresolved subtype-side
+          shape spreads whose contributions cannot be constrained independently. *)
+
+type sub_type_against_expected_type =
+  Typing_env_types.env ->
+  ?is_dynamic_aware:bool ->
+  ?ignore_readonly:bool ->
+  Typing_defs.locl_ty ->
+  Typing_defs.locl_ty ->
+  Typing_error.Reasons_callback.t option ->
+  expected_subtyping_result
+
+val sub_type_against_expected_type_ref : sub_type_against_expected_type ref
+
+val sub_type_against_expected_type : sub_type_against_expected_type
+
 type sub_type_i =
   Typing_env_types.env ->
   ?is_coeffect:bool ->
