@@ -52,20 +52,20 @@
             "kind": "<<",
             "text": "<<",
             "offset": 5,
-            "leading_width": 51,
+            "leading_width": 63,
             "width": 2,
             "trailing_width": 0,
             "leading": [
               {
                 "kind": "single_line_comment",
-                "text": "// Named and inout modifier ordering is validated.",
+                "text": "// Named and inout modifiers are incompatible in either order.",
                 "offset": 5,
-                "width": 50
+                "width": 62
               },
               {
                 "kind": "end_of_line",
                 "text": "\n",
-                "offset": 55,
+                "offset": 67,
                 "width": 1
               }
             ],
@@ -78,7 +78,7 @@
           "token": {
             "kind": "file",
             "text": "file",
-            "offset": 58,
+            "offset": 70,
             "leading_width": 0,
             "width": 4,
             "trailing_width": 0,
@@ -92,7 +92,7 @@
           "token": {
             "kind": ":",
             "text": ":",
-            "offset": 62,
+            "offset": 74,
             "leading_width": 0,
             "width": 1,
             "trailing_width": 0,
@@ -115,7 +115,7 @@
                     "token": {
                       "kind": "name",
                       "text": "__EnableUnstableFeatures",
-                      "offset": 63,
+                      "offset": 75,
                       "leading_width": 0,
                       "width": 24,
                       "trailing_width": 0,
@@ -130,7 +130,7 @@
                   "token": {
                     "kind": "(",
                     "text": "(",
-                    "offset": 87,
+                    "offset": 99,
                     "leading_width": 0,
                     "width": 1,
                     "trailing_width": 0,
@@ -151,7 +151,7 @@
                           "token": {
                             "kind": "single_quoted_string_literal",
                             "text": "'named_parameters'",
-                            "offset": 88,
+                            "offset": 100,
                             "leading_width": 0,
                             "width": 18,
                             "trailing_width": 0,
@@ -169,7 +169,7 @@
                   "token": {
                     "kind": ")",
                     "text": ")",
-                    "offset": 106,
+                    "offset": 118,
                     "leading_width": 0,
                     "width": 1,
                     "trailing_width": 0,
@@ -187,7 +187,7 @@
           "token": {
             "kind": ">>",
             "text": ">>",
-            "offset": 107,
+            "offset": 119,
             "leading_width": 0,
             "width": 2,
             "trailing_width": 1,
@@ -196,7 +196,7 @@
               {
                 "kind": "end_of_line",
                 "text": "\n",
-                "offset": 109,
+                "offset": 121,
                 "width": 1
               }
             ],
@@ -213,7 +213,7 @@
             "token": {
               "kind": "function",
               "text": "function",
-              "offset": 110,
+              "offset": 122,
               "leading_width": 1,
               "width": 8,
               "trailing_width": 1,
@@ -221,7 +221,7 @@
                 {
                   "kind": "end_of_line",
                   "text": "\n",
-                  "offset": 110,
+                  "offset": 122,
                   "width": 1
                 }
               ],
@@ -229,7 +229,7 @@
                 {
                   "kind": "whitespace",
                   "text": " ",
-                  "offset": 119,
+                  "offset": 131,
                   "width": 1
                 }
               ],
@@ -241,7 +241,7 @@
             "token": {
               "kind": "name",
               "text": "f1",
-              "offset": 120,
+              "offset": 132,
               "leading_width": 0,
               "width": 2,
               "trailing_width": 0,
@@ -255,7 +255,7 @@
             "token": {
               "kind": "(",
               "text": "(",
-              "offset": 122,
+              "offset": 134,
               "leading_width": 0,
               "width": 1,
               "trailing_width": 0,
@@ -276,7 +276,7 @@
                     "token": {
                       "kind": "named",
                       "text": "named",
-                      "offset": 123,
+                      "offset": 135,
                       "leading_width": 0,
                       "width": 5,
                       "trailing_width": 1,
@@ -285,7 +285,7 @@
                         {
                           "kind": "whitespace",
                           "text": " ",
-                          "offset": 128,
+                          "offset": 140,
                           "width": 1
                         }
                       ],
@@ -297,7 +297,7 @@
                     "token": {
                       "kind": "inout",
                       "text": "inout",
-                      "offset": 129,
+                      "offset": 141,
                       "leading_width": 0,
                       "width": 5,
                       "trailing_width": 1,
@@ -306,7 +306,7 @@
                         {
                           "kind": "whitespace",
                           "text": " ",
-                          "offset": 134,
+                          "offset": 146,
                           "width": 1
                         }
                       ],
@@ -320,7 +320,7 @@
                       "token": {
                         "kind": "bool",
                         "text": "bool",
-                        "offset": 135,
+                        "offset": 147,
                         "leading_width": 0,
                         "width": 4,
                         "trailing_width": 1,
@@ -329,7 +329,7 @@
                           {
                             "kind": "whitespace",
                             "text": " ",
-                            "offset": 139,
+                            "offset": 151,
                             "width": 1
                           }
                         ],
@@ -342,7 +342,7 @@
                     "token": {
                       "kind": "variable",
                       "text": "$x",
-                      "offset": 140,
+                      "offset": 152,
                       "leading_width": 0,
                       "width": 2,
                       "trailing_width": 0,
@@ -360,7 +360,7 @@
             "token": {
               "kind": ")",
               "text": ")",
-              "offset": 142,
+              "offset": 154,
               "leading_width": 0,
               "width": 1,
               "trailing_width": 0,
@@ -374,7 +374,7 @@
             "token": {
               "kind": ":",
               "text": ":",
-              "offset": 143,
+              "offset": 155,
               "leading_width": 0,
               "width": 1,
               "trailing_width": 1,
@@ -383,7 +383,7 @@
                 {
                   "kind": "whitespace",
                   "text": " ",
-                  "offset": 144,
+                  "offset": 156,
                   "width": 1
                 }
               ],
@@ -397,7 +397,7 @@
               "token": {
                 "kind": "void",
                 "text": "void",
-                "offset": 145,
+                "offset": 157,
                 "leading_width": 0,
                 "width": 4,
                 "trailing_width": 1,
@@ -406,7 +406,7 @@
                   {
                     "kind": "whitespace",
                     "text": " ",
-                    "offset": 149,
+                    "offset": 161,
                     "width": 1
                   }
                 ],
@@ -422,7 +422,7 @@
             "token": {
               "kind": "{",
               "text": "{",
-              "offset": 150,
+              "offset": 162,
               "leading_width": 0,
               "width": 1,
               "trailing_width": 0,
@@ -436,7 +436,7 @@
             "token": {
               "kind": "}",
               "text": "}",
-              "offset": 151,
+              "offset": 163,
               "leading_width": 0,
               "width": 1,
               "trailing_width": 1,
@@ -445,7 +445,7 @@
                 {
                   "kind": "end_of_line",
                   "text": "\n",
-                  "offset": 152,
+                  "offset": 164,
                   "width": 1
                 }
               ],
@@ -463,7 +463,7 @@
             "token": {
               "kind": "function",
               "text": "function",
-              "offset": 153,
+              "offset": 165,
               "leading_width": 0,
               "width": 8,
               "trailing_width": 1,
@@ -472,7 +472,7 @@
                 {
                   "kind": "whitespace",
                   "text": " ",
-                  "offset": 161,
+                  "offset": 173,
                   "width": 1
                 }
               ],
@@ -484,7 +484,7 @@
             "token": {
               "kind": "name",
               "text": "f2",
-              "offset": 162,
+              "offset": 174,
               "leading_width": 0,
               "width": 2,
               "trailing_width": 0,
@@ -498,7 +498,7 @@
             "token": {
               "kind": "(",
               "text": "(",
-              "offset": 164,
+              "offset": 176,
               "leading_width": 0,
               "width": 1,
               "trailing_width": 0,
@@ -519,7 +519,7 @@
                     "token": {
                       "kind": "inout",
                       "text": "inout",
-                      "offset": 165,
+                      "offset": 177,
                       "leading_width": 0,
                       "width": 5,
                       "trailing_width": 1,
@@ -528,7 +528,7 @@
                         {
                           "kind": "whitespace",
                           "text": " ",
-                          "offset": 170,
+                          "offset": 182,
                           "width": 1
                         }
                       ],
@@ -540,7 +540,7 @@
                     "token": {
                       "kind": "named",
                       "text": "named",
-                      "offset": 171,
+                      "offset": 183,
                       "leading_width": 0,
                       "width": 5,
                       "trailing_width": 1,
@@ -549,7 +549,7 @@
                         {
                           "kind": "whitespace",
                           "text": " ",
-                          "offset": 176,
+                          "offset": 188,
                           "width": 1
                         }
                       ],
@@ -563,7 +563,7 @@
                       "token": {
                         "kind": "bool",
                         "text": "bool",
-                        "offset": 177,
+                        "offset": 189,
                         "leading_width": 0,
                         "width": 4,
                         "trailing_width": 1,
@@ -572,7 +572,7 @@
                           {
                             "kind": "whitespace",
                             "text": " ",
-                            "offset": 181,
+                            "offset": 193,
                             "width": 1
                           }
                         ],
@@ -585,7 +585,7 @@
                     "token": {
                       "kind": "variable",
                       "text": "$y",
-                      "offset": 182,
+                      "offset": 194,
                       "leading_width": 0,
                       "width": 2,
                       "trailing_width": 0,
@@ -603,7 +603,7 @@
             "token": {
               "kind": ")",
               "text": ")",
-              "offset": 184,
+              "offset": 196,
               "leading_width": 0,
               "width": 1,
               "trailing_width": 0,
@@ -617,7 +617,7 @@
             "token": {
               "kind": ":",
               "text": ":",
-              "offset": 185,
+              "offset": 197,
               "leading_width": 0,
               "width": 1,
               "trailing_width": 1,
@@ -626,7 +626,7 @@
                 {
                   "kind": "whitespace",
                   "text": " ",
-                  "offset": 186,
+                  "offset": 198,
                   "width": 1
                 }
               ],
@@ -640,7 +640,7 @@
               "token": {
                 "kind": "void",
                 "text": "void",
-                "offset": 187,
+                "offset": 199,
                 "leading_width": 0,
                 "width": 4,
                 "trailing_width": 1,
@@ -649,7 +649,7 @@
                   {
                     "kind": "whitespace",
                     "text": " ",
-                    "offset": 191,
+                    "offset": 203,
                     "width": 1
                   }
                 ],
@@ -665,7 +665,7 @@
             "token": {
               "kind": "{",
               "text": "{",
-              "offset": 192,
+              "offset": 204,
               "leading_width": 0,
               "width": 1,
               "trailing_width": 0,
@@ -679,7 +679,7 @@
             "token": {
               "kind": "}",
               "text": "}",
-              "offset": 193,
+              "offset": 205,
               "leading_width": 0,
               "width": 1,
               "trailing_width": 1,
@@ -688,7 +688,7 @@
                 {
                   "kind": "end_of_line",
                   "text": "\n",
-                  "offset": 194,
+                  "offset": 206,
                   "width": 1
                 }
               ],
@@ -704,7 +704,7 @@
           "token": {
             "kind": "end_of_file",
             "text": "",
-            "offset": 195,
+            "offset": 207,
             "leading_width": 0,
             "width": 0,
             "trailing_width": 0,

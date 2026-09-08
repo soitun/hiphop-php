@@ -17,6 +17,7 @@ interface AbstractMethodInoutOptional {
 //// abstract_method_inout_named.php
 <?hh
 <<file:__EnableUnstableFeatures('named_parameters')>>
+// The generated case intentionally combines incompatible modifiers.
 
 interface AbstractMethodInoutNamed {
   public function test(inout named int $x): void;

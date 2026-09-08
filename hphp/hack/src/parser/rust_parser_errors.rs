@@ -679,10 +679,12 @@ fn duplicate_parameter_modifier_error<'a>(modifiers: &[S<'a>]) -> Option<(S<'a>,
 /**
  * inout+optional are incompatible
  * inout+readonly are incompatible
+ * inout+named are incompatible
  */
 fn parameter_modifier_incompatibility_errors<'a>(param: S<'a>) -> Vec<(S<'a>, Error)> {
     let optional = parameter_modifier(param, TokenKind::Optional);
     let inout = parameter_modifier(param, TokenKind::Inout);
+    let named = parameter_modifier(param, TokenKind::Named);
     let readonly = parameter_modifier(param, TokenKind::Readonly);
     let mut incompatibilities = vec![];
     if optional.is_some()
@@ -708,6 +710,14 @@ fn parameter_modifier_incompatibility_errors<'a>(param: S<'a>) -> Vec<(S<'a>, Er
         incompatibilities.push((
             node,
             errors::incompatible_parameter_modifiers("inout", "readonly"),
+        ));
+    }
+    if inout.is_some()
+        && let Some(named) = named
+    {
+        incompatibilities.push((
+            named,
+            errors::incompatible_parameter_modifiers("inout", "named"),
         ));
     }
     incompatibilities

@@ -1,1 +1,2 @@
-(5,19)-(5,24) Invalid parameter modifier order. The correct order is `inout named`.
+(5,13)-(5,18) A parameter cannot be both `inout` and `named`.
+(6,19)-(6,24) A parameter cannot be both `inout` and `named`.
