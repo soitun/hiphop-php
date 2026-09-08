@@ -46,3 +46,4 @@ interface K {
 
 // Illegal: can't specify optional on a top-level function parameter
 function top(optional int $x):void { }
+// Optional and inout are incompatible.

@@ -741,6 +741,20 @@ fn token_kind<'a>(node: S<'a>) -> Option<TK> {
     }
 }
 
+fn parameter_modifier<'a>(node: S<'a>, kind: TK) -> Option<S<'a>> {
+    let fields = match &node.children {
+        ParameterDeclaration(c) => [&c.optional, &c.call_convention, &c.named, &c.readonly],
+        ClosureParameterTypeSpecifier(c) => {
+            [&c.optional, &c.call_convention, &c.named, &c.readonly]
+        }
+        _ => return None,
+    };
+
+    fields
+        .into_iter()
+        .find(|field| token_kind(field) == Some(kind))
+}
+
 fn check_valid_reified_hint<'a>(env: &mut Env<'a>, node: S<'a>, hint: &ast::Hint) {
     struct Checker<F: FnMut(&String)>(F);
     impl<'ast, F: FnMut(&String)> Visitor<'ast> for Checker<F> {
@@ -779,11 +793,18 @@ fn p_closure_parameter<'a>(
 ) -> Result<(ast::Hint, Option<ast::HfParamInfo>)> {
     match &node.children {
         ClosureParameterTypeSpecifier(c) => {
-            let optional = map_optional(&c.optional, env, p_optional)?;
-            let kind = p_param_kind(&c.call_convention, env)?;
-            let readonlyness = map_optional(&c.readonly, env, p_readonly)?;
+            let optional = parameter_modifier(node, TK::Optional)
+                .map(|modifier| p_optional(modifier, env))
+                .transpose()?;
+            let kind = parameter_modifier(node, TK::Inout)
+                .map(|modifier| p_param_kind(modifier, env))
+                .transpose()?
+                .unwrap_or(ast::ParamKind::Pnormal);
+            let readonlyness = parameter_modifier(node, TK::Readonly)
+                .map(|modifier| p_readonly(modifier, env))
+                .transpose()?;
             let splat = map_optional(&c.pre_ellipsis, env, p_splat)?;
-            let named = if c.named.is_missing() {
+            let named = if parameter_modifier(node, TK::Named).is_none() {
                 None
             } else {
                 Some(text(&c.name, env).to_string())
@@ -1227,7 +1248,7 @@ fn p_hint_<'a>(node: S<'a>, env: &mut Env<'a>) -> Result<ast::Hint_> {
                         if !c.ellipsis.is_missing() && c.type_.is_missing() {
                             raise_parsing_error(v, env, "Cannot use ... without a typehint");
                         }
-                        if !c.optional.is_missing() {
+                        if parameter_modifier(v, TK::Optional).is_some() {
                             raise_parsing_error(
                                 v,
                                 env,
@@ -1235,7 +1256,7 @@ fn p_hint_<'a>(node: S<'a>, env: &mut Env<'a>) -> Result<ast::Hint_> {
                             );
                         }
                         let hint = Some(p_hint(&c.type_, env)?);
-                        if c.named.is_missing() {
+                        if parameter_modifier(v, TK::Named).is_none() {
                             unnamed_variadic_hints.push(hint);
                         } else {
                             named_variadic_hints.push(hint);
@@ -4514,10 +4535,10 @@ fn p_fun_param<'a>(node: S<'a>, env: &mut Env<'a>) -> Result<ast::FunParam> {
         ParameterDeclaration(ParameterDeclarationChildren {
             attribute,
             visibility,
-            optional,
-            call_convention,
-            named,
-            readonly,
+            optional: _,
+            call_convention: _,
+            named: _,
+            readonly: _,
             pre_ellipsis,
             type_,
             ellipsis,
@@ -4541,28 +4562,25 @@ fn p_fun_param<'a>(node: S<'a>, env: &mut Env<'a>) -> Result<ast::FunParam> {
                 );
             }
             let expr = p_fun_param_default_value(default_value, env)?;
-            let callconv = p_param_kind(call_convention, env)?;
-            if !optional.is_missing() && expr.is_some() {
+            let optional = parameter_modifier(node, TK::Optional);
+            let callconv = parameter_modifier(node, TK::Inout)
+                .map(|modifier| p_param_kind(modifier, env))
+                .transpose()?
+                .unwrap_or(ast::ParamKind::Pnormal);
+            if optional.is_some() && expr.is_some() {
                 raise_parsing_error(
                     node,
                     env,
                     &syntax_error::invalid_optional_keyword_on_initializer,
                 );
             }
-            if !optional.is_missing() && is_variadic {
+            if optional.is_some() && is_variadic {
                 raise_parsing_error(node, env, &syntax_error::no_optional_on_variadic_parameter);
-            }
-            let is_inout = match callconv {
-                ast::ParamKind::Pinout(_) => true,
-                _ => false,
-            };
-            if !optional.is_missing() && is_inout {
-                raise_parsing_error(node, env, &syntax_error::no_optional_on_inout_parameter);
             }
             let info = match expr {
                 _ if is_variadic => ast::FunParamInfo::ParamVariadic,
                 Some(_) => ast::FunParamInfo::ParamOptional(expr),
-                None if !optional.is_missing() => ast::FunParamInfo::ParamOptional(None),
+                None if optional.is_some() => ast::FunParamInfo::ParamOptional(None),
                 _ => ast::FunParamInfo::ParamRequired,
             };
 
@@ -4575,9 +4593,13 @@ fn p_fun_param<'a>(node: S<'a>, env: &mut Env<'a>) -> Result<ast::FunParam> {
                 name,
                 info,
                 callconv,
-                readonly: map_optional(readonly, env, p_readonly)?,
+                readonly: parameter_modifier(node, TK::Readonly)
+                    .map(|modifier| p_readonly(modifier, env))
+                    .transpose()?,
                 splat,
-                named: map_optional(named, env, p_named)?,
+                named: parameter_modifier(node, TK::Named)
+                    .map(|modifier| p_named(modifier, env))
+                    .transpose()?,
                 /* implicit field via constructor parameter.
                  * This is always None except for constructors and the modifier
                  * can be only Public or Protected or Private.

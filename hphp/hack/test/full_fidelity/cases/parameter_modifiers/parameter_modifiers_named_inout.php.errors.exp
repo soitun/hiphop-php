@@ -1,2 +1,1 @@
-(4,19)-(4,24) A type specifier is expected here.
-(4,25)-(4,29) Encountered unexpected token `bool`.
+(5,19)-(5,24) Invalid parameter modifier order. The correct order is `inout named`.

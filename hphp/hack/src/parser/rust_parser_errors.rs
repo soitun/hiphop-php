@@ -483,23 +483,17 @@ fn is_splat_expression(node: S<'_>) -> bool {
 fn is_variadic_parameter_declaration(node: S<'_>) -> bool {
     match &node.children {
         ParameterDeclaration(x) => x.ellipsis.is_ellipsis(),
-        ClosureParameterTypeSpecifier(x) => x.ellipsis.is_ellipsis() && x.named.is_missing(),
+        ClosureParameterTypeSpecifier(x) => {
+            x.ellipsis.is_ellipsis() && parameter_modifier(node, TokenKind::Named).is_none()
+        }
         _ => false,
     }
 }
 fn is_readonly_parameter_declaration(node: S<'_>) -> bool {
-    match &node.children {
-        ParameterDeclaration(x) => x.readonly.is_readonly(),
-        ClosureParameterTypeSpecifier(x) => x.readonly.is_readonly(),
-        _ => false,
-    }
+    parameter_modifier(node, TokenKind::Readonly).is_some()
 }
 fn is_optional_parameter_declaration(node: S<'_>) -> bool {
-    match &node.children {
-        ParameterDeclaration(x) => x.optional.is_optional(),
-        ClosureParameterTypeSpecifier(x) => x.optional.is_optional(),
-        _ => false,
-    }
+    parameter_modifier(node, TokenKind::Optional).is_some()
 }
 fn is_splat_parameter_declaration(node: S<'_>) -> bool {
     match &node.children {
@@ -517,11 +511,7 @@ fn misplaced_variadic_param<'a>(params: S<'a>) -> Option<S<'a>> {
             // Check if there's any UNNAMED parameter after this variadic param
             for later_param in param_list.iter().skip(i + 1) {
                 // If later_param is NOT named, then variadic is misplaced
-                let is_named = match &later_param.children {
-                    ClosureParameterTypeSpecifier(x) => !x.named.is_missing(),
-                    ParameterDeclaration(x) => !x.named.is_missing(),
-                    _ => false,
-                };
+                let is_named = parameter_modifier(later_param, TokenKind::Named).is_some();
                 if !is_named {
                     // Found an unnamed param after variadic param -> error
                     return Some(*param);
@@ -536,12 +526,15 @@ fn misplaced_variadic_param<'a>(params: S<'a>) -> Option<S<'a>> {
 // has no name. Return the name of any that was given one.
 fn variadic_named_param_with_name<'a>(params: S<'a>) -> Option<S<'a>> {
     syntax_to_list_no_separators(params).find_map(|param| {
-        let (named, ellipsis, name) = match &param.children {
-            ParameterDeclaration(x) => (&x.named, &x.ellipsis, &x.name),
-            ClosureParameterTypeSpecifier(x) => (&x.named, &x.ellipsis, &x.name),
+        let (ellipsis, name) = match &param.children {
+            ParameterDeclaration(x) => (&x.ellipsis, &x.name),
+            ClosureParameterTypeSpecifier(x) => (&x.ellipsis, &x.name),
             _ => return None,
         };
-        if !named.is_missing() && ellipsis.is_ellipsis() && !name.is_missing() {
+        if parameter_modifier(param, TokenKind::Named).is_some()
+            && ellipsis.is_ellipsis()
+            && !name.is_missing()
+        {
             Some(name)
         } else {
             None
@@ -554,12 +547,12 @@ fn variadic_named_param_with_name<'a>(params: S<'a>) -> Option<S<'a>> {
 fn duplicate_variadic_named_param<'a>(params: S<'a>) -> Option<S<'a>> {
     syntax_to_list_no_separators(params)
         .filter(|param| {
-            let (named, ellipsis) = match &param.children {
-                ParameterDeclaration(x) => (&x.named, &x.ellipsis),
-                ClosureParameterTypeSpecifier(x) => (&x.named, &x.ellipsis),
+            let ellipsis = match &param.children {
+                ParameterDeclaration(x) => &x.ellipsis,
+                ClosureParameterTypeSpecifier(x) => &x.ellipsis,
                 _ => return false,
             };
-            !named.is_missing() && ellipsis.is_ellipsis()
+            parameter_modifier(param, TokenKind::Named).is_some() && ellipsis.is_ellipsis()
         })
         .nth(1)
 }
@@ -629,6 +622,131 @@ fn token_kind(node: S<'_>) -> Option<TokenKind> {
         return Some(t.kind());
     }
     None
+}
+
+fn parameter_modifier_fields<'a>(param: S<'a>) -> Option<[S<'a>; 4]> {
+    match &param.children {
+        ParameterDeclaration(x) => Some([&x.optional, &x.call_convention, &x.named, &x.readonly]),
+        ClosureParameterTypeSpecifier(x) => {
+            Some([&x.optional, &x.call_convention, &x.named, &x.readonly])
+        }
+        _ => None,
+    }
+}
+
+fn parameter_modifiers<'a>(param: S<'a>) -> Vec<S<'a>> {
+    parameter_modifier_fields(param)
+        .into_iter()
+        .flatten()
+        .filter(|node| !node.is_missing())
+        .collect()
+}
+
+fn parameter_modifier<'a>(param: S<'a>, kind: TokenKind) -> Option<S<'a>> {
+    parameter_modifier_fields(param)?
+        .into_iter()
+        .find(|node| token_kind(node) == Some(kind))
+}
+
+fn parameter_modifier_rank(kind: TokenKind) -> usize {
+    match kind {
+        TokenKind::Optional => 0,
+        TokenKind::Inout => 1,
+        TokenKind::Named => 2,
+        TokenKind::Readonly => 3,
+        _ => unreachable!(),
+    }
+}
+
+fn duplicate_parameter_modifier_error<'a>(modifiers: &[S<'a>]) -> Option<(S<'a>, Error)> {
+    let mut seen = [false; 4];
+    for modifier in modifiers {
+        let Some(kind) = token_kind(modifier) else {
+            continue;
+        };
+        let rank = parameter_modifier_rank(kind);
+        if seen[rank] {
+            return Some((
+                modifier,
+                errors::duplicate_parameter_modifier(kind.to_string()),
+            ));
+        }
+        seen[rank] = true;
+    }
+    None
+}
+
+/**
+ * inout+optional are incompatible
+ * inout+readonly are incompatible
+ */
+fn parameter_modifier_incompatibility_errors<'a>(param: S<'a>) -> Vec<(S<'a>, Error)> {
+    let optional = parameter_modifier(param, TokenKind::Optional);
+    let inout = parameter_modifier(param, TokenKind::Inout);
+    let readonly = parameter_modifier(param, TokenKind::Readonly);
+    let mut incompatibilities = vec![];
+    if optional.is_some()
+        && let Some(inout) = inout
+    {
+        let error = errors::incompatible_parameter_modifiers("optional", "inout");
+        let (node, error) = match &param.children {
+            ParameterDeclaration(_) => (param, error),
+            ClosureParameterTypeSpecifier(_) => (inout, error),
+            _ => unreachable!(),
+        };
+        incompatibilities.push((node, error));
+    }
+    if inout.is_some()
+        && readonly.is_some()
+        && let ParameterDeclaration(x) = &param.children
+    {
+        let node = if x.name.is_missing() {
+            &x.ellipsis
+        } else {
+            &x.name
+        };
+        incompatibilities.push((
+            node,
+            errors::incompatible_parameter_modifiers("inout", "readonly"),
+        ));
+    }
+    incompatibilities
+}
+
+fn parameter_modifier_order_error<'a>(modifiers: &[S<'a>]) -> Option<(S<'a>, Error)> {
+    let Some(out_of_order) = modifiers.windows(2).find_map(|pair| {
+        let previous = token_kind(pair[0])?;
+        let current = token_kind(pair[1])?;
+        (parameter_modifier_rank(previous) >= parameter_modifier_rank(current)).then_some(pair[1])
+    }) else {
+        return None;
+    };
+    let correct_order = modifiers
+        .iter()
+        .filter_map(|modifier| token_kind(modifier))
+        .sorted_by_key(|kind| parameter_modifier_rank(*kind))
+        .map(|kind| kind.to_string())
+        .join(" ");
+    Some((
+        out_of_order,
+        errors::parameter_modifier_order(&correct_order),
+    ))
+}
+
+fn parameter_modifier_errors<'a>(param: S<'a>) -> Vec<(S<'a>, Error)> {
+    let modifiers = parameter_modifiers(param);
+    if let Some(error) = duplicate_parameter_modifier_error(&modifiers) {
+        return vec![error];
+    }
+
+    let incompatibilities = parameter_modifier_incompatibility_errors(param);
+    if !incompatibilities.is_empty() {
+        return incompatibilities;
+    }
+
+    parameter_modifier_order_error(&modifiers)
+        .into_iter()
+        .collect()
 }
 
 // Helper function for common code pattern
@@ -817,12 +935,7 @@ fn is_abstract_and_async_method(md_node: S<'_>) -> bool {
 }
 
 fn parameter_callconv<'a>(param: S<'a>) -> Option<S<'a>> {
-    (match &param.children {
-        ParameterDeclaration(x) => Some(&x.call_convention),
-        ClosureParameterTypeSpecifier(x) => Some(&x.call_convention),
-        _ => None,
-    })
-    .filter(|node| !node.is_missing())
+    parameter_modifier(param, TokenKind::Inout)
 }
 
 fn is_parameter_with_callconv(param: S<'_>) -> bool {
@@ -854,14 +967,6 @@ fn make_name_already_used_error(
         report_error(name, short_name),
         vec![],
     )
-}
-
-fn extract_callconv_node<'a>(node: S<'a>) -> Option<S<'a>> {
-    match &node.children {
-        ParameterDeclaration(x) => Some(&x.call_convention),
-        ClosureParameterTypeSpecifier(x) => Some(&x.call_convention),
-        _ => None,
-    }
 }
 
 // Given a node, checks if it is a abstract ConstDeclaration
@@ -2463,10 +2568,10 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
     }
 
     fn check_parameter_readonly(&mut self, node: S<'a>) {
-        if let ParameterDeclaration(x) = &node.children {
-            if x.readonly.is_readonly() {
-                self.mark_uses_readonly()
-            }
+        if matches!(&node.children, ParameterDeclaration(_))
+            && parameter_modifier(node, TokenKind::Readonly).is_some()
+        {
+            self.mark_uses_readonly()
         }
     }
 
@@ -2480,6 +2585,9 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
     }
 
     fn parameter_errors(&mut self, node: S<'a>) {
+        for (modifier, error) in parameter_modifier_errors(node) {
+            self.errors.push(make_error_from_node(modifier, error));
+        }
         let param_errors = |self_: &mut Self, params| {
             for x in syntax_to_list_no_separators(params) {
                 self_.check_parameter_this(x);
@@ -2489,7 +2597,7 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
         };
         match &node.children {
             ParameterDeclaration(p) => {
-                let callconv_text = self.text(extract_callconv_node(node).unwrap_or(node));
+                let callconv_text = self.text(parameter_callconv(node).unwrap_or(node));
                 self.produce_error_from_check(param_with_callconv_has_default, node, || {
                     errors::error2074(callconv_text)
                 });
@@ -5555,7 +5663,7 @@ impl<'a, State: 'a + Clone> ParserErrors<'a, State> {
 
     fn param_default_decl_errors(&mut self, node: S<'a>) {
         if let ParameterDeclaration(x) = &node.children {
-            if !x.named.is_missing() {
+            if parameter_modifier(node, TokenKind::Named).is_some() {
                 self.check_can_use_feature(node, &FeatureName::NamedParameters);
             }
             match self.env.context.active_callable {

@@ -587,8 +587,6 @@ pub const no_attributes_on_variadic_parameter: Error =
     Cow::Borrowed("Attributes on variadic parameters are not allowed");
 pub const no_optional_on_variadic_parameter: Error =
     Cow::Borrowed("Cannot use `optional` on variadic or splat parameters");
-pub const no_optional_on_inout_parameter: Error =
-    Cow::Borrowed("Cannot use `optional` on `inout` parameters");
 pub const no_attributes_on_enum_class_enumerator: Error =
     Cow::Borrowed("Attributes on enum class enumerators are not allowed");
 pub const invalid_constant_initializer: Error =
@@ -662,6 +660,24 @@ pub const variadic_named_param_with_name: Error = Cow::Borrowed(
 pub const duplicate_variadic_named_param: Error = Cow::Borrowed(
     "A parameter list may have at most one variadic `named` parameter. The first one already collects every named argument that matches no named parameter.",
 );
+
+pub fn duplicate_parameter_modifier(modifier: &str) -> Error {
+    Cow::Owned(format!("Duplicate parameter modifier `{}`.", modifier))
+}
+
+pub fn incompatible_parameter_modifiers(first: &str, second: &str) -> Error {
+    Cow::Owned(format!(
+        "A parameter cannot be both `{}` and `{}`.",
+        first, second
+    ))
+}
+
+pub fn parameter_modifier_order(correct_order: &str) -> Error {
+    Cow::Owned(format!(
+        "Invalid parameter modifier order. The correct order is `{}`.",
+        correct_order
+    ))
+}
 
 pub const reassign_this: Error = Cow::Borrowed("Cannot re-assign `$this`");
 
@@ -1197,9 +1213,6 @@ pub fn invalid_readonly(r1: &str, r2: &str, reason: &str) -> Error {
 
 pub const inout_readonly_assignment: Error =
     Cow::Borrowed("Cannot write a readonly value to an inout parameter");
-
-pub const inout_readonly_parameter: Error =
-    Cow::Borrowed("Inout readonly parameters are not currently supported");
 
 pub const inout_readonly_argument: Error = Cow::Borrowed(
     "This expression is readonly. We currently do not support passing readonly values to an inout parameter.",

@@ -663,9 +663,6 @@ impl<'ast> VisitorMut<'ast> for Checker {
             }
 
             if p.readonly.is_some() {
-                if is_inout {
-                    self.add_error(&p.pos, syntax_error::inout_readonly_parameter);
-                }
                 context.add_param(&p.name, Rty::Readonly, is_inout)
             } else {
                 context.add_param(&p.name, Rty::Mutable, is_inout)
@@ -711,9 +708,6 @@ impl<'ast> VisitorMut<'ast> for Checker {
                 _ => {}
             }
             if p.readonly.is_some() {
-                if is_inout {
-                    self.add_error(&p.pos, syntax_error::inout_readonly_parameter)
-                }
                 new_context.add_param(&p.name, Rty::Readonly, is_inout)
             } else {
                 new_context.add_param(&p.name, Rty::Mutable, is_inout)

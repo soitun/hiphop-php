@@ -1,4 +1,5 @@
 <?hh
+// Named and inout modifier ordering is validated.
 <<file:__EnableUnstableFeatures('named_parameters')>>
 
 function f1(named inout bool $x): void {}

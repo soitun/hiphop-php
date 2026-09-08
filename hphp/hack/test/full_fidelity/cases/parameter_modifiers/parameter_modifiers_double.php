@@ -1,4 +1,5 @@
 <?hh
+// Duplicate parameter modifiers are invalid.
 
 function f1(readonly readonly int $x): void {}
 function f2((function(optional optional int $x): void) $f): void {}

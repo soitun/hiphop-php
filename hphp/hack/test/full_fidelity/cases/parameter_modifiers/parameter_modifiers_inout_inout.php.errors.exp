@@ -1,2 +1,1 @@
-(4,30)-(4,35) A type specifier is expected here.
-(4,36)-(4,39) Encountered unexpected token `int`.
+(5,30)-(5,35) Duplicate parameter modifier `inout`.

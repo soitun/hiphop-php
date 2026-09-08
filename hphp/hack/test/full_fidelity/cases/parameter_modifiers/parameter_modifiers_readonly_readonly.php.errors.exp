@@ -1,2 +1,1 @@
-(4,33)-(4,41) A type specifier is expected here.
-(4,42)-(4,45) Encountered unexpected token `int`.
+(5,33)-(5,41) Duplicate parameter modifier `readonly`.

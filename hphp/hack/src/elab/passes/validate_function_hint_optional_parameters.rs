@@ -8,8 +8,6 @@ use nast::Hint;
 use nast::Hint_;
 
 use crate::nast::OptionalKind;
-use crate::nast::ParamKind;
-use crate::nast::Pos;
 use crate::prelude::*;
 
 #[derive(Clone, Copy, Default)]
@@ -25,16 +23,6 @@ fn is_optional_param(p: &Option<HfParamInfo>) -> bool {
     }
 }
 
-fn is_inout_param(p: &Option<HfParamInfo>) -> Option<&Pos> {
-    match p {
-        Some(HfParamInfo {
-            kind: ParamKind::Pinout(pos),
-            ..
-        }) => Some(pos),
-        _ => None,
-    }
-}
-
 impl Pass for ValidateFunctionHintOptionalParametersPass {
     // Reject optional parameter preceding non-optional parameter
     // e.g. (function(int,optional bool,string):void)
@@ -45,18 +33,6 @@ impl Pass for ValidateFunctionHintOptionalParametersPass {
                 for p in &hint_fun.param_info {
                     if is_optional_param(p) {
                         previous_optional_param = Some(p);
-                        match is_inout_param(p) {
-                            None => (),
-                            Some(pos) => {
-                                env.emit_error(NamingPhaseError::Parsing(
-                                    ParsingError::ParsingError {
-                                        pos: pos.clone(),
-                                        msg: "Optional parameter cannot be inout".to_string(),
-                                        quickfixes: vec![],
-                                    },
-                                ));
-                            }
-                        }
                     } else {
                         match previous_optional_param {
                             None => (),

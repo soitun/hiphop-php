@@ -31,38 +31,20 @@ let on_hint on_error hint ~ctx =
                 optional_precedes_required_positional
                 || seen_optional_positional ))
       in
-      let optional_inouts =
-        List.filter_map hf_param_info ~f:(fun pi ->
-            match pi with
-            | Some
-                {
-                  Aast.hfparam_optional = Some Ast_defs.Optional;
-                  Aast.hfparam_kind = Ast_defs.Pinout pos;
-                  _;
-                } ->
-              Some
-                (Naming_phase_error.parsing
-                   Parsing_error.(
-                     Parsing_error
-                       {
-                         pos;
-                         msg = "Optional parameter cannot be inout";
-                         quickfixes = [];
-                       }))
-            | _ -> None)
-      in
       if optional_positional_precedes_required_positional then
-        Naming_phase_error.parsing
-          Parsing_error.(
-            Parsing_error
-              {
-                pos;
-                msg = "Optional parameter cannot precede non-optional parameter";
-                quickfixes = [];
-              })
-        :: optional_inouts
+        [
+          Naming_phase_error.parsing
+            Parsing_error.(
+              Parsing_error
+                {
+                  pos;
+                  msg =
+                    "Optional parameter cannot precede non-optional parameter";
+                  quickfixes = [];
+                });
+        ]
       else
-        optional_inouts
+        []
     | _ -> []
   in
   List.iter ~f:on_error err_list;

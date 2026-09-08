@@ -21,6 +21,15 @@ use crate::smart_constructors::NodeType;
 use crate::smart_constructors::SmartConstructors;
 use crate::smart_constructors::Token;
 
+struct ParameterModifiers<T> {
+    optional: T,
+    call_convention: T,
+    named: T,
+    readonly: T,
+    has_named: bool,
+    named_offsets: Option<(usize, usize)>,
+}
+
 #[derive(Clone)]
 pub struct TypeParser<'a, S>
 where
@@ -494,23 +503,6 @@ where
     }
 
     // SPEC
-    // call-convention:
-    //   inout
-
-    fn parse_call_convention_opt(&mut self) -> S::Output {
-        match self.peek_token_kind() {
-            TokenKind::Inout => {
-                let token = self.next_token();
-                self.sc_mut().make_token(token)
-            }
-            _ => {
-                let pos = self.pos();
-                self.sc_mut().make_missing(pos)
-            }
-        }
-    }
-
-    // SPEC
     // readonly:
     //   readonly
 
@@ -553,19 +545,6 @@ where
         }
     }
 
-    fn parse_named_opt(&mut self) -> S::Output {
-        match self.peek_token_kind() {
-            TokenKind::Named => {
-                let token = self.next_token();
-                self.sc_mut().make_token(token)
-            }
-            _ => {
-                let pos = self.pos();
-                self.sc_mut().make_missing(pos)
-            }
-        }
-    }
-
     // SPEC
     // closure-param-type-specifier-list:
     //   closure-param-type-specifiers  ,opt
@@ -587,20 +566,12 @@ where
     // caught in a later pass.
     //
     // closure-param-type-specifier:
-    //   call-convention-opt  type-specifier
+    //   parameter-modifier-list-opt  type-specifier
     //   type-specifier  ...
     //   ...
 
     fn parse_closure_param_type_or_ellipsis(&mut self) -> S::Output {
-        let optional = self.parse_optional_opt();
-        let callconv = self.parse_call_convention_opt();
-        let named_offsets = if self.peek_token_kind() == TokenKind::Named {
-            Some(self.error_offsets(/* on_whole_token */ true))
-        } else {
-            None
-        };
-        let named = self.parse_named_opt();
-        let readonly = self.parse_readonly_opt();
+        let modifiers = self.parse_parameter_modifiers();
 
         let ellipsis1 = self.parse_ellipsis_opt();
         let ts =
@@ -609,7 +580,7 @@ where
         let param_name = if self.peek_token_kind() == TokenKind::Variable {
             let token_node = self.next_token();
 
-            if named.is_missing() {
+            if !modifiers.has_named {
                 let (start_offset, end_offset) = match token_node.leading_start_offset() {
                     Some(start_offset) => (start_offset, start_offset + token_node.full_width()),
                     None => self.error_offsets(true), // This fallback is probably unreachable
@@ -639,8 +610,8 @@ where
             self.sc_mut().make_token(token_node)
         } else {
             // `named` without a `$name`. Allow only the variadic form `named T...`.
-            if !named.is_missing() && self.peek_token_kind() != TokenKind::DotDotDot {
-                if let Some((start_offset, end_offset)) = named_offsets {
+            if modifiers.has_named && self.peek_token_kind() != TokenKind::DotDotDot {
+                if let Some((start_offset, end_offset)) = modifiers.named_offsets {
                     let error = SyntaxError::make(
                         start_offset,
                         end_offset,
@@ -664,15 +635,120 @@ where
 
         let sc_mut = &mut self.sc_mut();
         sc_mut.make_closure_parameter_type_specifier(
-            optional,
-            callconv,
-            named,
-            readonly,
+            modifiers.optional,
+            modifiers.call_convention,
+            modifiers.named,
+            modifiers.readonly,
             pre_ellipsis,
             ts,
             param_name,
             ellipsis,
         )
+    }
+
+    fn parse_parameter_modifiers(&mut self) -> ParameterModifiers<S::Output> {
+        let start_pos = self.pos();
+        let mut modifiers = vec![];
+        let mut has_named = false;
+        let mut named_offsets = None;
+        while modifiers.len() < 4
+            && matches!(
+                self.peek_token_kind(),
+                TokenKind::Optional | TokenKind::Inout | TokenKind::Named | TokenKind::Readonly
+            )
+        {
+            let kind = self.peek_token_kind();
+            if kind == TokenKind::Named {
+                has_named = true;
+                named_offsets.get_or_insert_with(|| self.error_offsets(true));
+            }
+            let token = self.next_token();
+            let node = self.sc_mut().make_token(token);
+            modifiers.push((kind, node, self.pos()));
+        }
+
+        let rank = |kind| match kind {
+            TokenKind::Optional => 0,
+            TokenKind::Inout => 1,
+            TokenKind::Named => 2,
+            TokenKind::Readonly => 3,
+            _ => unreachable!(),
+        };
+        let is_canonical = modifiers
+            .windows(2)
+            .all(|pair| rank(pair[0].0) < rank(pair[1].0));
+        let pos = self.pos();
+        if !is_canonical {
+            let mut modifiers = modifiers.into_iter().map(|(_, node, _)| node);
+            let optional = modifiers
+                .next()
+                .unwrap_or_else(|| self.sc_mut().make_missing(pos));
+            let call_convention = modifiers
+                .next()
+                .unwrap_or_else(|| self.sc_mut().make_missing(pos));
+            let named = modifiers
+                .next()
+                .unwrap_or_else(|| self.sc_mut().make_missing(pos));
+            let readonly = modifiers
+                .next()
+                .unwrap_or_else(|| self.sc_mut().make_missing(pos));
+            return ParameterModifiers {
+                optional,
+                call_convention,
+                named,
+                readonly,
+                has_named,
+                named_offsets,
+            };
+        }
+
+        let mut optional = None;
+        let mut call_convention = None;
+        let mut named = None;
+        let mut readonly = None;
+        for (kind, node, end_pos) in modifiers {
+            match kind {
+                TokenKind::Optional => optional = Some((node, end_pos)),
+                TokenKind::Inout => call_convention = Some((node, end_pos)),
+                TokenKind::Named => named = Some((node, end_pos)),
+                TokenKind::Readonly => readonly = Some((node, end_pos)),
+                _ => unreachable!(),
+            }
+        }
+        let mut missing_pos = start_pos;
+        let optional = match optional {
+            Some((node, end_pos)) => {
+                missing_pos = end_pos;
+                node
+            }
+            None => self.sc_mut().make_missing(missing_pos),
+        };
+        let call_convention = match call_convention {
+            Some((node, end_pos)) => {
+                missing_pos = end_pos;
+                node
+            }
+            None => self.sc_mut().make_missing(missing_pos),
+        };
+        let named = match named {
+            Some((node, end_pos)) => {
+                missing_pos = end_pos;
+                node
+            }
+            None => self.sc_mut().make_missing(missing_pos),
+        };
+        let readonly = match readonly {
+            Some((node, _)) => node,
+            None => self.sc_mut().make_missing(missing_pos),
+        };
+        ParameterModifiers {
+            optional,
+            call_convention,
+            named,
+            readonly,
+            has_named,
+            named_offsets,
+        }
     }
 
     fn parse_tuple_or_union_or_intersection_element_type(&mut self) -> S::Output {

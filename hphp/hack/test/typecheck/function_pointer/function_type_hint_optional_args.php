@@ -52,3 +52,4 @@ function badhint2(
   (function(int, optional bool, optional float, string): void) $_,
 ): void {}
 function badhint3((function(int, optional inout bool): void) $_): void {}
+// Optional and inout are incompatible.
