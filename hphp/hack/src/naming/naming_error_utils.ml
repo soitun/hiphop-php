@@ -672,31 +672,6 @@ let illegal_class_meth pos =
 
 let illegal_constant pos = illegal_constant pos
 
-let lvar_in_obj_get pos lvar_pos lvar_name =
-  let lvar_no_dollar = String.chop_prefix_if_exists lvar_name ~prefix:"$" in
-  let suggestion = Printf.sprintf "->%s" lvar_no_dollar in
-  let suggestion_message =
-    Printf.sprintf
-      "Did you mean %s instead?"
-      (Markdown_lite.md_codify suggestion)
-  in
-  let quickfixes =
-    [
-      Quickfix.make_eager_default_hint_style
-        ~title:("Change to " ^ suggestion)
-        ~new_text:lvar_no_dollar
-        pos;
-    ]
-  in
-
-  User_diagnostic.make_err
-    Error_code.(to_enum LvarInObjGet)
-    ~quickfixes
-    ( pos,
-      "Dynamic access of properties and methods is only permitted on values of type `dynamic`."
-    )
-    [(Pos_or_decl.of_raw_pos lvar_pos, suggestion_message)]
-
 let dynamic_method_access pos =
   User_diagnostic.make_err
     Error_code.(to_enum DynamicMethodAccess)
@@ -946,8 +921,6 @@ let to_user_diagnostic t custom_err_config =
     | Illegal_meth_caller pos -> illegal_meth_caller pos
     | Illegal_class_meth pos -> illegal_class_meth pos
     | Illegal_constant pos -> illegal_constant pos
-    | Lvar_in_obj_get { pos; lvar_pos; lvar_name } ->
-      lvar_in_obj_get pos lvar_pos lvar_name
     | Class_meth_non_final_self { pos; class_name } ->
       class_meth_non_final_self pos class_name
     | Class_meth_non_final_CLASS { pos; class_name; is_trait } ->

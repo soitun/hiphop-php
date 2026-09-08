@@ -38,52 +38,28 @@ WARN: File "nonsense_member_access.php", line 18, characters 9-10:
 Method invoked on a value of type `dynamic` (Warn[12038])
   File "nonsense_member_access.php", line 12, characters 29-35:
   This expression has type `dynamic`
-ERROR: File "nonsense_member_access.php", line 5, characters 5-16:
-Dynamic access of property (Typing[4110])
-  File "nonsense_member_access.php", line 5, characters 5-16:
-  Expected `dynamic`
-  File "nonsense_member_access.php", line 5, characters 5-9:
-  Type `this` is not a subtype of `dynamic` under dynamic-aware subtyping
+ERROR: File "nonsense_member_access.php", line 5, characters 5-9:
+Dynamic access of a property is only permitted on a receiver of type `dynamic`, but this receiver has type `this` (Typing[4525])
 ERROR: File "nonsense_member_access.php", line 5, characters 12-16:
 Dynamic member access requires a local variable, not `$this`. (Typing[4406])
-ERROR: File "nonsense_member_access.php", line 6, characters 5-16:
-Dynamic access of property (Typing[4110])
-  File "nonsense_member_access.php", line 6, characters 5-16:
-  Expected `dynamic`
-  File "nonsense_member_access.php", line 6, characters 5-9:
-  Type `this` is not a subtype of `dynamic` under dynamic-aware subtyping
+ERROR: File "nonsense_member_access.php", line 6, characters 5-9:
+Dynamic access of a property is only permitted on a receiver of type `dynamic`, but this receiver has type `this` (Typing[4525])
 ERROR: File "nonsense_member_access.php", line 6, characters 12-16:
 Dynamic member access requires a local variable, not `$this`. (Typing[4406])
-ERROR: File "nonsense_member_access.php", line 7, characters 5-16:
-Dynamic access of property (Typing[4110])
-  File "nonsense_member_access.php", line 7, characters 5-16:
-  Expected `dynamic`
-  File "nonsense_member_access.php", line 7, characters 5-9:
-  Type `this` is not a subtype of `dynamic` under dynamic-aware subtyping
+ERROR: File "nonsense_member_access.php", line 7, characters 5-9:
+Dynamic access of a method is only permitted on a receiver of type `dynamic`, but this receiver has type `this` (Typing[4525])
 ERROR: File "nonsense_member_access.php", line 7, characters 12-16:
 Dynamic member access requires a local variable, not `$this`. (Typing[4406])
-ERROR: File "nonsense_member_access.php", line 8, characters 5-13:
-Dynamic access of property (Typing[4110])
-  File "nonsense_member_access.php", line 8, characters 5-13:
-  Expected `dynamic`
-  File "nonsense_member_access.php", line 8, characters 5-9:
-  Type `this` is not a subtype of `dynamic` under dynamic-aware subtyping
+ERROR: File "nonsense_member_access.php", line 8, characters 5-9:
+Dynamic access of a property is only permitted on a receiver of type `dynamic`, but this receiver has type `this` (Typing[4525])
 ERROR: File "nonsense_member_access.php", line 8, characters 12-13:
 Dynamic member access requires a local variable, not `$_`. (Typing[4406])
-ERROR: File "nonsense_member_access.php", line 9, characters 5-13:
-Dynamic access of property (Typing[4110])
-  File "nonsense_member_access.php", line 9, characters 5-13:
-  Expected `dynamic`
-  File "nonsense_member_access.php", line 9, characters 5-9:
-  Type `this` is not a subtype of `dynamic` under dynamic-aware subtyping
+ERROR: File "nonsense_member_access.php", line 9, characters 5-9:
+Dynamic access of a property is only permitted on a receiver of type `dynamic`, but this receiver has type `this` (Typing[4525])
 ERROR: File "nonsense_member_access.php", line 9, characters 12-13:
 Dynamic member access requires a local variable, not `$_`. (Typing[4406])
-ERROR: File "nonsense_member_access.php", line 10, characters 5-13:
-Dynamic access of property (Typing[4110])
-  File "nonsense_member_access.php", line 10, characters 5-13:
-  Expected `dynamic`
-  File "nonsense_member_access.php", line 10, characters 5-9:
-  Type `this` is not a subtype of `dynamic` under dynamic-aware subtyping
+ERROR: File "nonsense_member_access.php", line 10, characters 5-9:
+Dynamic access of a method is only permitted on a receiver of type `dynamic`, but this receiver has type `this` (Typing[4525])
 ERROR: File "nonsense_member_access.php", line 10, characters 12-13:
 Dynamic member access requires a local variable, not `$_`. (Typing[4406])
 ERROR: File "nonsense_member_access.php", line 13, characters 9-13:

@@ -8,8 +8,6 @@
  *)
 
 open Aast
-open Typing_defs
-module MakeType = Typing_make_type
 
 let handler =
   object
@@ -31,22 +29,5 @@ let handler =
           Typing_error.(
             primary
             @@ Primary.Nonsense_member_selection { pos = p; kind = "$_" })
-      | (_, _, Obj_get ((ty, _, _), _, _, _))
-        when Tast_env.is_sub_type_for_union
-               env
-               ty
-               (MakeType.dynamic Reason.none) ->
-        (* TODO akenn: do we need to detect error tyvar too? *)
-        ()
-      | (_, _, Obj_get (_, (_, pos, Lvar (lvar_pos, lvar_lid)), _, _)) ->
-        let lvar_name = Local_id.get_name lvar_lid in
-        let custom_err_config =
-          let tcopt = Tast_env.get_tcopt env in
-          TypecheckerOptions.custom_error_config tcopt
-        in
-        Diagnostics.add_diagnostic
-          (Naming_error_utils.to_user_diagnostic
-             (Naming_error.Lvar_in_obj_get { pos; lvar_pos; lvar_name })
-             custom_err_config)
       | _ -> ()
   end

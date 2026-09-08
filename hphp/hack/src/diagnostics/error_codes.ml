@@ -49,7 +49,7 @@ module Naming = struct
     | DisallowedXhpType [@value 2008]
     (* | DoubleInsteadOfFloatDEPRECATED [@value 2009] *)
     (* | DynamicClassDEPRECATED [@value 2010] *)
-    | LvarInObjGet [@value 2011]
+    (* | LvarInObjGetDEPRECATED [@value 2011] *)
     | ErrorNameAlreadyBound [@value 2012]
     | ExpectedCollection [@value 2013]
     | ExpectedVariable [@value 2014]
@@ -822,6 +822,7 @@ module Typing = struct
     | SplatMayRequireFields [@value 4522]
     | SplatFieldNotKnown [@value 4523]
     | RedeclaringPromotedProperty [@value 4524]
+    | RequireDynamicObjGet [@value 4525]
   (* Add new Typing codes here! Comment out when deprecating. *)
   [@@deriving enum, show { with_path = false }]
 

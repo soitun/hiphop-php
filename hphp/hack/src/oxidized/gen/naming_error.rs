@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<54044d7cc3d437c85ab3357945930380>>
+// @generated SignedSource<<2a0e9d96a7c45b3b749c93ccd991767c>>
 //
 // To regenerate this file, run:
 //   buck run @fbcode//mode/dev-nosan-lg fbcode//hphp/hack/src:oxidized_regen
@@ -260,12 +260,6 @@ pub enum NamingError {
     IllegalMethCaller(pos::Pos),
     #[rust_to_ocaml(name = "Illegal_class_meth")]
     IllegalClassMeth(pos::Pos),
-    #[rust_to_ocaml(name = "Lvar_in_obj_get")]
-    LvarInObjGet {
-        pos: pos::Pos,
-        lvar_pos: pos::Pos,
-        lvar_name: String,
-    },
     #[rust_to_ocaml(name = "Class_meth_non_final_self")]
     ClassMethNonFinalSelf { pos: pos::Pos, class_name: String },
     #[rust_to_ocaml(name = "Class_meth_non_final_CLASS")]

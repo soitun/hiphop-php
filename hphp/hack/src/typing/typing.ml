@@ -4435,17 +4435,52 @@ end = struct
           env
           e1
       in
+      let (_, receiver_pos, _) = e1 in
+      let receiver_ty =
+        match nullflavor with
+        | Regular -> ty1
+        | Nullsafe ->
+          let r = Reason.nullsafe_op p in
+          MakeType.intersection r [ty1; MakeType.nonnull r]
+      in
+      let member_kind =
+        match prop_or_method with
+        | Is_prop -> `Property
+        | Is_method -> `Method
+      in
+      let member_name =
+        match e2 with
+        | (_, member_pos, Lvar (member_name_pos, member_name)) ->
+          Some
+            Typing_error.Primary.
+              {
+                member_pos;
+                member_name_pos;
+                member_name = Local_id.get_name member_name;
+              }
+        | _ -> None
+      in
+      let dynamic_ty = MakeType.dynamic (Reason.witness p) in
+      (* Use ordinary subtyping to require the receiver to be explicitly
+         dynamic, rather than merely compatible under dynamic-aware subtyping. *)
       let (env, ty_err_opt) =
-        (* Under Sound Dynamic, check that e1 supports dynamic *)
-        Typing_coercion.coerce_type
-          ~is_dynamic_aware:true
-          p
-          Reason.URdynamic_prop
-          env
-          ty1
-          (MakeType.dynamic (Reason.witness p))
-          Unenforced
-          Typing_error.Callback.unify_error
+        SubType.sub_type_or_fail env receiver_ty dynamic_ty
+        @@ Some
+             Typing_error.(
+               primary
+               @@ Primary.Require_dynamic_obj_get
+                    {
+                      receiver_pos;
+                      receiver_ty =
+                        lazy
+                          (Typing_print.full_strip_ns
+                             ~hide_internals:true
+                             env
+                             ty1);
+                      receiver_ty_pos = get_pos ty1;
+                      member_kind;
+                      member_name;
+                    })
       in
       Option.iter ty_err_opt ~f:(Typing_error_utils.add_typing_error ~env);
       let (env, te2, _) =

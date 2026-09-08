@@ -1,10 +1,12 @@
 ERROR: File "instance_method_error2.php", line 8, characters 12-17:
 Expression trees only support named property or instance method access. (Parsing[1002])
 ERROR: File "instance_method_error2.php", line 8, characters 16-17:
-Dynamic access of properties and methods is only permitted on values of type `dynamic`. (Naming[2011])
-  File "instance_method_error2.php", line 8, characters 16-17:
-  Did you mean `->z` instead?
-ERROR: File "instance_method_error2.php", line 8, characters 16-17:
 Variable `$z` is undefined, or not always defined. (Naming[2050])
   File "instance_method_error2.php", line 5, characters 41-42:
   Did you mean `$y` instead?
+ERROR: File "instance_method_error2.php", line 8, characters 12-13:
+Dynamic access of a property is only permitted on a receiver of type `dynamic`, but this receiver has type `MyState` (Typing[4525])
+  File "instance_method_error2.php", line 8, characters 16-17:
+  Did you mean `->z` instead?
+  File "instance_method_error2.php", line 6, characters 15-21:
+  The receiver's type is defined here

@@ -3716,6 +3716,65 @@ end = struct
     in
     create ~code:Error_code.ImmutableLocal ~claim ()
 
+  let require_dynamic_obj_get
+      receiver_pos receiver_ty receiver_ty_pos member_kind member_name =
+    let member_kind =
+      match member_kind with
+      | `Property -> "property"
+      | `Method -> "method"
+    in
+    let claim =
+      lazy
+        ( receiver_pos,
+          Printf.sprintf
+            "Dynamic access of a %s is only permitted on a receiver of type `dynamic`, but this receiver has type %s"
+            member_kind
+            (Markdown_lite.md_codify @@ Lazy.force receiver_ty) )
+    in
+    let receiver_ty_reason =
+      let receiver_pos = Pos_or_decl.of_raw_pos receiver_pos in
+      if
+        Pos_or_decl.equal receiver_ty_pos Pos_or_decl.none
+        || Pos_or_decl.equal receiver_ty_pos receiver_pos
+      then
+        []
+      else
+        [(receiver_ty_pos, "The receiver's type is defined here")]
+    in
+    let (reasons, quickfixes) =
+      match member_name with
+      | Some Typing_error.Primary.{ member_pos; member_name_pos; member_name }
+        ->
+        let member_name =
+          String.chop_prefix_if_exists member_name ~prefix:"$"
+        in
+        let suggestion = Printf.sprintf "->%s" member_name in
+        let reasons =
+          lazy
+            (( Pos_or_decl.of_raw_pos member_name_pos,
+               Printf.sprintf
+                 "Did you mean %s instead?"
+                 (Markdown_lite.md_codify suggestion) )
+            :: receiver_ty_reason)
+        in
+        let quickfixes =
+          [
+            Quickfix.make_eager
+              ~title:("Change to " ^ suggestion)
+              ~new_text:member_name
+              ~hint_styles:
+                [
+                  Quickfix.HintStyleSilent
+                    (Classish_positions_types.Precomputed member_pos);
+                ]
+              member_pos;
+          ]
+        in
+        (reasons, quickfixes)
+      | None -> (lazy receiver_ty_reason, [])
+    in
+    create ~code:Error_code.RequireDynamicObjGet ~claim ~reasons ~quickfixes ()
+
   let nonsense_member_selection pos kind =
     let claim =
       lazy
@@ -5416,6 +5475,15 @@ end = struct
         class_name
         (prop_pos, prop_type)
     | Immutable_local pos -> immutable_local pos
+    | Require_dynamic_obj_get
+        { receiver_pos; receiver_ty; receiver_ty_pos; member_kind; member_name }
+      ->
+      require_dynamic_obj_get
+        receiver_pos
+        receiver_ty
+        receiver_ty_pos
+        member_kind
+        member_name
     | Nonsense_member_selection { pos; kind } ->
       nonsense_member_selection pos kind
     | Consider_meth_caller { pos; class_name; meth_name } ->

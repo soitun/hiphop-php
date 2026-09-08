@@ -512,6 +512,13 @@ module Primary = struct
   }
   [@@deriving show]
 
+  type dynamic_obj_get_member = {
+    member_pos: Pos.t;
+    member_name_pos: Pos.t;
+    member_name: string;
+  }
+  [@@deriving show]
+
   type t =
     (* Factorised errors *)
     | Coeffect of Coeffect.t
@@ -1064,6 +1071,13 @@ module Primary = struct
         prop_type: string;
       }
     | Immutable_local of Pos.t
+    | Require_dynamic_obj_get of {
+        receiver_pos: Pos.t;
+        receiver_ty: string Lazy.t;
+        receiver_ty_pos: Pos_or_decl.t;
+        member_kind: [ `Property | `Method ];
+        member_name: dynamic_obj_get_member option;
+      }
     | Nonsense_member_selection of {
         pos: Pos.t;
         kind: string;

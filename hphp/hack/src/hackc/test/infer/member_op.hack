@@ -103,6 +103,7 @@ function mop_basel_querym_ei_isset(vec<int> $a): bool {
 // CHECK:   ret n2
 // CHECK: }
 function mop_basel_querym_pc(C $a): int {
+  /* HH_FIXME[4525] This test verifies lowering of dynamic property access. */
   return $a->{ret_str()};
 }
 
@@ -121,7 +122,7 @@ function mop_basel_querym_pc(C $a): int {
 // CHECK: }
 function mop_basel_querym_pl(C $a): int {
   $b = "hello";
-  /* HH_FIXME[2011] dynamic access */
+  /* HH_FIXME[4525] dynamic access */
   return $a->{$b};
 }
 
