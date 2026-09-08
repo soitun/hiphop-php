@@ -1905,7 +1905,7 @@ The format can be found in hphp/tools/configs/generate_configs.rs
   Minimum heap growth, in bytes since the last collection,
   before triggering the next collection. See MemoryManager::updateNextGc().
 
-- bool GC.EnableLazyGC = false, UNKNOWN, lookuppath(Eval.EnableLazyGC)
+- bool GC.EnableLazyGC = true, UNKNOWN, lookuppath(Eval.EnableLazyGC)
 
   Collect less eagerly when GC.Enabled: raises the default GC.TriggerPct and
   gives requests a default GC.GraceBytes allowance, so a request is not killed
