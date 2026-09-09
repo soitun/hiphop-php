@@ -330,15 +330,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "balanced_partition"
-version = "0.0.0"
-dependencies = [
- "itertools 0.15.0",
- "log",
- "rayon",
-]
-
-[[package]]
 name = "base64"
 version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1230,13 +1221,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "delta_log"
-version = "0.0.0"
-dependencies = [
- "env_logger",
-]
-
-[[package]]
 name = "dep"
 version = "0.0.0"
 dependencies = [
@@ -1256,23 +1240,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "depgraph_compress"
-version = "0.0.0"
-dependencies = [
- "balanced_partition",
- "bytemuck",
- "depgraph_reader",
- "depgraph_writer",
- "hash",
- "log",
- "newtype",
- "rayon",
- "smallvec",
- "vint64",
- "zstd",
-]
-
-[[package]]
 name = "depgraph_reader"
 version = "0.0.0"
 dependencies = [
@@ -1282,16 +1249,6 @@ dependencies = [
  "rayon",
  "static_assertions",
  "vint64",
-]
-
-[[package]]
-name = "depgraph_writer"
-version = "0.0.0"
-dependencies = [
- "bytemuck",
- "dep",
- "log",
- "newtype",
 ]
 
 [[package]]
@@ -2347,56 +2304,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hh_fanout_build"
-version = "0.0.0"
-dependencies = [
- "bytemuck",
- "dashmap",
- "dep_graph_delta",
- "depgraph_compress",
- "depgraph_reader",
- "depgraph_writer",
- "hash",
- "log",
- "memmap2",
- "newtype",
- "parking_lot",
- "rayon",
- "smallvec",
-]
-
-[[package]]
-name = "hh_fanout_build_rust"
-version = "0.0.0"
-dependencies = [
- "delta_log",
- "env_logger",
- "hh_fanout_build",
- "ocamlrep_ocamlpool",
-]
-
-[[package]]
-name = "hh_fanout_dep_graph_is_subgraph_rust"
-version = "0.0.0"
-dependencies = [
- "depgraph_reader",
- "env_logger",
- "log",
- "ocamlrep_ocamlpool",
-]
-
-[[package]]
-name = "hh_fanout_dep_graph_stats_rust"
-version = "0.0.0"
-dependencies = [
- "depgraph_reader",
- "env_logger",
- "json",
- "log",
- "ocamlrep_ocamlpool",
-]
-
-[[package]]
 name = "hh_hash"
 version = "0.0.0"
 dependencies = [
@@ -2771,12 +2678,6 @@ dependencies = [
  "futures-util",
  "wasm-bindgen",
 ]
-
-[[package]]
-name = "json"
-version = "0.12.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "078e285eafdfb6c4b434e0d31e8cfcb5115b651496faca5749b88fafd4f23bfd"
 
 [[package]]
 name = "jwalk"
