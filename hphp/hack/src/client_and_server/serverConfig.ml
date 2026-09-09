@@ -613,7 +613,9 @@ let load_config (config : Config_file_common.t) (options : GlobalOptions.t) :
     ?class_pointer_ban_class_array_key:
       (bool_opt Config_keys.Hhconfig.class_pointer_ban_class_array_key config)
     ?tco_class_pointer_array_literal_keys:
-      (bool_opt Config_keys.Hhconfig.class_pointer_array_literal_keys config)
+      (int_opt Config_keys.Hhconfig.class_pointer_array_literal_keys config)
+    ?tco_class_pointer_array_write_keys:
+      (int_opt Config_keys.Hhconfig.class_pointer_array_write_keys config)
     ?tco_poly_function_pointers:
       (bool_opt Config_keys.Hhconfig.poly_function_pointers config)
     ?tco_permits_bypassing_visibility:

@@ -1,0 +1,12 @@
+ERROR: File "supportdyn_literal_key.php", line 12, characters 5-6:
+It is no longer allowed to use a `classname<A>` in this position. Please use a `class<A>` instead. (Typing[4482])
+  File "supportdyn_literal_key.php", line 9, characters 18-37:
+  Definition is here
+ERROR: File "supportdyn_literal_key.php", line 19, characters 5-6:
+It is no longer allowed to use a `classname<A>` in this position. Please use a `class<A>` instead. (Typing[4482])
+  File "supportdyn_literal_key.php", line 16, characters 15-22:
+  Definition is here
+ERROR: File "supportdyn_literal_key.php", line 26, characters 5-6:
+It is no longer allowed to use a `classname<A>` in this position. Please use a `class<A>` instead. (Typing[4482])
+  File "supportdyn_literal_key.php", line 23, characters 33-52:
+  Definition is here

@@ -203,7 +203,8 @@ type t = {
   allow_class_string_cast: bool;
   class_pointer_ban_classname_static_meth: int;
   class_pointer_ban_class_array_key: bool;
-  tco_class_pointer_array_literal_keys: bool;
+  tco_class_pointer_array_literal_keys: int;
+  tco_class_pointer_array_write_keys: int;
   tco_poly_function_pointers: bool;
   tco_permits_bypassing_visibility: string list;
   tco_tests_bypass_visibility_static_properties: bool;
@@ -320,7 +321,8 @@ let default =
     allow_class_string_cast = true;
     class_pointer_ban_classname_static_meth = 0;
     class_pointer_ban_class_array_key = false;
-    tco_class_pointer_array_literal_keys = false;
+    tco_class_pointer_array_literal_keys = 0;
+    tco_class_pointer_array_write_keys = 0;
     tco_poly_function_pointers = true;
     tco_permits_bypassing_visibility = [];
     tco_tests_bypass_visibility_static_properties = false;
@@ -435,6 +437,7 @@ let set
     ?class_pointer_ban_classname_static_meth
     ?class_pointer_ban_class_array_key
     ?tco_class_pointer_array_literal_keys
+    ?tco_class_pointer_array_write_keys
     ?tco_poly_function_pointers
     ?tco_permits_bypassing_visibility
     ?tco_tests_bypass_visibility_static_properties
@@ -744,6 +747,10 @@ let set
       setting
         tco_class_pointer_array_literal_keys
         options.tco_class_pointer_array_literal_keys;
+    tco_class_pointer_array_write_keys =
+      setting
+        tco_class_pointer_array_write_keys
+        options.tco_class_pointer_array_write_keys;
     tco_poly_function_pointers =
       setting tco_poly_function_pointers options.tco_poly_function_pointers;
     tco_permits_bypassing_visibility =

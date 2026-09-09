@@ -619,9 +619,13 @@ impl HhConfig {
                 "class_pointer_ban_class_array_key",
                 default.class_pointer_ban_class_array_key,
             )?,
-            tco_class_pointer_array_literal_keys: hhconfig.get_bool_or(
+            tco_class_pointer_array_literal_keys: hhconfig.get_int_or(
                 "class_pointer_array_literal_keys",
                 default.tco_class_pointer_array_literal_keys,
+            )?,
+            tco_class_pointer_array_write_keys: hhconfig.get_int_or(
+                "class_pointer_array_write_keys",
+                default.tco_class_pointer_array_write_keys,
             )?,
             tco_poly_function_pointers: hhconfig
                 .get_bool_or("poly_function_pointers", default.tco_poly_function_pointers)?,

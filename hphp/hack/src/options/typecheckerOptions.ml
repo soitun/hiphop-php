@@ -300,6 +300,9 @@ let class_pointer_ban_class_array_key t =
 let tco_class_pointer_array_literal_keys t =
   t.GlobalOptions.tco_class_pointer_array_literal_keys
 
+let tco_class_pointer_array_write_keys t =
+  t.GlobalOptions.tco_class_pointer_array_write_keys
+
 let tco_poly_function_pointers t = t.GlobalOptions.tco_poly_function_pointers
 
 let enable_recursive_case_types t =

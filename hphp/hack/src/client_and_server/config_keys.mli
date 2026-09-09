@@ -88,6 +88,8 @@ module Hhconfig : sig
 
   val class_pointer_array_literal_keys : string
 
+  val class_pointer_array_write_keys : string
+
   val class_pointer_ban_class_array_key : string
 
   val class_pointer_ban_classname_static_meth : string
