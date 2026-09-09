@@ -297,7 +297,7 @@ impl Display for Error {
             Self::OverlappingImplicitPath { path, other, .. } => {
                 write!(
                     f,
-                    "implicit_packages path //{} overlaps {}; they must be disjoint",
+                    "implicit_packages path //{} conflicts with {}; explicit package paths cannot be nested under a family, and family paths cannot overlap",
                     path, other
                 )?;
             }

@@ -1,6 +1,7 @@
 [packages]
 
 [packages.intern]
+include_paths = ["//www/"]
 
 [implicit_packages.prototypes]
 path = "//www/prototypes/"

@@ -238,13 +238,8 @@ impl Config {
                 errors.push(Error::implicit_include_paths_not_allowed(fname));
             }
 
-            // (1) A family `path` must be disjoint from every package
-            // `include_path` AND from every other family `path` (neither may be
-            // a prefix of the other). Otherwise a file under the overlap would
-            // match more than one entry in `include_path_to_package_map`, whose
-            // lookup is a first-match over a non-stable sort -- making package
-            // membership order-dependent. Paths have already been normalized to
-            // the leading-`//`-stripped form.
+            // (1) A broader explicit path may contain a family. An explicit
+            // path at or below the family would take precedence and is invalid.
             let fpath = fam.path.get_ref().as_str();
             let overlaps = |other: &str| fpath.starts_with(other) || other.starts_with(fpath);
             for (pname, package) in self.packages.iter() {
@@ -253,7 +248,7 @@ impl Config {
                     .include_paths
                     .iter()
                     .flat_map(|ips| ips.iter())
-                    .find(|ip| overlaps(ip.get_ref()));
+                    .find(|ip| ip.get_ref().starts_with(fpath));
                 if let Some(ip) = overlapping {
                     errors.push(Error::overlapping_implicit_path(
                         fpath.to_owned(),
@@ -266,6 +261,7 @@ impl Config {
                     ));
                 }
             }
+            // Family roots cannot overlap because neither family can win.
             for (other_name, other_fam) in self.implicit_packages.iter() {
                 // Compare each unordered pair once; skip self.
                 if other_name.get_ref() <= fname.get_ref() {

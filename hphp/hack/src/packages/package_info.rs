@@ -443,7 +443,7 @@ mod test {
                     "implicit_packages family www_pkg collides with package www_pkg (a family name may not equal or be a prefix of a package name)",
                 ),
                 String::from(
-                    "implicit_packages path //www/prototypes/ overlaps include_path //www/prototypes/shared/ of package www_pkg; they must be disjoint",
+                    "implicit_packages path //www/prototypes/ conflicts with include_path //www/prototypes/shared/ of package www_pkg; explicit package paths cannot be nested under a family, and family paths cannot overlap",
                 ),
                 String::from(
                     "implicit_packages.www_pkg must not specify include_paths: the include paths are derived from its path",
@@ -517,7 +517,7 @@ mod test {
         assert_eq!(
             errors,
             vec![String::from(
-                "implicit_packages path //www/prototypes/sub/ overlaps path //www/prototypes/ of implicit_packages family prototypes; they must be disjoint",
+                "implicit_packages path //www/prototypes/sub/ conflicts with path //www/prototypes/ of implicit_packages family prototypes; explicit package paths cannot be nested under a family, and family paths cannot overlap",
             )]
         );
     }
