@@ -1,0 +1,22 @@
+[packages]
+
+[packages."explicit.bad"]
+include_paths = ["//www/explicit/"]
+
+[packages.consumer]
+includes = ["prototypes.bad-name"]
+
+[implicit_packages]
+
+[implicit_packages.prototypes]
+path = "//www/prototypes/"
+
+[implicit_packages.consumer_family]
+path = "//www/consumer-family/"
+includes = ["prototypes.family-bad"]
+
+[implicit_packages."proto.v1"]
+path = "//www/proto-v1/"
+
+[deployments.prod]
+packages = ["prototypes.deploy-bad"]

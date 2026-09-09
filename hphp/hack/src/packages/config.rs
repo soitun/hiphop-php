@@ -6,6 +6,7 @@
 use std::borrow::Cow;
 use std::collections::VecDeque;
 
+use hack_name::is_valid_identifier;
 use hash::HashSet;
 use serde::Deserialize;
 use toml::Spanned;
@@ -28,11 +29,8 @@ pub struct Config {
 
 /// Splits a (possibly synthesized) package name `F.D` into its family name `F`
 /// and member segment `D`, splitting on the *first* `.`. Returns `None` if there
-/// is no `.` separator, or if either side is empty. The member `D` is a single
-/// directory name, which may itself contain `.` (e.g. `proto.v1`); this is why
-/// we split on the first `.` and keep the remainder as the member. Family names
-/// are forbidden from containing `.` (see `check_config`), so the split is
-/// unambiguous.
+/// is no `.` separator, or if either side is empty. Both `F` and `D` must be
+/// valid Hack identifiers; `PackageInfo` reports invalid names separately.
 fn split_member_name(name: &str) -> Option<(&str, &str)> {
     let (family, member) = name.split_once('.')?;
     if family.is_empty() || member.is_empty() {
@@ -53,6 +51,16 @@ impl Config {
             .map(|k| k.get_ref().as_str())
             .collect();
 
+        let check_member_names = |errors: &mut Vec<Error>, names: &Option<NameSet>| {
+            let Some(names) = names else {
+                return;
+            };
+            errors.extend(names.iter().filter_map(|name| {
+                let (family, member) = name.get_ref().split_once('.')?;
+                (family_key.contains(family) && !is_valid_identifier(member))
+                    .then(|| Error::implicit_member_name_invalid(name, member))
+            }));
+        };
         // A name is "defined" if it is a hand-written package, an implicit
         // family `F`, or a synthesized member `F.D` of a declared family. The
         // member case is validated structurally (no filesystem access): we do
@@ -192,12 +200,19 @@ impl Config {
                 }
             };
         for (package_name, package) in self.packages.iter() {
+            if !is_valid_identifier(package_name.get_ref()) {
+                errors.push(Error::package_name_invalid(package_name));
+            }
+            check_member_names(errors, &package.includes);
+            check_member_names(errors, &package.soft_includes);
             check_packages_are_defined(errors, &package.includes, &package.soft_includes);
             check_each_include_path_is_used_once(errors, &package.include_paths);
             check_package_includes_are_transitively_closed(errors, package_name, package);
         }
         if let Some(deployments) = &self.deployments {
             for (positioned_name, deployment) in deployments.iter() {
+                check_member_names(errors, &deployment.packages);
+                check_member_names(errors, &deployment.soft_packages);
                 check_packages_are_defined(errors, &deployment.packages, &deployment.soft_packages);
                 check_deployed_packages_are_transitively_closed(
                     errors,
@@ -212,19 +227,18 @@ impl Config {
         // are purely structural / textual -- none of them reads the filesystem,
         // so parsing remains a pure function of PACKAGES.toml's contents.
         for (fname, fam) in self.implicit_packages.iter() {
-            // (0) A family name must not contain `.`: the `.` separator is
-            // reserved for synthesized member names (`family.directory`), so a
-            // dotted family name would make `split_member_name` ambiguous.
-            if fname.get_ref().contains('.') {
+            if !is_valid_identifier(fname.get_ref()) {
                 errors.push(Error::implicit_family_name_invalid(fname));
             }
+            check_member_names(errors, &fam.includes);
+            check_member_names(errors, &fam.soft_includes);
 
-            // (1) `include_paths` is not permitted on a family stanza.
+            // (0) `include_paths` is not permitted on a family stanza.
             if fam.include_paths.is_some() {
                 errors.push(Error::implicit_include_paths_not_allowed(fname));
             }
 
-            // (2) A family `path` must be disjoint from every package
+            // (1) A family `path` must be disjoint from every package
             // `include_path` AND from every other family `path` (neither may be
             // a prefix of the other). Otherwise a file under the overlap would
             // match more than one entry in `include_path_to_package_map`, whose
@@ -271,7 +285,7 @@ impl Config {
                 }
             }
 
-            // (3) A family name must not collide with, or namespace-shadow, any
+            // (2) A family name must not collide with, or namespace-shadow, any
             // hand-written package name (`F` itself or anything under `F.`).
             let f = fname.get_ref().as_str();
             let dotted = format!("{}.", f);
@@ -282,7 +296,7 @@ impl Config {
                 }
             }
 
-            // (4) A family's own includes must be transitively closed, exactly
+            // (3) A family's own includes must be transitively closed, exactly
             // as for a hand-written package. Every member shares these includes,
             // so checking the family once suffices for all (current and future)
             // members.

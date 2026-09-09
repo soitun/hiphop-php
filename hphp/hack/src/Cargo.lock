@@ -3423,6 +3423,7 @@ name = "packages"
 version = "0.0.0"
 dependencies = [
  "anyhow",
+ "hack_name",
  "hash",
  "regex",
  "serde",

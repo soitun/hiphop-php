@@ -55,8 +55,17 @@ pub enum Error {
         package: String,
         span: (usize, usize),
     },
+    PackageNameInvalid {
+        name: String,
+        span: (usize, usize),
+    },
     ImplicitFamilyNameInvalid {
         name: String,
+        span: (usize, usize),
+    },
+    ImplicitMemberNameInvalid {
+        name: String,
+        member: String,
         span: (usize, usize),
     },
     ImplicitPackagesDisabled {
@@ -155,6 +164,22 @@ impl Error {
         }
     }
 
+    pub fn implicit_packages_disabled(family: &Spanned<String>) -> Self {
+        let Range { start, end } = family.span();
+        Self::ImplicitPackagesDisabled {
+            name: family.get_ref().into(),
+            span: (start, end),
+        }
+    }
+
+    pub fn package_name_invalid(package: &Spanned<String>) -> Self {
+        let Range { start, end } = package.span();
+        Self::PackageNameInvalid {
+            name: package.get_ref().into(),
+            span: (start, end),
+        }
+    }
+
     pub fn implicit_family_name_invalid(family: &Spanned<String>) -> Self {
         let Range { start, end } = family.span();
         Self::ImplicitFamilyNameInvalid {
@@ -163,10 +188,11 @@ impl Error {
         }
     }
 
-    pub fn implicit_packages_disabled(family: &Spanned<String>) -> Self {
-        let Range { start, end } = family.span();
-        Self::ImplicitPackagesDisabled {
-            name: family.get_ref().into(),
+    pub fn implicit_member_name_invalid(member_name: &Spanned<String>, member: &str) -> Self {
+        let Range { start, end } = member_name.span();
+        Self::ImplicitMemberNameInvalid {
+            name: member_name.get_ref().into(),
+            member: member.into(),
             span: (start, end),
         }
     }
@@ -182,7 +208,9 @@ impl Error {
             | Self::ImplicitIncludePathsNotAllowed { span, .. }
             | Self::OverlappingImplicitPath { span, .. }
             | Self::PackageNamePrefixCollision { span, .. }
+            | Self::PackageNameInvalid { span, .. }
             | Self::ImplicitFamilyNameInvalid { span, .. }
+            | Self::ImplicitMemberNameInvalid { span, .. }
             | Self::ImplicitPackagesDisabled { span, .. } => *span,
         }
     }
@@ -280,11 +308,21 @@ impl Display for Error {
                     name, package
                 )?;
             }
+            Self::PackageNameInvalid { name, .. } => {
+                write!(f, "Package name {} must be a valid Hack identifier", name)?;
+            }
             Self::ImplicitFamilyNameInvalid { name, .. } => {
                 write!(
                     f,
-                    "implicit_packages family name {} must not contain '.': the '.' separator is reserved for synthesized member names (family.directory)",
+                    "Implicit package family name {} must be a valid Hack identifier",
                     name
+                )?;
+            }
+            Self::ImplicitMemberNameInvalid { name, member, .. } => {
+                write!(
+                    f,
+                    "Implicit package member segment {} in {} must be a valid Hack identifier",
+                    member, name
                 )?;
             }
             Self::ImplicitPackagesDisabled { name, .. } => {

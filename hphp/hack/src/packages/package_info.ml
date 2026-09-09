@@ -60,8 +60,8 @@ let synthesize_member (family : Package.t) (member_dir : string) : Package.t =
 
 (* Splits a (possibly synthesized) name [F.D] into family [F] and member [D].
  * In a well-formed repo a member directory is a valid Hack identifier and so
- * contains no [.], and family names are forbidden from containing [.] (see the
- * family-name validation in config.rs), so [F.D] contains exactly one [.].
+ * contains no [.], and package_info.rs rejects family names containing [.], so
+ * [F.D] contains exactly one [.].
  * Resolution does not re-verify that: a directory that is not a valid identifier
  * is reported by the lowerer's placement check, and this code is only meaningful
  * for a repo that type-checks clean. Returns None unless both sides are

@@ -538,15 +538,23 @@ mod test {
     }
 
     #[test]
-    fn test_implicit_family_name_with_dot_rejected() {
-        let test_path = SRCDIR.as_path().join("tests/package-implicit-dotname.toml");
+    fn test_package_names_must_be_identifiers() {
+        let test_path = SRCDIR.as_path().join("tests/package-invalid-names.toml");
         let info = PackageInfo::from_text(false, true, test_path.to_str().unwrap()).unwrap();
-        let errors = info.errors.iter().map(|e| e.msg()).collect::<Vec<_>>();
+        let errors = info
+            .errors()
+            .iter()
+            .map(|error| error.msg())
+            .collect::<Vec<_>>();
         assert_eq!(
             errors,
-            vec![String::from(
-                "implicit_packages family name proto.v1 must not contain '.': the '.' separator is reserved for synthesized member names (family.directory)",
-            )]
+            vec![
+                "Package name explicit.bad must be a valid Hack identifier",
+                "Implicit package member segment bad-name in prototypes.bad-name must be a valid Hack identifier",
+                "Implicit package member segment deploy-bad in prototypes.deploy-bad must be a valid Hack identifier",
+                "Implicit package member segment family-bad in prototypes.family-bad must be a valid Hack identifier",
+                "Implicit package family name proto.v1 must be a valid Hack identifier",
+            ]
         );
     }
 
