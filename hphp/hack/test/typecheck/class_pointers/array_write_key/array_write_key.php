@@ -36,3 +36,27 @@ function nested_write(class<A> $c): void {
 function annotated_key(dict<classname<A>, int> $d, class<A> $c): void {
   $d[$c] = 1;
 }
+
+function keyset_append(class<A> $c): void {
+  $ks = keyset[];
+  $ks[] = $c;
+  foreach ($ks as $value) {
+    $value::meth();
+  }
+}
+
+function set_append(class<A> $c): void {
+  $set = Set {};
+  $set[] = $c;
+  foreach ($set as $value) {
+    $value::meth();
+  }
+}
+
+function vec_append_unchanged(class<A> $c): void {
+  $vec = vec[];
+  $vec[] = $c;
+  foreach ($vec as $value) {
+    $value::meth();
+  }
+}

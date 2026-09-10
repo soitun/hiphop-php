@@ -10,3 +10,11 @@ ERROR: File "array_write_key.php", line 31, characters 7-8:
 It is no longer allowed to use a `classname<A>` in this position. Please use a `class<A>` instead. (Typing[4482])
   File "array_write_key.php", line 25, characters 23-30:
   Definition is here
+ERROR: File "array_write_key.php", line 44, characters 5-10:
+It is no longer allowed to use a `classname<A>` in this position. Please use a `class<A>` instead. (Typing[4482])
+  File "array_write_key.php", line 40, characters 24-31:
+  Definition is here
+ERROR: File "array_write_key.php", line 52, characters 5-10:
+It is no longer allowed to use a `classname<A>` in this position. Please use a `class<A>` instead. (Typing[4482])
+  File "array_write_key.php", line 48, characters 21-28:
+  Definition is here

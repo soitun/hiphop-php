@@ -206,6 +206,14 @@ let widen_for_assign_array_append ~expr_pos env ty =
   | _ -> (env, None)
 
 let assign_array_append ~array_pos ~expr_pos ur env ty1 ty2 =
+  let coerce_set_value env ty =
+    Typing_class_pointers.coerce_to_name
+      ~level:
+        (TypecheckerOptions.tco_class_pointer_array_write_keys
+           (Env.get_tcopt env))
+      env
+      ty
+  in
   let ((env, ty_err1), ty1) =
     Typing_solver.expand_type_and_narrow
       ~description_of_expected:"an array or collection"
@@ -279,6 +287,7 @@ let assign_array_append ~array_pos ~expr_pos ur env ty1 ty2 =
       | (r, Tclass (((_, n) as id), e, []))
         when String.equal n SN.Collections.cKeyset
              || String.equal n SN.Collections.cSet ->
+        let (env, ty2) = coerce_set_value env ty2 in
         let (env, val_err_res) =
           if String.equal n SN.Collections.cKeyset then
             check_keyset_value env expr_pos ty1 ty2
@@ -295,6 +304,7 @@ let assign_array_append ~array_pos ~expr_pos ur env ty1 ty2 =
         (env, (ty, Ok ty, Ok ty2))
       | (r, Tclass (((_, n) as id), e, [tv]))
         when String.equal n SN.Collections.cKeyset ->
+        let (env, ty2) = coerce_set_value env ty2 in
         let (env, err_res) = check_keyset_value env expr_pos ty1 ty2 in
         let (env, tk') =
           let r = Reason.key_value_collection_key expr_pos in
@@ -305,6 +315,7 @@ let assign_array_append ~array_pos ~expr_pos ur env ty1 ty2 =
         let ty = mk (r, Tclass (id, e, [tk'])) in
         (env, (ty, Ok ty, err_res))
       | (_, Tclass ((_, n), _, [tv])) when String.equal n SN.Collections.cSet ->
+        let (env, ty2) = coerce_set_value env ty2 in
         let (env, err_res) =
           match check_set_value env expr_pos ty1 ty2 with
           | (_, Error _) as err_res -> err_res
