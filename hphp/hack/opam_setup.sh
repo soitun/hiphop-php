@@ -26,7 +26,10 @@ BUILD_ROOT="${2:-"${SOURCE_ROOT}/_build"}"
 
 OPAM_EXECUTABLE_DIR="$(dirname "$OPAM_EXECUTABLE")"
 
-export PATH="$OPAM_EXECUTABLE_DIR:$PATH"
+# Preserve the caller's compiler selection when opam is already on PATH.
+if [ "$(command -v opam || true)" != "$OPAM_EXECUTABLE" ]; then
+  export PATH="$OPAM_EXECUTABLE_DIR:$PATH"
+fi
 # detect if we are building inside FB by checking a specific dune file
 if [ -e "$SOURCE_ROOT/src/facebook/dune" ]; then
   # FB script must have already set OPAMROOT, and we reuse it

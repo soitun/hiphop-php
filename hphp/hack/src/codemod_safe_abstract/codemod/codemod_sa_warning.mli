@@ -31,5 +31,18 @@ type t = {
       *)
 }
 
-val parse_warnings_json_exn :
-  Yojson.Safe.t -> error_message:string -> t list Relative_path.Map.t
+type parse_result = {
+  warnings: t list Relative_path.Map.t;
+  input_diagnostics: int;
+  matching_diagnostics: int;
+  codemoddable_diagnostics: int;
+  unique_targets: int;
+}
+
+(** Parses the raw [hh_distc --json] file incrementally. Memory use is bounded
+    by one diagnostic plus the deduplicated codemod targets and one source file.
+    Accepts Yojson syntax, including its extensions. Invalid syntax or diagnostic
+    structure returns [Error] with the input path and a description. The entire
+    document is validated before loading source files. I/O and source-position
+    conversion exceptions are not caught. *)
+val parse_warnings_json_file : string -> (parse_result, string) result

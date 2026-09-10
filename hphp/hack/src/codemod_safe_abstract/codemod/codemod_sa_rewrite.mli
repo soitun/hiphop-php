@@ -6,4 +6,5 @@
  *
  *)
 (** Update the file on disk to patch Safe Abstract warnings *)
-val rewrite : Relative_path.t -> Codemod_sa_warning.t list -> string -> string
+val rewrite :
+  Relative_path.t -> Codemod_sa_warning.t list -> string -> string * int

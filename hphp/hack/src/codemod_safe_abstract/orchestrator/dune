@@ -7,6 +7,7 @@
     utils_core
     default_injector_config
     sys_utils
+    core_unix.filename_unix
     collections))
 
 (alias

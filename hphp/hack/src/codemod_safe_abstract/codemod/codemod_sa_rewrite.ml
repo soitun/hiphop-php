@@ -62,6 +62,27 @@ let needs_concrete_attribute_node : Syn.t =
     value = Synthetic;
   }
 
+let rec is_needs_concrete_attribute : Syn.t -> bool = function
+  | { syntax = ListItem { list_item; _ }; _ } ->
+    is_needs_concrete_attribute list_item
+  | { syntax = ConstructorCall { constructor_call_type = token; _ }; _ } ->
+    String.equal (Syn.text token) "__NeedsConcrete"
+  | _ -> false
+
+let has_needs_concrete_attribute : Syn.t -> bool = function
+  | {
+      syntax =
+        OldAttributeSpecification
+          {
+            old_attribute_specification_attributes =
+              { syntax = SyntaxList attributes; _ };
+            _;
+          };
+      _;
+    } ->
+    List.exists attributes ~f:is_needs_concrete_attribute
+  | _ -> false
+
 let add_attribute (methodish_attribute : Syn.t) ~(attribute : Syn.t) : Syn.t =
   match methodish_attribute.syntax with
   | Missing ->
@@ -85,10 +106,7 @@ let add_attribute (methodish_attribute : Syn.t) ~(attribute : Syn.t) : Syn.t =
          _;
        } as old_attribute_specification) ->
     let attributes =
-      if
-        List.exists attributes ~f:(fun attr ->
-            String.is_substring (Syn.text attr) ~substring:"__NeedsConcrete")
-      then
+      if List.exists attributes ~f:is_needs_concrete_attribute then
         attributes
       else
         let tail =
@@ -111,27 +129,10 @@ let add_attribute (methodish_attribute : Syn.t) ~(attribute : Syn.t) : Syn.t =
     }
   | _ -> methodish_attribute
 
-let has_needs_concrete_attribute : Syn.t -> bool = function
-  | {
-      syntax =
-        OldAttributeSpecification
-          {
-            old_attribute_specification_attributes =
-              { syntax = SyntaxList attributes; value = Synthetic };
-            _;
-          };
-      _;
-    } ->
-    List.exists attributes ~f:(function
-        | { syntax = ConstructorCall { constructor_call_type = token; _ }; _ }
-          ->
-          String.equal (Syn.text token) "__NeedsConcrete"
-        | _ -> false)
-  | _ -> false
-
 let rewrite_syntax
     (warnings : Codemod_sa_warning.t list)
     (path : Relative_path.t)
+    (edits : int ref)
     (node : Syn.t) : Syn.t Rewriter.t =
   let warning_in_containing_pos containing_pos =
     (* suboptimal O(n) search but probably doesn't matter *)
@@ -139,7 +140,8 @@ let rewrite_syntax
         match warning_code with
         | Error_codes.Warning.CallNeedsConcrete
         | Error_codes.Warning.AbstractAccessViaStatic
-        | Error_codes.Warning.UninstantiableClassViaStatic ->
+        | Error_codes.Warning.UninstantiableClassViaStatic
+        | Error_codes.Warning.NeedsConcreteOverride ->
           Pos.contains containing_pos pos
         | _ -> false)
   in
@@ -148,7 +150,6 @@ let rewrite_syntax
     match Syn.position path node with
     | Some containing_pos -> begin
       match warning_in_containing_pos containing_pos with
-      (* apparently isn't reached? *)
       | Some error when has_needs_concrete_attribute methodish_attribute ->
         let () =
           Printf.eprintf
@@ -156,20 +157,37 @@ let rewrite_syntax
             (Pos.print_verbose_relative error.pos)
         in
         Rewriter.Keep
-      | Some _ ->
-        Rewriter.Replace
-          {
-            node with
-            syntax =
-              MethodishDeclaration
-                {
-                  decl with
-                  methodish_attribute =
-                    add_attribute
-                      methodish_attribute
-                      ~attribute:needs_concrete_attribute_node;
-                };
-          }
+      | Some error ->
+        let methodish_attribute =
+          add_attribute
+            methodish_attribute
+            ~attribute:needs_concrete_attribute_node
+        in
+        if has_needs_concrete_attribute methodish_attribute then begin
+          let warning_code =
+            match error.warning_code with
+            | Error_codes.Warning.CallNeedsConcrete -> 12024
+            | Error_codes.Warning.AbstractAccessViaStatic -> 12025
+            | Error_codes.Warning.UninstantiableClassViaStatic -> 12026
+            | Error_codes.Warning.NeedsConcreteOverride -> 12027
+            | _ -> failwith "unexpected Safe Abstract warning"
+          in
+          incr edits;
+          Printf.printf
+            "SAFE_ABSTRACT_ADD\t%s\t%s\t%d\n%!"
+            (Relative_path.suffix path)
+            (_sp error.pos)
+            warning_code;
+          Rewriter.Replace
+            {
+              node with
+              syntax = MethodishDeclaration { decl with methodish_attribute };
+            }
+        end else
+          failwith
+            (Printf.sprintf
+               "Unable to add __NeedsConcrete at %s"
+               (Pos.print_verbose_relative error.pos))
       | None -> Rewriter.Keep
     end
     | None -> Rewriter.Keep
@@ -179,8 +197,12 @@ let rewrite_syntax
 let rewrite
     (path : Relative_path.t)
     (warnings : Codemod_sa_warning.t list)
-    (code : string) : string =
+    (code : string) : string * int =
+  let edits = ref 0 in
   let node = parse path code in
-  Rewriter.rewrite_post (rewrite_syntax warnings path) node
-  |> Syn.text
-  |> hackfmt path
+  let contents =
+    Rewriter.rewrite_post (rewrite_syntax warnings path edits) node
+    |> Syn.text
+    |> hackfmt path
+  in
+  (contents, !edits)
