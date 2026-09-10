@@ -85,12 +85,12 @@ static CrashReportStage s_crash_report_stage;
 // using the helper tool `hphp/tools/extract_from_core.sh`.  They start at
 // kDebugAddr and each start is page size aligned.  These static variables
 // should be kept in sync with that utility.
-static uintptr_t s_jitprof_start = 0;
-static uintptr_t s_jitprof_end = 0;
-static uintptr_t s_stacktrace_start = 0;
-static uintptr_t s_stacktrace_end = 0;
-static uintptr_t s_perfmap_start = 0;
-static uintptr_t s_perfmap_end = 0;
+static volatile uintptr_t s_jitprof_start = 0;
+static volatile uintptr_t s_jitprof_end = 0;
+static volatile uintptr_t s_stacktrace_start = 0;
+static volatile uintptr_t s_stacktrace_end = 0;
+static volatile uintptr_t s_perfmap_start = 0;
+static volatile uintptr_t s_perfmap_end = 0;
 
 static bool s_saw_trap = false;
 
@@ -346,8 +346,8 @@ void bt_handler(int sigin, siginfo_t* info, void* args) {
       s_crash_report_stage = CrashReportStage::SendEmail;
       auto frontier = kDebugAddr;
       auto const mapFileIn = [&frontier](const std::string& filename,
-                                         uintptr_t& start,
-                                         uintptr_t& end) {
+                                         volatile uintptr_t& start,
+                                         volatile uintptr_t& end) {
 
         auto file = fopen(filename.c_str(), "r");
         size_t size = 0;
