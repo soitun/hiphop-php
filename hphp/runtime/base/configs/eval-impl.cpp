@@ -153,6 +153,8 @@ int EvalLoader::AsyncJitWorkerThreadsDefault() {
 }
 
 bool EvalLoader::EnableAsyncJITProfileDefault() {
+  // Disabled with ROAR on ARM for now (T258073496).
+  if (use_roar && arch::any<arch::ARM>()) return false;
   return true;
 }
 
