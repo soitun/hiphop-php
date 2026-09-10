@@ -14,6 +14,7 @@ namespace HH {
    * The following enum values are defined in
    * hphp/runtime/ext/reflection/ext_reflection-classes.php
    */
+  <<__AllowUncheckedEnumValues>>
   enum TypeStructureKind: int {
     OF_VOID = 0;
     OF_INT = 0;

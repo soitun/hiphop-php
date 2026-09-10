@@ -20,5 +20,5 @@ File "typing_type_structure1.php", line 27, characters 5-28:
   classname<this> where this as D
 ERROR: File "typing_type_structure1.php", line 24, characters 33-42:
 The field `nullable` may not be present in this shape. Use `??` or `Shapes::idx()` instead. (Typing[4165])
-  File "typestructure.hhi", line 60, characters 6-15:
+  File "typestructure.hhi", line 61, characters 6-15:
   This is where the field was declared as optional.
