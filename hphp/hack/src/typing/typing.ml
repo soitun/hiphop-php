@@ -6094,7 +6094,8 @@ end = struct
             when String.equal name SN.FB.cTypeStructure ->
             if Typing_structure.is_enum_or_classish env ty_arg then
               let ty = make_ty (get_reason const_ty) ty_arg in
-              (env, te, ty)
+              let (_, te_pos, te_) = te in
+              make_result env te_pos te_ ty
             else begin
               Typing_error_utils.add_typing_error
                 ~env
