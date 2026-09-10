@@ -1,6 +1,6 @@
 <?hh
 
-function exn_throw($exn) :mixed{
+function exn_throw(Throwable $exn) :mixed{
   throw new Exception('throwing second');
 }
 <<__EntryPoint>>

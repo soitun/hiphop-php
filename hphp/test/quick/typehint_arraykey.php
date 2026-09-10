@@ -1,22 +1,25 @@
 <?hh
 
-function my_handler($errno, $errstr, $file, $line) :mixed{
+function my_handler(int $errno, string $errstr, string $file, int $line) :mixed{
   throw new Exception($errstr);
 }
 
-function try_takes_arraykey($a) :mixed{
+function try_takes_arraykey(mixed $a) :void{
   try {
-    takes_arraykey($a);
+    takes_arraykey(HH\FIXME\UNSAFE_CAST<mixed, arraykey>(
+      $a,
+      'Runtime enforcement is the behavior under test',
+    ));
   } catch (Exception $e) {
     echo $e->getMessage(), "\n";
   }
 }
 
-function takes_arraykey(arraykey $a) :mixed{
+function takes_arraykey(arraykey $a) :void{
   var_dump($a);
 }
 
-function main() :mixed{
+function main() :void{
   try_takes_arraykey(10);
   try_takes_arraykey('abc');
   try_takes_arraykey('100');

@@ -1,14 +1,14 @@
 <?hh
 
-<<__DynamicallyCallable>> function a() :mixed{
+<<__DynamicallyCallable>> function a() :void{
   echo "Hello from a\n";
 }
 
-<<__DynamicallyCallable>> function b() :mixed{
+<<__DynamicallyCallable>> function b() :void{
   echo "I am b\n";
 }
 
-function callfns($name, $name2) :mixed{
+function callfns(string $name, string $name2) :void{
   echo "Calling $name\n";
   HH\dynamic_fun($name)();
   echo "Calling $name2\n";

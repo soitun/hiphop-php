@@ -1,22 +1,25 @@
 <?hh
 
-function my_handler($errno, $errstr, $file, $line) :mixed{
+function my_handler(int $errno, string $errstr, string $file, int $line) :mixed{
   throw new Exception($errstr);
 }
 
-function try_takes_null($x) :mixed{
+function try_takes_null(mixed $x) :void{
   try {
-    takes_null($x);
+    takes_null(HH\FIXME\UNSAFE_CAST<mixed, null>(
+      $x,
+      'Runtime enforcement is the behavior under test',
+    ));
   } catch (Exception $e) {
     echo $e->getMessage(), "\n";
   }
 }
 
-function takes_null(null $x) :mixed{
+function takes_null(null $x) :void{
   var_dump($x);
 }
 
-function main() :mixed{
+function main() :void{
   try_takes_null(null);
   try_takes_null(42);
   try_takes_null(3.14);

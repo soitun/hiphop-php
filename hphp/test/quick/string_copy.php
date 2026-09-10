@@ -1,6 +1,6 @@
 <?hh
 
-function main($str) :mixed{
+function main(string $str) :void{
   $arr = vec[];
   for ($i = 0; $i < 3; ++$i) {
     $str[2] = (string)$i;

@@ -1,6 +1,6 @@
 <?hh
 
-function foo(inout $x) :mixed{
+function foo(inout int $x) :mixed{
   return $x + $x;
 }
 <<__EntryPoint>> function main(): void {

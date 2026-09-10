@@ -2,14 +2,14 @@
 // Copyright 2004-2015 Facebook. All Rights Reserved.
 
 class C {
-  public $x;
-  public function __construct($val) {
+  public int $x;
+  public function __construct(int $val) {
     $this->x = $val;
   }
-  public function getX() :mixed{
+  public function getX(): int{
     return $this->x;
   }
-  public function incX() :mixed{
+  public function incX(): int{
     $__lval_tmp_0 = $this->x;
     $this->x++;
     return $__lval_tmp_0;
@@ -17,7 +17,7 @@ class C {
 }
 
 
-function foo($o):mixed{
+function foo(C $o):void{
   echo $o->getX();
   echo "\n";
   echo $o->incX();

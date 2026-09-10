@@ -20,7 +20,7 @@ function foo5() :mixed{
   return INF * INF;
 }
 
-function foo6($a) :mixed{
+function foo6(float $a) :mixed{
   return $a * 2.0;
 }
 <<__EntryPoint>> function main(): void {

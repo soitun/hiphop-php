@@ -1,11 +1,11 @@
 <?hh
 
 
-function utf8_strtolower($str): string {
+function utf8_strtolower(string $str): string {
   return mb_strtolower($str, 'utf-8');
 }
 
-function normalize_email($email, $strip_slashes = false): string {
+function normalize_email(string $email, bool $strip_slashes = false): string {
   $ret_email = trim(utf8_strtolower($email), " \t\r\n\0\x0B.");
   if ($strip_slashes) {
     $ret_email = stripslashes($ret_email);

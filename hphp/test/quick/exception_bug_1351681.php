@@ -1,6 +1,6 @@
 <?hh
 function doThrow() :mixed{ throw new Exception("blah!"); }
-function foo() :mixed{
+function foo() :void{
   foreach (vec[1, 2, 3] as $_) {
     doThrow();
   }

@@ -1,6 +1,6 @@
 <?hh
 
-function darray_recursive($x) :mixed{
+function darray_recursive(mixed $x) :mixed{
   if (!HH\is_any_array($x)) {
     return $x;
   }

@@ -1,6 +1,6 @@
 <?hh
 
-function foo(inout $x, $y) :mixed{
+function foo(inout mixed $x, mixed $y) :mixed{
   $x = vec[1,2];
   $y = $x;
   return $y;

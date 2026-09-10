@@ -1,10 +1,10 @@
 <?hh
 
-function foo($v) :mixed{
-  return (string)$v;
+function foo(mixed $v) :mixed{
+  return (string)HH\FIXME\UNSAFE_CAST<mixed, dynamic>($v, 'Primitive value');
 }
 
-function bar($i) :mixed{
+function bar(int $i) :void{
   $v1 = "undefined";
   $v2 = "undefined";
   $v3 = "undefined";

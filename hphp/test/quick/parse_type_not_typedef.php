@@ -1,7 +1,7 @@
 <?hh
 
 // ok, 'type' is context sensitive
-function type() :mixed{
+function type() :void{
   echo "Hi\n";
 }
 
@@ -10,7 +10,7 @@ class Foo {
 }
 
 type t = int;
-function wat(t $type) :mixed{
+function wat(t $type) :void{
   echo $type . "\n";
 }
 <<__EntryPoint>> function main(): void {

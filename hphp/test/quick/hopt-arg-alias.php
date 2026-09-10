@@ -1,6 +1,6 @@
 <?hh
 
-function run(inout $a, inout $b) :mixed{
+function run(inout mixed $a, inout mixed $b) :mixed{
   $b = 2;
   $a = 3;
   return $b;

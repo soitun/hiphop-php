@@ -1,6 +1,6 @@
 <?hh
 
-function foo() :mixed{
+function foo() :void{
   $bar = \HH\global_get('asd');
 }
 <<__EntryPoint>> function main(): void {

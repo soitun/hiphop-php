@@ -1,16 +1,16 @@
 <?hh
 class B {
   const MYCONST = "B::MYCONST";
-  public static function foo() :mixed{
+  public static function foo() :void{
     echo "B::foo\n";
   }
 }
 class C extends B {
   const MYCONST = "C::MYCONST";
-  public static function foo() :mixed{
+  public static function foo() :void{
     echo "C::foo\n";
   }
-  public static function test() :mixed{
+  public static function test() :void{
     $arr = vec['foo'];
     self::foo();
     parent::foo();

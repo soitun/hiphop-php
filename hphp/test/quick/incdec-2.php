@@ -1,6 +1,10 @@
 <?hh
 
-function test($a, $b) :mixed{
+function test(mixed $a, mixed $b) :void{
+  $a = HH\FIXME\UNSAFE_CAST<mixed, dynamic>(
+    $a,
+    'The test intentionally increments values with legacy coercions',
+  );
   $a++;
   var_dump($a,$b);
   }

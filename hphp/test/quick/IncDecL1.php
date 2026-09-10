@@ -1,6 +1,6 @@
 <?hh
 
-function error_boundary($fn) :mixed{
+function error_boundary((function(): mixed) $fn) :mixed{
   try {
     return $fn();
   } catch (Exception $e) {
@@ -9,19 +9,35 @@ function error_boundary($fn) :mixed{
   }
 }
 
-function postInc($x) :mixed{
+function postInc(mixed $x) :mixed{
+  $x = HH\FIXME\UNSAFE_CAST<mixed, dynamic>(
+    $x,
+    'The test intentionally applies increment or decrement to legacy values',
+  );
   return error_boundary(() ==> { $r = $x; $x++; return $r; });
 }
 
-function preInc($x) :mixed{
+function preInc(mixed $x) :mixed{
+  $x = HH\FIXME\UNSAFE_CAST<mixed, dynamic>(
+    $x,
+    'The test intentionally applies increment or decrement to legacy values',
+  );
   return error_boundary(() ==> { ++$x; return $x; });
 }
 
-function postDec($x) :mixed{
+function postDec(mixed $x) :mixed{
+  $x = HH\FIXME\UNSAFE_CAST<mixed, dynamic>(
+    $x,
+    'The test intentionally applies increment or decrement to legacy values',
+  );
   return error_boundary(() ==> { $r = $x; $x--; return $r; });
 }
 
-function preDec($x) :mixed{
+function preDec(mixed $x) :mixed{
+  $x = HH\FIXME\UNSAFE_CAST<mixed, dynamic>(
+    $x,
+    'The test intentionally applies increment or decrement to legacy values',
+  );
   return error_boundary(() ==> { --$x; return $x; });
 }
 <<__EntryPoint>> function main(): void {

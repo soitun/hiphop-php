@@ -1,7 +1,7 @@
 <?hh
 
 class A {
-  public function f($x) :mixed{
+  public function f(string $x) :void{
     var_dump(HH\dynamic_fun($x)($this));
     var_dump(get_class($this));
   }

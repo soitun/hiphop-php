@@ -1,27 +1,27 @@
 <?hh
 
 namespace dict {
-const STUFF = 12;
+const int STUFF = 12;
 function dict() :mixed{ return 0; }
 function foo() :mixed{ return 1; }
 }
 
 namespace alpha {
-const STUFF = 12;
+const int STUFF = 12;
 function dict() :mixed{ return 0; }
 function foo() :mixed{ return 1; }
 }
 
 namespace beta\dict {
-const STUFF = 12;
+const int STUFF = 12;
 function dict() :mixed{ return 0; }
 function foo() :mixed{ return 1; }
 }
 
 namespace {
-function dictnest(dict<int, dict<int, int>> $foo) :mixed{}
+function dictnest(dict<int, dict<int, int>> $foo) :void{}
 
-function main() :mixed{
+function main() :void{
   var_dump(\dict\dict());
   var_dump(\dict\foo());
   var_dump(\dict\STUFF);

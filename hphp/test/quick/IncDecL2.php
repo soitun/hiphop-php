@@ -1,23 +1,39 @@
 <?hh
 
-function postInc(inout $x) :mixed{
+function postInc(inout mixed $x) :mixed{
+  $x = HH\FIXME\UNSAFE_CAST<mixed, dynamic>(
+    $x,
+    'The test intentionally applies increment or decrement to legacy values',
+  );
   $__lval_tmp_0 = $x;
   $x++;
   return $__lval_tmp_0;
 }
 
-function preInc(inout $x) :mixed{
+function preInc(inout mixed $x) :mixed{
+  $x = HH\FIXME\UNSAFE_CAST<mixed, dynamic>(
+    $x,
+    'The test intentionally applies increment or decrement to legacy values',
+  );
   ++$x;
   return $x;
 }
 
-function postDec(inout $x) :mixed{
+function postDec(inout mixed $x) :mixed{
+  $x = HH\FIXME\UNSAFE_CAST<mixed, dynamic>(
+    $x,
+    'The test intentionally applies increment or decrement to legacy values',
+  );
   $__lval_tmp_1 = $x;
   $x--;
   return $__lval_tmp_1;
 }
 
-function preDec(inout $x) :mixed{
+function preDec(inout mixed $x) :mixed{
+  $x = HH\FIXME\UNSAFE_CAST<mixed, dynamic>(
+    $x,
+    'The test intentionally applies increment or decrement to legacy values',
+  );
   --$x;
   return $x;
 }

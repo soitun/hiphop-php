@@ -1,5 +1,5 @@
 <?hh
-const SYMONE = 1;
+const int SYMONE = 1;
 <<__EntryPoint>> function main(): void {
 $l0 = 1;
 $l1 = $l0 + 1;

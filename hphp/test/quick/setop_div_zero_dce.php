@@ -1,6 +1,6 @@
 <?hh
 
-function error_boundary($fn) :mixed{
+function error_boundary((function(): mixed) $fn) :mixed{
   try {
     return $fn();
   } catch (\Throwable $e) {

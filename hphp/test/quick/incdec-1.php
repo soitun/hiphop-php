@@ -1,10 +1,10 @@
 <?hh
 
-function dec($x) :mixed{
+function dec(int $x) :mixed{
   return $x + -1;
 }
 
-function inc($x) :mixed{
+function inc(int $x) :mixed{
   return $x - (-1);
 }
 <<__EntryPoint>> function main(): void {

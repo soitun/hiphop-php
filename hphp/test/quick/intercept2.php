@@ -5,27 +5,27 @@
  * pre-intercept function.
  */
 
-function foo($i = 10) :mixed{
+function foo(mixed $i = 10) :void{
   var_dump(__METHOD__);
 }
 
-<<__DynamicallyCallable>> function bar($_1, $_2, inout $_3) :mixed{
+<<__DynamicallyCallable>> function bar(mixed $_1, mixed $_2, inout mixed $_3) :mixed{
   var_dump(__METHOD__);
   return shape('value' => null);
 }
 
-function test() :mixed{
+function test() :void{
   foo();
 }
 
 class C {
-  function snoot() :mixed{
+  public function snoot() :void{
     var_dump(__METHOD__);
   }
 }
 
 
-<<__DynamicallyCallable>> function swizzle($name, $obj, inout $args) :mixed{
+<<__DynamicallyCallable>> function swizzle(mixed $name, mixed $obj, inout mixed $args) :mixed{
   var_dump($name, $obj, $args);
   return shape();
 }

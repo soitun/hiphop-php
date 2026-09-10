@@ -1,7 +1,7 @@
 <?hh
 function foo() :mixed{ return "hello"; }
 function bar() :mixed{ return "goodbye"; }
-function test() :mixed{
+function test() :void{
   if (function_exists('foo')) {
     var_dump(foo());
   } else {

@@ -1,6 +1,6 @@
 <?hh
 
-function foo($x) :mixed{
+function foo(mixed $x) :void{
   var_dump((int)$x);
 }
 <<__EntryPoint>> function main(): void {

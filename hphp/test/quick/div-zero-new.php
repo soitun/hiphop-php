@@ -1,6 +1,6 @@
 <?hh
 
-function main($num,$zero) :mixed{
+function main(mixed $num,mixed $zero) :void{
   try {
     $z = HH\Lib\Legacy_FIXME\cast_for_arithmetic($num) / HH\Lib\Legacy_FIXME\cast_for_arithmetic($zero);
     var_dump($z);

@@ -1,9 +1,9 @@
 <?hh
 
 
-function doAThing($followable, $comment_settings) :mixed{
+function doAThing(int $followable, ?arraykey $comment_settings) :mixed{
   $interaction_settings = 0;
-  if ($followable) {
+  if (HH\legacy_is_truthy($followable)) {
     $interaction_settings |= 0x100;
   }
   if ($comment_settings !== null) {

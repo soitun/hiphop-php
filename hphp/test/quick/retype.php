@@ -1,6 +1,6 @@
 <?hh
 
-function show($x) :mixed{
+function show(arraykey $x) :void{
   echo $x;
 
   if(true) {

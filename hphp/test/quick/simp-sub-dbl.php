@@ -12,7 +12,7 @@ function foo3() :mixed{
   return NAN - 5.5;
 }
 
-function foo4($a) :mixed{
+function foo4(float $a) :mixed{
   return $a - 4.5;
 }
 

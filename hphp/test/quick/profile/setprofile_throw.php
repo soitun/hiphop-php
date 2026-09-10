@@ -1,17 +1,17 @@
 <?hh
 
 
-function throwing_profiler($case, $func) :mixed{
+function throwing_profiler(string $case, string $func) :void{
   if ($case == 'enter' && ($func == 'bar' || $func == 'baz')) {
     throw new Exception("yeah");
   }
 }
 
-function bar() :mixed{ echo "bar()\n"; }
-function baz() :mixed{ echo "baz()\n"; }
+function bar() :void{ echo "bar()\n"; }
+function baz() :void{ echo "baz()\n"; }
 
-function foo($f) :mixed{
-  $f();
+function foo(string $f) :void{
+  HH\FIXME\UNSAFE_CAST<string, (function(): void)>($f, 'String function name')();
 }
 
 <<__EntryPoint>>

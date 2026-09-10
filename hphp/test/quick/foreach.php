@@ -1,7 +1,7 @@
 <?hh
 
 // Test case pretty much stolen from www
-function array_glue($pre, $array, $post) :mixed{
+function array_glue(string $pre, vec<arraykey> $array, string $post) :mixed{
   foreach ($array as $k => $v) {
     $array[$k] = $pre.$v.$post;
   }
@@ -9,7 +9,7 @@ function array_glue($pre, $array, $post) :mixed{
   return $array;
 }
 
-function goo($arr) :mixed{
+function goo(vec<arraykey> $arr) :mixed{
   return array_glue('fub', $arr, '');
 }
 <<__EntryPoint>> function main(): void {

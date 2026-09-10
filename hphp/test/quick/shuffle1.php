@@ -1,6 +1,6 @@
 <?hh
 
-function get($a, $idx) :mixed{
+function get(KeyedContainer<arraykey, mixed> $a, arraykey $idx) :mixed{
   $max = 10;
   for ($i = 0; $i < $max; $i++) {
     $r = $a[$idx];

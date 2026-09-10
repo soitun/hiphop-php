@@ -1,7 +1,7 @@
 <?hh
 // Test the effectiveness of pre-coloring
 // Shouldn't have any shuffling for concats
-function foo($t0, $t1, $t2, $t3, $t4, $t5, $t6) :mixed{
+function foo(int $t0, int $t1, int $t2, int $t3, int $t4, int $t5, int $t6) :void{
   $sum = 0;
   $sum = $sum + $t0;
   $sum = $sum + $t1;

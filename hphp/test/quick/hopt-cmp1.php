@@ -1,6 +1,6 @@
 <?hh
 
-function main($x, $y) :mixed{
+function main(int $x, int $y) :void{
   while ($x < $y) {
     echo $x . "\n";
     $x++;

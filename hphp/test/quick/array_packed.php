@@ -1,6 +1,6 @@
 <?hh
 
-function test($x) :mixed{
+function test(int $x) :void{
   // each of these should "just work" but stresses NewVArray/NewDArray logic.
   $a = vec[$x, 1, 2]; var_dump($a);
   $a = vec[$x,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]; var_dump($a);

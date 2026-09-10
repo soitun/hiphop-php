@@ -1,43 +1,43 @@
 <?hh
 
 abstract class A {
-  abstract function foo(): int;
+  abstract public function foo(): int;
 
-  function bar(): int {
+  public function bar(): int {
     return $this->foo();
   }
 }
 
 abstract class B extends A {
-  function baz(): int {
+  public function baz(): int {
     return $this->bar();
   }
 }
 
 class B1 extends B {
   <<__Override>>
-  function foo(): int {
+  public function foo(): int {
     return 10;
   }
 }
 
 class B2 extends B {
   <<__Override>>
-  function foo(): int {
+  public function foo(): int {
     return 11;
   }
 }
 
 class C1 extends A {
   <<__Override>>
-  function foo(): int {
+  public function foo(): int {
     return 100;
   }
 }
 
 class C2 extends A {
   <<__Override>>
-  function foo(): int {
+  public function foo(): int {
     return 110;
   }
 }
@@ -51,7 +51,7 @@ function fox(B $b): int {
 }
 
 <<__EntryPoint>>
-function main() {
+function main() : void {
   bar(new C1());
   bar(new C2());
   bar(new B1());

@@ -40,18 +40,18 @@ function foo8() :mixed{
   return HH\Lib\Legacy_FIXME\neq($x, 2);
 }
 
-function foo9($x) :mixed{
+function foo9(int $x) :mixed{
   $y = $x + 1;
   return $y === 6;
 }
 
-function foo10($x) :mixed{
+function foo10(int $x) :mixed{
   $y = $x + 1;
   return $y !== 6;
 }
 
 
-function foo12($x) :mixed{
+function foo12(mixed $x) :mixed{
   return $x !== 6;
 }
 <<__EntryPoint>> function main(): void {

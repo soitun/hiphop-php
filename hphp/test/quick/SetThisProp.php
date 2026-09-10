@@ -1,8 +1,8 @@
 <?hh
 class C {
-  public $a;
-  public $b;
-  public function f() :mixed{
+  public mixed $a;
+  public mixed $b;
+  public function f() :void{
     $this->a = new stdClass();
     $this->b = 1;
     $this->a = 2;

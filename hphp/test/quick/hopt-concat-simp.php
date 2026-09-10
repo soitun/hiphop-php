@@ -13,7 +13,7 @@ function foo2() :mixed{
   return $x . $y . $z;
 }
 
-function foo3($x) :mixed{
+function foo3(string $x) :mixed{
   $y = "c";
   return $x . $y;
 }

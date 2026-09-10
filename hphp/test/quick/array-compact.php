@@ -1,5 +1,5 @@
 <?hh
-function f($a) :mixed{
+function f(dict<arraykey, int> $a) :mixed{
   $a["four"] = 4;
   return $a;
 }

@@ -1,7 +1,7 @@
 <?hh
 
 <<__EntryPoint>>
-function main() :mixed{
+function main() :void{
   vec[
   vec[
   vec[

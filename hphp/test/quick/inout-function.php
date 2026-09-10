@@ -1,5 +1,5 @@
 <?hh
-function func(inout $a, inout $b, inout $c): void {
+function func(inout string $a, inout string $b, inout int $c): void {
   print("In func: $a, $b, $c\n");
 
 }

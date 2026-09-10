@@ -1,13 +1,17 @@
 <?hh
 // Copyright 2004-present Facebook. All Rights Reserved.
 
-function do_print($f, $v, $k, $d) :mixed{
-  $f($v); print "\n";
-  $f($k); print "\n";
-  $f($d); print "\n";
+function do_print(mixed $f, mixed $v, mixed $k, mixed $d) :void{
+  $print = HH\FIXME\UNSAFE_CAST<mixed, (function(mixed): mixed)>(
+    $f,
+    'All supplied callbacks accept one value',
+  );
+  $print($v); print "\n";
+  $print($k); print "\n";
+  $print($d); print "\n";
 }
 
-function run($v, $k, $d) :mixed{
+function run(mixed $v, mixed $k, mixed $d) :void{
   do_print(var_dump<>, $v, $k, $d);
   do_print(var_export<>, $v, $k, $d);
   do_print(print_r<>, $v, $k, $d);

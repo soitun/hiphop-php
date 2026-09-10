@@ -1,6 +1,6 @@
 <?hh
 
-function foo($x) :mixed{
+function foo(int $x) :mixed{
   $x = $x + 1;
   return $x;
 }

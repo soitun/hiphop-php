@@ -1,6 +1,6 @@
 <?hh
 
-function ci($x) :mixed{
+function ci(mixed $x) :void{
   print "----------\nx == 0\n";
   var_dump($x);
   var_dump(HH\Lib\Legacy_FIXME\eq($x, 0));
@@ -22,7 +22,7 @@ function ci($x) :mixed{
   var_dump(HH\Lib\Legacy_FIXME\eq($x, 90000000000));
 }
 
-function cs($x) :mixed{
+function cs(mixed $x) :void{
   print "----------\nx == ''\n";
   var_dump($x);
   var_dump(HH\Lib\Legacy_FIXME\eq($x, ""));
@@ -64,7 +64,7 @@ function cs($x) :mixed{
   var_dump(HH\Lib\Legacy_FIXME\eq($x, "9e10"));
 }
 
-function is($x, $y) :mixed{
+function is(mixed $x, mixed $y) :void{
   print("----------\nx == y\n");
   var_dump($x);
   var_dump($y);
@@ -100,14 +100,14 @@ function is($x, $y) :mixed{
     }
   }
 
-  print "----------\n0 == 'q123'\n"; 
+  print "----------\n0 == 'q123'\n";
   var_dump(HH\Lib\Legacy_FIXME\eq(0, "q123"));
-  print "----------\n123 == '123q'\n"; 
+  print "----------\n123 == '123q'\n";
   var_dump(HH\Lib\Legacy_FIXME\eq(123, "123q"));
   print "----------\n123 == '123.0'\n";
   var_dump(HH\Lib\Legacy_FIXME\eq(123, "123.0"));
   print "----------\n90000000000 == '9e10'\n";
   var_dump(9000000000 == "9e10");
-  print "----------\n0 == '-456'\n"; 
+  print "----------\n0 == '-456'\n";
   var_dump(0 == "-456");
 }

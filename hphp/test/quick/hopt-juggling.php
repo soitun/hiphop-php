@@ -45,11 +45,11 @@ function foo9() :mixed{
   return HH\Lib\Legacy_FIXME\cast_for_arithmetic($x) - HH\Lib\Legacy_FIXME\cast_for_arithmetic(null);
 }
 
-function foo10($x) :mixed{
+function foo10(mixed $x) :mixed{
   return HH\Lib\Legacy_FIXME\cast_for_arithmetic($x) + HH\Lib\Legacy_FIXME\cast_for_arithmetic("10");
 }
 
-function foo11($x, $y) :mixed{
+function foo11(mixed $x, mixed $y) :mixed{
   return HH\Lib\Legacy_FIXME\cast_for_arithmetic($x) + HH\Lib\Legacy_FIXME\cast_for_arithmetic($y);
 }
 

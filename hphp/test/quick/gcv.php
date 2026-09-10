@@ -1,10 +1,10 @@
 <?hh
 class C {
-  public $pub = 'C::$pub';
-  protected $prot = 'C::$prot';
-  private $priv = 'C::$priv';
+  public string $pub = 'C::$pub';
+  protected string $prot = 'C::$prot';
+  private string $priv = 'C::$priv';
 
-  public static function show() :mixed{
+  public static function show() :void{
     echo "in C: accessing C\n";
     var_dump(get_class_vars('C'));
 
@@ -17,11 +17,11 @@ class C {
 }
 
 class D extends C {
-  public $pub_from_d = 'D::$pub_from_d';
-  protected $prot_from_d = 'D::$prot_from_d';
-  private $priv_from_d = 'D::$priv_from_d';
+  public string $pub_from_d = 'D::$pub_from_d';
+  protected string $prot_from_d = 'D::$prot_from_d';
+  private string $priv_from_d = 'D::$priv_from_d';
 
-  public static function show() :mixed{
+  public static function show() :void{
     echo "in D: accessing C\n";
     var_dump(get_class_vars('C'));
 
@@ -34,9 +34,9 @@ class D extends C {
 }
 
 class E extends D {
-  private $priv = 'E::$priv'; // same name as C::$priv
+  private string $priv = 'E::$priv'; // same name as C::$priv
 
-  public static function show() :mixed{
+  public static function show() :void{
     echo "in E: accessing C\n";
     var_dump(get_class_vars('C'));
 
@@ -50,11 +50,11 @@ class E extends D {
 
 
 class SC {
-  public static $pub = 'SC::$pub';
-  protected static $prot = 'SC::$prot';
-  private static $priv = 'SC::$priv';
+  public static string $pub = 'SC::$pub';
+  protected static string $prot = 'SC::$prot';
+  private static string $priv = 'SC::$priv';
 
-  public static function show() :mixed{
+  public static function show() :void{
     echo "in SC: accessing SC\n";
     var_dump(get_class_vars('SC'));
 
@@ -67,11 +67,11 @@ class SC {
 }
 
 class SD extends SC {
-  public static $pub_from_d = 'SD::$pub_from_d';
-  protected static $prot_from_d = 'SD::$prot_from_d';
-  private static $priv_from_d = 'SD::$priv_from_d';
+  public static string $pub_from_d = 'SD::$pub_from_d';
+  protected static string $prot_from_d = 'SD::$prot_from_d';
+  private static string $priv_from_d = 'SD::$priv_from_d';
 
-  public static function show() :mixed{
+  public static function show() :void{
     echo "in SD: accessing SC\n";
     var_dump(get_class_vars('SC'));
 
@@ -84,9 +84,9 @@ class SD extends SC {
 }
 
 class SE extends SD {
-  private static $priv = 'SE::$priv'; // same name as SC::$priv
+  private static string $priv = 'SE::$priv'; // same name as SC::$priv
 
-  public static function show() :mixed{
+  public static function show() :void{
     echo "in SE: accessing SC\n";
     var_dump(get_class_vars('SC'));
 

@@ -1,10 +1,10 @@
 <?hh
 
-function id($x,) :mixed{return $x;}
+function id(int $x,) :mixed{return $x;}
 
 function multiline(
-  $x,
-  $y,
+  int $x,
+  int $y,
 ) :mixed{ return $x+$y; }
 
 <<__EntryPoint>> function main(): void {

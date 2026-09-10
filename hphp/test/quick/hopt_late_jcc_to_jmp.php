@@ -1,17 +1,17 @@
 <?hh
 
 abstract final class HoptLateJccToJmp {
-  public static $baseurl;
-  public static $has_local;
+  public static ?int $baseurl;
+  public static ?bool $has_local;
 }
 
-function f() :mixed{
+function f() :void{
 
-  if (0xface != HoptLateJccToJmp::$baseurl) {
+  if (HH\Lib\Legacy_FIXME\neq(0xface, HoptLateJccToJmp::$baseurl)) {
     HoptLateJccToJmp::$has_local = true;
   }
 
-  if (!HoptLateJccToJmp::$has_local) {
+  if (!HH\legacy_is_truthy(HoptLateJccToJmp::$has_local)) {
     echo "oops\n";
   }
 }

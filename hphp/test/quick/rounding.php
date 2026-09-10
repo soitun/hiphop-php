@@ -1,6 +1,6 @@
 <?hh
 
-function main($v1, $v2, $v3, $v4, $v5, $v6) :mixed{
+function main(num $v1, num $v2, num $v3, num $v4, num $v5, num $v6) :void{
   $a = floor($v1);
   $b = ceil($v1);
   $c = floor($v2);

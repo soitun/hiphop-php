@@ -1,60 +1,60 @@
 <?hh
 // Copyright 2004-present Facebook. All Rights Reserved.
 
-const BOOLCNS = false;
+const bool BOOLCNS = false;
 
 class Cls {
   const INTCNS = 123;
 }
 
-const ARRAY1 = vec[];
-const ARRAY2 = vec[1, 2, 3, 4];
-const ARRAY3 = vec['a', 'b', 'c', 'd'];
-const ARRAY4 = vec[1, vec[false, null], vec[true, 'abc'], 1.23, vec[]];
-const ARRAY5 = vec[vec[], dict[], keyset[]];
-const ARRAY6 = vec[vec[1, 2], dict['abc' => true], keyset['a', 100, 'b']];
-const ARRAY7 = ARRAY1;
-const ARRAY8 = vec[ARRAY2, ARRAY2];
-const ARRAY9 = vec[BOOLCNS ? ARRAY2 : ARRAY3];
-const ARRAY10 = vec[Cls::INTCNS];
+const vec<mixed> ARRAY1 = vec[];
+const vec<mixed> ARRAY2 = vec[1, 2, 3, 4];
+const vec<mixed> ARRAY3 = vec['a', 'b', 'c', 'd'];
+const vec<mixed> ARRAY4 = vec[1, vec[false, null], vec[true, 'abc'], 1.23, vec[]];
+const vec<mixed> ARRAY5 = vec[vec[], dict[], keyset[]];
+const vec<mixed> ARRAY6 = vec[vec[1, 2], dict['abc' => true], keyset['a', 100, 'b']];
+const vec<mixed> ARRAY7 = ARRAY1;
+const vec<mixed> ARRAY8 = vec[ARRAY2, ARRAY2];
+const vec<mixed> ARRAY9 = vec[BOOLCNS ? ARRAY2 : ARRAY3];
+const vec<mixed> ARRAY10 = vec[Cls::INTCNS];
 
-const VEC1 = vec[];
-const VEC2 = vec[1, 2, 3, 4];
-const VEC3 = vec['a', 'b', 'c', 'd'];
-const VEC4 = vec[1, vec[false, null], vec[true, 'abc'], 1.23, vec[]];
-const VEC5 = vec[vec[], dict[], keyset[]];
-const VEC6 = vec[vec[1, 2], dict['abc' => true], keyset['a', 100, 'b']];
-const VEC7 = VEC1;
-const VEC8 = vec[VEC2, VEC2];
-const VEC9 = vec[BOOLCNS ? VEC2 : VEC3];
-const VEC10 = vec[Cls::INTCNS];
+const vec<mixed> VEC1 = vec[];
+const vec<mixed> VEC2 = vec[1, 2, 3, 4];
+const vec<mixed> VEC3 = vec['a', 'b', 'c', 'd'];
+const vec<mixed> VEC4 = vec[1, vec[false, null], vec[true, 'abc'], 1.23, vec[]];
+const vec<mixed> VEC5 = vec[vec[], dict[], keyset[]];
+const vec<mixed> VEC6 = vec[vec[1, 2], dict['abc' => true], keyset['a', 100, 'b']];
+const vec<mixed> VEC7 = VEC1;
+const vec<mixed> VEC8 = vec[VEC2, VEC2];
+const vec<mixed> VEC9 = vec[BOOLCNS ? VEC2 : VEC3];
+const vec<mixed> VEC10 = vec[Cls::INTCNS];
 
-const DICT1 = dict[];
-const DICT2 = dict[100 => 1, 200 => 2, 300 => 3, 400 => 4];
-const DICT3 = dict['key1' => 'a', 'key2' => 'b', 'key3' => 'c', 'key4' => 'd'];
-const DICT4 = dict['key1' => 500, 'key2' => 800];
-const DICT5 = dict[100 => 'abc', 200 => 'def'];
-const DICT6 = dict['100' => 'abc', '200' => 'def', 100 => 'ghi', 200 => 'jkl'];
-const DICT7 = dict[0 => 1,
+const dict<arraykey, mixed> DICT1 = dict[];
+const dict<arraykey, mixed> DICT2 = dict[100 => 1, 200 => 2, 300 => 3, 400 => 4];
+const dict<arraykey, mixed> DICT3 = dict['key1' => 'a', 'key2' => 'b', 'key3' => 'c', 'key4' => 'd'];
+const dict<arraykey, mixed> DICT4 = dict['key1' => 500, 'key2' => 800];
+const dict<arraykey, mixed> DICT5 = dict[100 => 'abc', 200 => 'def'];
+const dict<arraykey, mixed> DICT6 = dict['100' => 'abc', '200' => 'def', 100 => 'ghi', 200 => 'jkl'];
+const dict<arraykey, mixed> DICT7 = dict[0 => 1,
                    1 => dict['a' => false, 5 => null],
                    2 => dict[10 => true, 'z' => 'abc'],
                    3 => 1.23,
                    4 => dict[]];
-const DICT8 = dict['100' => 5, 100 => 'abc', 1 => dict[123 => 'abc', '123' => 10]];
-const DICT9 = dict[100 => vec[], 200 => vec[], 300 => keyset[]];
-const DICT10 = dict[100 => vec[1, 2], 200 => vec['abc'], 300 => keyset['a', 100, 'b']];
-const DICT11 = DICT1;
-const DICT12 = dict[123 => DICT2, 456 => DICT2];
-const DICT13 = dict[100 => BOOLCNS ? DICT2 : DICT3];
-const DICT14 = dict['abc' => Cls::INTCNS];
+const dict<arraykey, mixed> DICT8 = dict['100' => 5, 100 => 'abc', 1 => dict[123 => 'abc', '123' => 10]];
+const dict<arraykey, mixed> DICT9 = dict[100 => vec[], 200 => vec[], 300 => keyset[]];
+const dict<arraykey, mixed> DICT10 = dict[100 => vec[1, 2], 200 => vec['abc'], 300 => keyset['a', 100, 'b']];
+const dict<arraykey, mixed> DICT11 = DICT1;
+const dict<arraykey, mixed> DICT12 = dict[123 => DICT2, 456 => DICT2];
+const dict<arraykey, mixed> DICT13 = dict[100 => BOOLCNS ? DICT2 : DICT3];
+const dict<arraykey, mixed> DICT14 = dict['abc' => Cls::INTCNS];
 
-const KEYSET1 = keyset[];
-const KEYSET2 = keyset[1, 2, 3, 4];
-const KEYSET3 = keyset['a', 'b', 'c'];
-const KEYSET4 = keyset[1, '1', 2, '2'];
-const KEYSET5 = KEYSET1;
-const KEYSET6 = keyset[BOOLCNS ? 'a' : 1];
-const KEYSET7 = keyset[Cls::INTCNS];
+const keyset<arraykey> KEYSET1 = keyset[];
+const keyset<arraykey> KEYSET2 = keyset[1, 2, 3, 4];
+const keyset<arraykey> KEYSET3 = keyset['a', 'b', 'c'];
+const keyset<arraykey> KEYSET4 = keyset[1, '1', 2, '2'];
+const keyset<arraykey> KEYSET5 = KEYSET1;
+const keyset<arraykey> KEYSET6 = keyset[BOOLCNS ? 'a' : 1];
+const keyset<arraykey> KEYSET7 = keyset[Cls::INTCNS];
 
 <<__EntryPoint>> function main(): void {
 var_dump(ARRAY1);

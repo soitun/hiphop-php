@@ -1,5 +1,5 @@
 <?hh
 
-function inOtherUnit() :mixed{
+function inOtherUnit() :void{
   echo "called 0-ary function\n";
 }

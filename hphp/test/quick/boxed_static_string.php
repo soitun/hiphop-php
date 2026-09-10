@@ -1,6 +1,6 @@
 <?hh
 
-function breaker(inout $x) :mixed{
+function breaker(inout string $x) :void{
   $x = (string)mt_rand();
 }
 

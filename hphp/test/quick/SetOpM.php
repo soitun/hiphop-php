@@ -1,12 +1,12 @@
 <?hh
 class T {
-  public $str;
-  public $int;
-  function __construct() {
+  public string $str;
+  public int $int;
+  public function __construct() {
     $this->str = '';
     $this->int = 0;
   }
-  function bongo($a, $b) :mixed{
+  public function bongo(string $a, int $b) :void{
     $this->str .= $a;
     $this->int += $b;
   }

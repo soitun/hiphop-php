@@ -12,31 +12,31 @@ function foo2() :mixed{
   return (int)($x && $y);
 }
 
-function foo3($x) :mixed{
+function foo3(int $x) :mixed{
   return 0 & $x;
 }
 
-function foo4($x) :mixed{
+function foo4(int $x) :mixed{
   return $x & $x;
 }
 
-function foo5($x) :mixed{
+function foo5(int $x) :mixed{
   return (-1) & $x;
 }
 
-function foo6($x, $y, $z) :mixed{
+function foo6(int $x, int $y, int $z) :mixed{
   return ($x | $y) & ($x | $z);
 }
 
-function foo7($x, $y, $z) :mixed{
+function foo7(int $x, int $y, int $z) :mixed{
   return ($y | $x) & ($x | $z);
 }
 
-function foo8($x, $y, $z) :mixed{
+function foo8(int $x, int $y, int $z) :mixed{
   return ($x | $y) & ($z | $x);
 }
 
-function foo9($x, $y, $z) :mixed{
+function foo9(int $x, int $y, int $z) :mixed{
   return ($y | $x) & ($z | $x);
 }
 <<__EntryPoint>> function main(): void {

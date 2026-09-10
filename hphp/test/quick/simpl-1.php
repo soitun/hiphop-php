@@ -1,6 +1,6 @@
 <?hh
 
-function mult1($x) :mixed{
+function mult1(mixed $x) :mixed{
   return HH\Lib\Legacy_FIXME\cast_for_arithmetic($x) * 1;
 }
 <<__EntryPoint>> function main(): void {

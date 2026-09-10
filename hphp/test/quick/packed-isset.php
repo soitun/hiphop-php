@@ -1,6 +1,6 @@
 <?hh
 
-function foo() :mixed{
+function foo() :void{
   $arr = dict[];
   for ($i = 0; $i < 4; $i++) {
     $arr[$i] = $i;
@@ -13,7 +13,7 @@ function foo() :mixed{
   }
 }
 
-function foo2() :mixed{
+function foo2() :void{
   $arr = dict[];
   for ($i = 0; $i < 4; $i++) {
     $arr[$i] = null;

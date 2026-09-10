@@ -1,6 +1,6 @@
 <?hh
 
-function main($a, $b, $c, $d) :mixed{
+function main(mixed $a, mixed $b, mixed $c, mixed $d) :void{
   $x = abs($a);
   $y = abs($b);
   $z = abs($c);
@@ -11,7 +11,7 @@ function main($a, $b, $c, $d) :mixed{
   var_dump($z);
   var_dump($t);
 }
-<<__EntryPoint>> function main_entry() :mixed{
+<<__EntryPoint>> function main_entry() :void{
 main(5, -5, 5.5, -5.5);
 main(1729382256910270464, -1729382256910270464,
      4611686018427387904, -4611686018427387904);

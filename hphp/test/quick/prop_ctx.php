@@ -1,22 +1,22 @@
 <?hh
 
 trait t {
-  public static function f($o) :mixed{
-    var_dump($o->prop);
+  public static function f(mixed $o) :void{
+    var_dump((HH\FIXME\UNSAFE_CAST<mixed, dynamic>($o, 'Runtime property'))->prop);
   }
-  public static function set($o, $v) :mixed{
-    $o->prop = $v;
+  public static function set(mixed $o, string $v) :void{
+    (HH\FIXME\UNSAFE_CAST<mixed, dynamic>($o, 'Runtime property'))->prop = $v;
     var_dump($o);
   }
 }
 
 class a {
   use t;
-  private $prop = 'I am private in a';
+  private string $prop = 'I am private in a';
 }
 
 class b extends a {
-  public $prop = 'I am public in b';
+  public string $prop = 'I am public in b';
 }
 
 <<__EntryPoint>> function main(): void {

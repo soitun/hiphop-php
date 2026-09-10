@@ -1,6 +1,6 @@
 <?hh
 
-function foo() :mixed{
+function foo() :void{
   $x = 123;
   var_dump((string)$x);
   $y = -456;

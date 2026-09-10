@@ -17,7 +17,7 @@ enum Baz : int {
 }
 
 class Stringy {
-  function __toString(): string {
+  public function __toString(): string {
     return 'foo';
   }
 }

@@ -1,6 +1,6 @@
 <?hh
 class Foo {
-  function method(inout $a, inout $b, inout $c): void {
+  public function method(inout string $a, inout string $b, inout int $c): void {
     print("In method: $a, $b, $c\n");
   }
 }

@@ -18,7 +18,7 @@ class C extends Base { }
 class A1 extends A { }
 class A2 extends A { }
 
-function main() :mixed{
+function main() :void{
   Base::$side_effects = vec[];
   var_dump(vec[
     A1::name(),

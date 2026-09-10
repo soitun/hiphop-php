@@ -1,13 +1,13 @@
 <?hh
 
 class Foo {
-  public static $z = 0;
+  public static int $z = 0;
 
-  public static function setZ($a) :mixed{
+  public static function setZ(int $a) :void{
     Foo::$z = $a;
   }
 
-  public static function getZ() :mixed{
+  public static function getZ(): int{
     return Foo::$z;
   }
 }

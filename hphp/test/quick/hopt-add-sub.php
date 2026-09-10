@@ -1,18 +1,18 @@
 <?hh
 
-function foo1($a, $b) :mixed{
+function foo1(int $a, int $b) :mixed{
   return ($a - 4) + ($b - 9);
 }
 
-function foo2($a, $b) :mixed{
+function foo2(int $a, int $b) :mixed{
   return ($a - 3) + 7;
 }
 
-function foo3($a, $b) :mixed{
+function foo3(int $a, int $b) :mixed{
   return ($a - 3) - 7;
 }
 
-function foo4($a, $b) :mixed{
+function foo4(int $a, int $b) :mixed{
   return ($a - 4) + ($b + 9);
 }
 <<__EntryPoint>> function main(): void {

@@ -1,7 +1,7 @@
 <?hh
 
 
-function jmpfuse($str) :mixed{
+function jmpfuse(string $str) :mixed{
   $pos = 0;
   while (true) {
     if (!(strlen($str) > $pos + 2 &&

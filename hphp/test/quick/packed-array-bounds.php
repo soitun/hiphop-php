@@ -1,7 +1,7 @@
 <?hh
 
 
-function main($a, $i) :mixed{
+function main(vec<int> $a, int $i) :void{
   var_dump(isset($a[1 << 32]));
   var_dump(isset($a[$i]));
 }

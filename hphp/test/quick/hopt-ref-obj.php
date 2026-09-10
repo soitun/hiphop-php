@@ -2,7 +2,7 @@
 
 class Foo { }
 
-function run(inout $b) :mixed{
+function run(inout mixed $b) :mixed{
   return $b;
 }
 <<__EntryPoint>> function main(): void {

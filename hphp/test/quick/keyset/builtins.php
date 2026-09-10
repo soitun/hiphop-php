@@ -1,7 +1,11 @@
 <?hh
 // Copyright 2004-present Facebook. All Rights Reserved.
 
-function main($k) :mixed{
+function main(keyset<arraykey> $k) :void{
+  $k = HH\FIXME\UNSAFE_CAST<keyset<arraykey>, dynamic>(
+    $k,
+    'Array builtins are exercised with legacy dynamic behavior',
+  );
   echo "Testing: ";
   var_dump($k);
 

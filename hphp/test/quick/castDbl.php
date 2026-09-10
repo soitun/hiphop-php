@@ -1,6 +1,6 @@
 <?hh
 
-function main($x, $y, $z, $t) :mixed{
+function main(float $x, float $y, float $z, float $t) :void{
   $a = (int)$x;
   $b = (int)$y;
   $c = (int)$z;

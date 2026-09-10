@@ -5,47 +5,47 @@ function foo1() :mixed{
   return $x * $y;
 }
 
-function foo2($x) :mixed{
+function foo2(int $x) :mixed{
   return $x * 2;
 }
 
-function foo3($x, $y) :mixed{
+function foo3(int $x, int $y) :mixed{
   return $x * $y;
 }
 
-function foo4($x) :mixed{
+function foo4(int $x) :mixed{
   return (-1) * $x;
 }
 
-function foo5($x, $y, $z) :mixed{
+function foo5(int $x, int $y, int $z) :mixed{
   return $x * $y + $x * $z;
 }
 
-function foo6($x, $y, $z) :mixed{
+function foo6(int $x, int $y, int $z) :mixed{
   return $y * $x + $x * $z;
 }
 
-function foo7($x, $y, $z) :mixed{
+function foo7(int $x, int $y, int $z) :mixed{
   return $x * $y + $z * $x;
 }
 
-function foo8($x, $y, $z) :mixed{
+function foo8(int $x, int $y, int $z) :mixed{
   return $y * $x + $z * $x;
 }
 
-function foo9($x, $y) :mixed{
+function foo9(int $x, int $y) :mixed{
   return ($x * 3) * ($y * 7);
 }
 
-function foo10($x) :mixed{
+function foo10(int $x) :mixed{
   return (3 * $x) * 7;
 }
 
-function foo11($x) :mixed{
+function foo11(int $x) :mixed{
   return $x * 8;
 }
 
-function foo12($x) :mixed{
+function foo12(int $x) :mixed{
   return $x * (-8);
 }
 <<__EntryPoint>> function main(): void {

@@ -51,7 +51,7 @@ class C extends B {
 }
 
 
-function main() :mixed{
+function main() :void{
   // These are all possibilities, sorted randomly,
   // with the expected value determined by hand.
   $results = vec[

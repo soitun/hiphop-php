@@ -2,14 +2,14 @@
 
 class blah {
 
-  private static $breakerX = 0;
-  private function breaker() :mixed{
+  private static int $breakerX = 0;
+  private function breaker(): ?vec<nothing>{
     $__lval_tmp_0 = self::$breakerX;
     self::$breakerX++;
     return $__lval_tmp_0== 0 ? vec[] : null;
   }
 
-  public function foo() :mixed{
+  public function foo() :void{
     $x = 0;
     $y = 0;
 

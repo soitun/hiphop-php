@@ -1,7 +1,11 @@
 <?hh
 
 
-function go($c, $k) :mixed{
+function go(mixed $c, int $k) :void{
+  $c = HH\FIXME\UNSAFE_CAST<mixed, dynamic>(
+    $c,
+    'The test intentionally performs possibly invalid collection operations',
+  );
   try {
     $unused = $c[$k];
   } catch (Exception $e) {

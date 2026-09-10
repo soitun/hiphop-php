@@ -1,11 +1,11 @@
 <?hh
 
 class A {
-  <<__LSB>> private static $x = "hello";
-  <<__LSB>> protected static $y = 123;
-  <<__LSB>> public static $z = vec[1,2,3];
+  <<__LSB>> private static string $x = "hello";
+  <<__LSB>> protected static int $y = 123;
+  <<__LSB>> public static vec<int> $z = vec[1,2,3];
 
-  static function dump() :mixed{
+  static public function dump() :void{
     var_dump(static::$x);
     var_dump(static::$y);
     var_dump(static::$z);

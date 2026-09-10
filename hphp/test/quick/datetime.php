@@ -1,6 +1,6 @@
 <?hh
 
-function main() :mixed{
+function main() :void{
   try {
     new DateTimeZone('something');
   } catch (Exception $e) {
@@ -9,7 +9,7 @@ function main() :mixed{
   var_dump(DateTime::createFromFormat('2013-01-05', 'aoeu'));
 }
 
-function specialIntervals() :mixed{
+function specialIntervals() :void{
   $d = new DateTime('2015-05-05');
   echo 'Last day of the month of 2015-05-05 is ';
   echo $d->modify('last day of this month')->format('Y-m-d'), "\n";

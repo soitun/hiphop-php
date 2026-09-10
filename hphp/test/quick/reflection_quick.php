@@ -1,8 +1,8 @@
 <?hh
 class Foo {
 
-  private static $barX;
-  public static function bar() :mixed{
+  private static mixed $barX;
+  public static function bar() :void{
   }
 }
 <<__EntryPoint>> function main(): void {

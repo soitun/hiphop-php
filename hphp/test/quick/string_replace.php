@@ -1,20 +1,20 @@
 <?hh
 
-function replace_array_str($in) :mixed{
+function replace_array_str(mixed $in) :void{
   $search = vec['a', 'b'];
   $count = 0;
   $out = str_replace_with_count($search, '', $in, inout $count);
   var_dump(vec[$out, $count]);
 }
 
-function replace_array_array($inarr) :mixed{
+function replace_array_array(mixed $inarr) :void{
   $search = vec['a', 'b'];
   $count = 0;
   $out = str_replace_with_count($search, '', $inarr, inout $count);
   var_dump(vec[$out, $count]);
 }
 
-function replace_str_str($in) :mixed{
+function replace_str_str(mixed $in) :void{
   $search = 'a';
   $count = 0;
   $out = str_replace_with_count($search, '', $in, inout $count);

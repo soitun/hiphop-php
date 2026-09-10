@@ -1,8 +1,8 @@
 <?hh
 
 abstract class B {
-  private function priv() :mixed{ }
-  function func():mixed{
+  private function priv() :void{ }
+  public function func():void{
     $this->priv();
     var_dump(get_class_methods($this));
   }

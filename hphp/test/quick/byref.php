@@ -1,9 +1,12 @@
 <?hh
 
-function foo($a, inout $b, inout $c, $d) :mixed{
+function foo(int $a, inout ?int $b, inout ?int $c, int $d) :void{
   $a = 10;
   $b = 20;
-  $c = HH\Lib\Legacy_FIXME\cast_for_arithmetic($c);
+  $c = HH\FIXME\UNSAFE_CAST<num, int>(
+    HH\Lib\Legacy_FIXME\cast_for_arithmetic($c),
+    'The test only supplies integers and null',
+  );
   $c *= 10;
   $d *= 10;
   echo (__METHOD__."(): a: ".$a.", b: ".$b.", c: ".$c.", d: ".$d."\n");
@@ -16,7 +19,15 @@ function foo($a, inout $b, inout $c, $d) :mixed{
   $d = 4;
   echo (__METHOD__."(): a: ".$a.", b: ".$b.", c: ".$c.", d: ".$d."\n");
   foo($a, inout $b, inout $c, $d);
-  echo (__METHOD__."(): a: ".$a.", b: ".$b.", c: ".$c.", d: ".$d."\n");
+  $b_int = HH\FIXME\UNSAFE_CAST<?int, int>(
+    $b,
+    'foo assigns an integer before returning',
+  );
+  $c_int = HH\FIXME\UNSAFE_CAST<?int, int>(
+    $c,
+    'foo assigns an integer before returning',
+  );
+  echo (__METHOD__."(): a: ".$a.", b: ".$b_int.", c: ".$c_int.", d: ".$d."\n");
 
   $foo = null;
   $bar = null;

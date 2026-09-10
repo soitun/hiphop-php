@@ -1,11 +1,11 @@
 <?hh
 
 class Club {
-  protected $app_id = 0;
+  protected int $app_id = 0;
 }
 
 class Glub extends Club {
-  public function go() :mixed{
+  public function go() :void{
     var_dump(property_exists($this, 'app_id'));
   }
 }
