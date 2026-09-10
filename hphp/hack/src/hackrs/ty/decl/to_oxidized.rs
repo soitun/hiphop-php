@@ -308,20 +308,20 @@ impl ToOxidized for XhpEnumValue {
     }
 }
 
-impl ToOxidized for EnumMemberValue {
-    type Output = o::typing_defs::EnumMemberValue;
+impl ToOxidized for ConstValue {
+    type Output = o::typing_defs::ConstValue;
 
     fn to_oxidized(self) -> Self::Output {
-        use o::typing_defs::EnumMemberValue as O;
+        use o::typing_defs::ConstValue as O;
         match self {
-            Self::EMVInt(n) => O::EMVInt(n),
-            Self::EMVLargeInt(s) => O::EMVLargeInt(s),
-            Self::EMVString(s) => O::EMVString(s),
-            Self::EMVNameof(s) => O::EMVNameof(s),
-            Self::EMVClassPointer(s) => O::EMVClassPointer(s),
-            Self::EMVLabel => O::EMVLabel,
-            Self::EMVAbsent => O::EMVAbsent,
-            Self::EMVConstAccess(e, m) => O::EMVConstAccess(e, m),
+            Self::CVInt(n) => O::CVInt(n),
+            Self::CVLargeInt(s) => O::CVLargeInt(s),
+            Self::CVString(s) => O::CVString(s),
+            Self::CVNameof(s) => O::CVNameof(s),
+            Self::CVClassPointer(s) => O::CVClassPointer(s),
+            Self::CVLabel => O::CVLabel,
+            Self::CVAbsent => O::CVAbsent,
+            Self::CVConstAccess(e, m) => O::CVConstAccess(e, m),
         }
     }
 }
@@ -445,7 +445,7 @@ impl<R: Reason> ToOxidized for folded::ClassConst<R> {
             refs: self.refs.to_oxidized(),
             type_: self.ty.to_oxidized(),
             pos: self.pos.to_oxidized(),
-            enum_value: self.enum_value.to_oxidized(),
+            value: self.value.to_oxidized(),
         }
     }
 }
@@ -691,7 +691,7 @@ impl<R: Reason> ToOxidized for shallow::ShallowClassConst<R> {
             ty,
             refs,
             value,
-            enum_value,
+            const_value,
         } = self;
         o::shallow_decl_defs::ShallowClassConst {
             abstract_: kind,
@@ -699,7 +699,7 @@ impl<R: Reason> ToOxidized for shallow::ShallowClassConst<R> {
             type_: ty.to_oxidized(),
             refs: refs.to_oxidized(),
             value,
-            enum_value: enum_value.to_oxidized(),
+            const_value: const_value.to_oxidized(),
         }
     }
 }

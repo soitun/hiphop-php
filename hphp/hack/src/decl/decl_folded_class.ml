@@ -450,7 +450,7 @@ let class_const_fold
       cc_type = scc.scc_type;
       cc_origin = c_name;
       cc_refs = scc.scc_refs;
-      cc_enum_value = scc.scc_enum_value;
+      cc_value = scc.scc_const_value;
     }
   in
   let acc = SMap.add (snd scc.scc_name) cc acc in
@@ -480,7 +480,7 @@ let class_class_decl (ctx : Provider_context.t) (class_id : Typing_defs.pos_id)
     cc_type;
     cc_origin = name;
     cc_refs = [];
-    cc_enum_value = Typing_defs.Enum_member_value.absent;
+    cc_value = Typing_defs.Const_value.absent;
   }
 
 let build_prop_sprop_ty
@@ -609,7 +609,7 @@ let typeconst_structure
     cc_type = ts_ty;
     cc_origin = snd c.sc_name;
     cc_refs = [];
-    cc_enum_value = Typing_defs.Enum_member_value.absent;
+    cc_value = Typing_defs.Const_value.absent;
   }
 
 let maybe_add_supportdyn_bound ctx p kind =

@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<91c7576ce24a26f851630e772f5c2515>>
+// @generated SignedSource<<1a67b31933e531b41d34968b831dce26>>
 //
 // To regenerate this file, run:
 //   buck run @fbcode//mode/dev-nosan-lg fbcode//hphp/hack/src:oxidized_regen
@@ -53,11 +53,9 @@ pub struct ShallowClassConst {
     /// If DeclParserConfig option include_assignment_values is true,
     /// The string value for the constant
     pub value: Option<String>,
-    /// If DeclParserConfig option include_enum_member_values is true and this
-    /// is an enum member with a recordable value, its recorded value (or EMVLabel
-    /// when the value equals the member name). EMVAbsent otherwise (not recorded /
-    /// computed / non-enum).
-    pub enum_value: typing_defs::EnumMemberValue,
+    /// The recorded constant value. CVAbsent means no value was
+    /// recorded or the initializer cannot be represented.
+    pub const_value: typing_defs::ConstValue,
 }
 
 #[derive(

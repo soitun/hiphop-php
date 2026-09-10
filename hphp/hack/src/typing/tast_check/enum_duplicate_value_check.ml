@@ -37,11 +37,11 @@ let aliased_members_are_distinct env ~origin_opts_out base targets =
     let value_of target =
       match Env.get_const env bcls target with
       | Some cc
-        when (not (Enum_member_value.is_uncheckable cc.cc_enum_value))
+        when (not (Const_value.is_uncheckable cc.cc_value))
              && not (origin_opts_out cc.cc_origin) ->
-        (* `EMVLabel` stands for the aliased member's own name, not the
+        (* `CVLabel` stands for the aliased member's own name, not the
            aliasing member's. *)
-        Some (Enum_member_value.value_repr ~member_name:target cc.cc_enum_value)
+        Some (Const_value.value_repr ~member_name:target cc.cc_value)
       | _ -> None
     in
     (match Option.all (List.map targets ~f:value_of) with
@@ -79,7 +79,7 @@ let is_alias_exempt env cls consts ~is_local ~origin_opts_out =
   in
   let accesses =
     List.filter_map own_consts ~f:(fun (_, cc) ->
-        Enum_member_value.const_access_target cc.cc_enum_value)
+        Const_value.const_access_target cc.cc_value)
   in
   let n_local = List.length own_consts in
   let has_no_includes =
@@ -153,7 +153,7 @@ let report_uncheckable_enum
 (* The enum is fully checkable: flag duplicate values. The folded consts merge
    `use`-included members, so one pass catches own, included, and cross-include
    clashes. Maps each value to the first member that defines it; a later member
-   with the same value is a clash. An inherited `EMVConstAccess` can reach here
+   with the same value is a clash. An inherited `CVConstAccess` can reach here
    (a local access would make the enum uncheckable and never get this far), so it
    participates in duplicate detection via its `value_repr`. *)
 let report_duplicate_values env ~enum_pos ~is_local consts =
@@ -161,12 +161,10 @@ let report_duplicate_values env ~enum_pos ~is_local consts =
     String.Table.create ()
   in
   List.iter consts ~f:(fun (member_name, cc) ->
-      if Enum_member_value.is_absent cc.cc_enum_value then
+      if Const_value.is_absent cc.cc_value then
         ()
       else
-        let value =
-          Enum_member_value.value_repr ~member_name cc.cc_enum_value
-        in
+        let value = Const_value.value_repr ~member_name cc.cc_value in
         match Hashtbl.find seen value with
         | None -> Hashtbl.set seen ~key:value ~data:(member_name, cc)
         | Some (prev_name, prev_cc) ->
@@ -216,7 +214,7 @@ let handler =
           let is_own_uncheckable cc =
             is_local cc
             && (not cc.cc_synthesized)
-            && Enum_member_value.is_uncheckable cc.cc_enum_value
+            && Const_value.is_uncheckable cc.cc_value
           in
           (* A member inherited from an enum that opted out of the check. An
              inherited enum whose own values are uncheckable is flagged on its

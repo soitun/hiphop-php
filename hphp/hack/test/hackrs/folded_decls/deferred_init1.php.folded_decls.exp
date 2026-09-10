@@ -24,7 +24,7 @@ FoldedClass {
             ty: class<this>,
             origin: "\\A",
             refs: [],
-            enum_value: EMVAbsent,
+            value: CVAbsent,
         },
     },
     deferred_init_members: {

@@ -30,7 +30,7 @@ use crate::decl::CeVisibility;
 use crate::decl::ClassConstKind;
 use crate::decl::ClassConstRef;
 use crate::decl::ClassEltFlags;
-use crate::decl::EnumMemberValue;
+use crate::decl::ConstValue;
 use crate::decl::EnumType;
 use crate::decl::Tparam;
 use crate::decl::Ty;
@@ -137,10 +137,9 @@ pub struct ClassConst<R: Reason> {
     pub ty: Ty<R>,
     pub origin: TypeName, // Identifies the class from which this const originates
     pub refs: Box<[ClassConstRef]>,
-    // For enum members, the recorded value (int/string/nameof/::class), or
-    // EMVLabel (value == member name); EMVAbsent for computed values and
-    // non-enum consts.
-    pub enum_value: EnumMemberValue,
+    // The recorded constant value. CVAbsent means no value was recorded
+    // or the initializer cannot be represented.
+    pub value: ConstValue,
 }
 
 impl<R: Reason> ClassConst<R> {

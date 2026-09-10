@@ -88,16 +88,17 @@ type class_const_kind =
   | CCConcrete
 [@@deriving eq, show]
 
-(** The value recorded for an enum member. The type is abstract: callers
+(** A recorded constant value, used to store enum-member values and
+    class-constant values used as shape keys. The type is abstract: callers
     construct via [absent] and go through this module's API rather than matching
     raw constructors. *)
-module Enum_member_value : sig
+module Const_value : sig
   type t [@@deriving eq, ord, show]
 
-  (** The "no recorded value" case (computed values and non-enum consts). *)
+  (** The "no recorded value" case. *)
   val absent : t
 
-  (** Whether the value is [EMVAbsent] (no recorded value). *)
+  (** Whether the value is [CVAbsent] (no recorded value). *)
   val is_absent : t -> bool
 
   (** A canonical textual rendering of the value, usable as a comparison key and
@@ -107,14 +108,14 @@ module Enum_member_value : sig
       Hack coerces arraykeys. An "intish" string renders as the bare int: that is
       a canonical integer like ["0"] or ["-5"], within [i64] range, matching
       HHVM's [is_strictly_integer] -- ["00"], ["-0"], ["+1"], hex and underscores
-      are not intish and stay quoted. [EMVLabel] (value equals the member name)
-      renders like the equivalent [EMVString].
+      are not intish and stay quoted. [CVLabel] (value equals the member name)
+      renders like the equivalent [CVString].
 
       The converse does not hold, so a caller cannot read differing renderings as
-      differing values: [EMVNameof] deliberately never matches the equivalent
+      differing values: [CVNameof] deliberately never matches the equivalent
       string literal, to avoid relying on name resolution here.
 
-      [member_name] supplies the name for the [EMVLabel] case. *)
+      [member_name] supplies the name for the [CVLabel] case. *)
   val value_repr : member_name:string -> t -> string
 
   (** Whether the value cannot be resolved to a concrete, comparable form. *)
@@ -134,10 +135,9 @@ type class_const = {
       (** identifies the class from which this const originates *)
   cc_refs: class_const_ref list;
       (** references to the constants used in the initializer *)
-  cc_enum_value: Enum_member_value.t;
-      (** For enum members, the canonical checkable value (`EMVLabel` when the
-          value equals the member name); `EMVAbsent` for computed values and
-          non-enum consts. *)
+  cc_value: Const_value.t;
+      (** The recorded constant value; [CVAbsent] means no value was
+          recorded or the initializer cannot be represented. *)
 }
 [@@deriving show]
 

@@ -13,7 +13,7 @@
              ty: class<this>,
              origin: "\\T1",
              refs: [],
-             enum_value: EMVAbsent,
+             value: CVAbsent,
          },
      },
      req_constraints_ancestors: [
@@ -37,7 +37,7 @@
              ty: class<this>,
              origin: "\\T2",
              refs: [],
-             enum_value: EMVAbsent,
+             value: CVAbsent,
          },
      },
      req_constraints_ancestors: [
@@ -73,7 +73,7 @@
              ty: class<this>,
              origin: "\\C",
              refs: [],
-             enum_value: EMVAbsent,
+             value: CVAbsent,
          },
      },
  }
@@ -91,7 +91,7 @@
              ty: class<this>,
              origin: "\\D",
              refs: [],
-             enum_value: EMVAbsent,
+             value: CVAbsent,
          },
      },
  }

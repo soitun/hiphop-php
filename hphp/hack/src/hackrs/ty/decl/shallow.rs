@@ -28,9 +28,9 @@ use serde::Serialize;
 use crate::decl::ty::ClassConstKind;
 use crate::decl::ty::ClassConstRef;
 pub use crate::decl::ty::ConstDecl;
+use crate::decl::ty::ConstValue;
 use crate::decl::ty::DeclConstraintRequirement;
 use crate::decl::ty::Enforceable;
-use crate::decl::ty::EnumMemberValue;
 use crate::decl::ty::EnumType;
 use crate::decl::ty::FunElt;
 use crate::decl::ty::ModuleDefType;
@@ -73,10 +73,9 @@ pub struct ShallowClassConst<R: Reason> {
     /// The string value for the constant
     pub value: Option<String>,
 
-    /// If DeclParserConfig option include_enum_member_values is true and this is
-    /// an enum member with a recordable value, its recorded value (or EMVLabel
-    /// when value == member name). EMVAbsent otherwise.
-    pub enum_value: EnumMemberValue,
+    /// The recorded constant value. CVAbsent means no value was recorded
+    /// or the initializer cannot be represented.
+    pub const_value: ConstValue,
 }
 
 walkable!(ShallowClassConst<R> => [ty]);

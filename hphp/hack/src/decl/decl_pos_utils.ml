@@ -132,7 +132,7 @@ struct
       cc_type = ty cc.cc_type;
       cc_origin = cc.cc_origin;
       cc_refs = cc.cc_refs;
-      cc_enum_value = cc.cc_enum_value;
+      cc_value = cc.cc_value;
     }
 
   and typeconst = function
@@ -308,7 +308,7 @@ struct
       scc_type = ty scc.scc_type;
       scc_refs = scc.scc_refs;
       scc_value = scc.scc_value;
-      scc_enum_value = scc.scc_enum_value;
+      scc_const_value = scc.scc_const_value;
     }
 
   and shallow_typeconst stc =

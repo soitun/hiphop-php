@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the "hack" directory of this source tree.
 //
-// @generated SignedSource<<435a9d5ed128f2e579e069b244c80f7a>>
+// @generated SignedSource<<0f93e24f7d96d114a5f1f0340c9c1128>>
 //
 // To regenerate this file, run:
 //   buck run @fbcode//mode/dev-nosan-lg fbcode//hphp/hack/src:oxidized_regen
@@ -227,16 +227,16 @@ pub enum ClassConstKind {
     CCConcrete,
 }
 
-/// For an enum member, its recorded value. `EMVInt` holds values that fit
+/// `CVInt` holds values that fit
 /// OCaml's 63-bit `int`; literals outside that range (including `i64::MIN`)
-/// use `EMVLargeInt`, which stores the canonical decimal as a string so it
+/// use `CVLargeInt`, which stores the canonical decimal as a string so it
 /// marshals without truncation and every spelling of one value compares equal.
-/// `EMVNameof` and `EMVClassPointer` are kept distinct so `nameof C` (a
-/// string) and `C::class` (a class pointer) never coincide. `EMVLabel` means
+/// `CVNameof` and `CVClassPointer` are kept distinct so `nameof C` (a
+/// string) and `C::class` (a class pointer) never coincide. `CVLabel` means
 /// the value is a string equal to the member's own name (`FOO = 'FOO'`),
 /// recorded without storing the string.
-/// `EMVAbsent` represents the "no value" case (computed values and non-enum
-/// consts) inline, so the recorded value needs no `option` wrapper.
+/// `CVAbsent` represents an unrecorded or unrepresentable value inline, so
+/// the recorded value needs no `option` wrapper.
 #[derive(
     Clone,
     Debug,
@@ -255,15 +255,15 @@ pub enum ClassConstKind {
 #[rust_to_ocaml(attr = "deriving (eq, ord, show)")]
 #[rust_to_ocaml(attr = r#"warning "-37""#)]
 #[repr(C, u8)]
-pub enum EnumMemberValue {
-    EMVInt(isize),
-    EMVLargeInt(String),
-    EMVString(String),
-    EMVNameof(String),
-    EMVClassPointer(String),
-    EMVLabel,
-    EMVAbsent,
-    EMVConstAccess(String, String),
+pub enum ConstValue {
+    CVInt(isize),
+    CVLargeInt(String),
+    CVString(String),
+    CVNameof(String),
+    CVClassPointer(String),
+    CVLabel,
+    CVAbsent,
+    CVConstAccess(String, String),
 }
 
 #[derive(
@@ -293,9 +293,9 @@ pub struct ClassConst {
     pub origin: String,
     /// references to the constants used in the initializer
     pub refs: Vec<ClassConstRef>,
-    /// For enum members, the recorded value (`EMVLabel` when it equals the
-    /// member name); `EMVAbsent` for computed values and non-enum consts.
-    pub enum_value: EnumMemberValue,
+    /// The recorded constant value; `CVAbsent` means no value was
+    /// recorded or the initializer cannot be represented.
+    pub value: ConstValue,
 }
 
 #[derive(

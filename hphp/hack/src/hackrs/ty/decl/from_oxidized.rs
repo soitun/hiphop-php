@@ -320,18 +320,18 @@ impl From<o::typing_defs::ClassConstFrom> for ty::ClassConstFrom {
     }
 }
 
-impl From<o::typing_defs::EnumMemberValue> for ty::EnumMemberValue {
-    fn from(x: o::typing_defs::EnumMemberValue) -> Self {
-        use o::typing_defs::EnumMemberValue as O;
+impl From<o::typing_defs::ConstValue> for ty::ConstValue {
+    fn from(x: o::typing_defs::ConstValue) -> Self {
+        use o::typing_defs::ConstValue as O;
         match x {
-            O::EMVInt(n) => Self::EMVInt(n),
-            O::EMVLargeInt(s) => Self::EMVLargeInt(s),
-            O::EMVString(s) => Self::EMVString(s),
-            O::EMVNameof(s) => Self::EMVNameof(s),
-            O::EMVClassPointer(s) => Self::EMVClassPointer(s),
-            O::EMVLabel => Self::EMVLabel,
-            O::EMVAbsent => Self::EMVAbsent,
-            O::EMVConstAccess(e, m) => Self::EMVConstAccess(e, m),
+            O::CVInt(n) => Self::CVInt(n),
+            O::CVLargeInt(s) => Self::CVLargeInt(s),
+            O::CVString(s) => Self::CVString(s),
+            O::CVNameof(s) => Self::CVNameof(s),
+            O::CVClassPointer(s) => Self::CVClassPointer(s),
+            O::CVLabel => Self::CVLabel,
+            O::CVAbsent => Self::CVAbsent,
+            O::CVConstAccess(e, m) => Self::CVConstAccess(e, m),
         }
     }
 }
@@ -398,7 +398,7 @@ impl<R: Reason> From<o::shallow_decl_defs::ShallowClassConst> for shallow::Shall
             ty: scc.type_.into(),
             refs: slice(scc.refs),
             value: scc.value,
-            enum_value: scc.enum_value.into(),
+            const_value: scc.const_value.into(),
         }
     }
 }
@@ -668,7 +668,7 @@ impl<R: Reason> From<o::typing_defs::ClassConst> for folded::ClassConst<R> {
             ty: x.type_.into(),
             origin: x.origin.into(),
             refs: slice(x.refs),
-            enum_value: x.enum_value.into(),
+            value: x.value.into(),
         }
     }
 }

@@ -1,8 +1,8 @@
 <?hh
 
 // Plain enums record each member's canonical value in the shallow decl
-// (`scc_value`), which a later check uses to flag duplicate enum values. Enum
-// classes are intentionally excluded, so they keep `scc_value = None`.
+// (`scc_const_value`), which a later check uses to flag duplicate enum values.
+// Enum classes are intentionally excluded, so they keep `CVAbsent`.
 
 enum Bits: int {
   Zero = 0;
@@ -30,14 +30,14 @@ enum IntForms: int {
   Neg = -5;
 }
 
-// Values beyond OCaml's 63-bit `int` use the EMVLargeInt slow path, storing the
+// Values beyond OCaml's 63-bit `int` use the CVLargeInt slow path, storing the
 // canonical decimal, so every spelling of one value records identically.
-// Values within 63 bits stay EMVInt.
+// Values within 63 bits stay CVInt.
 enum BigInts: int {
-  Fits = 4611686018427387903; // 2^62 - 1 = OCaml max_int -> EMVInt
-  Big = 4611686018427387904; // 2^62 -> EMVLargeInt "4611686018427387904"
-  BigHex = 0x4000000000000001; // 2^62 + 1 -> EMVLargeInt "4611686018427387905"
-  Max = 9223372036854775807; // i64::MAX -> EMVLargeInt "9223372036854775807"
+  Fits = 4611686018427387903; // 2^62 - 1 = OCaml max_int -> CVInt
+  Big = 4611686018427387904; // 2^62 -> CVLargeInt "4611686018427387904"
+  BigHex = 0x4000000000000001; // 2^62 + 1 -> CVLargeInt "4611686018427387905"
+  Max = 9223372036854775807; // i64::MAX -> CVLargeInt "9223372036854775807"
 }
 
 class C {}

@@ -12,7 +12,7 @@ FoldedClass {
             ty: class<this>,
             origin: "\\C",
             refs: [],
-            enum_value: EMVAbsent,
+            value: CVAbsent,
         },
     },
 }
@@ -126,7 +126,7 @@ FoldedClass {
             ty: class<this>,
             origin: "\\E",
             refs: [],
-            enum_value: EMVAbsent,
+            value: CVAbsent,
         },
         "IntVal": ClassConst {
             is_synthesized: false,
@@ -135,7 +135,7 @@ FoldedClass {
             ty: E,
             origin: "\\E",
             refs: [],
-            enum_value: EMVInt(
+            value: CVInt(
                 1,
             ),
         },
@@ -146,7 +146,7 @@ FoldedClass {
             ty: E,
             origin: "\\E",
             refs: [],
-            enum_value: EMVInt(
+            value: CVInt(
                 -2,
             ),
         },
@@ -157,7 +157,7 @@ FoldedClass {
             ty: E,
             origin: "\\E",
             refs: [],
-            enum_value: EMVInt(
+            value: CVInt(
                 16,
             ),
         },
@@ -168,7 +168,7 @@ FoldedClass {
             ty: E,
             origin: "\\E",
             refs: [],
-            enum_value: EMVLargeInt(
+            value: CVLargeInt(
                 "9223372036854775807",
             ),
         },
@@ -179,7 +179,7 @@ FoldedClass {
             ty: E,
             origin: "\\E",
             refs: [],
-            enum_value: EMVLargeInt(
+            value: CVLargeInt(
                 "-9223372036854775808",
             ),
         },
@@ -190,7 +190,7 @@ FoldedClass {
             ty: E,
             origin: "\\E",
             refs: [],
-            enum_value: EMVString(
+            value: CVString(
                 "hello",
             ),
         },
@@ -201,7 +201,7 @@ FoldedClass {
             ty: E,
             origin: "\\E",
             refs: [],
-            enum_value: EMVNameof(
+            value: CVNameof(
                 "\\C",
             ),
         },
@@ -219,7 +219,7 @@ FoldedClass {
                     "class",
                 ),
             ],
-            enum_value: EMVClassPointer(
+            value: CVClassPointer(
                 "\\C",
             ),
         },
@@ -230,7 +230,7 @@ FoldedClass {
             ty: E,
             origin: "\\E",
             refs: [],
-            enum_value: EMVAbsent,
+            value: CVAbsent,
         },
     },
     extends: {

@@ -33,8 +33,8 @@
            scc_type = (Rwitness_from_decl ([7:3-6]), Tany);
            scc_refs = [((Typing_defs.From "\\Foo"), "class")];
            scc_value = None;
-           scc_enum_value =
-           (Typing_defs.Enum_member_value.EMVClassPointer "\\Foo") }
+           scc_const_value = (Typing_defs.Const_value.CVClassPointer "\\Foo")
+           }
           ];
         sc_typeconsts = []; sc_props = []; sc_sprops = [];
         sc_constructor = None; sc_static_methods = []; sc_methods = [];

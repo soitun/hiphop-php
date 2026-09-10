@@ -669,23 +669,24 @@ pub enum ClassConstFrom {
     From(TypeName),
 }
 
-/// For an enum member, its recorded value. `EMVInt` holds values that fit
+/// A recorded constant value, used to store enum-member values and
+/// class-constant values used as shape keys. `CVInt` holds values that fit
 /// OCaml's 63-bit `int`; literals outside that range (including `i64::MIN`) use
-/// `EMVLargeInt`, which stores the literal's source text verbatim (not
-/// canonicalized) so it marshals without truncation. `EMVNameof` and
-/// `EMVClassPointer` are kept distinct so that `nameof C` (a string) and
+/// `CVLargeInt`, which stores the literal's source text verbatim (not
+/// canonicalized) so it marshals without truncation. `CVNameof` and
+/// `CVClassPointer` are kept distinct so that `nameof C` (a string) and
 /// `C::class` (a class pointer) never coincide.
 #[derive(Clone, Debug, Eq, EqModuloPos, Hash, PartialEq, Serialize, Deserialize)]
 #[derive(ToOcamlRep, FromOcamlRep)]
-pub enum EnumMemberValue {
-    EMVInt(isize),
-    EMVLargeInt(String),
-    EMVString(String),
-    EMVNameof(String),
-    EMVClassPointer(String),
-    EMVLabel,
-    EMVAbsent,
-    EMVConstAccess(String, String),
+pub enum ConstValue {
+    CVInt(isize),
+    CVLargeInt(String),
+    CVString(String),
+    CVNameof(String),
+    CVClassPointer(String),
+    CVLabel,
+    CVAbsent,
+    CVConstAccess(String, String),
 }
 
 /// Class Constant References:

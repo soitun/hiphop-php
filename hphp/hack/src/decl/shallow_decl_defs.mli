@@ -96,7 +96,7 @@ type shallow_class_const = {
   scc_type: decl_ty;
   scc_refs: Typing_defs.class_const_ref list;
   scc_value: string option;
-  scc_enum_value: Typing_defs.Enum_member_value.t;
+  scc_const_value: Typing_defs.Const_value.t;
 }
 [@@deriving eq, show]
 

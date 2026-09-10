@@ -1,7 +1,7 @@
 <?hh
 
 // Large int literals (outside OCaml's 63-bit `int`) are recorded via the
-// EMVLargeInt slow path and are still checked for duplicates -- previously they
+// CVLargeInt slow path and are still checked for duplicates -- previously they
 // recorded no value and duplicates among them were silently missed. The slow
 // path stores the canonical decimal, so spellings of one value compare equal
 // (see LargeNormalized below).

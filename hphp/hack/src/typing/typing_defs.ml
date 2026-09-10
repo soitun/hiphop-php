@@ -130,39 +130,40 @@ type class_const_kind =
   | CCConcrete
 [@@deriving eq, show]
 
-(** The value recorded for an enum member. The representation is abstract
-    outside this module (see the .mli), so callers go through the API rather than
-    matching raw constructors. *)
-module Enum_member_value = struct
-  (** For an enum member, its recorded value. `EMVInt` holds values that fit
+(** A recorded constant value, used to store enum-member values and
+    class-constant values used as shape keys. The representation is abstract
+    outside this module (see the .mli), so callers go through the API rather
+    than matching raw constructors. *)
+module Const_value = struct
+  (** `CVInt` holds values that fit
       OCaml's 63-bit `int`; literals outside that range (including `i64::MIN`)
-      use `EMVLargeInt`, which stores the canonical decimal as a string so it
+      use `CVLargeInt`, which stores the canonical decimal as a string so it
       marshals without truncation and every spelling of one value compares equal.
-      `EMVNameof` and `EMVClassPointer` are kept distinct so `nameof C` (a
-      string) and `C::class` (a class pointer) never coincide. `EMVLabel` means
+      `CVNameof` and `CVClassPointer` are kept distinct so `nameof C` (a
+      string) and `C::class` (a class pointer) never coincide. `CVLabel` means
       the value is a string equal to the member's own name (`FOO = 'FOO'`),
       recorded without storing the string.
-      `EMVAbsent` represents the "no value" case (computed values and non-enum
-      consts) inline, so the recorded value needs no `option` wrapper. *)
+      `CVAbsent` represents an unrecorded or unrepresentable value inline, so
+      the recorded value needs no `option` wrapper. *)
   type t =
-    | EMVInt of int
-    | EMVLargeInt of string
-    | EMVString of string
-    | EMVNameof of string
-    | EMVClassPointer of string
-    | EMVLabel
-    | EMVAbsent
-    | EMVConstAccess of string * string
+    | CVInt of int
+    | CVLargeInt of string
+    | CVString of string
+    | CVNameof of string
+    | CVClassPointer of string
+    | CVLabel
+    | CVAbsent
+    | CVConstAccess of string * string
   [@@deriving eq, ord, show] [@@warning "-37"]
-  (* Every constructor except [EMVAbsent] is built only by the Rust decl parser
+  (* Every constructor except [CVAbsent] is built only by the Rust decl parser
      and marshaled in via ocamlrep; OCaml never builds them, so silence the
      unused-constructor warning. *)
 
-  (** The "no recorded value" case (computed values and non-enum consts). *)
-  let absent = EMVAbsent
+  (** The "no recorded value" case. *)
+  let absent = CVAbsent
 
   let is_absent = function
-    | EMVAbsent -> true
+    | CVAbsent -> true
     | _ -> false
 
   let is_intish s =
@@ -171,31 +172,31 @@ module Enum_member_value = struct
     | None -> false
 
   let value_repr ~member_name = function
-    | EMVInt n -> string_of_int n
-    | EMVLargeInt s -> s
-    | EMVString s ->
+    | CVInt n -> string_of_int n
+    | CVLargeInt s -> s
+    | CVString s ->
       if is_intish s then
         s
       else
         "\"" ^ s ^ "\""
-    | EMVLabel -> "\"" ^ member_name ^ "\""
-    | EMVNameof s -> "nameof " ^ s
-    | EMVClassPointer s -> s ^ "::class"
-    | EMVConstAccess (cls, member) -> cls ^ "::" ^ member
-    | EMVAbsent -> "<absent>"
+    | CVLabel -> "\"" ^ member_name ^ "\""
+    | CVNameof s -> "nameof " ^ s
+    | CVClassPointer s -> s ^ "::class"
+    | CVConstAccess (cls, member) -> cls ^ "::" ^ member
+    | CVAbsent -> "<absent>"
 
   (** Whether the value cannot be resolved to a concrete, comparable form:
       absent (no recorded value), or a reference to another enum's member
-      (`EMVConstAccess`, resolvable only through the pure-alias exemption). *)
+      (`CVConstAccess`, resolvable only through the pure-alias exemption). *)
   let is_uncheckable = function
-    | EMVAbsent
-    | EMVConstAccess _ ->
+    | CVAbsent
+    | CVConstAccess _ ->
       true
     | _ -> false
 
   (** For an aliasing member `X = E::A`, the accessed `(enum, member)`. *)
   let const_access_target = function
-    | EMVConstAccess (base, target) -> Some (base, target)
+    | CVConstAccess (base, target) -> Some (base, target)
     | _ -> None
 end
 
@@ -208,9 +209,9 @@ type class_const = {
       (** identifies the class from which this const originates *)
   cc_refs: class_const_ref list;
       (** references to the constants used in the initializer *)
-  cc_enum_value: Enum_member_value.t;
-      (** For enum members, the recorded value (`EMVLabel` when it equals the
-          member name); `EMVAbsent` for computed values and non-enum consts. *)
+  cc_value: Const_value.t;
+      (** The recorded constant value; `CVAbsent` means no value was
+          recorded or the initializer cannot be represented. *)
 }
 [@@deriving show]
 

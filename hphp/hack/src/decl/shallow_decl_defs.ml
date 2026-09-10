@@ -222,11 +222,9 @@ type shallow_class_const = {
   scc_value: string option;
       (** If DeclParserConfig option include_assignment_values is true,
       The string value for the constant *)
-  scc_enum_value: Typing_defs.Enum_member_value.t;
-      (** If DeclParserConfig option include_enum_member_values is true and this
-      is an enum member with a recordable value, its recorded value (or EMVLabel
-      when the value equals the member name). EMVAbsent otherwise (not recorded /
-      computed / non-enum). *)
+  scc_const_value: Typing_defs.Const_value.t;
+      (** The recorded constant value. CVAbsent means no value was
+      recorded or the initializer cannot be represented. *)
 }
 [@@deriving eq, show]
 

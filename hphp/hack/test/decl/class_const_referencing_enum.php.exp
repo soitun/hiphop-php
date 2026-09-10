@@ -20,14 +20,14 @@
           (Rwitness_from_decl ([4:9-14]),
            (Tapply (([4:9-14], "\\HH\\string"), [])));
           scc_refs = []; scc_value = None;
-          scc_enum_value = (Typing_defs.Enum_member_value.EMVString "foo") };
+          scc_const_value = (Typing_defs.Const_value.CVString "foo") };
          { Shallow_decl_defs.scc_abstract = Typing_defs.CCConcrete;
            scc_name = ([5:3-6], "BAR");
            scc_type =
            (Rwitness_from_decl ([5:9-14]),
             (Tapply (([5:9-14], "\\HH\\string"), [])));
            scc_refs = []; scc_value = None;
-           scc_enum_value = (Typing_defs.Enum_member_value.EMVString "bar") }
+           scc_const_value = (Typing_defs.Const_value.CVString "bar") }
          ];
        sc_typeconsts = []; sc_props = []; sc_sprops = [];
        sc_constructor = None; sc_static_methods = []; sc_methods = [];
@@ -65,7 +65,7 @@
            [((Typing_defs.From "\\Words"), "BAR");
              ((Typing_defs.From "\\Words"), "FOO")];
            scc_value = None;
-           scc_enum_value = Typing_defs.Enum_member_value.EMVAbsent }
+           scc_const_value = Typing_defs.Const_value.CVAbsent }
           ];
         sc_typeconsts = []; sc_props = []; sc_sprops = [];
         sc_constructor = None; sc_static_methods = []; sc_methods = [];

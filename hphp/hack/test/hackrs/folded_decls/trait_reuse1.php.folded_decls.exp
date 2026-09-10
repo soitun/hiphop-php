@@ -9,7 +9,7 @@ FoldedClass {
             ty: class<this>,
             origin: "\\T",
             refs: [],
-            enum_value: EMVAbsent,
+            value: CVAbsent,
         },
     },
 }
@@ -38,7 +38,7 @@ FoldedClass {
             ty: class<this>,
             origin: "\\A",
             refs: [],
-            enum_value: EMVAbsent,
+            value: CVAbsent,
         },
     },
     extends: {
@@ -78,7 +78,7 @@ FoldedClass {
             ty: class<this>,
             origin: "\\B",
             refs: [],
-            enum_value: EMVAbsent,
+            value: CVAbsent,
         },
     },
     extends: {
