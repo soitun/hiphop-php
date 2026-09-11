@@ -11,4 +11,4 @@ val convert :
   ctx:Provider_context.t ->
   entry:Provider_context.entry ->
   (Diagnostics.finalized_diagnostic * int) list ->
-  ClientIdeMessage.diagnostic list
+  Client_ide_message.diagnostic list

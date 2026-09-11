@@ -24,12 +24,12 @@ type t = {
 }
 
 (** Priorities are used so that some hh commands can be treated more urgently than others...
-When the monitor creates the server in ServerController.ml, it creates three FDs,
-[Priority_high / ServerController.Priority], and
-[Priority_default / ServerController.Default], and
-[Priority_dormant / ServerController.Force_dormant_start_only].
+When the monitor creates the server in server_controller.ml, it creates three FDs,
+[Priority_high / Server_controller.Priority], and
+[Priority_default / Server_controller.Default], and
+[Priority_dormant / Server_controller.Force_dormant_start_only].
 
-In [ClientConnect.connect], it decides which of the three to request:
+In [Client_connect.connect], it decides which of the three to request:
 "hh --force-dormant-start" will use the last one, and anything which doesn't require
 a full typecheck (e.g. --type-at-pos) will use priority, and anything which does
 require a full typecheck (e.g. hh status) will use default. The monitor,

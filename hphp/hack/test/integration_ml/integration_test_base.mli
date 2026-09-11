@@ -43,28 +43,31 @@ val prepend_root : string -> string
 (** Some tests work with clientIdeDaemon rather than Server.
 They use the following module instead of [setup_server] and [setup_disk]. *)
 module Client : sig
-  type env = ClientIdeDaemon.Test.env
+  type env = Client_ide_daemon.Test.env
 
   val with_env : custom_config:ServerConfig.t option -> (env -> unit) -> unit
 
   val setup_disk : env -> (string * string) list -> env
 
-  val open_file : env -> string -> env * ClientIdeMessage.diagnostic list SMap.t
+  val open_file :
+    env -> string -> env * Client_ide_message.diagnostic list SMap.t
 
   val close_file :
-    env -> string -> env * ClientIdeMessage.diagnostic list SMap.t
+    env -> string -> env * Client_ide_message.diagnostic list SMap.t
 
   val edit_file :
-    env -> string -> string -> env * ClientIdeMessage.diagnostic list SMap.t
+    env -> string -> string -> env * Client_ide_message.diagnostic list SMap.t
 
-  val assert_no_diagnostics : ClientIdeMessage.diagnostic list SMap.t -> unit
+  val assert_no_diagnostics : Client_ide_message.diagnostic list SMap.t -> unit
 
   val assert_diagnostics_string :
-    ClientIdeMessage.diagnostic list SMap.t -> string -> unit
+    Client_ide_message.diagnostic list SMap.t -> string -> unit
 end
 
 val doc :
-  string (* file-suffix *) -> string (* content *) -> ClientIdeMessage.document
+  string (* file-suffix *) ->
+  string (* content *) ->
+  Client_ide_message.document
 
 (* Helpers for asserting things *)
 

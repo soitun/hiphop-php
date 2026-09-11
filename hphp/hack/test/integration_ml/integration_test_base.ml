@@ -337,7 +337,7 @@ let assert_rename loop_output expected =
   let results = assert_response loop_output in
   (* We don't have any (better than JSON) human-readable format for rename results,
    * and I'm too lazy to write it. Tests will have to compare JSON outputs for now. *)
-  let results_as_string = ClientRename.patches_to_json_string results in
+  let results_as_string = Client_rename.patches_to_json_string results in
   assertEqual expected results_as_string
 
 let assert_needs_recheck env x =
@@ -357,15 +357,16 @@ let assert_needs_no_recheck env x =
     let () = Printf.eprintf "Expected %s not to need recheck\n" x in
     assert false
 
-let doc (suffix : string) (file_contents : string) : ClientIdeMessage.document =
+let doc (suffix : string) (file_contents : string) : Client_ide_message.document
+    =
   {
-    ClientIdeMessage.file_path =
+    Client_ide_message.file_path =
       Relative_path.from_root ~suffix |> Relative_path.to_absolute |> Path.make;
     file_contents;
   }
 
 module Client = struct
-  type env = ClientIdeDaemon.Test.env
+  type env = Client_ide_daemon.Test.env
 
   let with_env ~(custom_config : ServerConfig.t option) (f : env -> unit) : unit
       =
@@ -384,7 +385,7 @@ module Client = struct
         Relative_path.Map.empty
         ~base_content_version:""
     in
-    let env = ClientIdeDaemon.Test.init ~custom_config ~naming_sqlite in
+    let env = Client_ide_daemon.Test.init ~custom_config ~naming_sqlite in
     f env;
     ()
 
@@ -398,36 +399,38 @@ module Client = struct
         let file = Relative_path.to_absolute path in
         RealDisk.write_file ~file ~contents;
         TestDisk.set file contents);
-    ClientIdeDaemon.Test.index
+    Client_ide_daemon.Test.index
       env
       (Relative_path.Set.of_list (List.map files_and_contents ~f:fst))
 
   let edit_file (env : env) (suffix : string) (contents : string) :
-      env * ClientIdeMessage.diagnostic list SMap.t =
-    let message = ClientIdeMessage.(Did_open_or_change (doc suffix contents)) in
-    let (env, ()) = ClientIdeDaemon.Test.handle env message in
-    let message = ClientIdeMessage.(Diagnostics (doc suffix contents)) in
-    let (env, diagnostics) = ClientIdeDaemon.Test.handle env message in
+      env * Client_ide_message.diagnostic list SMap.t =
+    let message =
+      Client_ide_message.(Did_open_or_change (doc suffix contents))
+    in
+    let (env, ()) = Client_ide_daemon.Test.handle env message in
+    let message = Client_ide_message.(Diagnostics (doc suffix contents)) in
+    let (env, diagnostics) = Client_ide_daemon.Test.handle env message in
     let diagnostics = FileMap.singleton ("/" ^ suffix) diagnostics in
     (env, diagnostics)
 
   let open_file (env : env) (suffix : string) :
-      env * ClientIdeMessage.diagnostic list SMap.t =
+      env * Client_ide_message.diagnostic list SMap.t =
     let contents =
       TestDisk.get (Relative_path.from_root ~suffix |> Relative_path.to_absolute)
     in
     edit_file env suffix contents
 
   let close_file (env : env) (suffix : string) :
-      env * ClientIdeMessage.diagnostic list SMap.t =
+      env * Client_ide_message.diagnostic list SMap.t =
     let message =
-      ClientIdeMessage.(
+      Client_ide_message.(
         Did_close
           (Relative_path.from_root ~suffix
           |> Relative_path.to_absolute
           |> Path.make))
     in
-    let (env, diagnostics) = ClientIdeDaemon.Test.handle env message in
+    let (env, diagnostics) = Client_ide_daemon.Test.handle env message in
     let diagnostics = FileMap.singleton ("/" ^ suffix) diagnostics in
     (env, diagnostics)
 
@@ -438,9 +441,9 @@ module Client = struct
         Printf.bprintf
           buf
           "%s\n"
-          (Diagnostics.to_string diagnostic.ClientIdeMessage.diagnostic_error))
+          (Diagnostics.to_string diagnostic.Client_ide_message.diagnostic_error))
 
-  let diagnostics_to_string (x : ClientIdeMessage.diagnostic list SMap.t) =
+  let diagnostics_to_string (x : Client_ide_message.diagnostic list SMap.t) =
     let buf = Buffer.create 1024 in
     SMap.iter x ~f:(fun path diagnostics ->
         Printf.bprintf buf "%s:\n" path;
@@ -448,7 +451,7 @@ module Client = struct
     Buffer.contents buf
 
   let assert_no_diagnostics
-      (diagnostics : ClientIdeMessage.diagnostic list SMap.t) =
+      (diagnostics : Client_ide_message.diagnostic list SMap.t) =
     let is_any =
       FileMap.exists diagnostics ~f:(fun _file d -> not (List.is_empty d))
     in
@@ -462,7 +465,7 @@ module Client = struct
     end
 
   let assert_diagnostics_string
-      (diagnostics : ClientIdeMessage.diagnostic list SMap.t)
+      (diagnostics : Client_ide_message.diagnostic list SMap.t)
       (expected : string) : unit =
     let diagnostics_as_string =
       diagnostics_to_string diagnostics |> relativize

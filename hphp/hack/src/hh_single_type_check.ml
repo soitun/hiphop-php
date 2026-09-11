@@ -1732,8 +1732,8 @@ let do_enforcement
       let src = Provider_context.read_file_contents_exn entry in
       caret_pos_exn src "^ enforcement-at-caret"
   in
-  let open EnforcementAtPosService in
-  let result = ServerEnforcementAtPos.go_ctx ~ctx ~entry pos in
+  let open Enforcement_at_pos_service in
+  let result = Server_enforcement_at_pos.go_ctx ~ctx ~entry pos in
   match result with
   | Some (Enforced types) ->
     let ty_strs = List.map types ~f:(fun t -> t.ty_str) in
@@ -1746,10 +1746,10 @@ let do_enforcement_batch ~ctx ~filename oc =
     Provider_context.add_entry_if_missing ~ctx ~path:filename
   in
   let src = Provider_context.read_file_contents_exn entry in
-  let open EnforcementAtPosService in
+  let open Enforcement_at_pos_service in
   let positions = all_caret_positions src "^ enforcement-at-caret" in
   List.iter positions ~f:(fun pos ->
-      let result = ServerEnforcementAtPos.go_ctx ~ctx ~entry pos in
+      let result = Server_enforcement_at_pos.go_ctx ~ctx ~entry pos in
       match result with
       | Some (Enforced types) ->
         let ty_strs = List.map types ~f:(fun t -> t.ty_str) in
@@ -1823,8 +1823,8 @@ let handle_mode
     iter_over_files (fun filename ->
         match Relative_path.Map.find_opt files_info filename with
         | Some _fileinfo ->
-          let raw_result = SymbolInfoServiceUtils.helper ctx [] [filename] in
-          let result = SymbolInfoServiceUtils.format_result raw_result in
+          let raw_result = Symbol_info_service_utils.helper ctx [] [filename] in
+          let result = Symbol_info_service_utils.format_result raw_result in
           let result_json =
             ServerCommandTypes.Symbol_info_service.to_json result
           in
@@ -1961,7 +1961,7 @@ let handle_mode
     begin
       match result with
       | [] -> print_endline "None"
-      | result -> ClientGetDefinition.print_readable ~short_pos:true result
+      | result -> Client_get_definition.print_readable ~short_pos:true result
     end
   | Ide_code_actions { title_prefix; use_snippet_edits } ->
     let path = expect_single_file () in
@@ -2189,7 +2189,7 @@ let handle_mode
     let path = expect_single_file () in
     let (ctx, entry) = Provider_context.add_entry_if_missing ~ctx ~path in
     let results = Ide_highlight_refs.go_quarantined ~ctx ~entry pos in
-    ClientHighlightRefs.go results ~output_json:false
+    Client_highlight_refs.go results ~output_json:false
   | Errors when batch_mode ->
     (* For each file in our batch, run typechecking serially.
        Reset the heaps every time in between. *)

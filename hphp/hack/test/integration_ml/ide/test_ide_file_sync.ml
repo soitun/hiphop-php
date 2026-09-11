@@ -45,9 +45,9 @@ let test () =
   let (env, _diagnostics) = Test.Client.edit_file env bar_name bar_contents in
   (* Request completions *)
   let (env, response) =
-    ClientIdeDaemon.Test.handle
+    Client_ide_daemon.Test.handle
       env
-      ClientIdeMessage.(
+      Client_ide_message.(
         Completion
           ( Test.doc bar_name bar_contents,
             File_content.Position.from_one_based 3 5,
@@ -62,9 +62,9 @@ let test () =
   let env = Test.Client.setup_disk env [(bar_name, bar_new_contents)] in
   (* Check that new definition is among the completions *)
   let (env, response) =
-    ClientIdeDaemon.Test.handle
+    Client_ide_daemon.Test.handle
       env
-      ClientIdeMessage.(
+      Client_ide_message.(
         Completion
           ( Test.doc bar_name bar_new_contents,
             File_content.Position.from_one_based 4 5,

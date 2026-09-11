@@ -149,9 +149,9 @@ let underlines_to_patches
   IMap.values patch_per_line
 
 let diagnostic_to_underlines
-    source_text (diagnostic : ClientIdeMessage.diagnostic) :
+    source_text (diagnostic : Client_ide_message.diagnostic) :
     underline list IMap.t list =
-  let ClientIdeMessage.{ diagnostic_error; diagnostic_related_hints; _ } =
+  let Client_ide_message.{ diagnostic_error; diagnostic_related_hints; _ } =
     diagnostic
   in
   let hint_uls =
@@ -163,7 +163,7 @@ let diagnostic_to_underlines
   error_uls :: hint_uls
 
 let diagnostics_to_underlines
-    source_text (diagnostics : ClientIdeMessage.diagnostic list) :
+    source_text (diagnostics : Client_ide_message.diagnostic list) :
     underline list IMap.t =
   let underlines =
     List.bind diagnostics ~f:(diagnostic_to_underlines source_text)

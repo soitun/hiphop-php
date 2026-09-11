@@ -4,9 +4,9 @@
  (modules
   (:standard
    \
-   clientLogCommand
-   clientGetDefinition
-   clientHighlightRefs
+   client_log_command
+   client_get_definition
+   client_highlight_refs
    outline_for_agents
    server_progress_lwt))
  (libraries
@@ -53,7 +53,7 @@
 (library
  (name client_get_definition)
  (wrapped false)
- (modules clientGetDefinition)
+ (modules client_get_definition)
  (libraries nuclide_rpc_message_printer server_file_outline sys_utils)
  (preprocess
   (pps lwt_ppx ppx_deriving.std)))
@@ -61,7 +61,7 @@
 (library
  (name client_highlight_refs)
  (wrapped false)
- (modules clientHighlightRefs)
+ (modules client_highlight_refs)
  (libraries pos nuclide_rpc_message_printer server sys_utils)
  (preprocess
   (pps lwt_ppx ppx_deriving.std)))

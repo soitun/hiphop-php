@@ -262,7 +262,7 @@ let query_notifier
 
 let update_stats_after_recheck :
     RecheckLoopStats.t ->
-    ServerTypeCheck.CheckStats.t ->
+    Server_type_check.CheckStats.t ->
     telemetry:Telemetry.t ->
     start_time:seconds_since_epoch ->
     RecheckLoopStats.t =
@@ -278,7 +278,7 @@ let update_stats_after_recheck :
        any_full_checks = _;
      }
      {
-       ServerTypeCheck.CheckStats.total_rechecked_count =
+       Server_type_check.CheckStats.total_rechecked_count =
          total_rechecked_count_in_iteration;
        reparse_count;
        time_first_result;
@@ -448,7 +448,7 @@ let rec recheck_until_no_changes_left stats genv env select_outcome :
     in
     let (env, check_stats, type_check_telemetry) =
       CgroupProfiler.step_group check_kind_str ~log:true
-      @@ ServerTypeCheck.type_check genv env start_time
+      @@ Server_type_check.type_check genv env start_time
     in
     let telemetry =
       telemetry
@@ -530,7 +530,7 @@ let idle_if_no_client env waiting_client =
       (fun () -> SharedMem.GC.collect `aggressive);
     let t = Unix.gettimeofday () in
     if Float.(t -. env.last_idle_job_time > 0.5) then
-      let env = ServerIdle.go env in
+      let env = Server_idle.go env in
       { env with last_idle_job_time = t }
     else
       env
@@ -947,28 +947,28 @@ let serve genv env in_fds =
  * 5. If hh.conf lacks "load_state_natively_v4", then don't load it
  * 6. Otherwise, load it normally!
  *)
-let resolve_init_approach genv : ServerInit.init_approach * string =
+let resolve_init_approach genv : Server_init.init_approach * string =
   if Option.is_some (ServerArgs.save_naming_filename genv.options) then
-    (ServerInit.Parse_only_init, "Server_args_saving_naming")
+    (Server_init.Parse_only_init, "Server_args_saving_naming")
   else if ServerArgs.no_load genv.options then
-    (ServerInit.Full_init, "Server_args_no_load")
+    (Server_init.Full_init, "Server_args_no_load")
   else if
     (not genv.local_config.ServerLocalConfig.use_saved_state)
     && Option.is_none (ServerArgs.write_symbol_info genv.options)
   then
-    (ServerInit.Full_init, "Local_config_saved_state_disabled")
+    (Server_init.Full_init, "Local_config_saved_state_disabled")
   else if Option.is_some (ServerArgs.write_symbol_info genv.options) then
     match
       ( genv.local_config.ServerLocalConfig.use_saved_state_when_indexing,
         ServerArgs.with_saved_state genv.options )
     with
     | (false, None) ->
-      (ServerInit.Write_symbol_info, "Server_args_writing_symbol_info")
+      (Server_init.Write_symbol_info, "Server_args_writing_symbol_info")
     | (true, None) ->
-      ( ServerInit.Write_symbol_info_with_state ServerInit.Load_state_natively,
+      ( Server_init.Write_symbol_info_with_state Server_init.Load_state_natively,
         "Server_args_writing_symbol_info_load_native" )
     | (_, Some (ServerArgs.Saved_state_target_info target)) ->
-      ( ServerInit.Write_symbol_info_with_state (ServerInit.Precomputed target),
+      ( Server_init.Write_symbol_info_with_state (Server_init.Precomputed target),
         "Server_args_writing_symbol_info_precomputed" )
   else
     match
@@ -976,13 +976,14 @@ let resolve_init_approach genv : ServerInit.init_approach * string =
         ServerArgs.with_saved_state genv.options )
     with
     | (_, Some (ServerArgs.Saved_state_target_info target)) ->
-      ( ServerInit.Saved_state_init (ServerInit.Precomputed target),
+      ( Server_init.Saved_state_init (Server_init.Precomputed target),
         "Precomputed" )
-    | (false, None) -> (ServerInit.Full_init, "No_native_loading_or_precomputed")
+    | (false, None) ->
+      (Server_init.Full_init, "No_native_loading_or_precomputed")
     | (true, None) ->
       (* Use native loading only if the config specifies a load script,
        * and the local config prefers native. *)
-      ( ServerInit.Saved_state_init ServerInit.Load_state_natively,
+      ( Server_init.Saved_state_init Server_init.Load_state_natively,
         "Load_state_natively" )
 
 let program_init genv env =
@@ -1005,16 +1006,16 @@ let program_init genv env =
 
   let (env, init_type, init_error, init_error_telemetry, saved_state_revs_info)
       =
-    let (env, init_result) = ServerInit.init ~init_approach genv env in
+    let (env, init_result) = Server_init.init ~init_approach genv env in
     match init_approach with
-    | ServerInit.Write_symbol_info
-    | ServerInit.Full_init ->
+    | Server_init.Write_symbol_info
+    | Server_init.Full_init ->
       (env, "fresh", None, None, None)
-    | ServerInit.Parse_only_init -> (env, "parse-only", None, None, None)
-    | ServerInit.Write_symbol_info_with_state _
-    | ServerInit.Saved_state_init _ -> begin
+    | Server_init.Parse_only_init -> (env, "parse-only", None, None, None)
+    | Server_init.Write_symbol_info_with_state _
+    | Server_init.Saved_state_init _ -> begin
       match init_result with
-      | ServerInit.Load_state_succeeded saved_state_revs_info ->
+      | Server_init.Load_state_succeeded saved_state_revs_info ->
         let init_type =
           match
             Naming_table.get_forward_naming_fallback_path env.naming_table
@@ -1023,9 +1024,9 @@ let program_init genv env =
           | Some _ -> "state_load_sqlite"
         in
         (env, init_type, None, None, Some saved_state_revs_info)
-      | ServerInit.Load_state_failed (err, telemetry) ->
+      | Server_init.Load_state_failed (err, telemetry) ->
         (env, "state_load_failed", Some err, Some telemetry, None)
-      | ServerInit.Load_state_declined reason ->
+      | Server_init.Load_state_declined reason ->
         (env, "state_load_declined", Some reason, None, None)
     end
   in
@@ -1253,7 +1254,7 @@ let make_workers
       local_config
   in
   let gc_control = ServerConfig.gc_control config in
-  ServerWorker.make
+  Server_worker.make
     ~longlived_workers:local_config.ServerLocalConfig.longlived_workers
     ~nbr_procs:num_workers
     gc_control
@@ -1428,7 +1429,7 @@ let daemon_main_exn ~informant_managed options monitor_pid in_fds =
 
   let env = time @@ fun () -> program_init genv env in
 
-  ServerIdle.init genv (ServerArgs.root options);
+  Server_idle.init genv (ServerArgs.root options);
   log_server_ready ();
 
   serve genv env in_fds

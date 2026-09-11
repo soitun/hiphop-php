@@ -142,9 +142,9 @@ let test () =
     let (line, column) = File_content.Position.line_column_one_based position in
     let (env, _diagnostics) = Test.Client.open_file env path in
     let (env, response) =
-      ClientIdeDaemon.Test.handle
+      Client_ide_daemon.Test.handle
         env
-        ClientIdeMessage.(
+        Client_ide_message.(
           Completion
             ( Test.doc path clean_contents,
               File_content.Position.from_one_based line column,

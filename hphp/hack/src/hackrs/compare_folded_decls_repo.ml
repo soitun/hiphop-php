@@ -24,7 +24,7 @@ let make_workers
   in
   let shmem_config = ServerConfig.sharedmem_config server_config in
   let heap_handle = SharedMem.init ~num_workers shmem_config in
-  ServerWorker.make
+  Server_worker.make
     ~longlived_workers:true
     ~nbr_procs:num_workers
     gc_control

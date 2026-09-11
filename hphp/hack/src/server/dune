@@ -1,7 +1,7 @@
 (library
  (name server_symbol_info_service_utils)
  (wrapped false)
- (modules symbolInfoServiceUtils)
+ (modules symbol_info_service_utils)
  (libraries
   ast_provider
   naming
@@ -23,8 +23,8 @@
 (executable
  (name hh_saved_state_verifier)
  (modules
-  diffHotDecls
-  diffNamingTable
+  diff_hot_decls
+  diff_naming_table
   hh_saved_state_verifier)
  (libraries
   default_injector_config
@@ -37,15 +37,15 @@
   utils_core))
 
 (rule
- (target serverInvalidateUnits.fb.ml)
+ (target server_invalidate_units.fb.ml)
  (action
-  (copy# facebook/serverInvalidateUnits.ml serverInvalidateUnits.fb.ml)))
+  (copy# facebook/server_invalidate_units.ml server_invalidate_units.fb.ml)))
 
 (library
  (name server_incremental)
  (wrapped false)
  (modules
-  serverIncremental)
+  server_incremental)
  (libraries
   decl_compare
   fanout
@@ -58,7 +58,7 @@
 (library
  (name server_enforcement_at_pos)
  (wrapped false)
- (modules enforcementAtPosService serverEnforcementAtPos)
+ (modules enforcement_at_pos_service server_enforcement_at_pos)
  (libraries
   annotated_ast
   decl_provider
@@ -82,21 +82,21 @@
  (name server)
  (wrapped false)
  (modules
-  fullFidelityParseService
-  serverCheckUtils
-  serverIdle
-  serverTastHolesBatch
-  serverInvalidateUnits
-  serverIsSubtype
-  serverLint
-  serverLogErrors
-  serverMethodJumps
-  serverMethodJumpsBatch
-  serverRage
-  serverStatusSingle
-  serverTypeCheck
-  serverWorker
-  symbolInfoService)
+  full_fidelity_parse_service
+  server_check_utils
+  server_idle
+  server_tast_holes_batch
+  server_invalidate_units
+  server_is_subtype
+  server_lint
+  server_log_errors
+  server_method_jumps
+  server_method_jumps_batch
+  server_rage
+  server_status_single
+  server_type_check
+  server_worker
+  symbol_info_service)
  (libraries
   base64
   buffered_line_reader
@@ -141,17 +141,17 @@
   version
   watchman_utils
   (select
-   serverInvalidateUnits.ml
+   server_invalidate_units.ml
    from
-   (facebook signed_source -> serverInvalidateUnits.fb.ml)
-   (-> serverInvalidateUnits.stubs.ml)))
+   (facebook signed_source -> server_invalidate_units.fb.ml)
+   (-> server_invalidate_units.stubs.ml)))
  (preprocess
   (pps lwt_ppx ppx_deriving.std ppx_sexp_conv ppx_hash)))
 
 (rule
- (target serverInitMessages.fb.ml)
+ (target server_init_messages.fb.ml)
  (action
-  (copy# facebook/serverInitMessages.ml serverInitMessages.fb.ml)))
+  (copy# facebook/server_init_messages.ml server_init_messages.fb.ml)))
 
 
 (library
@@ -159,14 +159,14 @@
   (wrapped false)
   (modules
     client_command_handler
-    serverCommand
-    serverInit
+    server_command
+    server_init
     serverInitCommon
-    serverInitMessages
-    serverInitTypes
-    serverLazyInit
+    server_init_messages
+    server_init_types
+    server_lazy_init
     serverMain
-    serverRpc
+    server_rpc
     server_isolation)
   (libraries
     ast
@@ -196,10 +196,10 @@
     state_loader
     write_symbol_info
   (select
-   serverInitMessages.ml
+   server_init_messages.ml
    from
-   (facebook signed_source -> serverInitMessages.fb.ml)
-   (-> serverInitMessages.stubs.ml)))
+   (facebook signed_source -> server_init_messages.fb.ml)
+   (-> server_init_messages.stubs.ml)))
  (preprocess
   (pps
    lwt_ppx

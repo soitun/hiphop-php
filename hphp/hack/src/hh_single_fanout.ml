@@ -118,7 +118,7 @@ let redecl_make_new_naming_table
   let new_naming_table =
     Naming_table.update_many old_naming_table defs_per_file_parsed
   in
-  ServerIncremental.remove_defs_from_reverse_naming_table
+  Server_incremental.remove_defs_from_reverse_naming_table
     old_naming_table
     defs_per_file_parsed;
   let symbols_to_files =
@@ -137,7 +137,7 @@ let get_old_and_new_defs
     (new_naming_table : Naming_table.t) :
     Decl_compare.VersionedNames.t Relative_path.Map.t =
   let defs =
-    ServerIncremental.get_old_and_new_defs_in_files
+    Server_incremental.get_old_and_new_defs_in_files
       old_naming_table
       new_naming_table
       files_with_changes
@@ -260,7 +260,7 @@ let compute_fanout_and_resolve_deps
     in
     let files_with_errors = Diagnostics.get_failed_files errors in
     Relative_path.Set.inter files_to_recheck_if_errors files_with_errors
-    |> ServerIncremental.add_files_with_stale_errors
+    |> Server_incremental.add_files_with_stale_errors
          ctx
          ~reparsed:files_with_changes
          errors

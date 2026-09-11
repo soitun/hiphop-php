@@ -80,9 +80,9 @@ let test () =
     Test.Client.edit_file env "test.php" autocomplete_contents
   in
   let (env, response) =
-    ClientIdeDaemon.Test.handle
+    Client_ide_daemon.Test.handle
       env
-      ClientIdeMessage.(
+      Client_ide_message.(
         Completion
           ( Test.doc "test.php" autocomplete_contents,
             File_content.Position.from_one_based 4 9,

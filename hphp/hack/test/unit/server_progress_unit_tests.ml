@@ -552,7 +552,7 @@ let test_async_read_start () : bool Lwt.t =
   Lwt.return_true
 
 let env =
-  ClientEnv.
+  Client_env.
     {
       autostart = false;
       config = [];
@@ -567,7 +567,7 @@ let env =
       paths = [];
       max_errors = None;
       reason = None;
-      mode = ClientEnv.MODE_STATUS;
+      mode = Client_env.MODE_STATUS;
       no_load = true;
       save_64bit = None;
       save_human_readable_64bit_dep_map = None;
@@ -592,7 +592,7 @@ let make_error_filter env =
   Filter_diagnostics.Filter.make
     ~default_all:true
     ~generated_files:[]
-    env.ClientEnv.warning_switches
+    env.Client_env.warning_switches
 
 let test_check_success () : bool Lwt.t =
   let%lwt () =
@@ -602,7 +602,7 @@ let test_check_success () : bool Lwt.t =
           ~clock:None
           ~ignore_hh_version:false
           ~cancel_reason;
-        let env = { env with ClientEnv.root } in
+        let env = { env with Client_env.root } in
         let connect = ref false in
         let connect_then_close () =
           connect := true;
@@ -610,7 +610,7 @@ let test_check_success () : bool Lwt.t =
         in
         let partial_telemetry_ref = ref None in
         let check_future =
-          ClientCheckStatus.go_streaming
+          Client_check_status.go_streaming
             env
             ServerLocalConfigLoad.default
             (make_error_filter env)
@@ -639,11 +639,11 @@ let test_check_errors () : bool Lwt.t =
   let%lwt () =
     try_with_tmp (fun ~root ->
         Server_progress.write ~include_in_logs:false "test1";
-        let env = { env with ClientEnv.root } in
+        let env = { env with Client_env.root } in
         let connect_then_close () = Lwt.return_unit in
         let partial_telemetry_ref = ref None in
         let check_future =
-          ClientCheckStatus.go_streaming
+          Client_check_status.go_streaming
             env
             ServerLocalConfigLoad.default
             (make_error_filter env)
@@ -695,12 +695,12 @@ let test_check_jsonl_success () : bool Lwt.t =
           ~ignore_hh_version:false
           ~cancel_reason;
         let env =
-          { env with ClientEnv.root; output_jsonl = true; output_json = false }
+          { env with Client_env.root; output_jsonl = true; output_json = false }
         in
         let connect_then_close () = Lwt.return_unit in
         let partial_telemetry_ref = ref None in
         let check =
-          ClientCheckStatus.go_streaming
+          Client_check_status.go_streaming
             env
             ServerLocalConfigLoad.default
             (make_error_filter env)
@@ -739,12 +739,12 @@ let test_check_jsonl_errors () : bool Lwt.t =
     try_with_tmp (fun ~root ->
         Server_progress.write ~include_in_logs:false "test1";
         let env =
-          { env with ClientEnv.root; output_jsonl = true; output_json = false }
+          { env with Client_env.root; output_jsonl = true; output_json = false }
         in
         let connect_then_close () = Lwt.return_unit in
         let partial_telemetry_ref = ref None in
         let check =
-          ClientCheckStatus.go_streaming
+          Client_check_status.go_streaming
             env
             ServerLocalConfigLoad.default
             (make_error_filter env)
@@ -801,12 +801,12 @@ let test_check_jsonl_warnings_only () : bool Lwt.t =
     try_with_tmp (fun ~root ->
         Server_progress.write ~include_in_logs:false "test1";
         let env =
-          { env with ClientEnv.root; output_jsonl = true; output_json = false }
+          { env with Client_env.root; output_jsonl = true; output_json = false }
         in
         let connect_then_close () = Lwt.return_unit in
         let partial_telemetry_ref = ref None in
         let check =
-          ClientCheckStatus.go_streaming
+          Client_check_status.go_streaming
             env
             ServerLocalConfigLoad.default
             (make_error_filter env)
@@ -874,12 +874,12 @@ let test_check_jsonl_mixed_errors_and_warnings () : bool Lwt.t =
     try_with_tmp (fun ~root ->
         Server_progress.write ~include_in_logs:false "test1";
         let env =
-          { env with ClientEnv.root; output_jsonl = true; output_json = false }
+          { env with Client_env.root; output_jsonl = true; output_json = false }
         in
         let connect_then_close () = Lwt.return_unit in
         let partial_telemetry_ref = ref None in
         let check =
-          ClientCheckStatus.go_streaming
+          Client_check_status.go_streaming
             env
             ServerLocalConfigLoad.default
             (make_error_filter env)
@@ -969,12 +969,12 @@ let test_check_jsonl_full_output () : bool Lwt.t =
     try_with_tmp (fun ~root ->
         Server_progress.write ~include_in_logs:false "test1";
         let env =
-          { env with ClientEnv.root; output_jsonl = true; output_json = false }
+          { env with Client_env.root; output_jsonl = true; output_json = false }
         in
         let connect_then_close () = Lwt.return_unit in
         let partial_telemetry_ref = ref None in
         let check =
-          ClientCheckStatus.go_streaming
+          Client_check_status.go_streaming
             env
             ServerLocalConfigLoad.default
             (make_error_filter env)
@@ -1027,7 +1027,7 @@ let test_check_jsonl_streaming () : bool Lwt.t =
     try_with_tmp (fun ~root ->
         Server_progress.write ~include_in_logs:false "test1";
         let env =
-          { env with ClientEnv.root; output_jsonl = true; output_json = false }
+          { env with Client_env.root; output_jsonl = true; output_json = false }
         in
         let connect_then_close () = Lwt.return_unit in
         let partial_telemetry_ref = ref None in
@@ -1042,7 +1042,7 @@ let test_check_jsonl_streaming () : bool Lwt.t =
           ~ignore_hh_version:false
           ~cancel_reason;
         let check_future =
-          ClientCheckStatus.go_streaming
+          Client_check_status.go_streaming
             env
             ServerLocalConfigLoad.default
             (make_error_filter env)
@@ -1121,7 +1121,7 @@ let test_check_connect_success () : bool Lwt.t =
   let%lwt () =
     try_with_tmp (fun ~root ->
         Server_progress.write ~include_in_logs:false "test1";
-        let env = { env with ClientEnv.root } in
+        let env = { env with Client_env.root } in
         let (future1, trigger1) = Lwt.wait () in
         let (future2, trigger2) = Lwt.wait () in
         let connect = ref "A" in
@@ -1138,7 +1138,7 @@ let test_check_connect_success () : bool Lwt.t =
         let partial_telemetry_ref = ref None in
 
         let check_future =
-          ClientCheckStatus.go_streaming
+          Client_check_status.go_streaming
             env
             ServerLocalConfigLoad.default
             (make_error_filter env)
@@ -1178,7 +1178,7 @@ let test_check_connect_failure () : bool Lwt.t =
   let%lwt () =
     try_with_tmp (fun ~root ->
         Server_progress.write ~include_in_logs:false "test1";
-        let env = { env with ClientEnv.root } in
+        let env = { env with Client_env.root } in
         (* This is an async failure, so the exception is stored in check_future
            rather than being returned from ClientCheckStatus.go itself *)
         let connect_then_close () =
@@ -1187,7 +1187,7 @@ let test_check_connect_failure () : bool Lwt.t =
         in
         let partial_telemetry_ref = ref None in
         let check_future =
-          ClientCheckStatus.go_streaming
+          Client_check_status.go_streaming
             env
             ServerLocalConfigLoad.default
             (make_error_filter env)

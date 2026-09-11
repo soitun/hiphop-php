@@ -27,7 +27,7 @@ let () = Random.self_init ()
 
 let init_event_logger
     root
-    (command : ClientCommand.heavy_command)
+    (command : Client_command.heavy_command)
     ~init_id
     ~from
     (config : ServerConfig.t)
@@ -35,8 +35,8 @@ let init_event_logger
   HackEventLogger.client_init
     ~init_id
     ~from
-    ~is_interactive:(ClientArgs.is_interactive command)
-    ~custom_columns:(ClientCommand.get_custom_telemetry_data command)
+    ~is_interactive:(Client_args.is_interactive command)
+    ~custom_columns:(Client_command.get_custom_telemetry_data command)
     root;
   HackEventLogger.set_hhconfig_version
     (ServerConfig.version config |> Config_file.version_to_string_opt);
@@ -94,7 +94,7 @@ let exit_status_of_exn exn =
 let handle_exn_and_exit exn ~command_name =
   let (es, e) = exit_status_of_exn exn in
   (* hide the spinner *)
-  ClientSpinner.report ~to_stderr:false ~angery_reaccs_only:false None;
+  Client_spinner.report ~to_stderr:false ~angery_reaccs_only:false None;
   (* We trust that if someone raised Exit_with then they had the decency to print
      out a user-facing message; we will only print out a user-facing message here
      for uncaught exceptions: lvl=Error gets sent to stderr, but lvl=Info doesn't. *)
@@ -111,11 +111,11 @@ let handle_exn_and_exit exn ~command_name =
   HackEventLogger.client_bad_exit ~command_name es e;
   Exit.exit es
 
-let exec_command_without_config (command : ClientCommand.light_command) =
+let exec_command_without_config (command : Client_command.light_command) =
   try
     let exit_status =
       match command with
-      | ClientCommand.CDecompressZhhdg env -> ClientDecompressZhhdg.main env
+      | Client_command.CDecompressZhhdg env -> Client_decompress_zhhdg.main env
     in
     Exit.exit exit_status
   with
@@ -123,19 +123,19 @@ let exec_command_without_config (command : ClientCommand.light_command) =
     let (es, _e) = exit_status_of_exn exn in
     Printf.printf
       "[%s] %s\n"
-      (ClientCommand.name_camel_case_light command)
+      (Client_command.name_camel_case_light command)
       (Exit_status.show_expanded es);
     Exit.exit es
 
 let exec_command_with_config
-    (command : ClientCommand.heavy_command) ~init_proc_stack =
+    (command : Client_command.heavy_command) ~init_proc_stack =
   let init_id = Random_id.short_string () in
-  let command_name = ClientCommand.name_camel_case_heavy command in
+  let command_name = Client_command.name_camel_case_heavy command in
 
   (* The global variable Relative_path.root must be initialized for a wide variety of things *)
-  let root = ClientArgs.root command in
+  let root = Client_args.root command in
   set_up_root root;
-  let from = ClientArgs.from command in
+  let from = Client_args.from command in
 
   set_up_logger ~command_name ~init_id ~root;
   Hh_logger.log
@@ -143,7 +143,7 @@ let exec_command_with_config
     (String.concat ~sep:" " (Array.to_list Sys.argv));
 
   let cli_config_overrides =
-    ClientArgs.config command |> Option.value ~default:[]
+    Client_args.config command |> Option.value ~default:[]
   in
   ServerConfig.warn_on_invalid_config_keys cli_config_overrides;
 
@@ -158,7 +158,7 @@ let exec_command_with_config
   let (config, local_config) =
     ServerConfig.load_with_dynamic_overrides
       ~apply_dynamic_overrides:apply_qe_overrides
-      ~silent:(not @@ ClientArgs.dump_config command)
+      ~silent:(not @@ Client_args.dump_config command)
       ~from
       ~cli_config_overrides
   in
@@ -175,26 +175,26 @@ let exec_command_with_config
   try
     let exit_status =
       match command with
-      | ClientCommand.CCheck check_env ->
-        ClientCheck.main check_env config local_config ~init_proc_stack
+      | Client_command.CCheck check_env ->
+        Client_check.main check_env config local_config ~init_proc_stack
         (* never returns; does [Exit.exit] itself *)
-      | ClientCommand.CStart env ->
-        Lwt_utils.run_main (fun () -> ClientStart.main env)
-      | ClientCommand.CStop env ->
-        Lwt_utils.run_main (fun () -> ClientStop.main env)
-      | ClientCommand.CRestart env ->
-        Lwt_utils.run_main (fun () -> ClientRestart.main env)
-      | ClientCommand.CLsp args ->
+      | Client_command.CStart env ->
+        Lwt_utils.run_main (fun () -> Client_start.main env)
+      | Client_command.CStop env ->
+        Lwt_utils.run_main (fun () -> Client_stop.main env)
+      | Client_command.CRestart env ->
+        Lwt_utils.run_main (fun () -> Client_restart.main env)
+      | Client_command.CLsp args ->
         Lwt_utils.run_main (fun () ->
-            ClientLsp.main args ~init_id ~config ~local_config ~init_proc_stack)
-      | ClientCommand.CRage env ->
+            Client_lsp.main args ~init_id ~config ~local_config ~init_proc_stack)
+      | Client_command.CRage env ->
         Lwt_utils.run_main (fun () -> ClientRage.main env local_config)
-      | ClientCommand.CSavedStateProjectMetadata env ->
+      | Client_command.CSavedStateProjectMetadata env ->
         Lwt_utils.run_main (fun () ->
-            ClientSavedStateProjectMetadata.main env local_config)
-      | ClientCommand.CDownloadSavedState env ->
+            Client_saved_state_project_metadata.main env local_config)
+      | Client_command.CDownloadSavedState env ->
         Lwt_utils.run_main (fun () ->
-            ClientDownloadSavedState.main env local_config)
+            Client_download_saved_state.main env local_config)
     in
     Exit.exit exit_status
   with
@@ -210,7 +210,7 @@ let main () =
   let init_proc_stack = Proc.get_proc_stack (Unix.getpid ()) in
   let command =
     try
-      ClientArgs.parse_args
+      Client_args.parse_args
         ~from_default:
           (if Proc.is_likely_from_interactive_shell init_proc_stack then
             "[sh]"
@@ -220,8 +220,8 @@ let main () =
     | Exit_status.Exit_with exit_status -> Exit.exit exit_status
   in
   match command with
-  | ClientCommand.Without_config command -> exec_command_without_config command
-  | ClientCommand.With_config command ->
+  | Client_command.Without_config command -> exec_command_without_config command
+  | Client_command.With_config command ->
     exec_command_with_config command ~init_proc_stack
 
 let () =

@@ -105,7 +105,7 @@ type full_check_status =
           looking up things in dependency table) will have stale results. *)
   | Full_check_started
       (** Same as above, except server will actively try to process outstanding
-          changes (by going into ServerTypeCheck from main loop - this might need to
+          changes (by going into Server_type_check from main loop - this might need to
           be repeated several times before progressing to Full_check_done, due to
           ability to interrupt typecheck jobs).
           Server starts in this state, and we also enter it from Full_check_needed
@@ -207,7 +207,7 @@ type env = {
       (** Timestamp of last IDE file synchronization command *)
   last_notifier_check_time: float;
       (** Timestamp of last query for disk changes *)
-  last_idle_job_time: float;  (** Timestamp of last ServerIdle.go run *)
+  last_idle_job_time: float;  (** Timestamp of last Server_idle.go run *)
   disk_needs_parsing: Relative_path.Set.t;
   clock: ServerNotifier.clock option;
       (** This is the clock as of when disk_needs_parsing was last updated.
@@ -224,9 +224,9 @@ type env = {
           cancelled mid-flight, in which case full_check_status will be set to
           Full_check_started and entire thing will be retried on next iteration. *)
   why_needs_server_type_check: string * string;
-      (** Why is a round of ServerTypeCheck needed? For instance, if a typecheck
+      (** Why is a round of Server_type_check needed? For instance, if a typecheck
       got interrupted+cancelled leaving files still needing to be checked, the
-      reason will be stored here. It's written+read by [ServerTypeCheck.type_check].
+      reason will be stored here. It's written+read by [Server_type_check.type_check].
       The first of the two strings is a user-facing message, and the second is additional
       information for logs. *)
   init_env: init_env;

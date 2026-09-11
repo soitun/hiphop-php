@@ -118,7 +118,7 @@ type full_check_status =
           looking up things in dependency table) will have stale results. *)
   | Full_check_started
       (** Same as above, except server will actively try to process outstanding
-          changes (by going into ServerTypeCheck from main loop - this might need to
+          changes (by going into Server_type_check from main loop - this might need to
           be repeated several times before progressing to Full_check_done, due to
           ability to interrupt typecheck jobs).
           Server starts in this state, and we also enter it from Full_check_needed
@@ -315,7 +315,7 @@ type env = {
       (** Timestamp of last IDE file synchronization command *)
   last_notifier_check_time: float;
       (** Timestamp of last query for disk changes *)
-  last_idle_job_time: float;  (** Timestamp of last ServerIdle.go run *)
+  last_idle_job_time: float;  (** Timestamp of last Server_idle.go run *)
   disk_needs_parsing: Relative_path.Set.t;
       (** Files which parse trees were invalidated (because they changed on disk)
           and need to be re-parsed *)

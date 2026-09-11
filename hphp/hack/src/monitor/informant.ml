@@ -8,7 +8,7 @@
  *)
 
 open Hh_prelude
-open InformantNotifier
+open Informant_notifier
 
 type report =
   | Move_along  (** Nothing to see here. *)
@@ -125,10 +125,10 @@ end
 module Revision_tracker = struct
   type timestamp = float
 
-  type repo_transition = InformantNotifier.repo_transition
+  type repo_transition = Informant_notifier.repo_transition
 
   type init_settings = {
-    notifier: InformantNotifier.t;
+    notifier: Informant_notifier.t;
     root: Path.t;
     min_distance_restart: int;
     is_saved_state_precomputed: bool;
@@ -379,7 +379,7 @@ module Revision_tracker = struct
    * *)
   let process_once server_state env =
     let change =
-      InformantNotifier.get_change
+      Informant_notifier.get_change
         env.inits.notifier
         ~is_in_hg_update_state:env.is_in_hg_update_state
         ~is_in_hg_transaction_state:env.is_in_hg_transaction_state
@@ -420,7 +420,7 @@ module Revision_tracker = struct
      * InformantNotifier.has_more_messages, but this alternate method of pumping messages
      * is heavily used in tests *)
     ( report,
-      InformantNotifier.has_more_messages env.inits.notifier
+      Informant_notifier.has_more_messages env.inits.notifier
       || Option.is_some change )
 
   let rec process (server_state, env, reports_acc) =
@@ -555,7 +555,7 @@ let init
     Resigned
   else
     let notifier =
-      InformantNotifier.init ~use_eden ~watchman_debug_logging root
+      Informant_notifier.init ~use_eden ~watchman_debug_logging root
     in
     match notifier with
     | None ->

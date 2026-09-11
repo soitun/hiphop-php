@@ -191,7 +191,7 @@ let defer_or_do_type_check
       else
         let files_to_check_set = Relative_path.Set.of_list files_to_check in
         let filtered_check =
-          ServerCheckUtils.user_filter_type_check_files
+          Server_check_utils.user_filter_type_check_files
             ~to_recheck:files_to_check_set
             ~reparsed:Relative_path.Set.empty
         in
@@ -240,7 +240,7 @@ let defer_or_do_type_check
         ~longlived_workers
         ~hh_distc_config
         ~check_info:
-          (ServerCheckUtils.get_check_info
+          (Server_check_utils.get_check_info
              ~check_reason:(ServerEnv.Init_telemetry.get_reason init_telemetry)
              ~log_errors:true
              ~discard_warnings:(ServerEnv.discard_warnings env)

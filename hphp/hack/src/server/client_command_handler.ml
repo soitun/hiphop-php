@@ -58,7 +58,7 @@ end = struct
    * wrapping the return value to make it match return type of [command] *)
   let handle_client_command_try return client env command =
     try command () with
-    | ServerCommand.Nonfatal_rpc_exception (e, env) ->
+    | Server_command.Nonfatal_rpc_exception (e, env) ->
       return (handle_client_command_exception ~env ~client e)
     | exn ->
       let e = Exception.wrap exn in
@@ -73,7 +73,7 @@ end = struct
     match ClientProvider.read_connection_type client with
     | ServerCommandTypes.Non_persistent ->
       Hh_logger.log "Handling non-persistent client command.";
-      ServerCommand.handle genv env client
+      Server_command.handle genv env client
 
   let handle_client_command_or_persistent_connection genv env client =
     handle_client_command_or_persistent_connection_ genv env client
@@ -83,7 +83,7 @@ end
 
 let handle_client_command_or_persistent_connection genv env client :
     ServerEnv.env ServerUtils.handle_command_result =
-  ServerIdle.stamp_connection ();
+  Server_idle.stamp_connection ();
   Hh_logger.log
     ~category:"clients"
     "Handling non-persistent client command or persistent client connection.";

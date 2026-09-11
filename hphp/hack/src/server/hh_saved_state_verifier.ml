@@ -57,7 +57,7 @@ let diff_naming_table args =
      - The saved state "hack_saved_state/tree/hack/naming/<hash>"
        would also have a naming table in the sqlite format.
   *)
-  DiffNamingTable.diff control_naming_table test_naming_table
+  Diff_naming_table.diff control_naming_table test_naming_table
 
 let () =
   let args = parse_options () in

@@ -11,7 +11,7 @@
 open Hh_prelude
 
 let test_process_data =
-  ServerProcess.
+  Server_process.
     {
       pid = 2758734;
       server_specific_files =
@@ -30,7 +30,7 @@ let test_dmesg_parser () =
     ]
   in
   Sys_utils.For_test.find_oom_in_dmesg_output
-    test_process_data.ServerProcess.pid
+    test_process_data.Server_process.pid
     "hh_server"
     input
 

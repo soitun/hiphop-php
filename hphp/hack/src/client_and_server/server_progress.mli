@@ -157,7 +157,7 @@ val try_delete : unit -> unit
   LIFECYCLE SEMANTICS OF PRODUCING AND CONSUMING THE ERRORS-FILE
 
   The code that produces errors-file lives in ServerMain.ml (which registers an on-exit
-  hook to delete the file), ServerTypeCheck.ml (to manage the previous and new
+  hook to delete the file), server_type_check.ml (to manage the previous and new
   errors-file immediately before and after a typecheck is performed),
   and typing_check_service.ml (to make the actual error reports).
   1. When hh_server is launched, it either eventually exits or eventually writes

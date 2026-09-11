@@ -2,10 +2,10 @@
  (name client_ide_service)
  (wrapped false)
  (modules
-  clientIdeDaemon
-  clientIdeIncremental
-  clientIdeInit
-  clientIdeService)
+  client_ide_daemon
+  client_ide_incremental
+  client_ide_init
+  client_ide_service)
  (libraries
   client_ide_message
   client_ide_utils
@@ -36,7 +36,7 @@
  (name client_ide_message)
  (wrapped false)
  (modules
-  clientIdeMessage)
+  client_ide_message)
  (libraries
   file_content
   lwt_utils
@@ -48,7 +48,7 @@
 (library
  (name client_ide_utils)
  (wrapped false)
- (modules clientIdeUtils)
+ (modules client_ide_utils)
  (libraries client_ide_message yojson)
  (preprocess
   (pps lwt_ppx)))

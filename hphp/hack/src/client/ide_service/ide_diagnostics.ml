@@ -20,7 +20,7 @@ let convert_error ~classish_positions (error, diagnostic_hash) =
           | HintStyleSilent _ -> None
           | HintStyleHint p -> Classish_positions.find p classish_positions)
   in
-  ClientIdeMessage.
+  Client_ide_message.
     {
       diagnostic_error = error;
       diagnostic_related_hints = related_hints;

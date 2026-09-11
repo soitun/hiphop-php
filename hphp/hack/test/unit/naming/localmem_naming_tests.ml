@@ -252,7 +252,7 @@ let test_dupe_setup ~(sqlite : bool) =
     ~file:(Relative_path.to_absolute setup.Common_setup.nonexistent_path)
     ~contents;
   let dupe =
-    ClientIdeIncremental.update_naming_tables_and_si
+    Client_ide_incremental.update_naming_tables_and_si
       ~ctx
       ~naming_table:setup.Common_setup.naming_table
       ~sienv
@@ -288,11 +288,11 @@ let test_dupe_then_delete_dupe ~(sqlite : bool) () =
   (* Now we'll delete 'nonexistent.php'. *)
   Sys_utils.rm_dir_tree
     (Relative_path.to_absolute setup.Common_setup.nonexistent_path);
-  let (_unduped : ClientIdeIncremental.update_result) =
-    ClientIdeIncremental.update_naming_tables_and_si
+  let (_unduped : Client_ide_incremental.update_result) =
+    Client_ide_incremental.update_naming_tables_and_si
       ~ctx
-      ~naming_table:dupe.ClientIdeIncremental.naming_table
-      ~sienv:dupe.ClientIdeIncremental.sienv
+      ~naming_table:dupe.Client_ide_incremental.naming_table
+      ~sienv:dupe.Client_ide_incremental.sienv
       ~changes:(Relative_path.Set.singleton setup.Common_setup.nonexistent_path)
   in
 
@@ -323,11 +323,11 @@ let test_dupe_then_delete_original ~(sqlite : bool) () =
 
   (* Now we'll delete the original 'foo.php'. *)
   Sys_utils.rm_dir_tree (Relative_path.to_absolute setup.Common_setup.foo_path);
-  let (_unduped : ClientIdeIncremental.update_result) =
-    ClientIdeIncremental.update_naming_tables_and_si
+  let (_unduped : Client_ide_incremental.update_result) =
+    Client_ide_incremental.update_naming_tables_and_si
       ~ctx
-      ~naming_table:dupe.ClientIdeIncremental.naming_table
-      ~sienv:dupe.ClientIdeIncremental.sienv
+      ~naming_table:dupe.Client_ide_incremental.naming_table
+      ~sienv:dupe.Client_ide_incremental.sienv
       ~changes:(Relative_path.Set.singleton setup.Common_setup.foo_path)
   in
 
@@ -369,8 +369,8 @@ let test_xhp_name_mangling ~(sqlite : bool) () =
   Disk.write_file
     ~file:(Relative_path.to_absolute setup.Common_setup.nonexistent_path)
     ~contents;
-  let { ClientIdeIncremental.changes; _ } =
-    ClientIdeIncremental.update_naming_tables_and_si
+  let { Client_ide_incremental.changes; _ } =
+    Client_ide_incremental.update_naming_tables_and_si
       ~ctx
       ~naming_table:setup.Common_setup.naming_table
       ~sienv

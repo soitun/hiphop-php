@@ -43,9 +43,9 @@ let test () =
   let (env, _diagnostics) = Test.Client.edit_file env foo_name foo_contents in
   let (env, _diagnostics) = Test.Client.edit_file env bar_name bar_contents in
   let (env, response) =
-    ClientIdeDaemon.Test.handle
+    Client_ide_daemon.Test.handle
       env
-      ClientIdeMessage.(
+      Client_ide_message.(
         Completion
           ( Test.doc bar_name bar_contents,
             File_content.Position.from_one_based 3 15,
@@ -56,9 +56,9 @@ let test () =
   (* save one file, so the other now will respect it *)
   let env = Test.Client.setup_disk env [(foo_name, foo_contents)] in
   let (env, response) =
-    ClientIdeDaemon.Test.handle
+    Client_ide_daemon.Test.handle
       env
-      ClientIdeMessage.(
+      Client_ide_message.(
         Completion
           ( Test.doc bar_name bar_contents,
             File_content.Position.from_one_based 3 15,
@@ -71,9 +71,9 @@ let test () =
     Test.Client.setup_disk env [(foo_name, foo_contents_with_parse_error)]
   in
   let (env, response) =
-    ClientIdeDaemon.Test.handle
+    Client_ide_daemon.Test.handle
       env
-      ClientIdeMessage.(
+      Client_ide_message.(
         Completion
           ( Test.doc bar_name bar_contents,
             File_content.Position.from_one_based 3 15,
