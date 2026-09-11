@@ -45,6 +45,11 @@ let init_event_logger
     (ServerLocalConfigLoad.to_rollout_flags local_config);
   ()
 
+let log_qe_fetch (fetch : Server_local_config_qe.fetch) =
+  HackEventLogger.client_qe_fetch
+    ~start_time:fetch.start_time
+    ~end_time:fetch.end_time
+
 let set_up_signals () =
   (* Ignore SIGPIPE since if it arises from clientConnect then it might indicate server hangup;
      we detect this case already and handle it better than a signal (unhandled signals cause program exit). *)
@@ -142,13 +147,23 @@ let exec_command_with_config
   in
   ServerConfig.warn_on_invalid_config_keys cli_config_overrides;
 
+  let qe_fetches = ref [] in
+  let apply_qe_overrides ~silent config =
+    let (config, fetches) =
+      Server_local_config_qe.apply_qe_overrides ~silent config
+    in
+    qe_fetches := fetches;
+    config
+  in
   let (config, local_config) =
-    ServerConfig.load
+    ServerConfig.load_with_dynamic_overrides
+      ~apply_dynamic_overrides:apply_qe_overrides
       ~silent:(not @@ ClientArgs.dump_config command)
       ~from
       ~cli_config_overrides
   in
   init_event_logger root command ~init_id ~from config local_config;
+  List.iter !qe_fetches ~f:log_qe_fetch;
 
   let init_proc_stack =
     Option.some_if

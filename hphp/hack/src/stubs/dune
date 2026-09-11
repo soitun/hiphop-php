@@ -46,6 +46,13 @@
   (pps lwt_ppx ppx_deriving.std)))
 
 (library
+ (name server_local_config_qe_stubs)
+ (wrapped false)
+ (modules server_local_config_qe)
+ (preprocess
+  (pps lwt_ppx ppx_deriving.std)))
+
+(library
  (name linting_stubs)
  (wrapped false)
  (modules linting_service)
