@@ -70,10 +70,9 @@ The format can be found in hphp/tools/configs/generate_configs.rs
 
 - int Server.QueueCount = -1, UNKNOWN, nobind
 
-  Maximum number of worker threads the server can scale to at runtime
-  (e.g., via SEMR thread overrides). Defaults to -1 (auto-computed from
-  max(Server.ThreadCount, max(Eval.SemrThreadOverrides))). Users should
-  not need to set this.
+  Maximum number of worker threads the server can scale to at runtime.
+  Defaults to -1, in which case JobQueueDispatcher raises it to
+  Server.ThreadCount. Users should not need to set this.
 
 - int Server.IOThreadCount = 1, UNKNOWN
 - int Server.HighQueueingThreshold = 60, UNKNOWN, nobind
