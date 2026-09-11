@@ -382,6 +382,7 @@
    parser_options
    procs_bucket
    server_local_config_knobs_stubs
+   server_local_config_sandbox_experiment_stubs
    config_file
    package_config
    )

@@ -152,23 +152,28 @@ let warn_on_invalid_hhconf_keys (config : Config_file_common.t) : unit =
         Hh_logger.warn "%s" msg)
 
 (** Apply the following overrides in order:
-  * JuskKnobs
-  * Experiments
+  * JustKnobs
+  * SandboxExperiment
+  * Legacy experiments config
   * `overrides`
   *)
 let apply_overrides ~silent ~current_version ~config ~from ~overrides =
-  (* We'll apply CLI overrides now at the start so that JustKnobs and experiments_config
-     can be informed about them, e.g. "--config rollout_group=foo" will be able
-     to guide the manner in which JustKnobs picks up values, and "--config use_justknobs=false"
-     will be able to disable it. Don't worry though -- we'll apply CLI overrides again at the end,
-     so they overwrite any changes brought by JustKnobs and experiments_config. *)
+  (* We'll apply CLI overrides now at the start so that the dynamic config
+     sources can be informed about them, e.g. "--config rollout_group=foo" will
+     guide the manner in which JustKnobs picks up values, and
+     "--config use_justknobs=false" will disable it. Don't worry though -- we'll
+     apply CLI overrides again at the end, so they overwrite any changes brought
+     by dynamic config. *)
   let config =
     Config_file.apply_overrides ~config ~overrides ~log_reason:None
+  in
+  let deterministic_behavior_for_tests =
+    Sys_utils.deterministic_behavior_for_tests ()
   in
   (* Now is the time for JustKnobs *)
   let use_justknobs = bool_opt Config_keys.Hhconf.use_justknobs config in
   let config =
-    match (use_justknobs, Sys_utils.deterministic_behavior_for_tests ()) with
+    match (use_justknobs, deterministic_behavior_for_tests) with
     | (Some false, _)
     (* --config use_justknobs=false (or in hh.conf) will force JK off, regardless of anything else *)
     | (None, true)
@@ -181,6 +186,14 @@ let apply_overrides ~silent ~current_version ~config ~from ~overrides =
     (* if use_justknobs isn't set, then HH_TEST_MODE unset or =0 will leave JK on *)
       ->
       ServerLocalConfigKnobs.apply_justknobs_overrides ~silent config ~from
+  in
+  let config =
+    if deterministic_behavior_for_tests then
+      config
+    else
+      Server_local_config_sandbox_experiment.apply_sandbox_experiment_overrides
+        ~silent
+        config
   in
   (* Now is the time for experiments_config overrides *)
   let experiments_enabled =
@@ -244,7 +257,7 @@ let apply_overrides ~silent ~current_version ~config ~from ~overrides =
       ("Experimental config not enabled", config)
   in
   (* Finally, reapply the CLI overrides, since they should take
-     precedence over the experiments_config and JustKnobs. *)
+     precedence over dynamic config. *)
   let config =
     Config_file.apply_overrides
       ~config

@@ -233,7 +233,7 @@ let fold_repo
 
 let () =
   Daemon.check_entry_point ();
-  Folly.ensure_folly_init ();
+  Startup_initializer.init ();
   let repo = ref None in
   let naming_table_path = ref None in
   let output_dir = ref None in
