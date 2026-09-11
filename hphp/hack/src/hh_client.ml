@@ -201,6 +201,7 @@ let exec_command_with_config
   | exn -> handle_exn_and_exit exn ~command_name
 
 let main () =
+  Server_local_config_qe.prepare_client_startup ();
   (* no-op, needed at entry-point for Daemon hookup *)
   Daemon.check_entry_point ();
   (* This invokes fbinit logic, which subsumes Folly.ensure_folly_init () *)

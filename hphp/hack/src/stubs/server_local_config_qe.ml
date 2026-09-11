@@ -6,6 +6,8 @@
  *
  *)
 
+let prepare_client_startup () = ()
+
 type fetch = {
   start_time: float;
   end_time: float;
