@@ -676,6 +676,7 @@ let load_local_config
     (config : Config_file_common.t)
     (version : Config_file_version.version)
     ~(command_line_overrides : Config_file_common.t)
+    ~apply_dynamic_overrides
     ~silent
     ~from : ServerLocalConfig.t =
   let current_rolled_out_flag_idx =
@@ -690,7 +691,8 @@ let load_local_config
       ~default:false
       config
   in
-  ServerLocalConfigLoad.load
+  ServerLocalConfigLoad.load_with_dynamic_overrides
+    ~apply_dynamic_overrides
     ~silent
     ~current_version:version
     ~current_rolled_out_flag_idx
@@ -698,8 +700,11 @@ let load_local_config
     ~from
     ~overrides:command_line_overrides
 
-let load ~silent ~from ~(cli_config_overrides : (string * string) list) :
-    t * ServerLocalConfig.t =
+let load_with_dynamic_overrides
+    ~apply_dynamic_overrides
+    ~silent
+    ~from
+    ~(cli_config_overrides : (string * string) list) : t * ServerLocalConfig.t =
   let command_line_overrides = Config_file.of_list cli_config_overrides in
   let hhconfig_abs_path = Relative_path.to_absolute repo_config_path in
   let hhconfig = Config_file.parse_hhconfig hhconfig_abs_path in
@@ -716,7 +721,13 @@ let load ~silent ~from ~(cli_config_overrides : (string * string) list) :
       (Config_file.Getters.string_opt Config_keys.Hhconfig.version config)
   in
   let local_config =
-    load_local_config config version ~command_line_overrides ~silent ~from
+    load_local_config
+      config
+      version
+      ~command_line_overrides
+      ~apply_dynamic_overrides
+      ~silent
+      ~from
   in
   Option.iter
     ~f:Config_file_common.set_pkgconfig_path
@@ -858,6 +869,13 @@ let load ~silent ~from ~(cli_config_overrides : (string * string) list) :
           config;
     },
     local_config )
+
+let load ~silent ~from ~cli_config_overrides =
+  load_with_dynamic_overrides
+    ~apply_dynamic_overrides:(fun ~silent:_ config -> config)
+    ~silent
+    ~from
+    ~cli_config_overrides
 
 (* useful in testing code *)
 let default_config =

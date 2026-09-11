@@ -27,6 +27,16 @@ val load :
   cli_config_overrides:(string * string) list ->
   t * ServerLocalConfig.t
 
+(** As [load], with [apply_dynamic_overrides] applied after JustKnobs and before
+    SandboxExperiment while loading the local config. *)
+val load_with_dynamic_overrides :
+  apply_dynamic_overrides:
+    (silent:bool -> Config_file_common.t -> Config_file_common.t) ->
+  silent:bool ->
+  from:string ->
+  cli_config_overrides:(string * string) list ->
+  t * ServerLocalConfig.t
+
 val load_config : Config_file_common.t -> GlobalOptions.t -> GlobalOptions.t
 
 val set_parser_options : t -> ParserOptions.t -> t

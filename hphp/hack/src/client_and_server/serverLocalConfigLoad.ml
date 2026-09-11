@@ -151,13 +151,14 @@ let warn_on_invalid_hhconf_keys (config : Config_file_common.t) : unit =
         in
         Hh_logger.warn "%s" msg)
 
-(** Apply the following overrides in order:
-  * JustKnobs
-  * SandboxExperiment
-  * Legacy experiments config
-  * `overrides`
-  *)
-let apply_overrides ~silent ~current_version ~config ~from ~overrides =
+let apply_overrides_in_order
+    ~silent
+    ~config
+    ~overrides
+    ~apply_justknobs_overrides
+    ~apply_dynamic_overrides
+    ~apply_sandbox_experiment_overrides
+    ~apply_experiments_config_overrides =
   (* We'll apply CLI overrides now at the start so that the dynamic config
      sources can be informed about them, e.g. "--config rollout_group=foo" will
      guide the manner in which JustKnobs picks up values, and
@@ -167,12 +168,43 @@ let apply_overrides ~silent ~current_version ~config ~from ~overrides =
   let config =
     Config_file.apply_overrides ~config ~overrides ~log_reason:None
   in
+  let config = apply_justknobs_overrides config in
+  let config = apply_dynamic_overrides config in
+  let config = apply_sandbox_experiment_overrides config in
+  let (experiments_meta, config) = apply_experiments_config_overrides config in
+  (* Finally, reapply the CLI overrides, since they should take
+     precedence over dynamic config. *)
+  let config =
+    Config_file.apply_overrides
+      ~config
+      ~overrides
+      ~log_reason:(Option.some_if (not silent) "--config")
+  in
+  (experiments_meta, config)
+
+module For_test = struct
+  let apply_overrides_in_order = apply_overrides_in_order
+end
+
+(** Apply the following overrides in order:
+  * JustKnobs
+  * caller-provided dynamic overrides
+  * SandboxExperiment
+  * Legacy experiments config
+  * `overrides`
+  *)
+let apply_overrides
+    ~silent
+    ~current_version
+    ~config
+    ~from
+    ~overrides
+    ~apply_dynamic_overrides:apply_dynamic_overrides_fn =
   let deterministic_behavior_for_tests =
     Sys_utils.deterministic_behavior_for_tests ()
   in
-  (* Now is the time for JustKnobs *)
-  let use_justknobs = bool_opt Config_keys.Hhconf.use_justknobs config in
-  let config =
+  let apply_justknobs_overrides config =
+    let use_justknobs = bool_opt Config_keys.Hhconf.use_justknobs config in
     match (use_justknobs, deterministic_behavior_for_tests) with
     | (Some false, _)
     (* --config use_justknobs=false (or in hh.conf) will force JK off, regardless of anything else *)
@@ -187,7 +219,13 @@ let apply_overrides ~silent ~current_version ~config ~from ~overrides =
       ->
       ServerLocalConfigKnobs.apply_justknobs_overrides ~silent config ~from
   in
-  let config =
+  let apply_dynamic_overrides config =
+    if deterministic_behavior_for_tests then
+      config
+    else
+      apply_dynamic_overrides_fn ~silent config
+  in
+  let apply_sandbox_experiment_overrides config =
     if deterministic_behavior_for_tests then
       config
     else
@@ -195,15 +233,14 @@ let apply_overrides ~silent ~current_version ~config ~from ~overrides =
         ~silent
         config
   in
-  (* Now is the time for experiments_config overrides *)
-  let experiments_enabled =
-    bool_if_min_version
-      Config_keys.Hhconf.experiments_config_enabled
-      ~default:false
-      ~current_version
-      config
-  in
-  let (experiments_meta, config) =
+  let apply_experiments_config_overrides config =
+    let experiments_enabled =
+      bool_if_min_version
+        Config_keys.Hhconf.experiments_config_enabled
+        ~default:false
+        ~current_version
+        config
+    in
     if experiments_enabled then begin
       Disk.mkdir_p GlobalConfig.tmp_dir;
       let dir =
@@ -256,19 +293,19 @@ let apply_overrides ~silent ~current_version ~config ~from ~overrides =
     end else
       ("Experimental config not enabled", config)
   in
-  (* Finally, reapply the CLI overrides, since they should take
-     precedence over dynamic config. *)
-  let config =
-    Config_file.apply_overrides
-      ~config
-      ~overrides
-      ~log_reason:(Option.some_if (not silent) "--config")
-  in
-  (experiments_meta, config)
+  apply_overrides_in_order
+    ~silent
+    ~config
+    ~overrides
+    ~apply_justknobs_overrides
+    ~apply_dynamic_overrides
+    ~apply_sandbox_experiment_overrides
+    ~apply_experiments_config_overrides
 
 let load_
     ?(config : Config_file_common.t option)
     system_config_path
+    ~apply_dynamic_overrides
     ~silent
     ~current_version
     ~current_rolled_out_flag_idx
@@ -283,7 +320,13 @@ let load_
     | None ->
       let parsed = Config_file.parse_local_config system_config_path in
       warn_on_invalid_hhconf_keys parsed;
-      apply_overrides ~silent ~current_version ~config:parsed ~from ~overrides
+      apply_overrides
+        ~silent
+        ~current_version
+        ~config:parsed
+        ~from
+        ~overrides
+        ~apply_dynamic_overrides
   in
   (if not silent then
     output_config_section "Combined config" @@ fun () ->
@@ -1201,15 +1244,39 @@ let load_
     ignored_paths;
   }
 
-let load :
-    silent:bool ->
-    current_version:Config_file_version.version ->
-    current_rolled_out_flag_idx:int ->
-    deactivate_saved_state_rollout:bool ->
-    from:string ->
-    overrides:Config_file_common.t ->
-    t =
-  load_ system_config_path
+let load_with_dynamic_overrides
+    ~apply_dynamic_overrides
+    ~silent
+    ~current_version
+    ~current_rolled_out_flag_idx
+    ~deactivate_saved_state_rollout
+    ~from
+    ~overrides : t =
+  load_
+    ~apply_dynamic_overrides
+    system_config_path
+    ~silent
+    ~current_version
+    ~current_rolled_out_flag_idx
+    ~deactivate_saved_state_rollout
+    ~from
+    ~overrides
+
+let load
+    ~silent
+    ~current_version
+    ~current_rolled_out_flag_idx
+    ~deactivate_saved_state_rollout
+    ~from
+    ~overrides : t =
+  load_with_dynamic_overrides
+    ~apply_dynamic_overrides:(fun ~silent:_ config -> config)
+    ~silent
+    ~current_version
+    ~current_rolled_out_flag_idx
+    ~deactivate_saved_state_rollout
+    ~from
+    ~overrides
 
 (** Load ServerLocalConfig from already-parsed config contents.
     This is intended for testing, bypassing file reads and overrides.
@@ -1223,6 +1290,7 @@ let load_from_config
   load_
     ~config
     "" (* system_config_path unused when config is provided *)
+    ~apply_dynamic_overrides:(fun ~silent:_ config -> config)
     ~silent
     ~current_version
     ~current_rolled_out_flag_idx

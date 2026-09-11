@@ -63,11 +63,11 @@
   test_remove_enum_variant
   test_remove_method
   test_ide_hover
-  test_serverConfig_overrides
+  test_server_config_overrides
   test_unbound_name
   test_unbound_name_2
   test_unbound_name_3)
- (libraries runner_base yojson))
+ (libraries config_file runner_base yojson))
 
 (executable
  (name server_progress_tests)
