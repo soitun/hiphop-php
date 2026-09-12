@@ -1352,6 +1352,32 @@ Class::PropSlotLookup Class::getDeclPropSlot(
     }
   }
 
+  if (!Cfg::Repo::Authoritative && propSlot == kInvalidSlot) {
+    for (auto ancestor = m_parent; ancestor; ancestor = ancestor->m_parent) {
+      auto const ancestorPropSlot = ancestor->lookupDeclProp(key);
+      if (ancestorPropSlot == kInvalidSlot) continue;
+
+      auto const& ancestorProp = ancestor->m_declProperties[ancestorPropSlot];
+      if (
+        ancestorProp.cls != ancestor.get() ||
+        !(ancestorProp.attrs & AttrPrivate)
+      ) {
+        continue;
+      }
+      if (canTestsBypassVisibility(
+            ancestorProp.preProp->userAttributes(), ctx)) {
+        return PropSlotLookup {
+          ancestorPropSlot,
+          true,
+          false,
+          bool(ancestorProp.attrs & AttrIsReadonly),
+          bool(ancestorProp.attrs & AttrInternal)
+        };
+      }
+      break;
+    }
+  }
+
   if (propSlot == kInvalidSlot &&
       !g_context.isNull() &&
       g_context->debuggerSettings.bypassCheck &&

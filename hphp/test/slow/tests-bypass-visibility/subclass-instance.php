@@ -4,6 +4,9 @@ class WWWTest {}
 
 class Base {
   <<__TestsBypassVisibility>>
+  private string $privProp = "Base::privProp";
+
+  <<__TestsBypassVisibility>>
   private function priv(): mixed { return "Base::priv"; }
 
   <<__TestsBypassVisibility>>
@@ -21,14 +24,19 @@ class SubclassTest extends WWWTest {
     $base = new Base();
     echo $base->priv() . "\n";
     echo $base->prot() . "\n";
+    echo $base->privProp . "\n";
 
     $child = new Child();
     echo $child->priv() . "\n";
     echo $child->prot() . "\n";
+    echo $child->privProp . "\n";
+    $child->privProp = "Child::privProp";
+    echo $child->privProp . "\n";
 
     $grandchild = new GrandChild();
     echo $grandchild->priv() . "\n";
     echo $grandchild->prot() . "\n";
+    echo $grandchild->privProp . "\n";
 
     echo Base::spriv() . "\n";
   }

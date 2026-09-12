@@ -1,7 +1,11 @@
 Base::priv
 Base::prot
+Base::privProp
 Base::priv
 Base::prot
+Base::privProp
+Child::privProp
 Base::priv
 Base::prot
+Base::privProp
 Base::spriv
