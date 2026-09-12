@@ -25,7 +25,7 @@ let logger_handlers =
 (* Handlers that are enabled through 'log_levels' configuration. *)
 let select_logger_handlers ctx =
   let tco = Provider_context.get_tcopt ctx in
-  let log_levels = TypecheckerOptions.log_levels tco in
+  let log_levels = Typechecker_options.log_levels tco in
   let add_handler handlers (key, handler) =
     match SMap.find_opt key log_levels with
     | Some level when level > 0 -> handler ctx :: handlers
@@ -53,7 +53,7 @@ let visitor ctx =
   let irregular_handlers = select_logger_handlers ctx in
   let tcopt = Provider_context.get_tcopt ctx in
   let hierarchy_check handler =
-    if TypecheckerOptions.skip_hierarchy_checks tcopt then
+    if Typechecker_options.skip_hierarchy_checks tcopt then
       None
     else
       Some handler
@@ -109,16 +109,16 @@ let visitor ctx =
           Some Expression_tree_check.handler;
           Some Xhp_attr_value.handler;
           hierarchy_check Class_const_origin_check.handler;
-          (if TypecheckerOptions.global_access_check_enabled tcopt then
+          (if Typechecker_options.global_access_check_enabled tcopt then
             Some Global_access_check.handler
           else
             None);
           hierarchy_check Enum_check.handler;
-          (if TypecheckerOptions.check_duplicate_enum_values tcopt then
+          (if Typechecker_options.check_duplicate_enum_values tcopt then
             hierarchy_check Enum_duplicate_value_check.handler
           else
             None);
-          (if TypecheckerOptions.populate_dead_unsafe_cast_heap tcopt then
+          (if Typechecker_options.populate_dead_unsafe_cast_heap tcopt then
             Some Remove_dead_unsafe_casts.patch_location_collection_handler
           else
             None);
@@ -128,7 +128,8 @@ let visitor ctx =
         ]
   in
   let handlers =
-    if TypecheckerOptions.skip_tast_checks (Provider_context.get_tcopt ctx) then
+    if Typechecker_options.skip_tast_checks (Provider_context.get_tcopt ctx)
+    then
       []
     else
       handlers
@@ -145,7 +146,7 @@ let def ctx = (visitor ctx)#go_def ctx
 let warning_visitor ctx =
   let tcopt = Provider_context.get_tcopt ctx in
   let handlers =
-    if TypecheckerOptions.skip_tast_checks tcopt then
+    if Typechecker_options.skip_tast_checks tcopt then
       []
     else
       List.filter_map warning_checks ~f:(fun (module M) ->

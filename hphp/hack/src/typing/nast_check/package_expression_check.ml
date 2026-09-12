@@ -12,7 +12,7 @@ module SN = Naming_special_names
 let lookup_package env p =
   let info =
     Provider_context.get_tcopt env.Nast_check_env.ctx
-    |> TypecheckerOptions.package_info
+    |> Typechecker_options.package_info
   in
   Package_info.get_package info p
 
@@ -101,7 +101,7 @@ let require_package_strict_inclusion env attr =
         (* Emit naming error for unbound package *)
         let custom_err_config =
           Provider_context.get_tcopt env.Nast_check_env.ctx
-          |> TypecheckerOptions.custom_error_config
+          |> Typechecker_options.custom_error_config
         in
         Diagnostics.add_diagnostic
           (Naming_error_utils.to_user_diagnostic

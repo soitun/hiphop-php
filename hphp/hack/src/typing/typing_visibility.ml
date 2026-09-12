@@ -700,7 +700,8 @@ let check_gated_by_feature_flag env pos name attrs =
   in
   Option.iter feature_opt ~f:(fun feature_name ->
       let tcopt = Env.get_tcopt env in
-      if not (TypecheckerOptions.is_unstable_feature_enabled tcopt feature_name)
+      if
+        not (Typechecker_options.is_unstable_feature_enabled tcopt feature_name)
       then
         Typing_error_utils.add_typing_error
           ~env

@@ -36,7 +36,7 @@
   (wrapped false)
   (modules
     expression_id
-    tanySentinel
+    tany_sentinel
     tvid
     typing_defs_constraints
     typing_defs_core
@@ -205,7 +205,7 @@
  (name typing)
  (wrapped false)
  (modules
-  nastInitCheck
+  nast_init_check
   type_parameter_env_ops
   typing
   typing_alias

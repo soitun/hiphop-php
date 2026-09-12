@@ -177,12 +177,12 @@ let sleep_and_check
   with
   | End_of_file as exn ->
     let e = Exception.wrap exn in
-    HackEventLogger.get_client_channels_exception e;
+    Hack_event_logger.get_client_channels_exception e;
     Hh_logger.log "GET_CLIENT_CHANNELS_EXCEPTION End_of_file. Terminating.";
     Exit.exit Exit_status.Server_got_eof_from_monitor
   | exn ->
     let e = Exception.wrap exn in
-    HackEventLogger.get_client_channels_exception e;
+    Hack_event_logger.get_client_channels_exception e;
     Hh_logger.log
       "GET_CLIENT_CHANNELS_EXCEPTION(%s). Ignoring."
       (Exception.get_ctor_string e);

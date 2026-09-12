@@ -45,7 +45,7 @@ module TimerKey = struct
 end
 
 (** Mutable priority queue, ordered by target time, with O(log(n)) pushes and pops *)
-module TimerQueue = PriorityQueue.Make (TimerKey)
+module TimerQueue = Priority_queue.Make (TimerKey)
 
 let next_id = ref 1
 

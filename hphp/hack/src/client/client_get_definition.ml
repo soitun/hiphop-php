@@ -15,7 +15,7 @@ let print_json res =
 
 let print_readable ?(short_pos = false) x =
   List.iter x ~f:(function (occurrence, definition) ->
-      SymbolOccurrence.(
+      Symbol_occurrence.(
         let { name; type_; pos; is_declaration; affects_prod_build } =
           occurrence
         in

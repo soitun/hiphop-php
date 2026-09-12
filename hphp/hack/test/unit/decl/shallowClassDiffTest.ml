@@ -11,7 +11,7 @@ open OUnit2
 
 let parser_options =
   let parser_options =
-    ParserOptions.{ default with keep_user_attributes = true }
+    Parser_options.{ default with keep_user_attributes = true }
   in
   Decl_parser_options.from_parser_options parser_options
 
@@ -80,7 +80,7 @@ let test_enable_annotation_agnostic_decl_diffing_is_a_typechecker_option _ =
   in
   assert_bool
     "Expected annotation-agnostic decl diffing to be enabled"
-    (TypecheckerOptions.enable_annotation_agnostic_decl_diffing options)
+    (Typechecker_options.enable_annotation_agnostic_decl_diffing options)
 
 let () =
   "shallowClassDiffTest"

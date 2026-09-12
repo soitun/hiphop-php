@@ -7,7 +7,7 @@
  *)
 
 val identify_symbol_response_to_json :
-  (string SymbolOccurrence.t * string SymbolDefinition.t option) list ->
+  (string Symbol_occurrence.t * string Symbol_definition.t option) list ->
   Yojson.Safe.t
 
 val print_json : Yojson.Safe.t -> unit
@@ -17,7 +17,7 @@ val tast_holes_response_to_json :
   (string * string * string * string * Pos.t) list ->
   Yojson.Safe.t
 
-val outline_response_to_json : string SymbolDefinition.t list -> Yojson.Safe.t
+val outline_response_to_json : string Symbol_definition.t list -> Yojson.Safe.t
 
 val highlight_references_response_to_json :
   Ide_api_types.range list -> Yojson.Safe.t

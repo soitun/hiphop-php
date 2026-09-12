@@ -8,8 +8,8 @@
  *)
 
 open Hh_prelude
-open SearchUtils
-open SearchTypes
+open Search_utils
+open Search_types
 
 (* Set the currently selected search provider *)
 let initialize
@@ -20,8 +20,8 @@ let initialize
   (* Create the object *)
   let sienv =
     {
-      SearchUtils.default_si_env with
-      sie_provider = SearchUtils.provider_of_string provider_name;
+      Search_utils.default_si_env with
+      sie_provider = Search_utils.provider_of_string provider_name;
       sie_quiet_mode = quiet;
       sie_namespace_map = namespace_map;
       glean_reponame = Glean_options.reponame gleanopt;
@@ -30,7 +30,7 @@ let initialize
   (* Basic initialization *)
   let sienv =
     match sienv.sie_provider with
-    | CustomIndex -> CustomSearchService.initialize ~sienv
+    | CustomIndex -> Custom_search_service.initialize ~sienv
     | NoIndex
     | MockIndex _
     | LocalIndex ->
@@ -41,14 +41,14 @@ let initialize
   if not sienv.sie_quiet_mode then
     Hh_logger.log
       "Search provider set to [%s] based on configuration value [%s]"
-      (SearchUtils.descriptive_name_of_provider sienv.sie_provider)
+      (Search_utils.descriptive_name_of_provider sienv.sie_provider)
       provider_name;
   sienv
 
 let mock ~on_find =
   {
-    SearchUtils.default_si_env with
-    sie_provider = SearchUtils.MockIndex { mock_on_find = on_find };
+    Search_utils.default_si_env with
+    sie_provider = Search_utils.MockIndex { mock_on_find = on_find };
     sie_quiet_mode = true;
   }
 
@@ -64,8 +64,8 @@ let find_matching_symbols
     ~(max_results : int)
     ~(context : autocomplete_type)
     ~(kind_filter : FileInfo.si_kind option) :
-    SearchTypes.si_item list * SearchTypes.si_complete =
-  let is_complete = ref SearchTypes.Complete in
+    Search_types.si_item list * Search_types.si_complete =
+  let is_complete = ref Search_types.Complete in
   (*
    * Nuclide often sends this exact request to verify that HH is working.
    * Let's capture it and avoid doing unnecessary work.
@@ -113,7 +113,7 @@ let find_matching_symbols
         []
       | CustomIndex
       | LocalIndex ->
-        LocalSearchService.search_local_symbols
+        Local_search_service.search_local_symbols
           ~sienv:!sienv_ref
           ~query_text
           ~max_results
@@ -125,7 +125,7 @@ let find_matching_symbols
       match !sienv_ref.sie_provider with
       | CustomIndex ->
         let (r, custom_is_complete) =
-          CustomSearchService.search_symbols
+          Custom_search_service.search_symbols
             ~sienv_ref
             ~query_text
             ~max_results
@@ -133,7 +133,7 @@ let find_matching_symbols
             ~kind_filter
         in
         is_complete := custom_is_complete;
-        LocalSearchService.extract_dead_results ~sienv:!sienv_ref ~results:r
+        Local_search_service.extract_dead_results ~sienv:!sienv_ref ~results:r
       | MockIndex { mock_on_find } ->
         mock_on_find ~query_text ~context ~kind_filter
       | LocalIndex
@@ -162,11 +162,12 @@ let find_matching_symbols
 
 let find_refs
     ~(sienv_ref : si_env ref)
-    ~(action : SearchTypes.Find_refs.action)
+    ~(action : Search_types.Find_refs.action)
     ~(max_results : int) : Relative_path.t list option =
   match !sienv_ref.sie_provider with
   | NoIndex
   | LocalIndex
   | MockIndex _ ->
     None
-  | CustomIndex -> CustomSearchService.find_refs ~sienv_ref ~action ~max_results
+  | CustomIndex ->
+    Custom_search_service.find_refs ~sienv_ref ~action ~max_results

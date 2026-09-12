@@ -1,7 +1,7 @@
 open Hh_prelude
 
 let entry =
-  WorkerControllerEntryPoint.register ~restore:(fun _ ~(worker_id : int) ->
+  Worker_controller_entry_point.register ~restore:(fun _ ~(worker_id : int) ->
       Hh_logger.set_id (Printf.sprintf "procs_test_utils %d" worker_id))
 
 let try_finalize f x finally y =

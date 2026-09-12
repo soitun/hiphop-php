@@ -53,7 +53,7 @@ end
   so what we do instead is pass the data through shared memory via
   OnTheFlyStore.
   I tried replicating the data to speed things up but it had no effect. *)
-module OnTheFlyStore = GlobalStorage.Make (struct
+module OnTheFlyStore = Global_storage.Make (struct
   type t = Decl_compare.VersionedNames.t Relative_path.Map.t
 end)
 
@@ -408,7 +408,7 @@ let filter_descendant_classes
     (classes : SSet.t) ~(maybe_descendant_classes : string list) : string list =
   List.filter maybe_descendant_classes ~f:(is_descendant_of_any_of classes)
 
-module ClassSetStore = GlobalStorage.Make (struct
+module ClassSetStore = Global_storage.Make (struct
   type t = SSet.t
 end)
 

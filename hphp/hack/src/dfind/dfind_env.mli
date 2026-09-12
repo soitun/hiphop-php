@@ -32,7 +32,7 @@ end
 
 (* Our fancy Avl (cf monoidAvl.ml) *)
 module TimeFiles :
-  MonoidAvl.S with type elt = Time.t * string with type monoelt = Time.t
+  Monoid_avl.S with type elt = Time.t * string with type monoelt = Time.t
 
 type t = {
   (* The fsnotify environment, we use this for interacting with fsnotify *)

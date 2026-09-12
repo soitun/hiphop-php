@@ -108,7 +108,7 @@ let test_process_finishes_within_timeout () =
 
 let test_future () =
   let future =
-    FutureProcess.make
+    Future_process.make
       (Process.exec (Exec_command.For_use_in_testing_only "sleep") ["1"])
       String.strip
   in
@@ -118,7 +118,7 @@ let test_future () =
 
 let test_future_is_ready () =
   let future =
-    FutureProcess.make
+    Future_process.make
       (Process.exec (Exec_command.For_use_in_testing_only "sleep") ["1"])
       String.strip
   in
@@ -136,13 +136,15 @@ let test_future_is_ready () =
 let test_future_continue_with () =
   Tempfile.with_real_tempdir (fun dir_path ->
       let fn = Path.concat dir_path "test.txt" in
-      RealDisk.write_file ~file:(Path.to_string fn) ~contents:"my file contents";
+      Real_disk.write_file
+        ~file:(Path.to_string fn)
+        ~contents:"my file contents";
       let ls_proc =
         Process.exec
           (Exec_command.For_use_in_testing_only "ls")
           [Path.to_string dir_path]
       in
-      let future = FutureProcess.make ls_proc String.strip in
+      let future = Future_process.make ls_proc String.strip in
       let future = Future.continue_with future String.uppercase in
       String_asserter.assert_equals
         "TEST.TXT"
@@ -153,13 +155,15 @@ let test_future_continue_with () =
 let test_future_continue_with_future () =
   Tempfile.with_real_tempdir (fun dir_path ->
       let fn = Path.concat dir_path "test.txt" in
-      RealDisk.write_file ~file:(Path.to_string fn) ~contents:"my file contents";
+      Real_disk.write_file
+        ~file:(Path.to_string fn)
+        ~contents:"my file contents";
       let ls_proc =
         Process.exec
           (Exec_command.For_use_in_testing_only "ls")
           [Path.to_string dir_path]
       in
-      let future = FutureProcess.make ls_proc String.strip in
+      let future = Future_process.make ls_proc String.strip in
       let future =
         Future.continue_with_future future (fun a ->
             let cat_proc =
@@ -167,7 +171,7 @@ let test_future_continue_with_future () =
                 (Exec_command.For_use_in_testing_only "cat")
                 [Path.to_string (Path.concat dir_path a)]
             in
-            FutureProcess.make cat_proc String.strip)
+            Future_process.make cat_proc String.strip)
       in
       String_asserter.assert_equals
         "my file contents"
@@ -178,13 +182,15 @@ let test_future_continue_with_future () =
 let test_future_continue_and_map_err_ok () =
   Tempfile.with_real_tempdir (fun dir_path ->
       let fn = Path.concat dir_path "test.txt" in
-      RealDisk.write_file ~file:(Path.to_string fn) ~contents:"my file contents";
+      Real_disk.write_file
+        ~file:(Path.to_string fn)
+        ~contents:"my file contents";
       let ls_proc =
         Process.exec
           (Exec_command.For_use_in_testing_only "ls")
           [Path.to_string dir_path]
       in
-      let future = FutureProcess.make ls_proc String.strip in
+      let future = Future_process.make ls_proc String.strip in
       let future =
         Future.continue_and_map_err future (fun res ->
             match res with
@@ -204,7 +210,7 @@ let test_future_continue_and_map_err_error () =
   let fail_proc =
     Process.exec (Exec_command.For_use_in_testing_only "false") []
   in
-  let future = FutureProcess.make fail_proc String.strip in
+  let future = Future_process.make fail_proc String.strip in
   let future =
     Future.continue_and_map_err future (fun res ->
         match res with
@@ -224,18 +230,18 @@ let test_future_long_continuation_chain_ok () =
   Tempfile.with_real_tempdir (fun dir_path ->
       let dir1 = Path.concat dir_path "dir1" in
       let dir2 = Path.concat dir_path "dir2" in
-      RealDisk.mkdir_p (Path.to_string dir1);
-      RealDisk.mkdir_p (Path.to_string dir2);
+      Real_disk.mkdir_p (Path.to_string dir1);
+      Real_disk.mkdir_p (Path.to_string dir2);
       let fn = Path.to_string (Path.concat dir1 "test.txt") in
       let fn2 = Path.to_string (Path.concat dir2 "test2.txt") in
-      RealDisk.write_file ~file:fn ~contents:fn2;
-      RealDisk.write_file ~file:fn2 ~contents:"my file contents";
+      Real_disk.write_file ~file:fn ~contents:fn2;
+      Real_disk.write_file ~file:fn2 ~contents:"my file contents";
       let ls_proc =
         Process.exec
           (Exec_command.For_use_in_testing_only "ls")
           [Path.to_string dir1]
       in
-      let future = FutureProcess.make ls_proc String.strip in
+      let future = Future_process.make ls_proc String.strip in
       let future =
         Future.continue_with_future future (fun ls_result ->
             let cat_proc =
@@ -243,7 +249,7 @@ let test_future_long_continuation_chain_ok () =
                 (Exec_command.For_use_in_testing_only "cat")
                 [Path.to_string (Path.concat dir1 ls_result)]
             in
-            FutureProcess.make cat_proc String.strip)
+            Future_process.make cat_proc String.strip)
       in
       let future =
         Future.continue_with_future future (fun cat_result ->
@@ -252,7 +258,7 @@ let test_future_long_continuation_chain_ok () =
                 (Exec_command.For_use_in_testing_only "cat")
                 [cat_result]
             in
-            FutureProcess.make cat_proc String.strip)
+            Future_process.make cat_proc String.strip)
       in
       String_asserter.assert_equals
         "my file contents"
@@ -264,18 +270,18 @@ let test_future_long_continuation_chain_error () =
   Tempfile.with_real_tempdir (fun dir_path ->
       let dir1 = Path.concat dir_path "dir1" in
       let dir2 = Path.concat dir_path "dir2" in
-      RealDisk.mkdir_p (Path.to_string dir1);
-      RealDisk.mkdir_p (Path.to_string dir2);
+      Real_disk.mkdir_p (Path.to_string dir1);
+      Real_disk.mkdir_p (Path.to_string dir2);
       let fn = Path.to_string (Path.concat dir1 "test.txt") in
       let fn2 = Path.to_string (Path.concat dir2 "test2.txt") in
-      RealDisk.write_file ~file:fn ~contents:(fn2 ^ ".nowhere");
-      RealDisk.write_file ~file:fn2 ~contents:"my file contents";
+      Real_disk.write_file ~file:fn ~contents:(fn2 ^ ".nowhere");
+      Real_disk.write_file ~file:fn2 ~contents:"my file contents";
       let ls_proc =
         Process.exec
           (Exec_command.For_use_in_testing_only "ls")
           [Path.to_string dir1]
       in
-      let future = FutureProcess.make ls_proc String.strip in
+      let future = Future_process.make ls_proc String.strip in
       let future =
         Future.continue_with_future future (fun ls_result ->
             let cat_proc =
@@ -283,7 +289,7 @@ let test_future_long_continuation_chain_error () =
                 (Exec_command.For_use_in_testing_only "cat")
                 [Path.to_string (Path.concat dir1 ls_result)]
             in
-            FutureProcess.make cat_proc String.strip)
+            Future_process.make cat_proc String.strip)
       in
       let future =
         Future.continue_with_future future (fun cat_result ->
@@ -292,7 +298,7 @@ let test_future_long_continuation_chain_error () =
                 (Exec_command.For_use_in_testing_only "cat")
                 [cat_result]
             in
-            FutureProcess.make cat_proc String.strip)
+            Future_process.make cat_proc String.strip)
       in
       let future =
         Future.continue_and_map_err future (fun res ->

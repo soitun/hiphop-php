@@ -562,7 +562,7 @@ let format_summary
 let to_string error = User_diagnostic.to_string error
 
 let log_unexpected error path desc =
-  HackEventLogger.invariant_violation_bug
+  Hack_event_logger.invariant_violation_bug
     desc
     ~path
     ~pos:
@@ -668,7 +668,10 @@ let wrap_error_in_different_file ~current_file ~current_span claim reasons =
   let stack =
     Exception.get_current_callstack_string 99 |> Exception.clean_stack
   in
-  HackEventLogger.type_check_primary_position_bug ~current_file ~message ~stack;
+  Hack_event_logger.type_check_primary_position_bug
+    ~current_file
+    ~message
+    ~stack;
   let claim =
     if Pos.equal current_span Pos.none then
       (Pos.make_from current_file, badpos_message)
@@ -1172,7 +1175,7 @@ let experimental_feature pos msg =
 (*****************************************************************************)
 let log_exception_occurred pos e =
   let pos_str = pos |> Pos.to_absolute |> Pos.string in
-  HackEventLogger.type_check_exn_bug ~path:(Pos.filename pos) ~pos:pos_str ~e;
+  Hack_event_logger.type_check_exn_bug ~path:(Pos.filename pos) ~pos:pos_str ~e;
   Hh_logger.error
     "Exception while typechecking at position %s\n%s"
     pos_str
@@ -1180,7 +1183,7 @@ let log_exception_occurred pos e =
 
 let log_invariant_violation ~desc pos telemetry =
   let pos_str = pos |> Pos.to_absolute |> Pos.string in
-  HackEventLogger.invariant_violation_bug
+  Hack_event_logger.invariant_violation_bug
     desc
     ~path:(Pos.filename pos)
     ~pos:pos_str

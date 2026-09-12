@@ -99,14 +99,14 @@ let get_positional_info (cst : Syntax.t) (file_offset : int) :
 let get_occurrence_info
     (ctx : Provider_context.t)
     (nast : Nast.program)
-    (occurrence : Relative_path.t SymbolOccurrence.t) =
-  let module SO = SymbolOccurrence in
+    (occurrence : Relative_path.t Symbol_occurrence.t) =
+  let module SO = Symbol_occurrence in
   let full_occurrence =
     match occurrence.SO.type_ with
     | SO.Function ->
       let fun_name =
         Utils.expand_namespace
-          (Provider_context.get_popt ctx).ParserOptions.auto_namespace_map
+          (Provider_context.get_popt ctx).Parser_options.auto_namespace_map
           occurrence.SO.name
       in
       { occurrence with SO.name = fun_name }
@@ -138,9 +138,9 @@ let go_quarantined
     in
     let results =
       List.filter results ~f:(fun r ->
-          match r.SymbolOccurrence.type_ with
-          | SymbolOccurrence.Method _
-          | SymbolOccurrence.Function ->
+          match r.Symbol_occurrence.type_ with
+          | Symbol_occurrence.Method _
+          | Symbol_occurrence.Function ->
             true
           | _ -> false)
     in
@@ -178,9 +178,9 @@ let go_quarantined
           Tast_env.print_ty_with_identity tast_env ty occurrence def_opt
         in
         let siginfo_documentation =
-          let base_class_name = SymbolOccurrence.enclosing_class occurrence in
+          let base_class_name = Symbol_occurrence.enclosing_class occurrence in
           def_opt >>= fun def ->
-          let path = def.SymbolDefinition.pos |> Pos.filename in
+          let path = def.Symbol_definition.pos |> Pos.filename in
           let (ctx, entry) = Provider_context.add_entry_if_missing ~ctx ~path in
           ServerDocblockAt.go_comments_for_symbol_ctx
             ~ctx

@@ -8,8 +8,8 @@
  *)
 
 open Hh_prelude
-open SearchUtils
-open SearchTypes
+open Search_utils
+open Search_types
 
 (* Log information about calls to the symbol index service *)
 let log_symbol_index_search
@@ -42,7 +42,7 @@ let log_symbol_index_search
         query_text
         results
         duration;
-    HackEventLogger.search_symbol_index
+    Hack_event_logger.search_symbol_index
       ~query_text
       ~max_results
       ~results
@@ -52,7 +52,7 @@ let log_symbol_index_search
       ~search_provider
 
 type paths_with_addenda =
-  (Relative_path.t * FileInfo.si_addendum list * SearchUtils.file_source) list
+  (Relative_path.t * FileInfo.si_addendum list * Search_utils.file_source) list
 
 let update_from_addenda
     ~(sienv : si_env) ~(paths_with_addenda : paths_with_addenda) : si_env =
@@ -67,15 +67,15 @@ let update_from_addenda
       ~init:sienv
       ~f:(fun sienv (path, addenda, detector) ->
         match detector with
-        | SearchUtils.TypeChecker ->
-          LocalSearchService.update_file_from_addenda ~sienv ~path ~addenda
+        | Search_utils.TypeChecker ->
+          Local_search_service.update_file_from_addenda ~sienv ~path ~addenda
         | _ -> sienv)
 
 (*
  * This method is called when the typechecker is about to re-check a file.
  * Any local caches should be cleared of values for this file.
  *)
-let remove_files ~(sienv : SearchUtils.si_env) ~(paths : Relative_path.Set.t) :
+let remove_files ~(sienv : Search_utils.si_env) ~(paths : Relative_path.Set.t) :
     si_env =
   match sienv.sie_provider with
   | NoIndex
@@ -84,7 +84,7 @@ let remove_files ~(sienv : SearchUtils.si_env) ~(paths : Relative_path.Set.t) :
   | CustomIndex
   | LocalIndex ->
     Relative_path.Set.fold paths ~init:sienv ~f:(fun path sienv ->
-        LocalSearchService.remove_file ~sienv ~path)
+        Local_search_service.remove_file ~sienv ~path)
 
 (* Fetch best available position information for a symbol *)
 let get_position_for_symbol

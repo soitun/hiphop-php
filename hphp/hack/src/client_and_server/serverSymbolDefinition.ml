@@ -111,8 +111,8 @@ let summarize_class_typedef ctx x =
     Ast_provider.find_typedef_in_file ctx fn x ~full:false >>= fun tdef ->
     Some (FileOutline.summarize_typedef tdef)
 
-let go ctx ast (result : _ SymbolOccurrence.t) : _ SymbolDefinition.t option =
-  let module SO = SymbolOccurrence in
+let go ctx ast (result : _ Symbol_occurrence.t) : _ Symbol_definition.t option =
+  let module SO = Symbol_occurrence in
   let get_class ctx class_name =
     Decl_provider.get_class ctx class_name |> Decl_entry.to_option
   in
@@ -232,35 +232,35 @@ let get_definition_cst_node_from_pos ctx entry kind pos =
     let parents = Syntax.parentage (SyntaxTree.root tree) offset in
     List.find parents ~f:(fun syntax ->
         match (kind, Syntax.kind syntax) with
-        | (SymbolDefinition.Function, SyntaxKind.FunctionDeclaration)
-        | ( SymbolDefinition.(Classish { classish_kind = Class; _ }),
+        | (Symbol_definition.Function, SyntaxKind.FunctionDeclaration)
+        | ( Symbol_definition.(Classish { classish_kind = Class; _ }),
             SyntaxKind.ClassishDeclaration )
-        | ( SymbolDefinition.(Member { member_kind = Method; _ }),
+        | ( Symbol_definition.(Member { member_kind = Method; _ }),
             SyntaxKind.MethodishDeclaration )
-        | ( SymbolDefinition.(Member { member_kind = Property; _ }),
+        | ( Symbol_definition.(Member { member_kind = Property; _ }),
             SyntaxKind.PropertyDeclaration )
-        | ( SymbolDefinition.(Member { member_kind = Property; _ }),
+        | ( Symbol_definition.(Member { member_kind = Property; _ }),
             SyntaxKind.XHPClassAttribute )
-        | ( SymbolDefinition.(Member { member_kind = ClassConst; _ }),
+        | ( Symbol_definition.(Member { member_kind = ClassConst; _ }),
             SyntaxKind.ConstDeclaration )
-        | (SymbolDefinition.GlobalConst, SyntaxKind.ConstDeclaration)
-        | ( SymbolDefinition.(Member { member_kind = ClassConst; _ }),
+        | (Symbol_definition.GlobalConst, SyntaxKind.ConstDeclaration)
+        | ( Symbol_definition.(Member { member_kind = ClassConst; _ }),
             SyntaxKind.EnumClassEnumerator )
-        | ( SymbolDefinition.(Member { member_kind = ClassConst; _ }),
+        | ( Symbol_definition.(Member { member_kind = ClassConst; _ }),
             SyntaxKind.Enumerator )
-        | ( SymbolDefinition.(Classish { classish_kind = Enum; _ }),
+        | ( Symbol_definition.(Classish { classish_kind = Enum; _ }),
             SyntaxKind.EnumDeclaration )
-        | ( SymbolDefinition.(Classish { classish_kind = Enum; _ }),
+        | ( Symbol_definition.(Classish { classish_kind = Enum; _ }),
             SyntaxKind.EnumClassDeclaration )
-        | ( SymbolDefinition.(Classish { classish_kind = Interface; _ }),
+        | ( Symbol_definition.(Classish { classish_kind = Interface; _ }),
             SyntaxKind.ClassishDeclaration )
-        | ( SymbolDefinition.(Classish { classish_kind = Trait; _ }),
+        | ( Symbol_definition.(Classish { classish_kind = Trait; _ }),
             SyntaxKind.ClassishDeclaration )
-        | (SymbolDefinition.LocalVar, SyntaxKind.VariableExpression)
-        | ( SymbolDefinition.(Member { member_kind = TypeConst; _ }),
+        | (Symbol_definition.LocalVar, SyntaxKind.VariableExpression)
+        | ( Symbol_definition.(Member { member_kind = TypeConst; _ }),
             SyntaxKind.TypeConstDeclaration )
-        | (SymbolDefinition.Param, SyntaxKind.ParameterDeclaration)
-        | (SymbolDefinition.Typedef, SyntaxKind.AliasDeclaration) ->
+        | (Symbol_definition.Param, SyntaxKind.ParameterDeclaration)
+        | (Symbol_definition.Typedef, SyntaxKind.AliasDeclaration) ->
           true
         | _ -> false)
   with
@@ -269,6 +269,6 @@ let get_definition_cst_node_from_pos ctx entry kind pos =
 let get_definition_cst_node_ctx
     ~(ctx : Provider_context.t)
     ~(entry : Provider_context.entry)
-    ~(kind : 'a SymbolDefinition.kind)
+    ~(kind : 'a Symbol_definition.kind)
     ~(pos : 'a Pos.pos) : Full_fidelity_positioned_syntax.t option =
   get_definition_cst_node_from_pos ctx entry kind pos

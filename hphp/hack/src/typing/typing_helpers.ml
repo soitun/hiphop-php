@@ -95,7 +95,7 @@ let has_accept_disposable_attribute param =
   param_has_attribute param SN.UserAttributes.uaAcceptDisposable
 
 let with_timeout env fun_name (do_ : env -> 'b) : 'b option =
-  let timeout = TypecheckerOptions.(timeout @@ Env.get_tcopt env) in
+  let timeout = Typechecker_options.(timeout @@ Env.get_tcopt env) in
   if Int.equal timeout 0 then
     Some (do_ env)
   else

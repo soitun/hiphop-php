@@ -60,7 +60,8 @@ type start_telemetry = {
 let prepare_logging ctx : start_telemetry =
   Provider_context.reset_telemetry ctx;
   let prev_ctx_telemetry = Provider_context.get_telemetry ctx in
-  Decl_counters.set_mode HackEventLogger.PerFileProfilingConfig.DeclingTopCounts;
+  Decl_counters.set_mode
+    Hack_event_logger.PerFileProfilingConfig.DeclingTopCounts;
   {
     prev_ctx_telemetry;
     start_gc_telemetry = Telemetry.quick_gc_stat ();
@@ -117,7 +118,7 @@ let log_and_telemetry
     "compute_tast: %s\n%s"
     (Relative_path.suffix entry.Provider_context.path)
     (Telemetry.to_string telemetry);
-  HackEventLogger.ProfileTypeCheck.compute_tast
+  Hack_event_logger.ProfileTypeCheck.compute_tast
     ~telemetry
     ~path:entry.Provider_context.path
     ~start_time;

@@ -6,7 +6,7 @@
  *
  *)
 
-include ApproxSet_intf
+include Approx_set_intf
 
 module Bdd (Atom : sig
   type t
@@ -172,7 +172,7 @@ struct
   exception
     RelationUnsat of {
       left: Domain.t;
-      relation: SetRelation.t;
+      relation: Set_relation.t;
       right: Domain.t;
     }
 
@@ -197,18 +197,20 @@ struct
       performance becomes a concern then this is an optimization that
       can be done. *)
   let rec check_relation
-      ?(is_sat : SetRelation.t -> bool = (fun _ -> true)) (t1 : t) (t2 : t) ~ctx
-      : SetRelation.t =
+      ?(is_sat : Set_relation.t -> bool = (fun _ -> true))
+      (t1 : t)
+      (t2 : t)
+      ~ctx : Set_relation.t =
     let check_relation = check_relation ~is_sat ~ctx in
-    let merge (rel1 : SetRelation.t) (rel2 : SetRelation.t) : SetRelation.t =
-      SetRelation.(
+    let merge (rel1 : Set_relation.t) (rel2 : Set_relation.t) : Set_relation.t =
+      Set_relation.(
         make
           ~subset:(is_subset rel1 && is_subset rel2)
           ~superset:(is_superset rel1 && is_superset rel2)
           ~disjoint:(is_disjoint rel1 && is_disjoint rel2))
     in
     let rec erase_then_edges_if
-        (ground : Domain.t) (bdd : t) ~(f : SetRelation.t -> bool) : t =
+        (ground : Domain.t) (bdd : t) ~(f : Set_relation.t -> bool) : t =
       let simplify = erase_then_edges_if ~f ground in
       match bdd with
       | Select { atom; then_; else_ } ->
@@ -220,12 +222,12 @@ struct
       | Bottom -> Bottom
     in
     let erase_then_edges_disjoint_from =
-      erase_then_edges_if ~f:SetRelation.is_disjoint
+      erase_then_edges_if ~f:Set_relation.is_disjoint
     in
     let erase_then_edges_subset_of =
-      erase_then_edges_if ~f:SetRelation.is_subset
+      erase_then_edges_if ~f:Set_relation.is_subset
     in
-    let traverse_t1 ~(node1 : node) : SetRelation.t =
+    let traverse_t1 ~(node1 : node) : Set_relation.t =
       merge
         (check_relation
            (erase_then_edges_disjoint_from node1.atom node1.then_)
@@ -234,7 +236,7 @@ struct
            (erase_then_edges_subset_of node1.atom node1.else_)
            (erase_then_edges_subset_of node1.atom t2))
     in
-    let traverse_t2 ~(node2 : node) : SetRelation.t =
+    let traverse_t2 ~(node2 : node) : Set_relation.t =
       merge
         (check_relation
            (erase_then_edges_disjoint_from node2.atom t1)
@@ -245,11 +247,11 @@ struct
     in
     match (t1, t2) with
     | (Bottom, Top) ->
-      SetRelation.make ~subset:true ~superset:false ~disjoint:true
+      Set_relation.make ~subset:true ~superset:false ~disjoint:true
     | (Top, Bottom) ->
-      SetRelation.make ~subset:false ~superset:true ~disjoint:true
-    | (Bottom, Bottom) -> SetRelation.all
-    | (Top, Top) -> SetRelation.equivalent
+      Set_relation.make ~subset:false ~superset:true ~disjoint:true
+    | (Bottom, Bottom) -> Set_relation.all
+    | (Top, Top) -> Set_relation.equivalent
     | (Select node1, Select node2) ->
       let relation =
         match bdd_order node1.atom node2.atom with
@@ -273,12 +275,12 @@ struct
     | ((Bottom | Top), Select node2) -> traverse_t2 ~node2
 
   let are_disjoint ctx a b =
-    let is_sat = SetRelation.is_disjoint in
+    let is_sat = Set_relation.is_disjoint in
     try is_sat @@ check_relation ~is_sat ~ctx a b with
     | RelationUnsat _ -> false
 
   let is_subset ctx a b =
-    let is_sat = SetRelation.is_subset in
+    let is_sat = Set_relation.is_subset in
     try is_sat @@ check_relation ~is_sat ~ctx a b with
     | RelationUnsat _ -> false
 

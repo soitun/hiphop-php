@@ -147,7 +147,7 @@
 (library
  (name symbol)
  (wrapped false)
- (modules symbolDefinition symbolOccurrence)
+ (modules symbol_definition symbol_occurrence)
  (preprocess
   (pps lwt_ppx ppx_deriving.std ppx_deriving.enum))
  (libraries annotated_ast naming_special_names pos))
@@ -204,7 +204,7 @@
  (preprocess
   (pps lwt_ppx ppx_deriving.std ppx_deriving.enum))
  (libraries utils_core)
- (modules bigList))
+ (modules big_list))
 
 (library
  (name memory_stats)

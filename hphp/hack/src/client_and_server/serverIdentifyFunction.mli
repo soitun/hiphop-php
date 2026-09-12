@@ -12,12 +12,12 @@ val go_quarantined :
   ctx:Provider_context.t ->
   entry:Provider_context.entry ->
   File_content.Position.t ->
-  (Relative_path.t SymbolOccurrence.t
-  * Relative_path.t SymbolDefinition.t option)
+  (Relative_path.t Symbol_occurrence.t
+  * Relative_path.t Symbol_definition.t option)
   list
 
 val go_quarantined_absolute :
   ctx:Provider_context.t ->
   entry:Provider_context.entry ->
   File_content.Position.t ->
-  (string SymbolOccurrence.t * string SymbolDefinition.t option) list
+  (string Symbol_occurrence.t * string Symbol_definition.t option) list

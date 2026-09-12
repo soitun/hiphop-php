@@ -359,7 +359,7 @@ let call ?(call_id = 0) w (type a b) (f : a -> b) (x : a) : (a, b) handle =
         in
         close w h;
         Measure.merge (Measure.deserialize stats);
-        HackEventLogger.deserialize_globals log_globals;
+        Hack_event_logger.deserialize_globals log_globals;
         data)
   in
   let result () : b =
@@ -403,7 +403,7 @@ let call ?(call_id = 0) w (type a b) (f : a -> b) (x : a) : (a, b) handle =
         ())
   in
   let job = { result; infd; worker = w; wait_for_cancel } in
-  let metadata_in = { log_globals = HackEventLogger.serialize_globals () } in
+  let metadata_in = { log_globals = Hack_event_logger.serialize_globals () } in
   let (request : Worker.request) = wrap_request w f x metadata_in in
   (* Send the job to the worker. *)
   let () =
@@ -536,7 +536,7 @@ let wait_for_cancel d =
   | _ -> ()
 
 let cancel handles =
-  WorkerCancel.stop_workers ();
+  Worker_cancel.stop_workers ();
   List.iter handles ~f:(fun x -> wait_for_cancel x);
-  WorkerCancel.resume_workers ();
+  Worker_cancel.resume_workers ();
   ()

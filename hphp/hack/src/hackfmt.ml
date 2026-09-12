@@ -11,7 +11,7 @@ open Hh_prelude
 module SyntaxError = Full_fidelity_syntax_error
 module SyntaxTree =
   Full_fidelity_syntax_tree.WithSyntax (Full_fidelity_positioned_syntax)
-module Logger = HackfmtEventLogger
+module Logger = Hackfmt_event_logger
 module FEnv = Format_env
 open Printf
 open Boundaries
@@ -630,7 +630,7 @@ let debug_print ?range ?config text_source =
   let range = Option.map range ~f:(expand_or_convert_range source_text) in
   let env = Libhackfmt.env_from_config config in
   let doc =
-    Hack_format.transform env (SyntaxTransforms.editable_from_positioned tree)
+    Hack_format.transform env (Syntax_transforms.editable_from_positioned tree)
   in
   let chunk_groups = Chunk_builder.build env doc in
   Hackfmt_debug.debug env ~range source_text doc chunk_groups

@@ -74,10 +74,10 @@ let tast_holes_response_to_json ~print_file holes =
 let identify_symbol_response_to_json results =
   let get_definition_data = function
     | Some x ->
-      let { SymbolDefinition.pos; span; _ } = x in
+      let { Symbol_definition.pos; span; _ } = x in
       let pos = Pos.json pos in
       let span = Pos.multiline_json span in
-      let id = SymbolDefinition.identifier x |> string_opt in
+      let id = Symbol_definition.identifier x |> string_opt in
       (pos, span, id)
     | None -> (`Null, `Null, `Null)
   in
@@ -85,7 +85,7 @@ let identify_symbol_response_to_json results =
     let (definition_pos, definition_span, definition_id) =
       get_definition_data definition
     in
-    SymbolOccurrence.(
+    Symbol_occurrence.(
       `Assoc
         [
           ("name", `String occurrence.name);
@@ -99,7 +99,7 @@ let identify_symbol_response_to_json results =
   `List (List.map results ~f:symbol_to_json)
 
 let rec definition_to_json def =
-  SymbolDefinition.(
+  Symbol_definition.(
     let modifiers =
       `List
         (List.map def.modifiers ~f:(fun x -> `String (string_of_modifier x)))
@@ -123,7 +123,7 @@ let rec definition_to_json def =
       ([
          ("kind", `String (string_of_kind def.kind));
          ("name", `String def.name);
-         ("id", SymbolDefinition.identifier def |> string_opt);
+         ("id", Symbol_definition.identifier def |> string_opt);
          ("position", Pos.json def.pos);
          ("span", Pos.multiline_json def.span);
          ("modifiers", modifiers);

@@ -268,7 +268,7 @@ let text_before_and_after_expr_in_stmt
  *   await gen_int() + 3;
  *)
 module Expr_structure : sig
-  val equiv : ParserOptions.t -> stmt1:string -> stmt2:string -> bool
+  val equiv : Parser_options.t -> stmt1:string -> stmt2:string -> bool
 end = struct
   type t =
     | Zero

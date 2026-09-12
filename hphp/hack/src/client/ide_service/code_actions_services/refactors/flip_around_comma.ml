@@ -34,7 +34,7 @@ end = struct
 
   let create_exn ~positions ~insertion_index =
     if insertion_index >= List.length positions then begin
-      HackEventLogger.invariant_violation_bug
+      Hack_event_logger.invariant_violation_bug
         ~data:
           (Printf.sprintf
              "insertion index: %d positions length: %d"

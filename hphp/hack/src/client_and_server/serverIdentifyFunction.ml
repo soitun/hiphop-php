@@ -11,8 +11,8 @@ open Hh_prelude
 
 (* Order symbols from innermost to outermost *)
 let by_nesting x y =
-  if Pos.contains x.SymbolOccurrence.pos y.SymbolOccurrence.pos then
-    if Pos.contains y.SymbolOccurrence.pos x.SymbolOccurrence.pos then
+  if Pos.contains x.Symbol_occurrence.pos y.Symbol_occurrence.pos then
+    if Pos.contains y.Symbol_occurrence.pos x.Symbol_occurrence.pos then
       0
     else
       1
@@ -25,10 +25,10 @@ let rec take_best_suggestions l =
     (* Check if we should stop finding suggestions. For example, in
        "foo($bar)" it's not useful to look outside the local variable "$bar". *)
     let stop =
-      match first.SymbolOccurrence.type_ with
-      | SymbolOccurrence.LocalVar
-      | SymbolOccurrence.Method _
-      | SymbolOccurrence.Class _ ->
+      match first.Symbol_occurrence.type_ with
+      | Symbol_occurrence.LocalVar
+      | Symbol_occurrence.Method _
+      | Symbol_occurrence.Class _ ->
         true
       | _ -> false
     in
@@ -44,7 +44,7 @@ let rec take_best_suggestions l =
     plus information about the definition of that symbol if found. *)
 let go_quarantined
     ~(ctx : Provider_context.t) ~(entry : Provider_context.entry) pos =
-  let (symbols : _ SymbolOccurrence.t list) =
+  let (symbols : _ Symbol_occurrence.t list) =
     IdentifySymbolService.go_quarantined
       ~ctx
       ~entry
@@ -62,11 +62,11 @@ let go_quarantined
 
 let go_quarantined_absolute
     ~(ctx : Provider_context.t) ~(entry : Provider_context.entry) pos :
-    (string SymbolOccurrence.t * string SymbolDefinition.t option) list =
+    (string Symbol_occurrence.t * string Symbol_definition.t option) list =
   go_quarantined ~ctx ~entry pos
   |> List.map ~f:(fun (occurrence, definition) ->
-         let occurrence = SymbolOccurrence.to_absolute occurrence in
+         let occurrence = Symbol_occurrence.to_absolute occurrence in
          let definition =
-           Option.map ~f:SymbolDefinition.to_absolute definition
+           Option.map ~f:Symbol_definition.to_absolute definition
          in
          (occurrence, definition))

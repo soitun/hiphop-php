@@ -645,14 +645,14 @@ module M = struct
     let current_pkg_name =
       Option.map env.genv.current_package ~f:Aast_utils.get_package_name
     in
-    let info = get_tcopt env |> TypecheckerOptions.package_info in
+    let info = get_tcopt env |> Typechecker_options.package_info in
     Option.bind current_pkg_name ~f:(Package_info.get_package info)
 
   let get_current_package_def_pos env =
     let current_pkg_name =
       Option.map env.genv.current_package ~f:Aast_utils.get_package_name
     in
-    let info = get_tcopt env |> TypecheckerOptions.package_info in
+    let info = get_tcopt env |> Typechecker_options.package_info in
     Option.bind current_pkg_name ~f:(fun p ->
         Package_info.get_package info p |> Option.map ~f:Package.get_package_pos)
 
@@ -674,7 +674,7 @@ module M = struct
   let get_internal env = env.genv.this_internal
 
   let get_package_by_name env pkg_name =
-    let info = get_tcopt env |> TypecheckerOptions.package_info in
+    let info = get_tcopt env |> Typechecker_options.package_info in
     Package_info.get_package info pkg_name
 
   let is_package_loaded env package =
@@ -737,16 +737,16 @@ module M = struct
     current_pkg_includes @ loaded_pkg_includes
 
   let package_allow_classconst_violations env =
-    TypecheckerOptions.package_allow_classconst_violations @@ get_tcopt env
+    Typechecker_options.package_allow_classconst_violations @@ get_tcopt env
 
   let package_allow_all_tconst_violations env =
-    TypecheckerOptions.package_allow_all_tconst_violations @@ get_tcopt env
+    Typechecker_options.package_allow_all_tconst_violations @@ get_tcopt env
 
   let package_allow_as_expression_violations env =
-    TypecheckerOptions.package_allow_as_expression_violations @@ get_tcopt env
+    Typechecker_options.package_allow_as_expression_violations @@ get_tcopt env
 
   let package_allow_enforceable_enum_violations env =
-    TypecheckerOptions.package_allow_enforceable_enum_violations
+    Typechecker_options.package_allow_enforceable_enum_violations
     @@ get_tcopt env
 
   let assert_packages_loaded_from_attr env attr =
@@ -757,7 +757,7 @@ module M = struct
     with
     | Some attr ->
       let pos = fst attr.ua_name in
-      let package_info = get_tcopt env |> TypecheckerOptions.package_info in
+      let package_info = get_tcopt env |> Typechecker_options.package_info in
       let per_cont_env =
         List.fold
           ~init:env.lenv.per_cont_env
@@ -1124,7 +1124,10 @@ module M = struct
     map_tcopt
       ~f:(fun tcopt ->
         GlobalOptions.
-          { tcopt with po = { tcopt.po with ParserOptions.everything_sdt = b } })
+          {
+            tcopt with
+            po = { tcopt.po with Parser_options.everything_sdt = b };
+          })
       env
 
   let get_support_dynamic_type env = env.genv.this_support_dynamic_type
@@ -1234,7 +1237,7 @@ module M = struct
       let (env, new_type) =
         match get_node new_type with
         | Tdynamic None
-          when TypecheckerOptions.tco_dynamic_inference (get_tcopt env) ->
+          when Typechecker_options.tco_dynamic_inference (get_tcopt env) ->
           let local_name = Local_id.to_string x in
           let (inference_env, v) =
             Inf.fresh_shadow_tyvar
@@ -1247,7 +1250,7 @@ module M = struct
           (env, mk (get_reason new_type, Tdynamic (Some v)))
         | Tdynamic (Some _) -> (env, new_type)
         | _ ->
-          if TypecheckerOptions.tco_dynamic_inference (get_tcopt env) then
+          if Typechecker_options.tco_dynamic_inference (get_tcopt env) then
             match LID.Map.find_opt x next_cont.LEnvC.local_types with
             | Some local ->
               (match get_node local.Typing_local_types.ty with
@@ -1351,7 +1354,7 @@ module M = struct
             }
       in
       let custom_err_config =
-        TypecheckerOptions.custom_error_config (get_tcopt env)
+        Typechecker_options.custom_error_config (get_tcopt env)
       in
       Diagnostics.add_diagnostic
         (Naming_error_utils.to_user_diagnostic error custom_err_config)

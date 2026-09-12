@@ -10,7 +10,7 @@
 open Hh_prelude
 
 let main (env : Client_start.env) : Exit_status.t Lwt.t =
-  HackEventLogger.client_restart
+  Hack_event_logger.client_restart
     ~data:
       (Config_file.Utils.parse_hhconfig_and_hh_conf_to_json
          ~root:env.Client_start.root

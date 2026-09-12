@@ -19,12 +19,12 @@ let handler =
       | ExpressionTree et ->
         let tcopt = Tast_env.get_tcopt env in
         (* Unstable features file attribute ignores all restrictions *)
-        if TypecheckerOptions.expression_trees_enabled tcopt then
+        if Typechecker_options.expression_trees_enabled tcopt then
           ()
         else
           (* Otherwise, only allow those visitors in hhconfig *)
           let allowed_expression_tree_visitors =
-            TypecheckerOptions.allowed_expression_tree_visitors tcopt
+            Typechecker_options.allowed_expression_tree_visitors tcopt
           in
           let (_pos, id) = et.et_class in
           let err_opt =

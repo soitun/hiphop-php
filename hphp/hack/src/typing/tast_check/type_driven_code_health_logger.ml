@@ -164,7 +164,7 @@ let log_on_unsurfaced_exception level ((_, exn), (pos, exn_binding), bl) =
 let create_handler ctx =
   let level =
     Provider_context.get_tcopt ctx
-    |> TypecheckerOptions.log_levels
+    |> Typechecker_options.log_levels
     |> SMap.find_opt "type_driven_code_health"
     |> Option.value ~default:1
   in

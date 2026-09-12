@@ -68,7 +68,7 @@ let start_time : float = Unix.gettimeofday ()
 let start_heartbeat_telemetry () : unit =
   let rec loop n : 'a =
     let%lwt _ = Lwt_unix.sleep 1.0 in
-    HackEventLogger.spinner_heartbeat n ~spinner:(get_latest_report ());
+    Hack_event_logger.spinner_heartbeat n ~spinner:(get_latest_report ());
     loop (n + 1)
   in
   let _future = loop 1 in
@@ -124,7 +124,7 @@ let report ~(to_stderr : bool) ~(angery_reaccs_only : bool) :
         "spinner %0.1fs: [%s]"
         (Unix.gettimeofday () -. start_time)
         next;
-      HackEventLogger.spinner_change ~spinner:(get_latest_report ()) ~next;
+      Hack_event_logger.spinner_change ~spinner:(get_latest_report ()) ~next;
       Message
         { text = next; is_hidden = false; start_time = Unix.gettimeofday () }
     | (Message { text; start_time; _ }, None) ->

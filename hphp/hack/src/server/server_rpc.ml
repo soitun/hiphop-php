@@ -33,7 +33,7 @@ let single_ctx env path file_input =
   Provider_context.add_or_overwrite_entry_contents ~ctx ~path ~contents
 
 let log_check_response env =
-  HackEventLogger.check_response
+  Hack_event_logger.check_response
     (Diagnostics.get_diagnostic_list env.ServerEnv.diagnostics
     |> List.map ~f:(fun { User_diagnostic.code; _ } -> code))
 
@@ -165,7 +165,7 @@ let handle :
         Out_channel.newline oc;
         Out_channel.close oc
       | None ->
-        HackEventLogger.LogFileErrors.log
+        Hack_event_logger.LogFileErrors.log
           telemetry
           ~from:metadata.ServerCommandTypes.from
     in
@@ -242,7 +242,7 @@ let handle :
     (env, result)
   (* TODO: edit this to look for classname *)
   | ServerCommandTypes.IDENTIFY_SYMBOL arg ->
-    let module SO = SymbolOccurrence in
+    let module SO = Symbol_occurrence in
     let ctx = Provider_utils.ctx_from_server_env env in
     let get_def_opt type_ name =
       ServerSymbolDefinition.go
@@ -257,7 +257,7 @@ let handle :
             affects_prod_build = true;
           }
       |> Option.to_list
-      |> List.map ~f:SymbolDefinition.to_absolute
+      |> List.map ~f:Symbol_definition.to_absolute
     in
     let arg = Str.split (Str.regexp "::") arg in
     (* The following are all the different named entities I could think of in Hack. *)
@@ -373,10 +373,10 @@ let handle :
               ctx
               None
               {
-                SymbolOccurrence.name = "unused for lookup";
+                Symbol_occurrence.name = "unused for lookup";
                 type_ =
-                  SymbolOccurrence.Method
-                    ( SymbolOccurrence.ClassName (Utils.add_ns class_name),
+                  Symbol_occurrence.Method
+                    ( Symbol_occurrence.ClassName (Utils.add_ns class_name),
                       old_name );
                 is_declaration = None;
                 pos = Pos.none;
@@ -387,8 +387,8 @@ let handle :
               ctx
               None
               {
-                SymbolOccurrence.name = Utils.add_ns old_name;
-                type_ = SymbolOccurrence.Function;
+                Symbol_occurrence.name = Utils.add_ns old_name;
+                type_ = Symbol_occurrence.Function;
                 is_declaration = None;
                 pos = Pos.none;
                 affects_prod_build = true;
@@ -494,8 +494,8 @@ let handle :
     let ctx = Provider_utils.ctx_from_server_env env in
     let go =
       match version with
-      | ServerCommandTypes.Find_my_tests.V2 -> FindMyTestsV2.go
-      | ServerCommandTypes.Find_my_tests.Staging -> FindMyTestsStaging.go
+      | ServerCommandTypes.Find_my_tests.V2 -> Find_my_tests_v2.go
+      | ServerCommandTypes.Find_my_tests.Staging -> Find_my_tests_staging.go
     in
     let result = go ~ctx ~genv ~env config actions in
     (env, result)

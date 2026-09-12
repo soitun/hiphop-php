@@ -53,7 +53,7 @@ let log_bug
     (category : string) : unit =
   let { category; data } = make_error_internal ~category ~e ~data in
   Hh_logger.error "%s\n%s" category (Hh_json_helpers.Out.to_string data);
-  if telemetry then HackEventLogger.serverless_ide_bug ~message:category ~data;
+  if telemetry then Hack_event_logger.serverless_ide_bug ~message:category ~data;
   ()
 
 let make_rich_error

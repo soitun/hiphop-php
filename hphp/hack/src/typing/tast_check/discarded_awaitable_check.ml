@@ -39,7 +39,7 @@ let rec enforce_not_awaitable env p ty =
         @@ Primary.Discarded_awaitable { pos = p; decl_pos = get_pos ety })
   | Toption ty' ->
     if
-      TypecheckerOptions.disallow_discarded_nullable_awaitables
+      Typechecker_options.disallow_discarded_nullable_awaitables
         (Env.get_tcopt env)
     then
       enforce_not_awaitable env p ty'
@@ -94,7 +94,7 @@ let disallow_awaitable =
 
 let disallow_due_to_cast ctx env =
   if
-    TypecheckerOptions.disallow_discarded_nullable_awaitables
+    Typechecker_options.disallow_discarded_nullable_awaitables
       (Env.get_tcopt env)
   then
     {

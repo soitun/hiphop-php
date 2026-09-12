@@ -10,7 +10,7 @@
    it simulates. *)
 let normalize_path (ctx : Provider_context.t) (path : string) : string =
   let popt = Provider_context.get_popt ctx in
-  if popt.ParserOptions.package_support_multifile_tests then
+  if popt.Parser_options.package_support_multifile_tests then
     Multifile.strip_multifile_prefix path
   else
     path

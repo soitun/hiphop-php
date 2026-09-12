@@ -159,13 +159,13 @@ type check_info = {
   log_errors: bool;
   discard_warnings: bool;
   recheck_id: string option;
-  per_file_profiling: HackEventLogger.PerFileProfilingConfig.t;
+  per_file_profiling: Hack_event_logger.PerFileProfilingConfig.t;
   memtrace_dir: string option;
   heartbeat_interval: int option;
   prefetch_decls_enabled: bool;
   prefetch_decls_threshold: int;
 }
 
-type workitems_to_process = workitem BigList.t
+type workitems_to_process = workitem Big_list.t
 
 type workitems_in_progress = workitem list

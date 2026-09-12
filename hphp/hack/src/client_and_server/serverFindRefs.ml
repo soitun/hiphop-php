@@ -23,7 +23,7 @@ let add_ns name =
 
 let strip_ns results =
   List.map results ~f:(fun r ->
-      SearchTypes.Find_refs.{ r with name = Utils.strip_ns r.name })
+      Search_types.Find_refs.{ r with name = Utils.strip_ns r.name })
 
 let search ctx target include_defs ~hints ~files ~stream_file genv =
   let hints_set = Relative_path.Set.of_list hints in
@@ -114,7 +114,7 @@ let search_member
     ~(stream_file : Path.t option)
     ~(hints : Relative_path.t list)
     (genv : genv)
-    (env : env) : env * SearchTypes.Find_refs.t list t =
+    (env : env) : env * Search_types.Find_refs.t list t =
   let dep_member_of member =
     let open Typing_deps.Dep.Member in
     match member with
@@ -162,7 +162,7 @@ let search_member
 
 let search_single_file_for_member
     ctx (class_name : string) (member : member) (filename : Relative_path.t) :
-    SearchTypes.Find_refs.t list =
+    Search_types.Find_refs.t list =
   let class_name = add_ns class_name in
   let origin_class_name =
     FindRefsService.get_origin_class_name ctx class_name member
@@ -241,7 +241,7 @@ let search_localvar ~ctx ~entry pos =
     let content = Provider_context.read_file_contents_exn entry in
     let var_text = Pos.get_text_from_pos ~content first_pos in
     List.map results ~f:(fun x ->
-        SearchTypes.Find_refs.{ name = var_text; pos = x })
+        Search_types.Find_refs.{ name = var_text; pos = x })
   | [] -> []
 
 let is_local = function
@@ -334,12 +334,12 @@ let go_for_localvar ctx action =
 
 let to_absolute res =
   List.map res ~f:(fun r ->
-      SearchTypes.Find_refs.{ r with pos = Pos.to_absolute r.pos })
+      Search_types.Find_refs.{ r with pos = Pos.to_absolute r.pos })
 
 let get_action symbol (filename, file_content, pos) =
-  let module SO = SymbolOccurrence in
-  let name = symbol.SymbolOccurrence.name in
-  match symbol.SymbolOccurrence.type_ with
+  let module SO = Symbol_occurrence in
+  let name = symbol.Symbol_occurrence.name in
+  match symbol.Symbol_occurrence.type_ with
   | SO.Class _ -> Some (Class name)
   | SO.Function -> Some (Function name)
   | SO.Method (SO.ClassName class_name, method_name) ->
@@ -371,7 +371,7 @@ let get_action symbol (filename, file_content, pos) =
 
 let go_from_file_ctx_with_symbol_definition
     ~(ctx : Provider_context.t) ~(entry : Provider_context.entry) pos :
-    (Relative_path.t SymbolDefinition.t * ServerCommandTypes.Find_refs.action)
+    (Relative_path.t Symbol_definition.t * ServerCommandTypes.Find_refs.action)
     option =
   (* Find the symbol at given position *)
   ServerIdentifyFunction.go_quarantined ~ctx ~entry pos
@@ -393,4 +393,4 @@ let go_from_file_ctx
     (string * ServerCommandTypes.Find_refs.action) option =
   go_from_file_ctx_with_symbol_definition ~ctx ~entry pos
   |> Option.map ~f:(fun (def, action) ->
-         (SymbolDefinition.full_name def, action))
+         (Symbol_definition.full_name def, action))

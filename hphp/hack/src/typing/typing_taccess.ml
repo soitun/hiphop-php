@@ -347,7 +347,7 @@ let create_root_from_type_constant ctx env root (_class_pos, class_name) class_
           if
             TySet.is_empty upper_bounds
             && Option.is_some upper
-            && TypecheckerOptions.everything_sdt (Env.get_tcopt env)
+            && Typechecker_options.everything_sdt (Env.get_tcopt env)
           then
             TySet.singleton (MakeType.supportdyn_mixed Reason.none)
           else

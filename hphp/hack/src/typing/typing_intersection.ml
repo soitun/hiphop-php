@@ -431,7 +431,7 @@ and intersect_ env (rec_tracker : Recursion_tracker.t) ~r ty1 ty2 =
               (* If class<T> <: classname<T>, class<U> & classname<V> -> classname<U & V> *)
               | ((_, Tnewtype (cn, [ty_cn], _)), (_, Tclass_ptr ty_c))
               | ((_, Tclass_ptr ty_c), (_, Tnewtype (cn, [ty_cn], _)))
-                when TypecheckerOptions.class_sub_classname (Env.get_tcopt env)
+                when Typechecker_options.class_sub_classname (Env.get_tcopt env)
                      && String.equal cn Naming_special_names.Classes.cClassname
                 ->
                 let (env, ty) = intersect ~r env rec_tracker ty_c ty_cn in

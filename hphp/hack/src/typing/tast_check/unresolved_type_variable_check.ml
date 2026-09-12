@@ -13,7 +13,7 @@ let handler =
 
     method! at_expr env (ty, p, _) =
       if
-        TypecheckerOptions.disallow_unresolved_type_variables
+        Typechecker_options.disallow_unresolved_type_variables
           (Tast_env.get_tcopt env)
       then
         ignore (Tast_expand.expand_ty ~pos:p env ty)

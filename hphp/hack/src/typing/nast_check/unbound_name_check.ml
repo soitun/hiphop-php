@@ -32,7 +32,7 @@ type env = {
 
 let get_custom_error_config env =
   let tc_opt = Provider_context.get_tcopt env.ctx in
-  TypecheckerOptions.custom_error_config tc_opt
+  Typechecker_options.custom_error_config tc_opt
 
 let handle_unbound_name env custom_err_config (pos, name) kind =
   (* We've already errored in naming if we get *Unknown* class *)
@@ -41,7 +41,7 @@ let handle_unbound_name env custom_err_config (pos, name) kind =
   else begin
     let tcopt = Provider_context.get_tcopt env.ctx in
     let warn =
-      match TypecheckerOptions.repo_stdlib_path tcopt with
+      match Typechecker_options.repo_stdlib_path tcopt with
       | None -> false
       | Some prefix ->
         let file_path = Relative_path.suffix (Pos.filename pos) in

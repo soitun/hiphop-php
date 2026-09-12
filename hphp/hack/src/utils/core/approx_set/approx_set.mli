@@ -6,4 +6,4 @@
  *
  *)
 
-include ApproxSet_intf.ApproxSet
+include Approx_set_intf.ApproxSet

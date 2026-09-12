@@ -34,14 +34,14 @@ module WithSyntax (Syntax : Syntax_sig.Syntax_S) = struct
       hhvm_compat_mode: hhvm_compat_mode;
       codegen: bool;
       hhi_mode: bool;
-      parser_options: ParserOptions.t;
+      parser_options: Parser_options.t;
     }
 
     let make_env
         ?(level = Typical)
         ?(hhvm_compat_mode = NoCompat)
         ?(hhi_mode = false)
-        ~(parser_options : ParserOptions.t)
+        ~(parser_options : Parser_options.t)
         (syntax_tree : SyntaxTree.t)
         ~(codegen : bool) : env =
       {
@@ -79,7 +79,7 @@ module WithSyntax (Syntax : Syntax_sig.Syntax_S) = struct
         Syntax.rust_parser_errors
           (SyntaxTree.text env.syntax_tree)
           rust_tree
-          ParserOptions.(
+          Parser_options.(
             to_rust_ffi_t
               {
                 env.parser_options with

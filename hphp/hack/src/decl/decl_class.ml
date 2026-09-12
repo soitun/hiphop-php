@@ -57,7 +57,7 @@ let raise_decl_heap_elems_bug
     "Decl_heap_elems_bug: %s\n%s"
     data
     (Exception.get_current_callstack_string 99 |> Exception.clean_stack);
-  HackEventLogger.decl_consistency_bug ~data "Decl_heap_elems_bug";
+  Hack_event_logger.decl_consistency_bug ~data "Decl_heap_elems_bug";
   raise (Decl_heap_elems_bug data)
 
 let unpack_member_lookup_result
@@ -120,7 +120,7 @@ let lookup_store_or ctx =
         false
       | Some ctx ->
         not
-          (TypecheckerOptions.populate_member_heaps
+          (Typechecker_options.populate_member_heaps
           @@ Provider_context.get_tcopt ctx))
 
 let find_method_in_shallow_class

@@ -293,7 +293,7 @@ and _ ty_ =
   | Twildcard : decl_phase ty_
   | Tlike : decl_phase ty -> decl_phase ty_
   (*========== Following Types Exist in Both Phases ==========*)
-  | Tany : (TanySentinel.t[@transform.opaque]) -> 'phase ty_
+  | Tany : (Tany_sentinel.t[@transform.opaque]) -> 'phase ty_
   | Tnonnull : 'phase ty_
   | Tdynamic : (Tvid.t option[@transform.opaque]) -> 'phase ty_
   | Toption : 'phase ty -> 'phase ty_

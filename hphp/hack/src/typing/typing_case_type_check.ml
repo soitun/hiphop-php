@@ -52,13 +52,13 @@ let check_overlapping
                 (ty_str ty2) );
         ]
       in
-      if SetRelation.is_equivalent relation then
+      if Set_relation.is_equivalent relation then
         primary_why
           ~f:(Printf.sprintf "It overlaps with `%s`, which also includes ")
-      else if SetRelation.is_superset relation then
+      else if Set_relation.is_superset relation then
         primary_why ~f:(Printf.sprintf "It overlaps with `%s`, which includes ")
         @ secondary_why ~f:(Printf.sprintf "Because %s contains %s")
-      else if SetRelation.is_subset relation then
+      else if Set_relation.is_subset relation then
         primary_why ~f:(Printf.sprintf "It overlaps with `%s`, which includes ")
         @ secondary_why ~f:(Printf.sprintf "Because %s are also %s")
       else

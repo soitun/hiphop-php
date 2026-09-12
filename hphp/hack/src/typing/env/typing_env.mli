@@ -34,7 +34,7 @@ module Expose_to_tast_env : sig
 
   val inside_expr_tree : env -> Aast_defs.class_name -> env
 
-  val get_tcopt : env -> TypecheckerOptions.t
+  val get_tcopt : env -> Typechecker_options.t
 
   val get_self_ty : env -> locl_ty option
 
@@ -100,7 +100,7 @@ val show_env : env -> string
 
 val pp_env : Format.formatter -> env -> unit
 
-val map_tcopt : env -> f:(TypecheckerOptions.t -> TypecheckerOptions.t) -> env
+val map_tcopt : env -> f:(Typechecker_options.t -> Typechecker_options.t) -> env
 
 val get_deps_mode : env -> Typing_deps_mode.t
 

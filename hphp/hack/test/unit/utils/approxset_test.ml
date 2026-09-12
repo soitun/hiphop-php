@@ -37,10 +37,10 @@ module Atom = struct
     let subset = Set.is_subset set1 ~of_:set2 in
     let superset = Set.is_subset set2 ~of_:set1 in
     let disjoint = Set.are_disjoint set1 set2 in
-    SetRelation.make ~subset ~superset ~disjoint
+    Set_relation.make ~subset ~superset ~disjoint
 end
 
-module TestBase (Impl : ApproxSet_intf.S with module Domain := Atom) = struct
+module TestBase (Impl : Approx_set_intf.S with module Domain := Atom) = struct
   module ASet = struct
     module Impl = Impl
 
@@ -106,7 +106,7 @@ module TestBase (Impl : ApproxSet_intf.S with module Domain := Atom) = struct
       let subset = Impl.is_subset () l.set r.set in
       let superset = Impl.is_subset () r.set l.set in
       let disjoint = Impl.are_disjoint () l.set r.set in
-      SetRelation.make ~subset ~superset ~disjoint
+      Set_relation.make ~subset ~superset ~disjoint
 
     let non_empty gen =
       Quickcheck.Generator.filter gen ~f:(fun set ->
@@ -230,7 +230,7 @@ module TestBase (Impl : ApproxSet_intf.S with module Domain := Atom) = struct
     let relation = ASet.relate (ab --- abc) ASet.empty in
     assert_bool
       "Expected ab - abc expected to equal bottom"
-      (SetRelation.is_equivalent relation)
+      (Set_relation.is_equivalent relation)
 
   let test_quick_disjoint _ =
     let f (set1, set2) =
@@ -257,17 +257,17 @@ module TestBase (Impl : ApproxSet_intf.S with module Domain := Atom) = struct
       in
       let relation = ASet.relate set1 set2 in
       if
-        SetRelation.is_subset relation
+        Set_relation.is_subset relation
         && (not @@ Set.is_subset set1.ASet.expected ~of_:set2.ASet.expected)
       then
         fail "subset";
       if
-        SetRelation.is_superset relation
+        Set_relation.is_superset relation
         && (not @@ Set.is_subset set2.ASet.expected ~of_:set1.ASet.expected)
       then
         fail "superset";
       if
-        SetRelation.is_disjoint relation
+        Set_relation.is_disjoint relation
         && (not @@ Set.are_disjoint set1.ASet.expected set2.ASet.expected)
       then
         fail "disjoint"
@@ -292,7 +292,7 @@ module TestBase (Impl : ApproxSet_intf.S with module Domain := Atom) = struct
 end
 
 module TestWithWitness
-    (Impl : ApproxSet_intf.S_with_witness with module Domain := Atom) =
+    (Impl : Approx_set_intf.S_with_witness with module Domain := Atom) =
 struct
   include TestBase (Impl)
 
@@ -315,41 +315,41 @@ struct
   let tests = tests @ ["test_origin_reporting" >:: test_origin_reporting]
 end
 
-module ApproxSet = TestWithWitness (ApproxSet.Make (Atom))
+module ApproxSet = TestWithWitness (Approx_set.Make (Atom))
 
 module BddSet = struct
-  include TestBase (BddSet.Make (Atom))
+  include TestBase (Bdd_set.Make (Atom))
 
   let test_quick_complement _ =
     let f set =
-      SetRelation.is_equivalent @@ ASet.relate set set
+      Set_relation.is_equivalent @@ ASet.relate set set
       |> assert_bool "Expected sets to be equal to self";
 
-      SetRelation.is_equivalent @@ ASet.relate set ASet.(comp @@ comp set)
+      Set_relation.is_equivalent @@ ASet.relate set ASet.(comp @@ comp set)
       |> assert_bool "Expected sets to be equal to double complement";
 
       let comp = ASet.comp set in
 
       assert_equal
         (ASet.relate set comp)
-        (SetRelation.flip @@ ASet.relate comp set);
+        (Set_relation.flip @@ ASet.relate comp set);
 
-      SetRelation.is_disjoint @@ ASet.relate set comp
+      Set_relation.is_disjoint @@ ASet.relate set comp
       |> assert_bool "Expected set to be disjoint from comp";
 
-      SetRelation.is_disjoint @@ ASet.relate comp set
+      Set_relation.is_disjoint @@ ASet.relate comp set
       |> assert_bool "Expected comp to be disjoint from self";
 
-      SetRelation.is_equivalent @@ ASet.relate ASet.top (ASet.union comp set)
+      Set_relation.is_equivalent @@ ASet.relate ASet.top (ASet.union comp set)
       |> assert_bool "Expected union of comp and set to be equal to top";
 
-      SetRelation.is_equivalent @@ ASet.relate ASet.empty (ASet.inter comp set)
+      Set_relation.is_equivalent @@ ASet.relate ASet.empty (ASet.inter comp set)
       |> assert_bool "Expected inter of comp and set to be equal to bottom";
 
-      SetRelation.is_equivalent @@ ASet.relate comp (ASet.diff comp set)
+      Set_relation.is_equivalent @@ ASet.relate comp (ASet.diff comp set)
       |> assert_bool "Expected diff of comp and set to be equal to comp";
 
-      SetRelation.is_equivalent @@ ASet.relate set (ASet.diff set comp)
+      Set_relation.is_equivalent @@ ASet.relate set (ASet.diff set comp)
       |> assert_bool "Expected diff of set and comp to be equal to set"
     in
 

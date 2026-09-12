@@ -53,7 +53,7 @@ let saved_state_init_error env genv ~do_indexing err =
     | Some user_instructions ->
       Printf.sprintf "%s\n\n%s" user_message user_instructions
   in
-  HackEventLogger.load_state_exn telemetry;
+  Hack_event_logger.load_state_exn telemetry;
   Hh_logger.log "LOAD_STATE_EXN %s" (Telemetry.to_string telemetry);
   match next_step with
   | Exit_status.No_error ->

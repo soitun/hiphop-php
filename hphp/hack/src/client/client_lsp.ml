@@ -196,7 +196,7 @@ module Run_env = struct
     | FindRefs of shellout_standard_response
     | GoToImpl of shellout_standard_response
     | Rename of {
-        symbol_definition: Relative_path.t SymbolDefinition.t; [@opaque]
+        symbol_definition: Relative_path.t Symbol_definition.t; [@opaque]
         find_refs_action: ServerCommandTypes.Find_refs.action; [@opaque]
         new_name: string;
         ide_calculated_patches: ServerRenameTypes.patch list; [@opaque]
@@ -570,7 +570,7 @@ let ignore_promise_but_handle_failure
             ]
         in
         let code = Lsp.Error.InternalError in
-        HackEventLogger.client_lsp_exception
+        Hack_event_logger.client_lsp_exception
           ~root:!env.root
           ~code:(Lsp.Error.code_to_enum code, Lsp.Error.show_code code)
           ~message:"Unhandled exception"
@@ -1083,7 +1083,7 @@ let lsp_range_to_ide (range : Lsp.range) : Ide_api_types.range =
   * here is for outlines, sticky headers, and breadcrumbs.
   *)
 let document_symbol_location_of_symbol
-    (symbol : string SymbolDefinition.t) ~(default_path : string) :
+    (symbol : string Symbol_definition.t) ~(default_path : string) :
     Lsp.Location.t =
   let full_pos = symbol.span in
   (* By convention, symbol.pos is the position of the name. See FileOutline.ml *)
@@ -1112,15 +1112,15 @@ let hack_pos_definition_to_lsp_identifier_location
   Lsp.DefinitionLocation.{ location; title = Some title }
 
 let hack_symbol_definition_to_lsp_identifier_location
-    (symbol : string SymbolDefinition.t) ~(default_path : string) :
+    (symbol : string Symbol_definition.t) ~(default_path : string) :
     Lsp.DefinitionLocation.t =
   let location =
-    hack_pos_to_lsp_location symbol.SymbolDefinition.pos ~default_path
+    hack_pos_to_lsp_location symbol.Symbol_definition.pos ~default_path
   in
   Lsp.DefinitionLocation.
     {
       location;
-      title = Some (Utils.strip_ns @@ SymbolDefinition.full_name symbol);
+      title = Some (Utils.strip_ns @@ Symbol_definition.full_name symbol);
     }
 
 (** See documentation for `args` field `notebook_mode` *)
@@ -1781,14 +1781,14 @@ let ide_rpc
   before starting a new file! *)
 let watch_refs_stream_file
     (file : Path.t)
-    ~(open_file_results : SearchTypes.Find_refs.absolute list Lsp.UriMap.t) :
+    ~(open_file_results : Search_types.Find_refs.absolute list Lsp.UriMap.t) :
     FindRefsWireFormat.half_open_one_based list Lwt_stream.t =
   let (q, add) = Lwt_stream.create () in
   let ide_results =
     open_file_results
     |> UriMap.values
     |> List.concat
-    |> List.map ~f:(fun SearchTypes.Find_refs.{ name = _; pos } ->
+    |> List.map ~f:(fun Search_types.Find_refs.{ name = _; pos } ->
            FindRefsWireFormat.from_absolute pos)
   in
   if not (List.is_empty ide_results) then add (Some ide_results);
@@ -1850,7 +1850,7 @@ let unlink_refs_stream_file_if_present (shellable_type : Run_env.shellable_type)
          Hence: going down this codepath via ENOENT is unexpected. Some might say it's worth logging
          as an indication that something has gone wrong. On the other hand, the name+contract of this
          function is to unlink the file "if present". I side with the first, which is why I'm logging. *)
-      HackEventLogger.invariant_violation_bug
+      Hack_event_logger.invariant_violation_bug
         ~data:(Exception.to_string e)
         "Streaming find-refs file unlinking error";
       Hh_logger.log "Streaming find-refs unlinking error")
@@ -1913,7 +1913,7 @@ let log_response_if_necessary
         start_handle_time,
         message ) ->
     let (kind, method_) = get_message_kind_and_method_for_logging message in
-    HackEventLogger.client_lsp_method_handled
+    Hack_event_logger.client_lsp_method_handled
       ~root:!env.root
       ~method_
       ~kind
@@ -1959,7 +1959,7 @@ let hack_log_error
   match event with
   | Some (Client_message (metadata, message)) ->
     let (kind, method_) = get_message_kind_and_method_for_logging message in
-    HackEventLogger.client_lsp_method_exception
+    Hack_event_logger.client_lsp_method_exception
       ~root:!env.root
       ~method_
       ~kind
@@ -1974,7 +1974,7 @@ let hack_log_error
       ~data_opt:e.Error.data
       ~source
   | _ ->
-    HackEventLogger.client_lsp_exception
+    Hack_event_logger.client_lsp_exception
       ~root:!env.root
       ~code:
         (Lsp.Error.code_to_enum e.Error.code, Lsp.Error.show_code e.Error.code)
@@ -2149,7 +2149,7 @@ let kickoff_shell_out_and_maybe_cancel
     let result_telemetry = make_result_telemetry 0 ~log_immediately:false in
     Lwt.return (state, result_telemetry)
   | _ ->
-    HackEventLogger.invariant_violation_bug "kickoff when not in Run_env";
+    Hack_event_logger.invariant_violation_bug "kickoff when not in Run_env";
     Lwt.return (state, make_result_telemetry 0)
 
 (** If there's a current_hh_shell with [id], then send it a SIGTERM.
@@ -2316,7 +2316,7 @@ let do_definition
   in
   let has_xhp_attribute =
     List.exists results ~f:(fun (occurrence, _) ->
-        SymbolOccurrence.is_xhp_literal_attr occurrence)
+        Symbol_occurrence.is_xhp_literal_attr occurrence)
   in
   Lwt.return (locations, has_xhp_attribute)
 
@@ -2464,7 +2464,7 @@ let docblock_with_ranking_detail
 let resolve_ranking_source
     (kind : FileInfo.si_kind) (ranking_source : int option) : FileInfo.si_kind =
   match ranking_source with
-  | Some x -> SearchTypes.int_to_kind x
+  | Some x -> Search_types.int_to_kind x
   | None -> kind
 
 (*
@@ -2555,7 +2555,7 @@ let do_resolve
     in
     Lwt.return result
 
-let hack_symbol_to_lsp (symbol : SearchUtils.symbol) =
+let hack_symbol_to_lsp (symbol : Search_utils.symbol) =
   (* Hack sometimes gives us back items with an empty path, by which it
      intends "whichever path you asked me about". That would be meaningless
      here. If it does, then it'll pick up our default path (also empty),
@@ -2586,9 +2586,9 @@ let hack_symbol_to_lsp (symbol : SearchUtils.symbol) =
       failwith "Unknown symbol kind"
   in
   {
-    SymbolInformation.name = Utils.strip_ns symbol.SearchUtils.name;
-    kind = hack_to_lsp_kind symbol.SearchUtils.result_type;
-    location = hack_pos_to_lsp_location symbol.SearchUtils.pos ~default_path:"";
+    SymbolInformation.name = Utils.strip_ns symbol.Search_utils.name;
+    kind = hack_to_lsp_kind symbol.Search_utils.result_type;
+    location = hack_pos_to_lsp_location symbol.Search_utils.pos ~default_path:"";
     detail = None;
     containerName = None;
   }
@@ -2610,33 +2610,33 @@ let rec lsp_document_symbols_of_outline
     ~(accu : Lsp.SymbolInformation.t list)
     ~(container_name : string option)
     (defs : FileOutline.outline) : Lsp.SymbolInformation.t list =
-  let open SymbolDefinition in
+  let open Symbol_definition in
   let hack_to_lsp_kind = function
-    | SymbolDefinition.Function -> SymbolInformation.Function
-    | SymbolDefinition.(Classish { classish_kind = Class; _ }) ->
+    | Symbol_definition.Function -> SymbolInformation.Function
+    | Symbol_definition.(Classish { classish_kind = Class; _ }) ->
       SymbolInformation.Class
-    | SymbolDefinition.Member { member_kind; _ } ->
+    | Symbol_definition.Member { member_kind; _ } ->
       (match member_kind with
-      | SymbolDefinition.Method -> SymbolInformation.Method
-      | SymbolDefinition.Property -> SymbolInformation.Property
-      | SymbolDefinition.ClassConst -> SymbolInformation.Constant
-      | SymbolDefinition.TypeConst ->
+      | Symbol_definition.Method -> SymbolInformation.Method
+      | Symbol_definition.Property -> SymbolInformation.Property
+      | Symbol_definition.ClassConst -> SymbolInformation.Constant
+      | Symbol_definition.TypeConst ->
         SymbolInformation.Class
         (* e.g. "const type Ta = string;" -- absent from LSP *))
-    | SymbolDefinition.GlobalConst -> SymbolInformation.Constant
-    | SymbolDefinition.(Classish { classish_kind = Enum; _ }) ->
+    | Symbol_definition.GlobalConst -> SymbolInformation.Constant
+    | Symbol_definition.(Classish { classish_kind = Enum; _ }) ->
       SymbolInformation.Enum
-    | SymbolDefinition.(Classish { classish_kind = Interface; _ })
-    | SymbolDefinition.(Classish { classish_kind = Trait; _ }) ->
+    | Symbol_definition.(Classish { classish_kind = Interface; _ })
+    | Symbol_definition.(Classish { classish_kind = Trait; _ }) ->
       SymbolInformation.Interface
     (* LSP doesn't have traits, so we approximate with interface *)
-    | SymbolDefinition.LocalVar -> SymbolInformation.Variable
-    | SymbolDefinition.TypeVar -> SymbolInformation.TypeParameter
-    | SymbolDefinition.Typedef -> SymbolInformation.Class
+    | Symbol_definition.LocalVar -> SymbolInformation.Variable
+    | Symbol_definition.TypeVar -> SymbolInformation.TypeParameter
+    | Symbol_definition.Typedef -> SymbolInformation.Class
     (* e.g. top level type alias -- absent from LSP *)
-    | SymbolDefinition.Param -> SymbolInformation.Variable
+    | Symbol_definition.Param -> SymbolInformation.Variable
     (* We never return a param from a document-symbol-search *)
-    | SymbolDefinition.Module -> SymbolInformation.Module
+    | Symbol_definition.Module -> SymbolInformation.Module
   in
   let lsp_of_symbol definition containerName =
     {
@@ -2740,7 +2740,7 @@ let do_findReferences
         params.FindReferences.loc.TextDocumentPositionParams.textDocument
     in
     let positions =
-      List.map positions ~f:(fun SearchTypes.Find_refs.{ name = _; pos } ->
+      List.map positions ~f:(fun Search_types.Find_refs.{ name = _; pos } ->
           hack_pos_to_lsp_location ~default_path:filename pos)
     in
     respond_jsonrpc
@@ -2768,7 +2768,7 @@ let do_findReferences
     (* The [open_file_results] included the SymbolOccurrence text for each ref. We won't need that... *)
     let ide_calculated_positions =
       UriMap.map
-        (List.map ~f:(fun SearchTypes.Find_refs.{ name = _; pos } -> pos))
+        (List.map ~f:(fun Search_types.Find_refs.{ name = _; pos } -> pos))
         open_file_results
     in
     let shellable_type =
@@ -2812,7 +2812,7 @@ let notify_refs_file_items
     ()
   | None ->
     log "Refs-file: notify-refs called, but no stream_file";
-    HackEventLogger.invariant_violation_bug
+    Hack_event_logger.invariant_violation_bug
       "refs-file: notify-refs called, but no stream file";
     ()
 
@@ -2837,19 +2837,19 @@ let handle_refs_file_items
       Running Run_env.{ current_hh_shell = Some { shellable_type; _ }; _ } ) ->
     let data = Run_env.show_shellable_type shellable_type in
     log "Refs-file: wrong shellable type to send refs - %s" data;
-    HackEventLogger.invariant_violation_bug
+    Hack_event_logger.invariant_violation_bug
       ~data
       "refs-file wrong shellale type to send refs";
     None
   | (Some _, Running Run_env.{ current_hh_shell = None; _ }) ->
     log "Refs-file: got items when current_hh_shell is None";
-    HackEventLogger.invariant_violation_bug
+    Hack_event_logger.invariant_violation_bug
       "refs-file got items when current_hh_shell is None";
     None
   | (Some _, _) ->
     let data = state_to_string state in
     log "Refs-file: unexpected items in wrong state - %s" data;
-    HackEventLogger.invariant_violation_bug
+    Hack_event_logger.invariant_violation_bug
       ~data
       "refs-file unexpected items in wrong state";
     None
@@ -2859,7 +2859,8 @@ let handle_refs_file_items
        which also updates [state] to no longer be watching this file. Therefore, we should never encounter
        a closed stream. *)
     log "Refs-file: unexpected end of stream";
-    HackEventLogger.invariant_violation_bug "refs-file unexpected end of stream";
+    Hack_event_logger.invariant_violation_bug
+      "refs-file unexpected end of stream";
     None
 
 (** This is called when a shell-out to "hh --ide-find-refs-by-symbol" completes successfully *)
@@ -3425,7 +3426,7 @@ let report_recheck_telemetry
         Some metadata.activity_id )
   in
   notify_jsonrpc ~powered_by:Serverless_ide notification;
-  HackEventLogger.client_lsp_recheck
+  Hack_event_logger.client_lsp_recheck
     ~root:!env.root
     ~path:(lsp_uri_to_path uri |> Relative_path.create_detect_prefix)
     ~trigger_method
@@ -3472,7 +3473,7 @@ let publish_and_report_after_recomputing_live_squiggles
       (* Log diagnostics so we can track error lifetime *)
       Option.iter
         (Telemetry.of_yojson_opt (Lsp_fmt.print_diagnostics params))
-        ~f:(HackEventLogger.Diagnostics.log ~activity_id)
+        ~f:(Hack_event_logger.Diagnostics.log ~activity_id)
     in
     let notification = PublishDiagnosticsNotification params in
     notify_jsonrpc ~powered_by:Serverless_ide notification;
@@ -3519,7 +3520,7 @@ let handle_errors_file_item
   | None ->
     (* We must have an item, because the errors-stream always ends with a sentinel, and we stop tailing upon the sentinel. *)
     log "Errors-file: unexpected end of stream";
-    HackEventLogger.invariant_violation_bug
+    Hack_event_logger.invariant_violation_bug
       "errors-file unexpected end of stream";
     latest_hh_server_errors :=
       SeekingErrors
@@ -4047,10 +4048,10 @@ let cancel_if_stale (client : Jsonrpc.t) (timestamp : float) (timeout : float) :
 
 (** Assert that workers from the worker controller are not stopped. *)
 let assert_workers_are_not_stopped () =
-  if WorkerCancel.is_stop_requested () then begin
-    HackEventLogger.invariant_violation_bug
+  if Worker_cancel.is_stop_requested () then begin
+    Hack_event_logger.invariant_violation_bug
       "ClientLsp workers are stopped but shouldn't be";
-    WorkerCancel.resume_workers ()
+    Worker_cancel.resume_workers ()
   end;
   ()
 
@@ -4129,14 +4130,14 @@ let respect_cancellation
           Hh_logger.log
             "acting upon cancellation at %s"
             (Utils.timestring timestamp);
-          WorkerCancel.stop_workers ())
+          Worker_cancel.stop_workers ())
       promise
   in
   let%lwt result =
     Lwt_utils.try_finally ~f ~finally:(fun () ->
         ensure_cancelled cancellation_source;
         let%lwt () = promise in
-        WorkerCancel.resume_workers ();
+        Worker_cancel.resume_workers ();
         Lwt.return_unit)
   in
   Lwt.return result
@@ -4916,9 +4917,9 @@ let handle_deferred_check
 or clientIdeDaemon *)
 let handle_tick ~(state : state ref) : result_telemetry option Lwt.t =
   EventLogger.recheck_disk_files ();
-  HackEventLogger.Memory.profile_if_needed ();
+  Hack_event_logger.Memory.profile_if_needed ();
   let%lwt () = try_open_errors_file ~state in
-  let (promise : unit Lwt.t) = EventLoggerLwt.flush () in
+  let (promise : unit Lwt.t) = Event_logger_lwt.flush () in
   ignore_promise_but_handle_failure
     promise
     ~desc:"tick-event-flush"
@@ -4968,8 +4969,11 @@ let main
 
   let%lwt version = read_hhconfig_version root in
   let%lwt hhconfig_version_and_switch = read_hhconfig_version_and_switch root in
-  HackEventLogger.set_hhconfig_version (Some (String_utils.lstrip version "^"));
-  HackEventLogger.client_lsp_start ~init_proc_stack ~hhconfig_version_and_switch;
+  Hack_event_logger.set_hhconfig_version
+    (Some (String_utils.lstrip version "^"));
+  Hack_event_logger.client_lsp_start
+    ~init_proc_stack
+    ~hhconfig_version_and_switch;
   (* [SharedMem.empty_config] will give us shared globals like [hh_shared.c:workers_should_exit]
      but no key/value heaps. *)
   let shm_handle = SharedMem.init SharedMem.empty_config ~num_workers:1 in

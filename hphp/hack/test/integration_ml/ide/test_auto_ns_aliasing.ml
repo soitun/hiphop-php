@@ -92,7 +92,7 @@ function testTypecheck(): void {
 
 let test () =
   let po =
-    ParserOptions.
+    Parser_options.
       {
         default with
         auto_namespace_map = [("ShortName", "HH\\LongName\\ShortName")];

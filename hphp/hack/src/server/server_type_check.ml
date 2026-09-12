@@ -225,7 +225,7 @@ let do_naming
   (* final telemetry *)
   let t3 = Hh_logger.log_duration "Update_many (filename->names)" t2 in
   let heap_size = SharedMem.SMTelemetry.heap_size () in
-  HackEventLogger.naming_end ~count start_t heap_size;
+  Hack_event_logger.naming_end ~count start_t heap_size;
   let telemetry =
     telemetry
     |> Telemetry.float_ ~key:"update_reverse_duration" ~value:(t2 -. start_t)
@@ -389,7 +389,7 @@ let do_type_checking
     |> Telemetry.object_ ~key:"gc" ~value:(Telemetry.quick_gc_stat ())
     |> Telemetry.object_
          ~key:"proc"
-         ~value:(ProcFS.telemetry_for_pid (Unix.getpid ()))
+         ~value:(Proc_fs.telemetry_for_pid (Unix.getpid ()))
   in
 
   let files_checked = files_to_check in
@@ -462,9 +462,9 @@ let quantile ~index ~count : Relative_path.Set.t -> Relative_path.Set.t =
   in
   (* Work with BigList-s the same way Typing_check_service does, to preserve
      the same typechecking order within the quantile. *)
-  let files = files |> Relative_path.Set.elements |> BigList.create in
+  let files = files |> Relative_path.Set.elements |> Big_list.create in
   let rec pop_quantiles n files =
-    let (bucket, files) = BigList.split_n files file_count_in_quantile in
+    let (bucket, files) = Big_list.split_n files file_count_in_quantile in
     if n <= 0 then
       bucket
     else
@@ -550,7 +550,7 @@ let type_check_core
     |> Telemetry.int_ ~key:"parse_end_heap_size" ~value:hs
     |> Telemetry.int_ ~key:"parse_count" ~value:reparse_count
   in
-  HackEventLogger.parsing_end_for_typecheck t hs ~parsed_count:reparse_count;
+  Hack_event_logger.parsing_end_for_typecheck t hs ~parsed_count:reparse_count;
   let t = Hh_logger.log_duration logstring t in
 
   (* UPDATE NAMING TABLES **************************************************)
@@ -626,7 +626,7 @@ let type_check_core
   in
 
   let hs = SharedMem.SMTelemetry.heap_size () in
-  HackEventLogger.first_redecl_end t hs;
+  Hack_event_logger.first_redecl_end t hs;
   let t = Hh_logger.log_duration logstring t in
   let telemetry =
     telemetry
@@ -992,7 +992,7 @@ let type_check_core
   in
 
   (* CAUTION! Lots of alerts/dashboards depend on this event, particularly start_t  *)
-  HackEventLogger.type_check_end
+  Hack_event_logger.type_check_end
     (Some telemetry)
     ~heap_size
     ~started_count:to_recheck_count
@@ -1000,7 +1000,7 @@ let type_check_core
     ~experiments:genv.local_config.ServerLocalConfig.experiments
     ~desc:"serverTypeCheck"
     ~start_t:type_check_start_t;
-  HackEventLogger.TypingErrors.log_errors
+  Hack_event_logger.TypingErrors.log_errors
     ~type_check_end_id
     ~data:
       (let telemetry =
@@ -1047,7 +1047,7 @@ let type_check_unsafe genv env start_time profiling =
   in
 
   (* CAUTION! Lots of alerts/dashboards depend on the exact string of check_kind and check_reason *)
-  HackEventLogger.with_check_kind ~check_kind ~check_reason @@ fun () ->
+  Hack_event_logger.with_check_kind ~check_kind ~check_reason @@ fun () ->
   Hh_logger.log "******************************************";
   Hh_logger.log
     "Check kind: will bring hh_server to consistency with code changes, by checking whatever fanout is needed ('%s')"

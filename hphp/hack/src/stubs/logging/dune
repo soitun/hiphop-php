@@ -2,10 +2,10 @@
  (name logging_stubs)
  (wrapped false)
  (modules
-  featureLogging
-  hackEventLogger
-  hackfmtEventLogger
-  typingLogger)
+  feature_logging
+  hack_event_logger
+  hackfmt_event_logger
+  typing_logger)
  (libraries
   hack_event_logger_types
   saved_state_rollouts

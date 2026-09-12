@@ -53,7 +53,7 @@ type env = {
 
 (** See the .mli file for the documentation of fields. *)
 and genv = {
-  tcopt: TypecheckerOptions.t;
+  tcopt: Typechecker_options.t;
   callable_pos: Pos.t;
   function_pos: Pos.t;
   readonly: bool;
@@ -127,7 +127,7 @@ let empty ?origin ?(mode = FileInfo.Mstrict) ctx file ~droot =
         needs_concrete = false;
       };
     tpenv = Type_parameter_env.empty;
-    log_levels = TypecheckerOptions.log_levels (Provider_context.get_tcopt ctx);
+    log_levels = Typechecker_options.log_levels (Provider_context.get_tcopt ctx);
     inference_env = Typing_inference_env.empty_inference_env;
     rank = 0;
     check_rank = false;

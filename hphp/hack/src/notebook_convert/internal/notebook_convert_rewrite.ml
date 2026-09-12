@@ -40,7 +40,7 @@ let mangle (Notebook_number prefix) (hack_source_code : string) : string =
       end
   in
 
-  DeclarationsRewriter.rename_decls ~rename ~hack_source_code
+  Declarations_rewriter.rename_decls ~rename ~hack_source_code
 
 let unmangle (Notebook_number prefix) (hack_source_code : string) : string =
   let uppercase_prefix = String.uppercase prefix in
@@ -58,4 +58,4 @@ let unmangle (Notebook_number prefix) (hack_source_code : string) : string =
       ~f:(fun name prefix ->
         Option.value (String.chop_prefix name ~prefix) ~default:name)
   in
-  DeclarationsRewriter.rename_decls ~rename ~hack_source_code
+  Declarations_rewriter.rename_decls ~rename ~hack_source_code

@@ -1763,7 +1763,7 @@ end = struct
             let reason = Typing_reason.witness_from_decl pos in
             let ub =
               let tcopt = Typing_env_types.(env.genv.tcopt) in
-              if TypecheckerOptions.everything_sdt tcopt then
+              if Typechecker_options.everything_sdt tcopt then
                 ( Ast_defs.Constraint_as,
                   Decl_enforceability.supportdyn_mixed pos reason )
               else

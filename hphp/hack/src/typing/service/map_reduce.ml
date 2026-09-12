@@ -11,7 +11,7 @@ open Hh_prelude
 module type MapReducer = sig
   type t
 
-  val is_enabled : TypecheckerOptions.t -> bool
+  val is_enabled : Typechecker_options.t -> bool
 
   val map :
     Provider_context.t -> Relative_path.t -> Tast.by_names -> Diagnostics.t -> t
@@ -118,7 +118,7 @@ are enabled.
 
 Evaluated at module initialization time, because we don't want to do the
 resolution from map-reducer to function everytime. *)
-let all_map_reducers : ((TypecheckerOptions.t -> bool) * map_reducer) list =
+let all_map_reducers : ((Typechecker_options.t -> bool) * map_reducer) list =
   List.map all_of_map_reducer ~f:(fun mr ->
       match type_for mr with
       | TypeForAny typed_mr ->

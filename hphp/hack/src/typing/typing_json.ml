@@ -26,7 +26,7 @@ module Cls = Folded_class
 module Nast = Aast
 
 let show_supportdyn env =
-  (not (TypecheckerOptions.everything_sdt env.genv.tcopt))
+  (not (Typechecker_options.everything_sdt env.genv.tcopt))
   || Typing_env_types.get_log_level env "show" >= 1
 
 let param_mode_to_string = function

@@ -39,7 +39,7 @@ let get_docblock_for_member ctx class_info member_name =
     ServerSymbolDefinition.get_definition_cst_node_ctx
       ~ctx
       ~entry
-      ~kind:SymbolDefinition.(Member { member_kind = Method; class_name = "" })
+      ~kind:Symbol_definition.(Member { member_kind = Method; class_name = "" })
       ~pos
     >>= Docblock_finder.get_docblock
   | _ -> None
@@ -115,7 +115,7 @@ let go_comments_from_source_text
     ~(ctx : Provider_context.t)
     ~(entry : Provider_context.entry)
     pos
-    ~(kind : 'a SymbolDefinition.kind) : string option =
+    ~(kind : 'a Symbol_definition.kind) : string option =
   let _ = ctx in
   let filename = Relative_path.to_absolute entry.Provider_context.path in
   let lp =
@@ -139,27 +139,27 @@ let go_comments_from_source_text
 let go_comments_for_symbol_ctx
     ~(ctx : Provider_context.t)
     ~(entry : Provider_context.entry)
-    ~(def : 'a SymbolDefinition.t)
+    ~(def : 'a Symbol_definition.t)
     ~(base_class_name : string option) : string option =
-  match def.SymbolDefinition.docblock with
+  match def.Symbol_definition.docblock with
   | Some db -> Some (clean_comments db)
   | None ->
     (match
        ServerSymbolDefinition.get_definition_cst_node_ctx
          ~ctx
          ~entry
-         ~kind:def.SymbolDefinition.kind
-         ~pos:def.SymbolDefinition.pos
+         ~kind:def.Symbol_definition.kind
+         ~pos:def.Symbol_definition.pos
      with
     | None -> None
     | Some ffps ->
       (match Docblock_finder.get_docblock ffps with
       | Some db -> Some (clean_comments db)
       | None ->
-        (match (def.SymbolDefinition.kind, base_class_name) with
-        | ( SymbolDefinition.(Member { member_kind = Method; _ }),
+        (match (def.Symbol_definition.kind, base_class_name) with
+        | ( Symbol_definition.(Member { member_kind = Method; _ }),
             Some base_class_name ) ->
-          fallback ctx base_class_name def.SymbolDefinition.name
+          fallback ctx base_class_name def.Symbol_definition.name
         | _ -> None)))
 
 (* Locate a symbol and return file, line, column, and base_class *)
@@ -167,7 +167,7 @@ let go_locate_symbol
     ~(ctx : Provider_context.t) ~(symbol : string) ~(kind : FileInfo.si_kind) :
     DocblockService.dbs_symbol_location_result =
   (* Look up this class name *)
-  match SymbolIndexCore.get_position_for_symbol ctx symbol kind with
+  match Symbol_index_core.get_position_for_symbol ctx symbol kind with
   | None -> None
   | Some (path, pos) ->
     let filename = Relative_path.to_absolute path in
@@ -193,32 +193,32 @@ let go_locate_symbol
       }
 
 let symboldefinition_kind_from_si_kind (kind : FileInfo.si_kind) :
-    'a SymbolDefinition.kind =
+    'a Symbol_definition.kind =
   match kind with
   | FileInfo.SI_Class
   | FileInfo.SI_Unknown
   | FileInfo.SI_XHP ->
-    SymbolDefinition.(Classish { members = []; classish_kind = Class })
+    Symbol_definition.(Classish { members = []; classish_kind = Class })
   | FileInfo.SI_Interface ->
-    SymbolDefinition.(Classish { members = []; classish_kind = Interface })
+    Symbol_definition.(Classish { members = []; classish_kind = Interface })
   | FileInfo.SI_Enum ->
-    SymbolDefinition.(Classish { members = []; classish_kind = Enum })
+    Symbol_definition.(Classish { members = []; classish_kind = Enum })
   | FileInfo.SI_Trait ->
-    SymbolDefinition.(Classish { members = []; classish_kind = Trait })
-  | FileInfo.SI_Mixed -> SymbolDefinition.LocalVar
-  | FileInfo.SI_Function -> SymbolDefinition.Function
-  | FileInfo.SI_Typedef -> SymbolDefinition.Typedef
-  | FileInfo.SI_GlobalConstant -> SymbolDefinition.GlobalConst
+    Symbol_definition.(Classish { members = []; classish_kind = Trait })
+  | FileInfo.SI_Mixed -> Symbol_definition.LocalVar
+  | FileInfo.SI_Function -> Symbol_definition.Function
+  | FileInfo.SI_Typedef -> Symbol_definition.Typedef
+  | FileInfo.SI_GlobalConstant -> Symbol_definition.GlobalConst
   | FileInfo.SI_ClassMethod ->
-    SymbolDefinition.(Member { class_name = ""; member_kind = Method })
-  | FileInfo.SI_Literal -> SymbolDefinition.LocalVar
+    Symbol_definition.(Member { class_name = ""; member_kind = Method })
+  | FileInfo.SI_Literal -> Symbol_definition.LocalVar
   | FileInfo.SI_ClassConstant ->
-    SymbolDefinition.(Member { class_name = ""; member_kind = ClassConst })
+    Symbol_definition.(Member { class_name = ""; member_kind = ClassConst })
   | FileInfo.SI_Property ->
-    SymbolDefinition.(Member { class_name = ""; member_kind = Property })
-  | FileInfo.SI_LocalVariable -> SymbolDefinition.LocalVar
+    Symbol_definition.(Member { class_name = ""; member_kind = Property })
+  | FileInfo.SI_LocalVariable -> Symbol_definition.LocalVar
   | FileInfo.SI_Constructor ->
-    SymbolDefinition.(Member { class_name = ""; member_kind = Method })
+    Symbol_definition.(Member { class_name = ""; member_kind = Method })
   | FileInfo.SI_Keyword -> failwith "Cannot look up a keyword"
   | FileInfo.SI_Namespace -> failwith "Cannot look up a namespace"
 

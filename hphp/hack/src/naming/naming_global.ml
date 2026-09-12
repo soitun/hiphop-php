@@ -151,7 +151,7 @@ let should_report_duplicate
     Printf.eprintf
       "%s\n%!"
       (Exception.get_current_callstack_string 99 |> Exception.clean_stack);
-    HackEventLogger.invariant_violation_bug
+    Hack_event_logger.invariant_violation_bug
       desc
       ~path:(FileInfo.get_pos_filename p)
       ~telemetry:

@@ -63,7 +63,7 @@
 (library
  (name messages_stubs)
  (wrapped false)
- (modules clientMessages)
+ (modules client_messages)
  (preprocess
   (pps lwt_ppx ppx_deriving.std)))
 
@@ -148,7 +148,7 @@
 (library
  (name rage_stubs)
  (wrapped false)
- (modules clientRage)
+ (modules client_rage)
  (libraries utils_exit utils_core)
  (preprocess
   (pps lwt_ppx ppx_deriving.std)))
@@ -207,6 +207,6 @@
 (library
  (name findmytests_stubs)
  (wrapped false)
- (modules findMyTestsStaging findMyTestsV2)
+ (modules find_my_tests_staging find_my_tests_v2)
  (preprocess
   (pps lwt_ppx ppx_deriving.std)))

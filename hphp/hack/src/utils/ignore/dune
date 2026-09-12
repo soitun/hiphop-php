@@ -1,7 +1,7 @@
 (rule
- (target filesToIgnore.fb.ml)
+ (target files_to_ignore.fb.ml)
  (action
-  (copy# facebook/filesToIgnore.ml filesToIgnore.fb.ml)))
+  (copy# facebook/files_to_ignore.ml files_to_ignore.fb.ml)))
 
 (library
  (name ignore)
@@ -15,7 +15,7 @@
   core
   yojson
   (select
-   filesToIgnore.ml
+   files_to_ignore.ml
    from
-   (facebook -> filesToIgnore.fb.ml)
-   (-> filesToIgnore.stubs.ml))))
+   (facebook -> files_to_ignore.fb.ml)
+   (-> files_to_ignore.stubs.ml))))

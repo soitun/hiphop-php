@@ -165,7 +165,7 @@ let to_edits_and_selection
       | Some classish_start -> Some classish_start
       | None ->
         let () =
-          HackEventLogger.invariant_violation_bug
+          Hack_event_logger.invariant_violation_bug
             ~data:class_name
             "Could not find class position for quickfix"
         in

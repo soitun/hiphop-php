@@ -113,7 +113,7 @@ let make_param_local_ty ~dynamic_mode ~no_auto_likes env decl_hint param =
         | _ -> ty
       in
       let ty =
-        if TypecheckerOptions.everything_sdt Typing_env_types.(env.genv.tcopt)
+        if Typechecker_options.everything_sdt Typing_env_types.(env.genv.tcopt)
         then
           let ty =
             (* For implicit pessimisation, wrap supportdyn around parameters with function types. *)

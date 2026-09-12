@@ -29,7 +29,7 @@ $x = /*range-start*/(() ==> shape('a' => 2, 'b' => $a)['a'])()/*range-end*/;
 let plus_state (a : state) (b : state) : state =
   match (a, b) with
   | (Searching (Some _), Searching (Some (pos_b, _))) ->
-    HackEventLogger.invariant_violation_bug
+    Hack_event_logger.invariant_violation_bug
       ~path:(Pos.filename pos_b)
       ~pos:(Pos.string @@ Pos.to_absolute pos_b)
       "expected only one candidate to be found, since we select the largest shape-typed expression containing the selection";

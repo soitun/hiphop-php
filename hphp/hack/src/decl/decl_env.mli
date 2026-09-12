@@ -15,7 +15,7 @@ type env = {
   ctx: Provider_context.t;
 }
 
-val tcopt : env -> TypecheckerOptions.t
+val tcopt : env -> Typechecker_options.t
 
 type class_cache = Decl_store.class_entries SMap.t
 

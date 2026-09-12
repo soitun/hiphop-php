@@ -10,7 +10,7 @@ open Hh_prelude
 
 (* This should stay at toplevel in order to be executed before [Daemon.check_entry_point]. *)
 let entry =
-  WorkerControllerEntryPoint.register ~restore:Batch_global_state.restore
+  Worker_controller_entry_point.register ~restore:Batch_global_state.restore
 
 let catch_and_classify_exceptions : 'x 'b. ('x -> 'b) -> 'x -> 'b =
  fun f x ->
@@ -40,8 +40,8 @@ let make_hhi_dir () =
 
 let init_state
     ~(root : Path.t)
-    ~(popt : ParserOptions.t)
-    ~(tcopt : TypecheckerOptions.t)
+    ~(popt : Parser_options.t)
+    ~(tcopt : Typechecker_options.t)
     ~(deps_mode : Typing_deps_mode.t) :
     Provider_context.t * Batch_global_state.batch_state =
   Relative_path.(set_path_prefix Root root);
@@ -60,8 +60,8 @@ let init_state
 let init
     ~(root : Path.t)
     ~(shmem_config : SharedMem.config)
-    ~(popt : ParserOptions.t)
-    ~(tcopt : TypecheckerOptions.t)
+    ~(popt : Parser_options.t)
+    ~(tcopt : Typechecker_options.t)
     ~(deps_mode : Typing_deps_mode.t)
     ?(gc_control : Gc.control option)
     (t : float) : Provider_context.t * MultiWorker.worker list * float =
@@ -91,7 +91,7 @@ let init_with_defaults =
   init
     ~root:(Path.make "/")
     ~shmem_config:SharedMem.default_config
-    ~popt:ParserOptions.default
-    ~tcopt:TypecheckerOptions.default
+    ~popt:Parser_options.default
+    ~tcopt:Typechecker_options.default
     ~deps_mode:(Typing_deps_mode.InMemoryMode None)
     ?gc_control:None

@@ -8,7 +8,7 @@
  *)
 open Core
 
-module type S = WrappedMap_sig.S
+module type S = Wrapped_map_sig.S
 
 module Make (Ord : Stdlib.Map.OrderedType) : S with type key = Ord.t = struct
   include Stdlib.Map.Make (Ord)

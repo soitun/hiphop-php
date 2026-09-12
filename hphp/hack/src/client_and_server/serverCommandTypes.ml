@@ -28,7 +28,7 @@ end
 
 module Identify_symbol = struct
   type single_result =
-    string SymbolOccurrence.t * string SymbolDefinition.t option
+    string Symbol_occurrence.t * string Symbol_definition.t option
 
   type result = single_result list
 end
@@ -131,11 +131,11 @@ module Done_or_retry = struct
 end
 
 module Find_refs = struct
-  include SearchTypes.Find_refs
+  include Search_types.Find_refs
 
-  type server_result = SearchTypes.Find_refs.t list
+  type server_result = Search_types.Find_refs.t list
 
-  type result = SearchTypes.Find_refs.absolute list
+  type result = Search_types.Find_refs.absolute list
 
   type server_result_or_retry = server_result Done_or_retry.t
 
@@ -330,7 +330,7 @@ module Rename = struct
   let arguments_to_string_exn
       (new_name : string)
       (action : Find_refs.action)
-      (symbol_def : Relative_path.t SymbolDefinition.t) : string =
+      (symbol_def : Relative_path.t Symbol_definition.t) : string =
     let symbol_and_action =
       FindRefsWireFormat.CliArgs.to_string
         {
@@ -350,7 +350,7 @@ module Rename = struct
    * HackTypecheckerQueryBase::WWWDir|Member,\HackTypecheckerQueryBase,Method,getWWWDir|<byte_string>
   *)
   let string_to_args arg :
-      string * Find_refs.action * Relative_path.t SymbolDefinition.t =
+      string * Find_refs.action * Relative_path.t Symbol_definition.t =
     let split_arg = Str.split (Str.regexp "|") arg in
     let (symbol_name, action_arg, marshalled_def) =
       match split_arg with
@@ -365,7 +365,7 @@ module Rename = struct
       FindRefsWireFormat.CliArgs.from_string_exn str
     in
     let decoded_str = Base64.decode_exn marshalled_def in
-    let symbol_definition : Relative_path.t SymbolDefinition.t =
+    let symbol_definition : Relative_path.t Symbol_definition.t =
       Marshal.from_string decoded_str 0
     in
     (new_name, action, symbol_definition)
@@ -437,7 +437,7 @@ module Symbol_info_service = struct
 end
 
 module Outline = struct
-  type outline = string SymbolDefinition.t list
+  type outline = string Symbol_definition.t list
 end
 
 module Infer_return_type = struct
@@ -459,7 +459,7 @@ module Ide_rename_type = struct
 end
 
 module Go_to_definition = struct
-  type result = (string SymbolOccurrence.t * string SymbolDefinition.t) list
+  type result = (string Symbol_occurrence.t * string Symbol_definition.t) list
 end
 
 module Go_to_type_definition = struct
@@ -537,7 +537,7 @@ type _ t =
   | IS_SUBTYPE : string -> (string, string) result t
   | TAST_HOLES : file_input * Tast_hole.filter -> TastHolesService.result t
   | TAST_HOLES_BATCH : string list -> TastHolesService.result t
-  | IDENTIFY_SYMBOL : string -> string SymbolDefinition.t list t
+  | IDENTIFY_SYMBOL : string -> string Symbol_definition.t list t
   | IDENTIFY_FUNCTION :
       string * file_input * File_content.Position.t
       -> Identify_symbol.result t
@@ -557,7 +557,7 @@ type _ t =
       -> Find_refs.result_or_retry t
   | RENAME : ServerRenameTypes.action -> Rename.result_or_retry t
   | IDE_RENAME_BY_SYMBOL :
-      Find_refs.action * string * Relative_path.t SymbolDefinition.t
+      Find_refs.action * string * Relative_path.t Symbol_definition.t
       -> Rename.ide_result_or_retry t
   | DUMP_SYMBOL_INFO : string list -> Symbol_info_service.result t
   | REMOVE_DEAD_FIXMES :

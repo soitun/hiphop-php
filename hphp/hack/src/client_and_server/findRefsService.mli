@@ -27,7 +27,7 @@ val find_refs_ctx :
   ctx:Provider_context.t ->
   entry:Provider_context.entry ->
   target:action_internal ->
-  SearchTypes.Find_refs.t list
+  Search_types.Find_refs.t list
 
 val find_references :
   Provider_context.t ->
@@ -37,13 +37,13 @@ val find_references :
   Relative_path.t list ->
   deadline:float option ->
   stream_file:Path.t option ->
-  SearchTypes.Find_refs.t list
+  Search_types.Find_refs.t list
 
 val find_references_single_file :
   Provider_context.t ->
   action_internal ->
   Relative_path.t ->
-  SearchTypes.Find_refs.t list
+  Search_types.Find_refs.t list
 
 val find_child_classes_in_files :
   Provider_context.t ->

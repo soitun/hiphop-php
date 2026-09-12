@@ -27,7 +27,7 @@ let tparam_with_name (params : ('a, 'b) Aast.tparam list) (name : string) :
   List.find params ~f:(fun tp -> String.equal (snd tp.tp_name) name)
 
 let sym_def_of_tparam (tp : ('a, 'b) Aast.tparam) :
-    Relative_path.t SymbolDefinition.t =
+    Relative_path.t Symbol_definition.t =
   let (pos, name) = tp.tp_name in
   let name_with_constraints =
     String.strip (Format.asprintf "%a" Hint_print.pp_tparam tp)
@@ -38,9 +38,9 @@ let sym_def_of_tparam (tp : ('a, 'b) Aast.tparam) :
     else
       Some name_with_constraints
   in
-  SymbolDefinition.
+  Symbol_definition.
     {
-      kind = SymbolDefinition.TypeVar;
+      kind = Symbol_definition.TypeVar;
       name;
       pos;
       span = pos;
@@ -73,5 +73,5 @@ let find_tparam_def
   | _ -> None
 
 let go (program : ('a, 'b) Aast.def list) (pos : Pos.t) (name : string) :
-    Relative_path.t SymbolDefinition.t option =
+    Relative_path.t Symbol_definition.t option =
   Option.map (find_tparam_def program pos name) ~f:sym_def_of_tparam

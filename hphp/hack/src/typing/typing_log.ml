@@ -85,8 +85,8 @@ let lastenv =
   ref
     (Typing_env_types.empty
        (Provider_context.empty_for_debugging
-          ~popt:ParserOptions.default
-          ~tcopt:TypecheckerOptions.default
+          ~popt:Parser_options.default
+          ~tcopt:Typechecker_options.default
           ~deps_mode:(Typing_deps_mode.InMemoryMode None))
        Relative_path.default
        ~droot:None)
@@ -836,5 +836,5 @@ let log_sd_pass ?(level = 1) env pos =
   lnewline ()
 
 let increment_feature_count env s =
-  if TypecheckerOptions.language_feature_logging env.genv.tcopt then
+  if Typechecker_options.language_feature_logging env.genv.tcopt then
     Measure.sample s 1.0

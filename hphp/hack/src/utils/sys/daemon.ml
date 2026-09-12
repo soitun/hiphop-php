@@ -313,7 +313,7 @@ let spawn
   if stdout <> Unix.stdout then close_if_open stdout;
   if stderr <> Unix.stderr && stderr <> stdout then close_if_open stderr;
 
-  PidLog.log ~reason:(Entry.name_of_entry entry) ~no_fail:true pid;
+  Pid_log.log ~reason:(Entry.name_of_entry entry) ~no_fail:true pid;
   {
     channels =
       (Unix.in_channel_of_descr parent_in, Unix.out_channel_of_descr parent_out);

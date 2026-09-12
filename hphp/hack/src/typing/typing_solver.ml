@@ -28,13 +28,13 @@ let log_remaining_prop env =
     let prop =
       Typing_inference_env.get_nongraph_subtype_prop env.inference_env
     in
-    (if TypecheckerOptions.log_inference_constraints (Env.get_tcopt env) then
+    (if Typechecker_options.log_inference_constraints (Env.get_tcopt env) then
       let p_as_string = Typing_print.subtype_prop env prop in
       let pos = Pos.string (Pos.to_absolute env.genv.callable_pos) in
       let size = TL.size prop in
       let n_disj = TL.n_disj prop in
       let n_conj = TL.n_conj prop in
-      TypingLogger.InferenceCnstr.log p_as_string ~pos ~size ~n_disj ~n_conj);
+      Typing_logger.InferenceCnstr.log p_as_string ~pos ~size ~n_disj ~n_conj);
     if (not (Diagnostics.currently_has_errors ())) && not (TL.is_valid prop)
     then
       Typing_log.log_prop
@@ -334,7 +334,7 @@ let bind_to_lower_bound ~freshen env r var lower_bounds =
        * around invariant generics. Leave them be to try to get leave more
        * flexibility to type filers *)
       let autocomplete_mode =
-        TypecheckerOptions.tco_autocomplete_mode env.genv.tcopt
+        Typechecker_options.tco_autocomplete_mode env.genv.tcopt
       in
       if autocomplete_mode && TUtils.is_nothing env ty then
         (env, freshen_ty_err)
@@ -559,7 +559,7 @@ let try_bind_to_equal_bound ~freshen env r var =
 *)
 let rec always_solve_tyvar_down ~freshen env r var =
   let autocomplete_mode =
-    TypecheckerOptions.tco_autocomplete_mode env.genv.tcopt
+    Typechecker_options.tco_autocomplete_mode env.genv.tcopt
   in
   (* If there is a type that is both a lower and upper bound, force to that type *)
   let (env, ty_err_opt1) = try_bind_to_equal_bound ~freshen env r var in

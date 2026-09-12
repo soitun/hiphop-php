@@ -75,7 +75,7 @@ let setup
   (* Parsing produces the file infos that the naming table module can use
      to construct the forward naming table (files-to-symbols) *)
   let popt =
-    ParserOptions.
+    Parser_options.
       {
         default with
         disable_xhp_element_mangling =

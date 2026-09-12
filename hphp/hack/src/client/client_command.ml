@@ -17,7 +17,7 @@ type heavy_command =
   | CLsp of Client_lsp.args
   | CSavedStateProjectMetadata of Client_env.client_check_env
   | CDownloadSavedState of Client_download_saved_state.env
-  | CRage of ClientRage.env
+  | CRage of Client_rage.env
 
 (** Light commands should not use any of the following
   - Hh_logger, HackEventLogger

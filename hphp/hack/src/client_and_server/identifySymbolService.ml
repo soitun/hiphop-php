@@ -8,15 +8,15 @@
  *)
 
 open Hh_prelude
-open SymbolOccurrence
+open Symbol_occurrence
 open Typing_defs
 module SN = Naming_special_names
 module FFP = Full_fidelity_positioned_syntax
 
 module Result_set = Stdlib.Set.Make (struct
-  type t = Relative_path.t SymbolOccurrence.t
+  type t = Relative_path.t Symbol_occurrence.t
 
-  let compare : t -> t -> int = SymbolOccurrence.compare Relative_path.compare
+  let compare : t -> t -> int = Symbol_occurrence.compare Relative_path.compare
 end)
 
 let is_target
@@ -595,7 +595,7 @@ let visitor =
             false
           else if !in_class_ptr then
             let tcopt = Tast_env.get_tcopt env in
-            not (TypecheckerOptions.package_allow_classconst_violations tcopt)
+            not (Typechecker_options.package_allow_classconst_violations tcopt)
           else if !in_newtype || !in_is_expression then
             false
           else if !in_typedef then
@@ -603,7 +603,7 @@ let visitor =
           else if !in_as_expression then
             let tcopt = Tast_env.get_tcopt env in
             not
-              (TypecheckerOptions.package_allow_as_expression_violations tcopt)
+              (Typechecker_options.package_allow_as_expression_violations tcopt)
           else
             true
         in
@@ -827,7 +827,7 @@ let visitor =
           else if !in_as_expression then
             let tcopt = Tast_env.get_tcopt env in
             not
-              (TypecheckerOptions.package_allow_as_expression_violations tcopt)
+              (Typechecker_options.package_allow_as_expression_violations tcopt)
           else
             true
         in
@@ -1044,8 +1044,8 @@ let visitor =
           String.equal
             (snd ua.Aast.ua_name)
             SN.UserAttributes.uaSupportDynamicType
-          && TypecheckerOptions.everything_sdt tcopt
-          && not (TypecheckerOptions.enable_no_auto_dynamic tcopt)
+          && Typechecker_options.everything_sdt tcopt
+          && not (Typechecker_options.enable_no_auto_dynamic tcopt)
         then
           Result_set.empty
         else
@@ -1419,6 +1419,6 @@ let go_quarantined
     ~(ctx : Provider_context.t)
     ~(entry : Provider_context.entry)
     (cursor : File_content.Position.t)
-    ~use_declaration_spans : Relative_path.t SymbolOccurrence.t list =
+    ~use_declaration_spans : Relative_path.t Symbol_occurrence.t list =
   all_symbols_ctx ~ctx ~entry
   |> List.filter ~f:(is_target ~use_declaration_spans cursor)

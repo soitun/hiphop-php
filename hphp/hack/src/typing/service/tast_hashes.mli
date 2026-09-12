@@ -10,7 +10,7 @@ type by_names [@@deriving yojson_of]
 
 type t [@@deriving yojson_of]
 
-val is_enabled : TypecheckerOptions.t -> bool
+val is_enabled : Typechecker_options.t -> bool
 
 val map :
   Provider_context.t -> Relative_path.t -> Tast.by_names -> Diagnostics.t -> t

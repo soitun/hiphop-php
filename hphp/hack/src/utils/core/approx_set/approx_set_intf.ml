@@ -27,7 +27,7 @@ module type DomainType = sig
             SetRelation.is_disjoint @@ relation ctx b a`
 
       We also require transitively as expected for the given set relations *)
-  val relation : t -> ctx:ctx -> t -> SetRelation.t
+  val relation : t -> ctx:ctx -> t -> Set_relation.t
 end
 
 (** An abstract representation of a set, designed specifically to determine if two
@@ -74,7 +74,7 @@ module type S_with_witness = sig
     | Sat  (** The two sets are definitely disjoint *)
     | Unsat of {
         left: Domain.t;
-        relation: SetRelation.t;
+        relation: Set_relation.t;
         right: Domain.t;
       }
         (** The two sets are not disjoint because of the relation between

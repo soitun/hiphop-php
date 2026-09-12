@@ -1,6 +1,6 @@
 open Hh_prelude
-open SearchUtils
-open SearchTypes
+open Search_utils
+open Search_types
 open Test_harness
 module Args = Test_harness_common_args
 module SA = Asserter.String_asserter
@@ -27,8 +27,8 @@ let rec assert_docblock_markdown
       in
       assert_docblock_markdown exp_list act_list)
 
-let assert_ns_matches (expected_ns : string) (actual : SearchTypes.si_item list)
-    : unit =
+let assert_ns_matches
+    (expected_ns : string) (actual : Search_types.si_item list) : unit =
   let found =
     List.fold actual ~init:false ~f:(fun acc item ->
         String.equal item.si_name expected_ns || acc)
@@ -58,7 +58,7 @@ let assert_autocomplete
   in
   (* Search for the symbol *)
   let (results, _is_complete) =
-    SymbolIndex.find_matching_symbols
+    Symbol_index.find_matching_symbols
       ~sienv_ref
       ~query_text
       ~max_results:100
@@ -107,7 +107,7 @@ let run_index_builder (harness : Test_harness.t) : si_env =
 
   (* Scan the repo folder *)
   let sienv =
-    SymbolIndex.initialize
+    Symbol_index.initialize
       ~gleanopt:Glean_options.default
       ~namespace_map:[]
       ~provider_name:"LocalIndex"
@@ -122,9 +122,11 @@ let run_index_builder (harness : Test_harness.t) : si_env =
            | None -> None
            | Some decls ->
              let addenda = Direct_decl_parser.decls_to_addenda decls in
-             Some (path, addenda, SearchUtils.TypeChecker))
+             Some (path, addenda, Search_utils.TypeChecker))
   in
-  let sienv = SymbolIndexCore.update_from_addenda ~sienv ~paths_with_addenda in
+  let sienv =
+    Symbol_index_core.update_from_addenda ~sienv ~paths_with_addenda
+  in
 
   sienv
 

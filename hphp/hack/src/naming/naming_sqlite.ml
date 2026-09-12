@@ -158,7 +158,7 @@ module LocalChanges = struct
             | Deleted -> Deleted)
       in
       if Relative_path.Map.cardinal file_deltas > 0 then
-        HackEventLogger.naming_sqlite_local_changes_nonempty "get";
+        Hack_event_logger.naming_sqlite_local_changes_nonempty "get";
       { base_content_version; file_deltas }
     | rc ->
       failwith
@@ -762,7 +762,7 @@ let save_file_infos db_name file_info_map ~base_content_version =
           let per_file =
             save_file_info db stmt_cache path acc.checksum file_info
           in
-          let () = HackEventLogger.calling_ocaml_naming_table () in
+          let () = Hack_event_logger.calling_ocaml_naming_table () in
 
           {
             files_added = acc.files_added + per_file.files_added;
@@ -866,7 +866,7 @@ let copy_and_update
           let per_file =
             save_file_info new_db stmt_cache path acc.checksum file_info
           in
-          let () = HackEventLogger.calling_ocaml_naming_table () in
+          let () = Hack_event_logger.calling_ocaml_naming_table () in
 
           {
             files_added = acc.files_added + per_file.files_added;
@@ -952,7 +952,7 @@ let fold
     Hh_logger.log
       "NAMING_COSTLY_ITER\n%s"
       (Exception.get_current_callstack_string 99 |> Exception.clean_stack);
-    HackEventLogger.naming_costly_iter ~start_t
+    Hack_event_logger.naming_costly_iter ~start_t
   end;
   acc
 

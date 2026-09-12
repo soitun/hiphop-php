@@ -31,7 +31,7 @@ let check_implements
     (* this case should never execute *)
   in
   let is_systemlib =
-    TypecheckerOptions.is_systemlib (Typing_env.get_tcopt env)
+    Typechecker_options.is_systemlib (Typing_env.get_tcopt env)
   in
   if String.is_prefix attr_name ~prefix:"__" then
     (* Check against builtins *)
@@ -79,7 +79,7 @@ let check_implements
         in
 
         let custom_err_config =
-          TypecheckerOptions.custom_error_config (Typing_env.get_tcopt env)
+          Typechecker_options.custom_error_config (Typing_env.get_tcopt env)
         in
         Diagnostics.add_diagnostic
           (Naming_error_utils.to_user_diagnostic
@@ -123,7 +123,7 @@ let check_implements
       env
     | _ ->
       let custom_err_config =
-        TypecheckerOptions.custom_error_config (Typing_env.get_tcopt env)
+        Typechecker_options.custom_error_config (Typing_env.get_tcopt env)
       in
       Diagnostics.add_diagnostic
         (Naming_error_utils.to_user_diagnostic

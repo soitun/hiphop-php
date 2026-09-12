@@ -322,7 +322,7 @@ type t = {
   tico_invalidate_files: bool;
       (** Allows hh_server to invalidate units in hhvm based on local changes *)
   tico_invalidate_smart: bool;  (** Use finer grain hh_server dependencies *)
-  per_file_profiling: HackEventLogger.PerFileProfilingConfig.t;
+  per_file_profiling: Hack_event_logger.PerFileProfilingConfig.t;
       (** turns on memtrace .ctf writes to this directory *)
   memtrace_dir: string option;
   go_to_implementation: bool;

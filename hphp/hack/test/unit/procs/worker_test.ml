@@ -1,7 +1,7 @@
 open Hh_prelude
 
 let entry =
-  WorkerControllerEntryPoint.register ~restore:(fun () ~(worker_id : int) ->
+  Worker_controller_entry_point.register ~restore:(fun () ~(worker_id : int) ->
       Hh_logger.set_id (Printf.sprintf "worker_test %d" worker_id))
 
 let num_workers = 2

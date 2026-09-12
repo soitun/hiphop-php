@@ -86,7 +86,7 @@ let test () =
   let files = [("source.php", source)] in
 
   Relative_path.set_path_prefix Relative_path.Root (Path.make root);
-  TestDisk.set hhconfig_filename "";
+  Test_disk.set hhconfig_filename "";
   let (custom_config, _) =
     ServerConfig.load ~silent:false ~from:"" ~cli_config_overrides:[]
   in

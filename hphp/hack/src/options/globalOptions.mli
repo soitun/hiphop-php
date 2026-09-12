@@ -71,7 +71,7 @@ type extended_reasons_config =
   - po_<feature/flag/setting> - parser option
   - so_<feature/flag/setting> - server option *)
 type t = {
-  po: ParserOptions.t;
+  po: Parser_options.t;
   tco_saved_state: saved_state;
   tco_legacy_experimental_features: SSet.t;
       (** Set of typechecker-only experimental features, in lowercase.
@@ -314,7 +314,7 @@ type t = {
 [@@deriving eq, show]
 
 val set :
-  ?po:ParserOptions.t ->
+  ?po:Parser_options.t ->
   ?tco_saved_state:saved_state ->
   ?po_disallow_toplevel_requires:bool ->
   ?tco_log_large_fanouts_threshold:int ->

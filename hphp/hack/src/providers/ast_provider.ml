@@ -38,7 +38,7 @@ module LocalParserCache =
     end)
 
 let parse
-    (popt : ParserOptions.t)
+    (popt : Parser_options.t)
     ~(full : bool)
     ~(source_text : Full_fidelity_source_text.t) :
     Diagnostics.t * Parser_return.t =
@@ -54,7 +54,7 @@ let parse
   let ast =
     if
       Relative_path.(is_hhi (prefix path))
-      && popt.ParserOptions.deregister_php_stdlib
+      && popt.Parser_options.deregister_php_stdlib
     then
       Nast.deregister_ignored_attributes ast
     else
@@ -106,7 +106,7 @@ let get_from_local_cache ~full ctx file_name =
     let ast =
       if
         Relative_path.(is_hhi (prefix file_name))
-        && popt.ParserOptions.deregister_php_stdlib
+        && popt.Parser_options.deregister_php_stdlib
       then
         Nast.deregister_ignored_attributes ast
       else
@@ -132,7 +132,7 @@ let compute_source_text ~(entry : Provider_context.entry) :
    improved with a method similar to the TAST-and-errors generation, where the TAST
    errors are not generated unless necessary. *)
 let compute_parser_return_and_ast_errors
-    ~(popt : ParserOptions.t) ~(entry : Provider_context.entry) :
+    ~(popt : Parser_options.t) ~(entry : Provider_context.entry) :
     Parser_return.t * Diagnostics.t =
   match entry with
   | {
@@ -161,26 +161,28 @@ let compute_cst ~(ctx : Provider_context.t) ~(entry : Provider_context.entry) :
     cst
 
 let compute_ast_with_error
-    ~(popt : ParserOptions.t) ~(entry : Provider_context.entry) :
+    ~(popt : Parser_options.t) ~(entry : Provider_context.entry) :
     Diagnostics.t * Nast.program =
   let ({ Parser_return.ast; _ }, ast_errors) =
     compute_parser_return_and_ast_errors ~popt ~entry
   in
   (ast_errors, ast)
 
-let compute_ast ~(popt : ParserOptions.t) ~(entry : Provider_context.entry) :
+let compute_ast ~(popt : Parser_options.t) ~(entry : Provider_context.entry) :
     Nast.program =
   compute_ast_with_error ~popt ~entry |> snd
 
-let compute_comments ~(popt : ParserOptions.t) ~(entry : Provider_context.entry)
-    : Parser_return.comments =
+let compute_comments
+    ~(popt : Parser_options.t) ~(entry : Provider_context.entry) :
+    Parser_return.comments =
   let ({ Parser_return.comments; _ }, _ast_errors) =
     compute_parser_return_and_ast_errors ~popt ~entry
   in
   comments
 
 let compute_file_info
-    ~(popt : ParserOptions.t) ~(entry : Provider_context.entry) : FileInfo.ids =
+    ~(popt : Parser_options.t) ~(entry : Provider_context.entry) : FileInfo.ids
+    =
   let ast = compute_ast ~popt ~entry in
   Nast.get_def_names ast
 

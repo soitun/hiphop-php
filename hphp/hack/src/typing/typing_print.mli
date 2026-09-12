@@ -41,15 +41,15 @@ val full_strip_ns_decl :
   ?msg:bool -> verbose_fun:bool -> env -> Typing_defs.decl_ty -> string
 
 val full_decl :
-  ?msg:bool -> TypecheckerOptions.t -> Typing_defs.decl_ty -> string
+  ?msg:bool -> Typechecker_options.t -> Typing_defs.decl_ty -> string
 
 (** Pretty print a type and all of its associated declaration information. *)
 val full_with_identity :
   hide_internals:bool ->
   env ->
   Typing_defs.locl_ty ->
-  'b SymbolOccurrence.t ->
-  'b SymbolDefinition.t option ->
+  'b Symbol_occurrence.t ->
+  'b Symbol_definition.t option ->
   string
 
 (** Pretty print a type and all of its associated declaration information. *)
@@ -58,8 +58,8 @@ val full_decl_with_identity :
   omit_likes:bool ->
   verbose_fun:bool ->
   Typing_defs.decl_ty ->
-  'b SymbolOccurrence.t ->
-  'b SymbolDefinition.t option ->
+  'b Symbol_occurrence.t ->
+  'b Symbol_definition.t option ->
   string
 
 (** Print a locl_type to a string, stripping namespaces, including exact annotations and type variable numbering *)

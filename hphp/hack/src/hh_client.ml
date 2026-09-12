@@ -32,21 +32,22 @@ let init_event_logger
     ~from
     (config : ServerConfig.t)
     (local_config : ServerLocalConfig.t) : unit =
-  HackEventLogger.client_init
+  Hack_event_logger.client_init
     ~init_id
     ~from
     ~is_interactive:(Client_args.is_interactive command)
     ~custom_columns:(Client_command.get_custom_telemetry_data command)
     root;
-  HackEventLogger.set_hhconfig_version
+  Hack_event_logger.set_hhconfig_version
     (ServerConfig.version config |> Config_file.version_to_string_opt);
-  HackEventLogger.set_rollout_group local_config.ServerLocalConfig.rollout_group;
-  HackEventLogger.set_rollout_flags
+  Hack_event_logger.set_rollout_group
+    local_config.ServerLocalConfig.rollout_group;
+  Hack_event_logger.set_rollout_flags
     (ServerLocalConfigLoad.to_rollout_flags local_config);
   ()
 
 let log_qe_fetch (fetch : Server_local_config_qe.fetch) =
-  HackEventLogger.client_qe_fetch
+  Hack_event_logger.client_qe_fetch
     ~start_time:fetch.start_time
     ~end_time:fetch.end_time
 
@@ -108,7 +109,7 @@ let handle_exn_and_exit exn ~command_name =
     "CLIENT_BAD_EXIT [%s] %s"
     command_name
     (Exit_status.show_expanded es);
-  HackEventLogger.client_bad_exit ~command_name es e;
+  Hack_event_logger.client_bad_exit ~command_name es e;
   Exit.exit es
 
 let exec_command_without_config (command : Client_command.light_command) =
@@ -188,7 +189,7 @@ let exec_command_with_config
         Lwt_utils.run_main (fun () ->
             Client_lsp.main args ~init_id ~config ~local_config ~init_proc_stack)
       | Client_command.CRage env ->
-        Lwt_utils.run_main (fun () -> ClientRage.main env local_config)
+        Lwt_utils.run_main (fun () -> Client_rage.main env local_config)
       | Client_command.CSavedStateProjectMetadata env ->
         Lwt_utils.run_main (fun () ->
             Client_saved_state_project_metadata.main env local_config)

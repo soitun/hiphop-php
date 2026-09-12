@@ -99,7 +99,7 @@ let parse_options () =
   in
 
   let popt =
-    ParserOptions.
+    Parser_options.
       {
         default with
         keep_user_attributes = true;
@@ -189,7 +189,7 @@ let file_to_files filename =
 
 let decl_and_run_mode
     { files; extra_builtins; ai_options; tcopt }
-    (popt : ParserOptions.t)
+    (popt : Parser_options.t)
     (hhi_root : Path.t) : unit =
   Ident.track_names := true;
   let builtins =
@@ -338,7 +338,7 @@ let main_hack ({ tcopt; _ } as opts) (sharedmem_config : SharedMem.config) :
             { opts with ai_options; files }
           in
           decl_and_run_mode opts tcopt.GlobalOptions.po hhi_root;
-          TypingLogger.flush_buffers ()))
+          Typing_logger.flush_buffers ()))
 
 (* command line driver *)
 let () =

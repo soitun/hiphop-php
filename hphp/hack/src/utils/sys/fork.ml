@@ -43,8 +43,8 @@ let fork_and_log ?reason () =
   let result = fork () in
   (match result with
   | -1 -> ()
-  | 0 -> PidLog.close ()
-  | pid -> PidLog.log ?reason pid);
+  | 0 -> Pid_log.close ()
+  | pid -> Pid_log.log ?reason pid);
   result
 
 let fork_and_may_log ?reason () =

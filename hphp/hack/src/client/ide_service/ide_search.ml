@@ -8,10 +8,10 @@
  *)
 
 open Hh_prelude
-module SUtils = SearchUtils
+module SUtils = Search_utils
 
 let result_to_json res =
-  let desc_string = SearchUtils.kind_to_string res.SUtils.result_type in
+  let desc_string = Search_utils.kind_to_string res.SUtils.result_type in
   let p = res.SUtils.pos in
   let fn = Pos.filename p in
   let (line, start, end_) = Pos.info_pos p in
@@ -29,12 +29,12 @@ let result_to_json res =
 let re_colon_colon = Str.regexp "::"
 
 let go
-    ctx query_text ~(kind_filter : string) (sienv_ref : SearchUtils.si_env ref)
-    : SearchUtils.result =
+    ctx query_text ~(kind_filter : string) (sienv_ref : Search_utils.si_env ref)
+    : Search_utils.result =
   let max_results = 100 in
   let start_time = Unix.gettimeofday () in
-  let kind_filter = SearchUtils.string_to_kind kind_filter in
-  let context = SearchTypes.Ac_workspace_symbol in
+  let kind_filter = Search_utils.string_to_kind kind_filter in
+  let context = Search_types.Ac_workspace_symbol in
   let results =
     (* If query contains "::", search class methods instead of top level definitions *)
     match Str.split_delim re_colon_colon query_text with
@@ -43,7 +43,7 @@ let go
       let kind_filter = Some FileInfo.SI_Class in
       (* Get the class with the most similar name to `class_name_query` *)
       let (candidates, _is_complete) =
-        SymbolIndex.find_matching_symbols
+        Symbol_index.find_matching_symbols
           ~query_text:class_name_query
           ~max_results:1
           ~kind_filter
@@ -51,12 +51,12 @@ let go
           ~sienv_ref
       in
       let class_ =
-        candidates |> List.hd |> Option.map ~f:(fun r -> r.SearchTypes.si_name)
+        candidates |> List.hd |> Option.map ~f:(fun r -> r.Search_types.si_name)
       in
       begin
         match class_ with
         | Some name ->
-          ClassMethodSearch.query_class_methods
+          Class_method_search.query_class_methods
             ctx
             (Utils.add_ns name)
             method_query
@@ -67,7 +67,7 @@ let go
       end
     | _ ->
       let (temp_results, _is_complete) =
-        SymbolIndex.find_matching_symbols
+        Symbol_index.find_matching_symbols
           ~sienv_ref
           ~query_text
           ~max_results
@@ -76,7 +76,7 @@ let go
       in
       AutocompleteService.add_position_to_results ctx temp_results
   in
-  SymbolIndexCore.log_symbol_index_search
+  Symbol_index_core.log_symbol_index_search
     ~sienv:!sienv_ref
     ~start_time
     ~query_text

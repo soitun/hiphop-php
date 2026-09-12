@@ -26,13 +26,13 @@ external batch_index_root_relative_paths_only :
 
 type update_result = {
   naming_table: Naming_table.t;
-  sienv: SearchUtils.si_env;
+  sienv: Search_utils.si_env;
   changes: FileInfo.change list;
 }
 
 (** For each path, direct decl parse to compute the names and positions in the file. If the file at the path doesn't exist, return [None]. *)
 let compute_file_info_batch_root_relative_paths_only
-    (popt : ParserOptions.t) (paths : Relative_path.t list) :
+    (popt : Parser_options.t) (paths : Relative_path.t list) :
     (Relative_path.t
     * (FileInfo.t * FileInfo.pfh_hash * FileInfo.si_addendum list) option)
     list =
@@ -53,14 +53,14 @@ let compute_file_info_batch_root_relative_paths_only
   in
   batch_index_root_relative_paths_only
     (Decl_parser_options.from_parser_options popt)
-    popt.ParserOptions.deregister_php_stdlib
+    popt.Parser_options.deregister_php_stdlib
     (Relative_path.path_of_prefix Relative_path.Root |> Path.make)
     paths
 
 let update_naming_tables_and_si
     ~(ctx : Provider_context.t)
     ~(naming_table : Naming_table.t)
-    ~(sienv : SearchUtils.si_env)
+    ~(sienv : Search_utils.si_env)
     ~(changes : Relative_path.Set.t) : update_result =
   log
     "Batch change %d files, e.g. %s"
@@ -126,17 +126,19 @@ let update_naming_tables_and_si
     |> Relative_path.Set.of_list
   in
   let sienv =
-    SymbolIndexCore.remove_files ~sienv ~paths:paths_without_new_ids
+    Symbol_index_core.remove_files ~sienv ~paths:paths_without_new_ids
   in
   (* now update paths with new file info *)
   let get_addenda_opt (path, new_ids_with_addenda_opt) =
     Option.map
       new_ids_with_addenda_opt
       ~f:(fun (_new_ids, _pfh_hash, addenda) ->
-        (path, addenda, SearchUtils.TypeChecker))
+        (path, addenda, Search_utils.TypeChecker))
   in
   let paths_with_addenda = List.filter_map parse_results ~f:get_addenda_opt in
-  let sienv = SymbolIndexCore.update_from_addenda ~sienv ~paths_with_addenda in
+  let sienv =
+    Symbol_index_core.update_from_addenda ~sienv ~paths_with_addenda
+  in
 
   let end_time = Unix.gettimeofday () in
   let telemetry =

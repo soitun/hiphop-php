@@ -144,7 +144,7 @@ let pessimise_type env ty =
   Typing_union.union env ty (MakeType.dynamic (get_reason ty))
 
 let maybe_pessimise_type env ty =
-  if TypecheckerOptions.pessimise_builtins (Env.get_tcopt env) then
+  if Typechecker_options.pessimise_builtins (Env.get_tcopt env) then
     pessimise_type env ty
   else
     (env, ty)
@@ -209,7 +209,7 @@ let assign_array_append ~array_pos ~expr_pos ur env ty1 ty2 =
   let coerce_set_value env ty =
     Typing_class_pointers.coerce_to_name
       ~level:
-        (TypecheckerOptions.tco_class_pointer_array_write_keys
+        (Typechecker_options.tco_class_pointer_array_write_keys
            (Env.get_tcopt env))
       env
       ty

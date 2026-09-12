@@ -1,6 +1,6 @@
 (library
  (name search_utils)
- (modules searchUtils)
+ (modules search_utils)
  (wrapped false)
  (libraries ast file_info glean pos search_types sqlite3)
  (preprocess
@@ -9,7 +9,7 @@
 (library
  (name search_types)
  (modules
-  searchTypes)
+  search_types)
  (wrapped false)
  (libraries
   file_content

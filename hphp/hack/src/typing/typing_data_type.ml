@@ -23,8 +23,8 @@ module Tag = struct
 
   (* Forward ref for; set after [DataType] is defined *)
   let derive_generic_relation_ref :
-      (Typing_env_types.env -> string -> t -> SetRelation.t) ref =
-    ref (fun _env _name _tag -> SetRelation.none)
+      (Typing_env_types.env -> string -> t -> Set_relation.t) ref =
+    ref (fun _env _name _tag -> Set_relation.none)
 
   let is_fresh_generic ty =
     match get_node ty with
@@ -110,11 +110,11 @@ module Tag = struct
   *)
   let rec relation_generics env generic_pairs =
     match generic_pairs with
-    | [] -> SetRelation.equivalent
+    | [] -> Set_relation.equivalent
     | (Erased, Erased) :: generic_pairs -> relation_generics env generic_pairs
     | (_, Erased) :: generic_pairs ->
-      SetRelation.(inter subset (relation_generics env generic_pairs))
-    | (Erased, Reified _) :: _ -> SetRelation.none
+      Set_relation.(inter subset (relation_generics env generic_pairs))
+    | (Erased, Reified _) :: _ -> Set_relation.none
     | (Reified left, Reified right) :: generic_pairs ->
       let is_sub_left_right =
         Typing_utils.is_sub_type_opt_ignore_generic_params env left right
@@ -127,8 +127,8 @@ module Tag = struct
         | (Some true, Some true) -> relation_generics env generic_pairs
         | (Some false, _)
         | (_, Some false) ->
-          SetRelation.disjoint
-        | _ -> SetRelation.none
+          Set_relation.disjoint
+        | _ -> Set_relation.none
       end
 
   let relation tag1 ~ctx:env tag2 =
@@ -144,36 +144,36 @@ module Tag = struct
        between the set of values that are built-in and objects *)
     | (BuiltInData, ObjectData)
     | (ObjectData, BuiltInData) ->
-      SetRelation.none
+      Set_relation.none
     (* Shapes are represented imprecisely so do not consider them as equal *)
     | (ShapeData, ShapeData)
     | (DictData, ShapeData)
     | (ShapeData, DictData) ->
-      SetRelation.none
+      Set_relation.none
     (* Tuples are represented imprecisely so do not consider them as equal *)
     | (TupleData, TupleData)
     | (VecData, TupleData)
     | (TupleData, VecData) ->
-      SetRelation.none
+      Set_relation.none
     (* Enums share runtime representation with arraykeys; same-name enums are
        equivalent, different enums may share values and so are uncertain. *)
     | (EnumData e1, EnumData e2) when String.equal e1 e2 ->
-      SetRelation.equivalent
-    | (EnumData _, EnumData _) -> SetRelation.none
+      Set_relation.equivalent
+    | (EnumData _, EnumData _) -> Set_relation.none
     | (EnumData _, (IntData | StringData))
     | ((IntData | StringData), EnumData _) ->
-      SetRelation.none
+      Set_relation.none
     | (EnumData _, _)
     | (_, EnumData _) ->
-      SetRelation.disjoint
+      Set_relation.disjoint
     | (GenericData g1, GenericData g2) when String.equal g1 g2 ->
-      SetRelation.equivalent
+      Set_relation.equivalent
     | (GenericData g, other) -> !derive_generic_relation_ref env g other
     | (other, GenericData g) ->
-      SetRelation.flip (!derive_generic_relation_ref env g other)
-    | (tag1, tag2) when equal tag1 tag2 -> SetRelation.equivalent
-    | (ObjectData, InstanceOf _) -> SetRelation.superset
-    | (InstanceOf _, ObjectData) -> SetRelation.subset
+      Set_relation.flip (!derive_generic_relation_ref env g other)
+    | (tag1, tag2) when equal tag1 tag2 -> Set_relation.equivalent
+    | (ObjectData, InstanceOf _) -> Set_relation.superset
+    | (InstanceOf _, ObjectData) -> Set_relation.subset
     | ( InstanceOf { name = cls1; kind = kind1 },
         InstanceOf { name = cls2; kind = kind2 } ) ->
       let open Option.Let_syntax in
@@ -183,7 +183,7 @@ module Tag = struct
       in
       let is_instance_of_closure cls = String.equal cls SN.Classes.cClosure in
 
-      Option.value ~default:SetRelation.none
+      Option.value ~default:Set_relation.none
       @@ let* cls1_instance_of_cls2 = is_instance_of cls1 cls2 in
          if cls1_instance_of_cls2 then
            if has_reified kind2 then
@@ -192,17 +192,17 @@ module Tag = struct
                 cls1 != cls2, we would need to know *how* cls1 inherits from
                 cls2, i.e. what are the generics provided to cls2 in the
                 inheritting declaration(s) *)
-             return SetRelation.none
+             return Set_relation.none
            else
-             return SetRelation.subset
+             return Set_relation.subset
          else
            let* cls2_instance_of_cls1 = is_instance_of cls2 cls1 in
            if cls2_instance_of_cls1 then
              if has_reified kind1 then
                (* TODO(T221435654) see comment above *)
-               return SetRelation.none
+               return Set_relation.none
              else
-               return SetRelation.superset
+               return Set_relation.superset
            else if String.equal cls1 cls2 then
              return
              @@ relation_generics env
@@ -213,19 +213,19 @@ module Tag = struct
              match (kind1, kind2) with
              | (FinalClass _, _)
              | (_, FinalClass _) ->
-               return SetRelation.disjoint
+               return Set_relation.disjoint
              | (Interface, _)
              | (_, Interface) ->
                (* Closures cannot be implemented in user-land so we assume
                   it is disjoint from any user specified interface *)
                if is_instance_of_closure cls1 || is_instance_of_closure cls2
                then
-                 return SetRelation.disjoint
+                 return Set_relation.disjoint
                else
-                 return SetRelation.none
-             | (Class _, Class _) -> return SetRelation.disjoint
+                 return Set_relation.none
+             | (Class _, Class _) -> return Set_relation.disjoint
            )
-    | _ -> SetRelation.disjoint
+    | _ -> Set_relation.disjoint
 end
 
 (** Tracks the reason why a particular tag is assumed to be a part of the
@@ -405,7 +405,7 @@ module type SET = sig
 end
 
 module ApproxTagSet = struct
-  include ApproxSet.Make (TagWithReason)
+  include Approx_set.Make (TagWithReason)
 
   let singleton ~reason tag = singleton @@ TagWithReason.make reason tag
 
@@ -1057,8 +1057,8 @@ let () =
           other
       in
       if DataType.Set.are_disjoint env g_dt other_dt then
-        SetRelation.disjoint
+        Set_relation.disjoint
       else if DataType.Set.is_subset env g_dt other_dt then
-        SetRelation.subset
+        Set_relation.subset
       else
-        SetRelation.none
+        Set_relation.none

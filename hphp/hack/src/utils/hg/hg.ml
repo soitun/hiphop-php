@@ -40,7 +40,7 @@ module Hg_actual = struct
       exec_hg
         (["cat"; "-r"; rev_string rev] @ files @ ["-o"; out; "--cwd"; repo])
     in
-    FutureProcess.make process ignore
+    Future_process.make process ignore
 
   (** The globalrev of a given revision. If that revision is not public,
   the globalrev of `parents(roots(draft() & ::<rev>))`, and if there are merge conflicts,
@@ -50,7 +50,7 @@ module Hg_actual = struct
       exec_hg ["log"; "-r"; rev; "-T"; "{globalrev}\n"; "--cwd"; repo]
     in
     let global_rev_process rev =
-      FutureProcess.make (global_rev_query rev) (fun s ->
+      Future_process.make (global_rev_query rev) (fun s ->
           int_of_string (String.trim s))
     in
     (* If we are on public commit, it should have global_rev field and we are done *)
@@ -84,7 +84,7 @@ module Hg_actual = struct
       exec_hg
         ["log"; "--rev"; "ancestor(master,.)"; "-T"; "{node}"; "--cwd"; repo]
     in
-    FutureProcess.make process @@ fun result ->
+    Future_process.make process @@ fun result ->
     let result = String.trim result in
     if String.length result < 1 then
       raise Malformed_result
@@ -96,7 +96,7 @@ module Hg_actual = struct
    * hg id -i --cwd <repo> *)
   let current_working_copy_hg_rev repo =
     let process = exec_hg ["id"; "-i"; "--cwd"; repo] in
-    FutureProcess.make process @@ fun result ->
+    Future_process.make process @@ fun result ->
     let result = String.trim result in
     if String.length result < 1 then
       raise Malformed_result
@@ -115,7 +115,7 @@ module Hg_actual = struct
       exec_hg
         ["log"; "-r"; rev_string rev; "-T"; "{date|hgdate}"; "--cwd"; repo]
     in
-    FutureProcess.make process @@ fun date_string ->
+    Future_process.make process @@ fun date_string ->
     let date_list = String.split_on_char ' ' (String.trim date_string) in
     date_list |> List.hd |> int_of_string
 
@@ -124,7 +124,7 @@ module Hg_actual = struct
     let process =
       exec_hg ["log"; "-r"; "p2()"; "-T"; "{node}"; "--cwd"; repo]
     in
-    let future = FutureProcess.make process String.trim in
+    let future = Future_process.make process String.trim in
     match Future.get future with
     | Ok "" -> None
     | Ok s -> Some s
@@ -175,7 +175,7 @@ module Hg_actual = struct
         (["status"; "-n"; "--rev"; rev_string rev]
         @ hg_status_common_options repo)
     in
-    FutureProcess.make process Sys_utils.split_lines
+    Future_process.make process Sys_utils.split_lines
 
   (** Returns the files changed in rev
    *
@@ -186,7 +186,7 @@ module Hg_actual = struct
         (["status"; "-n"; "--change"; rev_string rev]
         @ hg_status_common_options repo)
     in
-    FutureProcess.make process Sys_utils.split_lines
+    Future_process.make process Sys_utils.split_lines
 
   (** Similar to above, except instead of listing files to get us to
    * the repo's current state, it gets us to the given "finish" revision.
@@ -216,16 +216,16 @@ module Hg_actual = struct
            ]
           @ hg_status_common_options repo)
       in
-      FutureProcess.make process Sys_utils.split_lines
+      Future_process.make process Sys_utils.split_lines
 
   let hg_root () =
     let process = exec_hg ["root"] in
-    FutureProcess.make process String.trim
+    Future_process.make process String.trim
 
   (** hg update --rev r<global_rev> --cwd <repo> *)
   let update_to_rev rev repo =
     let process = exec_hg ["update"; "--rev"; rev_string rev; "--cwd"; repo] in
-    FutureProcess.make process ignore
+    Future_process.make process ignore
 
   module Mocking = struct
     exception Cannot_set_when_mocks_disabled

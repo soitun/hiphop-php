@@ -50,7 +50,7 @@ let lint_and_filter ctx code acc fnl =
 
 let lint_all genv ctx code =
   let tcopt = Provider_context.get_tcopt ctx in
-  let sample_rate = TypecheckerOptions.typecheck_sample_rate tcopt in
+  let sample_rate = Typechecker_options.typecheck_sample_rate tcopt in
   let next =
     compose
       (fun lst ->

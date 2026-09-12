@@ -115,7 +115,7 @@ let check_deprecated_static attrs =
   | _ -> ()
 
 let check_no_auto_dynamic env attrs =
-  if TypecheckerOptions.enable_no_auto_dynamic (Nast_check_env.get_tcopt env)
+  if Typechecker_options.enable_no_auto_dynamic (Nast_check_env.get_tcopt env)
   then
     ()
   else

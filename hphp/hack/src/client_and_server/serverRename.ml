@@ -49,7 +49,7 @@ let get_lambda_parameter_rewrite_patches ctx files =
         (Relative_path.from_root ~suffix:file))
 
 let find_def_filename current_filename definition =
-  let def_filename = Pos.filename definition.SymbolDefinition.pos in
+  let def_filename = Pos.filename definition.Symbol_definition.pos in
   if Relative_path.equal def_filename Relative_path.default then
     (* When the definition is in an IDE buffer with local changes, the filename
        in the definition will be empty. *)
@@ -276,15 +276,15 @@ let classish_is_interface (ctx : Provider_context.t) (name : string) : bool =
 (* Produce a "deprecated" version of the old [definition] so that calls to it can be rerouted.
    If [definition] is None, this is a no-op. *)
 let get_deprecated_wrapper_patch
-    ~(definition : Relative_path.t SymbolDefinition.t option)
+    ~(definition : Relative_path.t Symbol_definition.t option)
     ~(ctx : Provider_context.t)
     (new_name : string) : patch option =
   let filename =
     Option.bind definition ~f:(fun definition ->
-        let filename = Pos.filename definition.SymbolDefinition.pos in
+        let filename = Pos.filename definition.Symbol_definition.pos in
         let is_dummy = Relative_path.equal filename Relative_path.default in
         if is_dummy then
-          HackEventLogger.invariant_violation_bug
+          Hack_event_logger.invariant_violation_bug
             "--refactor has empty filename";
         Option.some_if (not is_dummy) filename)
   in
@@ -301,7 +301,7 @@ let get_deprecated_wrapper_patch
 
          Thus, we subtract 1.
       *)
-      let { SymbolDefinition.span; pos; kind; _ } = definition in
+      let { Symbol_definition.span; pos; kind; _ } = definition in
       let (_, col_start_plus1, _, _) = Pos.destruct_range_one_based span in
       let col_start = col_start_plus1 - 1 in
       let (_ctx, entry) =
@@ -330,7 +330,7 @@ let get_deprecated_wrapper_patch
           in
 
           (match kind with
-          | SymbolDefinition.Member { class_name; _ }
+          | Symbol_definition.Member { class_name; _ }
             when classish_is_interface ctx class_name ->
             (* We can't add a stub that calls the new name in
                interfaces, as methods can't have bodies there. *)
@@ -401,7 +401,7 @@ let go
     action
     genv
     env
-    ~(definition_for_wrapper : Relative_path.t SymbolDefinition.t option) =
+    ~(definition_for_wrapper : Relative_path.t Symbol_definition.t option) =
   let module Types = ServerCommandTypes.Find_refs in
   let (find_refs_action, new_name) =
     match action with
@@ -428,7 +428,7 @@ let go
   |> ServerCommandTypes.Done_or_retry.map_env ~f:(fun refs ->
          let changes =
            let fold_to_positions_and_patches
-               (positions, patches) SearchTypes.Find_refs.{ name = _; pos } =
+               (positions, patches) Search_types.Find_refs.{ name = _; pos } =
              if Pos.Set.mem pos positions then
                (* Don't rename at the same position twice. Double-renames were happening (~~T157645473~~) because
                 * ServerRename uses ServerFindRefs which searches the tast, which thinks Self::TWhatever
@@ -488,7 +488,7 @@ let go_for_localvar ctx action new_name =
     let changes =
       ServerFindRefs.go_for_localvar ctx action
       >>| List.fold_left
-            ~f:(fun acc SearchTypes.Find_refs.{ name = _; pos } ->
+            ~f:(fun acc Search_types.Find_refs.{ name = _; pos } ->
               let replacement =
                 { pos = Pos.to_absolute pos; text = maybe_add_dollar new_name }
               in
@@ -501,7 +501,7 @@ let go_for_localvar ctx action new_name =
   | _ -> Error action
 
 let new_name_for_symbol_definition
-    ~(symbol_definition : _ SymbolDefinition.t)
+    ~(symbol_definition : _ Symbol_definition.t)
     ~(filename : Relative_path.t)
     ~(pos : Pos.t)
     ~(new_name : string) : string =
@@ -518,8 +518,8 @@ let new_name_for_symbol_definition
     else
       s
   in
-  match symbol_definition.SymbolDefinition.kind with
-  | SymbolDefinition.(Member { member_kind = Property; _ }) ->
+  match symbol_definition.Symbol_definition.kind with
+  | Symbol_definition.(Member { member_kind = Property; _ }) ->
     (* For static properties: they always have a $-sign prefix.
        For non-static properties:
          - On the definition site they have a $-sign prefix.
@@ -535,8 +535,8 @@ let new_name_for_symbol_definition
              end)
     in
     let is_static =
-      List.exists symbol_definition.SymbolDefinition.modifiers ~f:(function
-          | SymbolDefinition.Static -> true
+      List.exists symbol_definition.Symbol_definition.modifiers ~f:(function
+          | Symbol_definition.Static -> true
           | _ -> false)
     in
     if is_static then
@@ -545,15 +545,15 @@ let new_name_for_symbol_definition
       ensure_dollar new_name
     else
       strip_dollar new_name
-  | SymbolDefinition.Function
-  | SymbolDefinition.Classish _
-  | SymbolDefinition.Member _
-  | SymbolDefinition.GlobalConst
-  | SymbolDefinition.LocalVar
-  | SymbolDefinition.TypeVar
-  | SymbolDefinition.Param
-  | SymbolDefinition.Typedef
-  | SymbolDefinition.Module ->
+  | Symbol_definition.Function
+  | Symbol_definition.Classish _
+  | Symbol_definition.Member _
+  | Symbol_definition.GlobalConst
+  | Symbol_definition.LocalVar
+  | Symbol_definition.TypeVar
+  | Symbol_definition.Param
+  | Symbol_definition.Typedef
+  | Symbol_definition.Module ->
     new_name
 
 let go_for_single_file
@@ -573,7 +573,7 @@ let go_for_single_file
         refs
         ~f:
           begin
-            fun acc SearchTypes.Find_refs.{ name = _; pos } ->
+            fun acc Search_types.Find_refs.{ name = _; pos } ->
               let replacement =
                 {
                   pos = Pos.to_absolute pos;
@@ -602,7 +602,7 @@ let go_for_single_file
       *)
       Relative_path.equal
         filename
-        (Pos.filename symbol_definition.SymbolDefinition.pos)
+        (Pos.filename symbol_definition.Symbol_definition.pos)
     in
     let definition =
       Option.some_if should_write_deprecated_wrapper_patch symbol_definition
@@ -655,7 +655,7 @@ let go_ide_with_find_refs_action
              refs
              ~f:
                begin
-                 fun acc SearchTypes.Find_refs.{ name = _; pos } ->
+                 fun acc Search_types.Find_refs.{ name = _; pos } ->
                    let replacement =
                      { pos = Pos.to_absolute pos; text = new_name }
                    in

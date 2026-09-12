@@ -23,7 +23,7 @@ let test () =
   let files = [("source_with_errors.php", source_with_errors)] in
 
   Relative_path.set_path_prefix Relative_path.Root (Path.make root);
-  TestDisk.set hhconfig_filename hhconfig_contents;
+  Test_disk.set hhconfig_filename hhconfig_contents;
   let (custom_config, _) =
     ServerConfig.load ~silent:false ~from:"" ~cli_config_overrides:[]
   in

@@ -100,7 +100,7 @@ let check_use_kind
 
 let member_heaps_enabled (ctx : Provider_context.t) : bool =
   let tco = Provider_context.get_tcopt ctx in
-  TypecheckerOptions.(populate_member_heaps tco)
+  Typechecker_options.(populate_member_heaps tco)
 
 (**
  * Adds the traits/classes which are part of a class' hierarchy.
@@ -466,7 +466,7 @@ let class_class_decl (ctx : Provider_context.t) (class_id : Typing_defs.pos_id)
   let cc_type =
     let reason = Reason.class_class (pos, name) in
     let classname_or_class_ptr_ty =
-      if TypecheckerOptions.(class_class_type tco) then
+      if Typechecker_options.(class_class_type tco) then
         mk (reason, Tclass_ptr (mk (reason, Tthis)))
       else
         mk (reason, Tapply ((pos, SN.Classes.cClassname), [mk (reason, Tthis)]))
@@ -613,7 +613,7 @@ let typeconst_structure
   }
 
 let maybe_add_supportdyn_bound ctx p kind =
-  if TypecheckerOptions.everything_sdt (Provider_context.get_tcopt ctx) then
+  if Typechecker_options.everything_sdt (Provider_context.get_tcopt ctx) then
     match kind with
     | TCAbstract { atc_as_constraint = None; atc_super_constraint; atc_default }
       ->
@@ -1054,7 +1054,7 @@ and class_decl
       dc_support_dynamic_type =
         c.sc_support_dynamic_type
         || inherited.Decl_inherit.ih_support_dynamic_type
-           && TypecheckerOptions.implicit_inherit_sdt
+           && Typechecker_options.implicit_inherit_sdt
                 (Provider_context.get_tcopt ctx)
         || Attributes.mem
              SN.UserAttributes.uaDynamicallyReferenced
@@ -1097,5 +1097,5 @@ let class_decl_if_missing
   | None ->
     (* Class elements are in memory if and only if the class itself is there.
      * Exiting before class declaration is ready would break this invariant *)
-    WorkerCancel.with_no_cancellations @@ fun () ->
+    Worker_cancel.with_no_cancellations @@ fun () ->
     class_decl_if_missing ~sh { ctx; stack = SSet.empty } class_name

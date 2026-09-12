@@ -28,8 +28,8 @@ type t = {
 }
 [@@deriving show]
 
-let from_parser_options (popt : ParserOptions.t) =
-  let open ParserOptions in
+let from_parser_options (popt : Parser_options.t) =
+  let open Parser_options in
   {
     auto_namespace_map = popt.auto_namespace_map;
     disable_xhp_element_mangling = popt.disable_xhp_element_mangling;

@@ -39,9 +39,9 @@ val load_with_dynamic_overrides :
 
 val load_config : Config_file_common.t -> GlobalOptions.t -> GlobalOptions.t
 
-val set_parser_options : t -> ParserOptions.t -> t
+val set_parser_options : t -> Parser_options.t -> t
 
-val set_tc_options : t -> TypecheckerOptions.t -> t
+val set_tc_options : t -> Typechecker_options.t -> t
 
 val set_glean_options : t -> Glean_options.t -> t
 
@@ -61,9 +61,9 @@ val gc_control : t -> Gc.control
 
 val sharedmem_config : t -> SharedMem.config
 
-val typechecker_options : t -> TypecheckerOptions.t
+val typechecker_options : t -> Typechecker_options.t
 
-val parser_options : t -> ParserOptions.t
+val parser_options : t -> Parser_options.t
 
 val glean_options : t -> Glean_options.t
 

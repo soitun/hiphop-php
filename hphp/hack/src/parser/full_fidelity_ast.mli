@@ -20,7 +20,7 @@ val make_env (* Optional parts *) :
   ?include_line_comments:bool ->
   ?quick_mode:bool ->
   ?show_all_errors:bool ->
-  ?parser_options:ParserOptions.t (* Required parts *) ->
+  ?parser_options:Parser_options.t (* Required parts *) ->
   ?is_systemlib:bool ->
   Relative_path.t ->
   env
@@ -41,7 +41,7 @@ val defensive_program :
   ?show_all_errors:bool ->
   ?elaborate_namespaces:bool ->
   ?include_line_comments:bool ->
-  ParserOptions.t ->
+  Parser_options.t ->
   Relative_path.t ->
   string ->
   Parser_return.t
@@ -49,7 +49,7 @@ val defensive_program :
 val defensive_from_file :
   ?quick:bool ->
   ?show_all_errors:bool ->
-  ParserOptions.t ->
+  Parser_options.t ->
   Relative_path.t ->
   Parser_return.t
 

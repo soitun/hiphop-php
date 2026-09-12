@@ -21,7 +21,7 @@ module Tag : sig
 
   val describe : env -> t -> string
 
-  val relation : t -> ctx:ctx -> t -> SetRelation.t
+  val relation : t -> ctx:ctx -> t -> Set_relation.t
 end
 
 (** Tracks the reason why a particular tag is assumed to be a part of the
@@ -89,7 +89,7 @@ module TagWithReason : sig
     tag: Tag.t;
   }
 
-  val relation : t -> ctx:ctx -> t -> SetRelation.t
+  val relation : t -> ctx:ctx -> t -> Set_relation.t
 
   val make : DataTypeReason.t -> Tag.t -> t
 
@@ -124,7 +124,7 @@ module ApproxTagSet : sig
     | Sat
     | Unsat of {
         left: TagWithReason.t;
-        relation: SetRelation.t;
+        relation: Set_relation.t;
         right: TagWithReason.t;
       }
 

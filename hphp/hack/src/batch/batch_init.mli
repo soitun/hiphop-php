@@ -10,8 +10,8 @@ open Hh_prelude
 val init :
   root:Path.t ->
   shmem_config:SharedMem.config ->
-  popt:ParserOptions.t ->
-  tcopt:TypecheckerOptions.t ->
+  popt:Parser_options.t ->
+  tcopt:Typechecker_options.t ->
   deps_mode:Typing_deps_mode.t ->
   ?gc_control:Gc.control ->
   float ->

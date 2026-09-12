@@ -996,5 +996,5 @@ let get_files ctx deps =
       Printf.sprintf "dephash_lookup_%s" (Provider_backend.t_to_string backend)
     in
     Hh_logger.log "INVARIANT_VIOLATION_BUG [%s]" desc;
-    HackEventLogger.invariant_violation_bug desc;
+    Hack_event_logger.invariant_violation_bug desc;
     failwith "need_update_files"

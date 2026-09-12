@@ -107,7 +107,7 @@ let disallow_unresolved_type_variables t =
 
 let custom_error_config t = t.GlobalOptions.tco_custom_error_config
 
-let const_static_props t = t.GlobalOptions.po.ParserOptions.const_static_props
+let const_static_props t = t.GlobalOptions.po.Parser_options.const_static_props
 
 let const_attribute t = t.GlobalOptions.tco_const_attribute
 
@@ -117,7 +117,7 @@ let disallow_discarded_nullable_awaitables t =
 let check_duplicate_enum_values t =
   t.GlobalOptions.tco_check_duplicate_enum_values
 
-let is_systemlib t = t.GlobalOptions.po.ParserOptions.is_systemlib
+let is_systemlib t = t.GlobalOptions.po.Parser_options.is_systemlib
 
 let enable_no_auto_dynamic t = t.GlobalOptions.tco_enable_no_auto_dynamic
 
@@ -133,18 +133,18 @@ let named_variadic_type t = t.GlobalOptions.tco_named_variadic_type
 let variadic_named_parameters t = t.GlobalOptions.tco_variadic_named_parameters
 
 let interpret_soft_types_as_like_types t =
-  t.GlobalOptions.po.ParserOptions.interpret_soft_types_as_like_types
+  t.GlobalOptions.po.Parser_options.interpret_soft_types_as_like_types
 
 let ignore_unsafe_cast t = t.GlobalOptions.tco_ignore_unsafe_cast
 
 let set_tco_no_parser_readonly_check t b =
   let po =
-    { t.GlobalOptions.po with ParserOptions.no_parser_readonly_check = b }
+    { t.GlobalOptions.po with Parser_options.no_parser_readonly_check = b }
   in
   GlobalOptions.{ t with po }
 
 let tco_no_parser_readonly_check t =
-  t.GlobalOptions.po.ParserOptions.no_parser_readonly_check
+  t.GlobalOptions.po.Parser_options.no_parser_readonly_check
 
 let set_tco_enable_expression_trees t b =
   GlobalOptions.{ t with tco_enable_expression_trees = b }
@@ -165,7 +165,7 @@ let require_extends_implements_ancestors t =
 
 let repo_stdlib_path t = t.GlobalOptions.tco_repo_stdlib_path
 
-let everything_sdt t = t.GlobalOptions.po.ParserOptions.everything_sdt
+let everything_sdt t = t.GlobalOptions.po.Parser_options.everything_sdt
 
 let implicit_inherit_sdt t = t.GlobalOptions.tco_implicit_inherit_sdt
 
@@ -244,7 +244,7 @@ let tco_autocomplete_mode t = t.GlobalOptions.tco_autocomplete_mode
 let set_tco_autocomplete_mode t =
   { t with GlobalOptions.tco_autocomplete_mode = true }
 
-let package_info t = t.GlobalOptions.po.ParserOptions.package_info
+let package_info t = t.GlobalOptions.po.Parser_options.package_info
 
 let tco_extended_reasons t = t.GlobalOptions.tco_extended_reasons
 
@@ -255,11 +255,11 @@ let hack_warnings t = t.GlobalOptions.hack_warnings
 let warnings_generated_files t = t.GlobalOptions.warnings_generated_files
 
 let set_package_info t package_info =
-  let popt = { t.GlobalOptions.po with ParserOptions.package_info } in
+  let popt = { t.GlobalOptions.po with Parser_options.package_info } in
   { t with GlobalOptions.po = popt }
 
 let package_support_multifile_tests t =
-  t.GlobalOptions.po.ParserOptions.package_support_multifile_tests
+  t.GlobalOptions.po.Parser_options.package_support_multifile_tests
 
 let package_allow_classconst_violations t =
   t.GlobalOptions.tco_package_allow_classconst_violations
@@ -278,7 +278,7 @@ let package_exclude_patterns t = t.GlobalOptions.tco_package_exclude_patterns
 let class_sub_classname t = t.GlobalOptions.class_sub_classname
 
 let enable_class_pointer_hint t =
-  t.GlobalOptions.po.ParserOptions.enable_class_pointer_hint
+  t.GlobalOptions.po.Parser_options.enable_class_pointer_hint
 
 let class_class_type t = t.GlobalOptions.class_class_type
 

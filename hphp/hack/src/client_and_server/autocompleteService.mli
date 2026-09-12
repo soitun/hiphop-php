@@ -8,7 +8,7 @@
  *)
 
 val add_position_to_results :
-  Provider_context.t -> SearchTypes.si_item list -> SearchUtils.result
+  Provider_context.t -> Search_types.si_item list -> Search_utils.result
 
 val autocomplete_result_to_json :
   AutocompleteTypes.autocomplete_item -> Yojson.Safe.t
@@ -17,6 +17,6 @@ val go_ctx :
   ctx:Provider_context.t ->
   entry:Provider_context.entry ->
   autocomplete_context:AutocompleteTypes.legacy_autocomplete_context ->
-  sienv_ref:SearchUtils.si_env ref ->
+  sienv_ref:Search_utils.si_env ref ->
   naming_table:Naming_table.t ->
   AutocompleteTypes.autocomplete_item list Utils.With_complete_flag.t

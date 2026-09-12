@@ -179,7 +179,7 @@
 (library
  (name full_fidelity_parse_args)
  (wrapped false)
- (modules fullFidelityParseArgs)
+ (modules full_fidelity_parse_args)
  (libraries global_options parser_options parser))
 
 (executable

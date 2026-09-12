@@ -46,7 +46,8 @@ let test_process_file_deferring () =
   in
 
   (* Finally, this is what all the setup was for: process this file *)
-  Decl_counters.set_mode HackEventLogger.PerFileProfilingConfig.DeclingTopCounts;
+  Decl_counters.set_mode
+    Hack_event_logger.PerFileProfilingConfig.DeclingTopCounts;
   let prev_counter_state = Counters.reset () in
   let { Typing_check_service.deferred_decls; _ } =
     Typing_check_service.process_file

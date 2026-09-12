@@ -13,7 +13,7 @@ open Hh_prelude
    at toplevel, in order to be executed before
    [Daemon.check_entry_point]. *)
 let entry =
-  WorkerControllerEntryPoint.register ~restore:ServerGlobalState.restore
+  Worker_controller_entry_point.register ~restore:ServerGlobalState.restore
 
 (** We use the call_wrapper to classify some exceptions in all calls in the
  * same way. *)

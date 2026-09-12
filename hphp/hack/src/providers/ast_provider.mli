@@ -77,25 +77,27 @@ val get_ast_with_error :
 (** Compute the AST for the given [Provider_context.entry].
     This is cached in the entry itself, but not in the AST provider's cache. *)
 val compute_ast :
-  popt:ParserOptions.t -> entry:Provider_context.entry -> Nast.program
+  popt:Parser_options.t -> entry:Provider_context.entry -> Nast.program
 
 (** Compute the full [Parser_return.t] object.
     This is cached in the entry itself, but not in the AST provider's cache. *)
 val compute_parser_return_and_ast_errors :
-  popt:ParserOptions.t ->
+  popt:Parser_options.t ->
   entry:Provider_context.entry ->
   Parser_return.t * Diagnostics.t
 
 (** Compute the comments for the given [Provider_context.entry].
     This is cached in the entry itself, but not in the AST provider's cache. *)
 val compute_comments :
-  popt:ParserOptions.t -> entry:Provider_context.entry -> Parser_return.comments
+  popt:Parser_options.t ->
+  entry:Provider_context.entry ->
+  Parser_return.comments
 
 (** Compute the [FileInfo.t] associated with the given entry, doing a parse
 if necessary.
     This is cached in the entry itself, but not in the AST provider's cache. *)
 val compute_file_info :
-  popt:ParserOptions.t -> entry:Provider_context.entry -> FileInfo.ids
+  popt:Parser_options.t -> entry:Provider_context.entry -> FileInfo.ids
 
 (** Compute the [Full_fidelity_source_text.t] for this [Provider_context.entry].
     This is cached in the entry itself, but not in the AST provider's cache. *)

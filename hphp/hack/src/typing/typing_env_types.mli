@@ -76,7 +76,7 @@ type env = {
 }
 
 and genv = {
-  tcopt: TypecheckerOptions.t;
+  tcopt: Typechecker_options.t;
   callable_pos: Pos.t;
       (** position of the function/method name being checked *)
   function_pos: Pos.t;

@@ -53,7 +53,7 @@ type find_refs_result =
           this action will specifiy what hh_server shoud look for. *)
       hint_suffixes: string list;
           (** in case of a shell-out, we will suggest hh_server to look in these root-relative paths first. *)
-      open_file_results: SearchTypes.Find_refs.absolute list Lsp.UriMap.t;
+      open_file_results: Search_types.Find_refs.absolute list Lsp.UriMap.t;
           (** All references that were found in all open files in clientIdeDaemon. *)
     }
 
@@ -61,7 +61,7 @@ type rename_result =
   | Not_renameable_position
   | Rename_success of {
       shellout:
-        (Relative_path.t SymbolDefinition.t
+        (Relative_path.t Symbol_definition.t
         * ServerCommandTypes.Find_refs.action)
         option;
       local: ServerRenameTypes.patch list;
@@ -151,7 +151,7 @@ type _ t =
       (** Handles "textDocument/documentHighlight" LSP messages *)
   | Document_symbol : document -> FileOutline.outline t
       (** Handles "textDocument/documentSymbol" LSP messages *)
-  | Workspace_symbol : string -> SearchUtils.result t
+  | Workspace_symbol : string -> Search_utils.result t
   | Go_to_implementation :
       document * File_content.Position.t * document list
       -> go_to_impl_result t

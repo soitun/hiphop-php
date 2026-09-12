@@ -187,7 +187,7 @@ val deregister_ignored_attributes : program -> (unit, unit) Aast.def list
 val remove_pos_and_docblock :
   (unit, unit) Aast.def list -> (unit, unit) Aast.def list
 
-val generate_ast_decl_hash : (unit, unit) Aast.def list -> OpaqueDigest.t
+val generate_ast_decl_hash : (unit, unit) Aast.def list -> Opaque_digest.t
 
 module Visitor_DEPRECATED : sig
   type id = Aast.lid

@@ -284,8 +284,8 @@ type init_env = {
 type env = {
   naming_table: Naming_table.t;
   deps_mode: Typing_deps_mode.t; [@opaque]
-  tcopt: TypecheckerOptions.t;
-  popt: ParserOptions.t;
+  tcopt: Typechecker_options.t;
+  popt: Parser_options.t;
   gleanopt: Glean_options.t;
   swriteopt: Symbol_write_options.t;
   diagnostics: Diagnostics.t; [@opaque]

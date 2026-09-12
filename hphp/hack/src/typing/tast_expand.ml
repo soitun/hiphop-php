@@ -82,7 +82,7 @@ let expand_ty ?var_hook ?pos env ty =
         | None -> mk (p, Tvar v)
         | Some pos ->
           (if
-           TypecheckerOptions.disallow_unresolved_type_variables
+           Typechecker_options.disallow_unresolved_type_variables
              (Tast_env.get_tcopt env)
           then
             let Equal = Tast_env.eq_typing_env in

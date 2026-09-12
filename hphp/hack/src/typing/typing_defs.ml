@@ -517,7 +517,7 @@ module Named_params = struct
           (* TODO(named_params): remove runtime invariant checking,
            * perhaps by changing fp.fp_name to `string` instead of `string option`
            *)
-          HackEventLogger.invariant_violation_bug
+          Hack_event_logger.invariant_violation_bug
             ~path:(Pos_or_decl.filename fp.fp_pos)
             "named param without name"
         in
@@ -555,7 +555,7 @@ let this = Local_id.make_scoped "$this"
 
 (* This should be the ONLY way that Tany is constructed anywhere in the
  * codebase. *)
-let make_tany () = Tany TanySentinel.value
+let make_tany () = Tany Tany_sentinel.value
 
 (* Required parameters (number and names). Does not include optional, variadic, or
  * type-splat parameters

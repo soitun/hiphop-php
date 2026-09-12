@@ -9,7 +9,7 @@
 open Hh_prelude
 
 type symbol = private {
-  occ: Relative_path.t SymbolOccurrence.t;
+  occ: Relative_path.t Symbol_occurrence.t;
   def: Sym_def.t option;
 }
 [@@deriving show]

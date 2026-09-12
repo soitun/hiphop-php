@@ -8,7 +8,7 @@
 
 open Hack
 
-module PosMap : WrappedMap_sig.S with type key = Pos.t
+module PosMap : Wrapped_map_sig.S with type key = Pos.t
 
 (** maps a target fact id to the json representation of the corresponding fact,
    and the positions of symbol that reference it *)

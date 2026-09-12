@@ -28,4 +28,4 @@ type t = {
 }
 [@@deriving show]
 
-val from_parser_options : ParserOptions.t -> t
+val from_parser_options : Parser_options.t -> t

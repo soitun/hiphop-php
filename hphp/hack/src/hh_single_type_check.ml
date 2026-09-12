@@ -302,11 +302,12 @@ let parse_options () =
   let explicit_consistent_constructors = ref 0 in
   let require_types_class_consts = ref 0 in
   let type_printer_fuel =
-    ref (TypecheckerOptions.type_printer_fuel GlobalOptions.default)
+    ref (Typechecker_options.type_printer_fuel GlobalOptions.default)
   in
   let profile_type_check_multi = ref None in
   let profile_top_level_definitions =
-    ref (TypecheckerOptions.profile_top_level_definitions GlobalOptions.default)
+    ref
+      (Typechecker_options.profile_top_level_definitions GlobalOptions.default)
   in
   let memtrace = ref None in
   let enable_global_access_check = ref false in
@@ -696,7 +697,7 @@ let parse_options () =
         Arg.Int (( := ) type_printer_fuel),
         " Sets the amount of fuel that the type printer can use to display an individual type. Default: "
         ^ string_of_int
-            (TypecheckerOptions.type_printer_fuel GlobalOptions.default) );
+            (Typechecker_options.type_printer_fuel GlobalOptions.default) );
       ( "--enable-global-access-check",
         Arg.Set enable_global_access_check,
         " Run global access checker to check global writes and reads" );
@@ -836,7 +837,7 @@ let parse_options () =
   | _ -> ());
 
   let po =
-    ParserOptions.
+    Parser_options.
       {
         (* These don't have command-line flags, so init them to their defaults. *)
         hhvm_compat_mode = default.hhvm_compat_mode;
@@ -925,7 +926,7 @@ let parse_options () =
   let tco_legacy_experimental_features =
     if !enable_supportdyn_hint then
       SSet.add
-        TypecheckerOptions.experimental_supportdynamic_type_hint
+        Typechecker_options.experimental_supportdynamic_type_hint
         tco_legacy_experimental_features
     else
       tco_legacy_experimental_features
@@ -933,7 +934,7 @@ let parse_options () =
   let tco_legacy_experimental_features =
     if !consider_type_const_enforceable then
       SSet.add
-        TypecheckerOptions.experimental_consider_type_const_enforceable
+        Typechecker_options.experimental_consider_type_const_enforceable
         tco_legacy_experimental_features
     else
       tco_legacy_experimental_features
@@ -1074,7 +1075,7 @@ let parse_and_name ctx files_contents =
             in
             let ast =
               let { Parser_return.ast; _ } = parsed_file in
-              if popt.ParserOptions.deregister_php_stdlib then
+              if popt.Parser_options.deregister_php_stdlib then
                 Nast.deregister_ignored_attributes ast
               else
                 ast
@@ -2603,7 +2604,7 @@ let decl_and_run_mode
         ~pkgs_config_abs_path:
           Relative_path.(to_absolute @@ from_root ~suffix:pkgs_config_relpath)
   in
-  let tcopt = TypecheckerOptions.set_package_info tcopt package_info in
+  let tcopt = Typechecker_options.set_package_info tcopt package_info in
   let popt = tcopt.GlobalOptions.po in
   let ctx =
     if rust_provider_backend then
@@ -2703,7 +2704,7 @@ let main_hack opts (root : Path.t) (sharedmem_config : SharedMem.config) : unit
     Relative_path.set_path_prefix Relative_path.Hhi hhi_root;
     Relative_path.set_path_prefix Relative_path.Tmp (Path.make "tmp");
     decl_and_run_mode opts hhi_root;
-    TypingLogger.flush_buffers ()
+    Typing_logger.flush_buffers ()
   in
   match opts.custom_hhi_path with
   | Some hhi_root -> process true (Path.make hhi_root)

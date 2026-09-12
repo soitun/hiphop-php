@@ -24,8 +24,8 @@ type t = {
    * they are short-lived processes *)
   gc_control: Gc.control; [@printer (fun fmt _ -> fprintf fmt "control")]
   sharedmem_config: SharedMem.config;
-  tc_options: TypecheckerOptions.t;
-  parser_options: ParserOptions.t;
+  tc_options: Typechecker_options.t;
+  parser_options: Parser_options.t;
   glean_options: Glean_options.t;
   symbol_write_options: Symbol_write_options.t;
   formatter_override: Path.t option;
@@ -132,7 +132,7 @@ let config_list_regexp = Str.regexp "[, \t]+"
 let process_experimental sl =
   match List.map sl ~f:String.lowercase with
   | ["false"] -> SSet.empty
-  | ["true"] -> TypecheckerOptions.experimental_all
+  | ["true"] -> Typechecker_options.experimental_all
   | features -> List.fold_left features ~f:SSet.add ~init:SSet.empty
 
 let config_experimental_tc_features config =
@@ -162,10 +162,10 @@ let config_experimental_stx_features config =
 let process_migration_flags sl =
   match sl with
   | ["false"] -> SSet.empty
-  | ["true"] -> TypecheckerOptions.migration_flags_all
+  | ["true"] -> Typechecker_options.migration_flags_all
   | flags ->
     List.iter flags ~f:(fun s ->
-        if not (SSet.mem TypecheckerOptions.migration_flags_all s) then
+        if not (SSet.mem Typechecker_options.migration_flags_all s) then
           failwith ("invalid migration flag: " ^ s));
     List.fold_left flags ~f:SSet.add ~init:SSet.empty
 
@@ -332,7 +332,7 @@ let load_config (config : Config_file_common.t) (options : GlobalOptions.t) :
   let po_opt = options.GlobalOptions.po in
   let experimental_features = config_experimental_stx_features config in
   let po =
-    ParserOptions.
+    Parser_options.
       {
         (* These aren't set in the config file, so init them to their defaults. *)
         hhvm_compat_mode = po_opt.hhvm_compat_mode;
@@ -751,7 +751,7 @@ let load_with_dynamic_overrides
           GlobalOptions.
             {
               default.po with
-              ParserOptions.allow_unstable_features =
+              Parser_options.allow_unstable_features =
                 local_config.ServerLocalConfig.allow_unstable_features;
             }
         ?so_naming_sqlite_path:local_config.naming_sqlite_path
@@ -884,10 +884,10 @@ let default_config =
     load_script_timeout = 0;
     gc_control = GlobalConfig.gc_control;
     sharedmem_config = SharedMem.default_config;
-    tc_options = TypecheckerOptions.default;
+    tc_options = Typechecker_options.default;
     glean_options = Glean_options.default;
     symbol_write_options = Symbol_write_options.default;
-    parser_options = ParserOptions.default;
+    parser_options = Parser_options.default;
     formatter_override = None;
     config_hash = None;
     ignored_paths = [];

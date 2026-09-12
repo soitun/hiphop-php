@@ -26,7 +26,7 @@ let go_quarantined
    * seems like a reasonable compromise, so Hack should do the same. *)
   let cls =
     List.fold results ~init:`None ~f:(fun class_opt (occ, _) ->
-        match (class_opt, SymbolOccurrence.enclosing_class occ) with
+        match (class_opt, Symbol_occurrence.enclosing_class occ) with
         | (`None, Some c) -> `Single c
         | (`Single c, Some c2) when String.equal c c2 -> `Single c
         | (`Single _, Some _) ->
@@ -45,7 +45,7 @@ let go_quarantined
     | `Multiple ->
       results
     | `Single _ ->
-      SymbolOccurrence.(
+      Symbol_occurrence.(
         let explicitly_defined =
           List.fold results ~init:[] ~f:(fun acc (occ, def) ->
               let cls = get_class_name occ in
@@ -54,7 +54,7 @@ let go_quarantined
               | Some cls ->
                 if
                   String.is_prefix
-                    (SymbolDefinition.full_name def)
+                    (Symbol_definition.full_name def)
                     ~prefix:(Utils.strip_ns cls)
                 then
                   (occ, def) :: acc
@@ -78,6 +78,6 @@ let go_quarantined
           results)
   in
   List.map results ~f:(fun (occurrence, definition) ->
-      let occurrence = SymbolOccurrence.to_absolute occurrence in
-      let definition = SymbolDefinition.to_absolute definition in
+      let occurrence = Symbol_occurrence.to_absolute occurrence in
+      let definition = Symbol_definition.to_absolute definition in
       (occurrence, definition))

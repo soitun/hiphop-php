@@ -41,7 +41,7 @@ allowed_decl_fixme_codes = 4336
 
 let test () =
   Relative_path.set_path_prefix Relative_path.Root (Path.make root);
-  TestDisk.set hhconfig_filename hhconfig_contents;
+  Test_disk.set hhconfig_filename hhconfig_contents;
   let (custom_config, _) =
     ServerConfig.load ~silent:false ~from:"" ~cli_config_overrides:[]
   in
@@ -83,7 +83,7 @@ let test () =
       log_errors = false;
       discard_warnings = false;
       recheck_id = Some "";
-      per_file_profiling = HackEventLogger.PerFileProfilingConfig.default;
+      per_file_profiling = Hack_event_logger.PerFileProfilingConfig.default;
       memtrace_dir = None;
       heartbeat_interval = None;
       prefetch_decls_enabled = false;

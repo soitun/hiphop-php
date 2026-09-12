@@ -6,7 +6,7 @@
  *
  *)
 
-include ApproxSet_intf
+include Approx_set_intf
 
 module Make (Domain : DomainType) :
   S_with_witness with module Domain := Domain = struct
@@ -14,7 +14,7 @@ module Make (Domain : DomainType) :
     | Sat
     | Unsat of {
         left: Domain.t;
-        relation: SetRelation.t;
+        relation: Set_relation.t;
         right: Domain.t;
       }
 
@@ -52,24 +52,24 @@ module Make (Domain : DomainType) :
       | (Set { comp = false; elt = elt1 }, Set { comp = false; elt = elt2 }) ->
         Domain.relation ~ctx elt1 elt2
       | (Union (left, right), set) ->
-        SetRelation.union (relate ctx left set) (relate ctx right set)
+        Set_relation.union (relate ctx left set) (relate ctx right set)
       | (Inter (left, right), set) ->
-        SetRelation.inter (relate ctx left set) (relate ctx right set)
+        Set_relation.inter (relate ctx left set) (relate ctx right set)
       | (Set { comp = true; elt }, set) ->
-        SetRelation.complement (relate ctx (singleton elt) set)
+        Set_relation.complement (relate ctx (singleton elt) set)
       | ( Set { comp = false; elt },
           ((Union _ | Inter _ | Set { comp = true; elt = _ }) as set) ) ->
-        SetRelation.flip (relate ctx set (singleton elt))
+        Set_relation.flip (relate ctx set (singleton elt))
 
     let flip_unsat = function
       | Sat -> Sat
       | Unsat { left; relation; right } ->
         Unsat
-          { left = right; relation = SetRelation.flip relation; right = left }
+          { left = right; relation = Set_relation.flip relation; right = left }
 
     let disjoint_atom atom1 atom2 ~ctx =
       let relation = relate ctx (Set atom1) (Set atom2) in
-      if SetRelation.is_disjoint relation then
+      if Set_relation.is_disjoint relation then
         Sat
       else
         Unsat { left = atom1.elt; relation; right = atom2.elt }
@@ -157,5 +157,5 @@ module Make (Domain : DomainType) :
     | (None, _) -> true
     | (Some _, None) -> false
     | (Some set1, Some set2) ->
-      SetRelation.is_subset (Impl.relate ctx set1 set2)
+      Set_relation.is_subset (Impl.relate ctx set1 set2)
 end

@@ -233,7 +233,7 @@ let enum_class_check
   let pos = Cls.pos tc in
   let add_like =
     Typing_env.get_support_dynamic_type env
-    && TypecheckerOptions.everything_sdt (Typing_env.get_tcopt env)
+    && Typechecker_options.everything_sdt (Typing_env.get_tcopt env)
   in
   let (enum_info_opt : Decl_enum.t option) =
     Decl_enum.enum_kind

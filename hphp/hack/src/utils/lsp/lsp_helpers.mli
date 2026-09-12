@@ -56,7 +56,7 @@ val apply_changes_unsafe :
   string -> Lsp.DidChange.textDocumentContentChangeEvent list -> string
 
 val sym_occ_kind_to_lsp_sym_info_kind :
-  SymbolOccurrence.kind -> Lsp.SymbolInformation.symbolKind
+  Symbol_occurrence.kind -> Lsp.SymbolInformation.symbolKind
 
 (** Correctly handles our various positions:
   * - real positions

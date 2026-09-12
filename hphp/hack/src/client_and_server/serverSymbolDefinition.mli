@@ -10,13 +10,13 @@
 val go :
   Provider_context.t ->
   Nast.program option ->
-  Relative_path.t SymbolOccurrence.t ->
-  Relative_path.t SymbolDefinition.t option
+  Relative_path.t Symbol_occurrence.t ->
+  Relative_path.t Symbol_definition.t option
 
 val get_definition_cst_node_ctx :
   ctx:Provider_context.t ->
   entry:Provider_context.entry ->
-  kind:'a SymbolDefinition.kind ->
+  kind:'a Symbol_definition.kind ->
   pos:'a Pos.pos ->
   Full_fidelity_positioned_syntax.t option
 

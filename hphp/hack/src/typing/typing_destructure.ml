@@ -370,7 +370,7 @@ let rec type_destructure_target
       match te with
       | (_, _, Aast.DestructureShape typed_shape) -> typed_shape
       | _ ->
-        HackEventLogger.invariant_violation_bug
+        Hack_event_logger.invariant_violation_bug
           ~pos:(Pos.show_absolute (Pos.to_absolute shape_pat.ds_pos))
           "type_shape returned non-DestructureShape expr in DtShape target";
         {
@@ -394,7 +394,7 @@ let rec type_destructure_target
       match te with
       | (_, _, Aast.DestructureTuple typed_tuple) -> typed_tuple
       | _ ->
-        HackEventLogger.invariant_violation_bug
+        Hack_event_logger.invariant_violation_bug
           ~pos:(Pos.show_absolute (Pos.to_absolute tuple_pat.dt_pos))
           "type_tuple returned non-DestructureTuple expr in DtTuple target";
         {

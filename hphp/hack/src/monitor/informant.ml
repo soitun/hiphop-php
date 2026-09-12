@@ -74,7 +74,7 @@ module Revision_map = struct
         result
         |> Result.map_error ~f:Future.error_to_string
         |> Result.map_error
-             ~f:(HackEventLogger.find_svn_rev_failed (Future.start_t future))
+             ~f:(Hack_event_logger.find_svn_rev_failed (Future.start_t future))
       in
       Some (result |> Result.ok |> Option.value ~default:0)
 end
@@ -489,7 +489,7 @@ module Revision_tracker = struct
         Future.get future
         |> Result.map_error ~f:Future.error_to_string
         |> Result.map_error
-             ~f:HackEventLogger.revision_tracker_init_svn_rev_failed
+             ~f:Hack_event_logger.revision_tracker_init_svn_rev_failed
         |> Result.ok
         |> Option.value ~default:0
       in
@@ -612,7 +612,7 @@ let report informant server_state =
       (match report with
       | Restart_server ->
         Hh_logger.log "Informant watcher starting server from settling";
-        HackEventLogger.informant_watcher_starting_server_from_settling ()
+        Hack_event_logger.informant_watcher_starting_server_from_settling ()
       | Move_along -> ());
       report
     ) else

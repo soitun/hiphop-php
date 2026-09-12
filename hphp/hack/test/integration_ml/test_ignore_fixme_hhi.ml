@@ -48,7 +48,7 @@ You cannot use `HH_FIXME` or `HH_IGNORE_ERROR` comments to suppress error 4110 (
 
 let test () =
   Relative_path.set_path_prefix Relative_path.Root (Path.make root);
-  TestDisk.set hhconfig_filename hhconfig_contents;
+  Test_disk.set hhconfig_filename hhconfig_contents;
   let (config, _) =
     ServerConfig.load ~silent:false ~from:"" ~cli_config_overrides:[]
   in

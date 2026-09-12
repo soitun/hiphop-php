@@ -14,7 +14,7 @@ let hhconfig_filename = Filename.concat root ".hhconfig"
 
 let test_cli_overrides () =
   Relative_path.set_path_prefix Relative_path.Root (Path.make root);
-  TestDisk.set hhconfig_filename "timeout = 737";
+  Test_disk.set hhconfig_filename "timeout = 737";
   let (config, local_config) =
     ServerConfig.load
       ~silent:false
@@ -23,7 +23,7 @@ let test_cli_overrides () =
         [("timeout", "747"); ("informant_min_distance_restart", "711")]
   in
   let timeout =
-    TypecheckerOptions.timeout (ServerConfig.typechecker_options config)
+    Typechecker_options.timeout (ServerConfig.typechecker_options config)
   in
   if not (timeout = 747) then Test.fail "Global config value not overridden!";
 

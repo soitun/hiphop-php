@@ -64,7 +64,7 @@ module For_test : sig
     string * Config_file_common.t
 end
 
-val to_rollout_flags : ServerLocalConfig.t -> HackEventLogger.rollout_flags
+val to_rollout_flags : ServerLocalConfig.t -> Hack_event_logger.rollout_flags
 
 val system_config_path : string
 

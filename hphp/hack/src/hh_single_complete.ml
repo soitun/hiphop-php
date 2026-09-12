@@ -251,7 +251,7 @@ let parse_options () =
   in
   let ( >?? ) x y = Option.value x ~default:y in
   let po =
-    ParserOptions.
+    Parser_options.
       {
         default with
         disable_xhp_element_mangling = !disable_xhp_element_mangling;
@@ -298,7 +298,7 @@ let parse_and_name ctx files_contents =
             in
             let ast =
               let { Parser_return.ast; _ } = parsed_file in
-              if popt.ParserOptions.deregister_php_stdlib then
+              if popt.Parser_options.deregister_php_stdlib then
                 Nast.deregister_ignored_attributes ast
               else
                 ast
@@ -368,7 +368,7 @@ i.e. surrounding characters. *)
 let do_auto332
     ~(ctx : Provider_context.t)
     ~(is_manually_invoked : bool)
-    ~(sienv_ref : SearchUtils.si_env ref)
+    ~(sienv_ref : Search_utils.si_env ref)
     ~(naming_table : Naming_table.t)
     (path : Relative_path.t)
     (contents : string) :
@@ -409,7 +409,7 @@ let do_glean_symbol_searches
     (searches :
       (string
       * string
-      * SearchTypes.autocomplete_type
+      * Search_types.autocomplete_type
       * FileInfo.si_kind option)
       list) : unit =
   let handle =
@@ -433,7 +433,7 @@ let do_glean_symbol_searches
         Printf.sprintf
           "%s [%s,%s]"
           query_text
-          (SearchTypes.show_autocomplete_type context)
+          (Search_types.show_autocomplete_type context)
           (Option.value_map kind_filter ~default:"*" ~f:FileInfo.show_si_kind)
       in
       if show_query_text then
@@ -451,11 +451,11 @@ let do_glean_symbol_searches
         in
         List.iter
           results
-          ~f:(fun { SearchTypes.si_name; si_kind; si_file; si_fullname = _ } ->
+          ~f:(fun { Search_types.si_name; si_kind; si_file; si_fullname = _ } ->
             let file =
               match si_file with
-              | SearchTypes.SI_Filehash hash -> Printf.sprintf "#%s" hash
-              | SearchTypes.SI_Path path -> Relative_path.show path
+              | Search_types.SI_Filehash hash -> Printf.sprintf "#%s" hash
+              | Search_types.SI_Path path -> Relative_path.show path
             in
             Printf.printf
               "[%s] %s - %s\n%!"
@@ -490,7 +490,7 @@ let handle_autocomplete_glean ctx sienv naming_table ~dry_run filename =
                 what [SymbolIndex.find] was performed -- i.e. what query_text, context, filter. *)
              let search = ref None in
              let mock_sienv =
-               SymbolIndex.mock
+               Symbol_index.mock
                  ~on_find:(fun ~query_text ~context ~kind_filter ->
                    search :=
                      Some
@@ -515,11 +515,11 @@ let handle_autocomplete_glean ctx sienv naming_table ~dry_run filename =
       files_contents
       |> List.concat_map ~f:(fun (_path, contents) ->
              extract_nonblank_lines contents
-             |> List.map ~f:(fun s -> (s, s, SearchTypes.Acid, None)))
+             |> List.map ~f:(fun s -> (s, s, Search_types.Acid, None)))
   in
   do_glean_symbol_searches
     searches
-    ~reponame:sienv.SearchUtils.glean_reponame
+    ~reponame:sienv.Search_utils.glean_reponame
     ~dry_run
     ~show_query_text:any_hack_files;
   ()
@@ -685,9 +685,9 @@ let handle_search ctx sienv ~glean_only ~dry_run filename =
   if glean_only then
     queries
     |> List.map ~f:(fun query ->
-           (query, query, SearchTypes.Ac_workspace_symbol, None))
+           (query, query, Search_types.Ac_workspace_symbol, None))
     |> do_glean_symbol_searches
-         ~reponame:sienv.SearchUtils.glean_reponame
+         ~reponame:sienv.Search_utils.glean_reponame
          ~dry_run
          ~show_query_text:true
   else
@@ -695,7 +695,7 @@ let handle_search ctx sienv ~glean_only ~dry_run filename =
         Printf.printf "query: %s\n%!" query;
         let sienv_ref = ref sienv in
         let results = Ide_search.go ctx query ~kind_filter:"" sienv_ref in
-        List.iter results ~f:(fun { SearchUtils.name; pos; result_type } ->
+        List.iter results ~f:(fun { Search_utils.name; pos; result_type } ->
             let filename = Pos.filename pos |> Filename.basename in
             let (line, start_, end_) = Pos.info_pos pos in
             Printf.printf
@@ -719,7 +719,7 @@ let handle_findrefs_glean sienv ~dry_run filename =
   let queries =
     Sys_utils.cat (Relative_path.to_absolute filename) |> extract_nonblank_lines
   in
-  let reponame = sienv.SearchUtils.glean_reponame in
+  let reponame = sienv.Search_utils.glean_reponame in
   let handle =
     if dry_run then
       None
@@ -752,7 +752,7 @@ let handle_findrefs_glean sienv ~dry_run filename =
       end);
   ()
 
-let handle_mode mode filenames ctx (sienv : SearchUtils.si_env) naming_table =
+let handle_mode mode filenames ctx (sienv : Search_utils.si_env) naming_table =
   let filename =
     match filenames with
     | [x] -> x
@@ -777,7 +777,7 @@ let handle_mode mode filenames ctx (sienv : SearchUtils.si_env) naming_table =
 
 let decl_and_run_mode
     { files; extra_builtins; mode; no_builtins; tcopt; naming_table_path }
-    (popt : ParserOptions.t)
+    (popt : Parser_options.t)
     (hhi_root : Path.t) : unit =
   Ident.track_names := true;
   let builtins =
@@ -915,9 +915,9 @@ let decl_and_run_mode
 
   (* SYMBOL INDEX PHASE 1: initialize *)
   let glean_reponame = Glean_options.reponame tcopt in
-  let namespace_map = popt.ParserOptions.auto_namespace_map in
+  let namespace_map = popt.Parser_options.auto_namespace_map in
   let sienv =
-    SymbolIndex.initialize
+    Symbol_index.initialize
       ~gleanopt:tcopt
       ~namespace_map
       ~provider_name:
@@ -937,9 +937,9 @@ let decl_and_run_mode
          * - When iterating on a feature, test manually in IDE as well
          * - if you can, delete these overrides
       *)
-      SearchUtils.sie_quiet_mode = false;
-      SearchUtils.sie_resolve_positions = true;
-      SearchUtils.sie_resolve_local_decl = true;
+      Search_utils.sie_quiet_mode = false;
+      Search_utils.sie_resolve_positions = true;
+      Search_utils.sie_resolve_local_decl = true;
     }
   in
 
@@ -948,9 +948,11 @@ let decl_and_run_mode
     files_info_and_addenda
     |> Relative_path.Map.elements
     |> List.map ~f:(fun (path, (_fi, addenda)) ->
-           (path, addenda, SearchUtils.TypeChecker))
+           (path, addenda, Search_utils.TypeChecker))
   in
-  let sienv = SymbolIndexCore.update_from_addenda ~sienv ~paths_with_addenda in
+  let sienv =
+    Symbol_index_core.update_from_addenda ~sienv ~paths_with_addenda
+  in
 
   handle_mode mode files ctx sienv naming_table
 
@@ -970,7 +972,7 @@ let main_hack
       Relative_path.set_path_prefix Relative_path.Hhi hhi_root;
       Relative_path.set_path_prefix Relative_path.Tmp (Path.make "tmp");
       decl_and_run_mode opts tcopt.GlobalOptions.po hhi_root;
-      TypingLogger.flush_buffers ())
+      Typing_logger.flush_buffers ())
 
 (* command line driver *)
 let () =

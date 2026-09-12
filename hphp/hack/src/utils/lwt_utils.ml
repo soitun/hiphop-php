@@ -149,7 +149,7 @@ module Process_failure = struct
         Printf.sprintf
           "WSIGNALLED %d (%s)%s"
           exit_code
-          (PrintSignal.string_of_signal exit_code)
+          (Print_signal.string_of_signal exit_code)
           (if exit_code = Sys.sigkill then
             " - this often indicates a timeout"
           else
@@ -158,7 +158,7 @@ module Process_failure = struct
         Printf.sprintf
           "WSTOPPED %d (%s)"
           exit_code
-          (PrintSignal.string_of_signal exit_code)
+          (Print_signal.string_of_signal exit_code)
     in
     let stderr =
       match process_failure.stderr with

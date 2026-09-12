@@ -349,5 +349,5 @@ let rust_parse text env = !rust_parse_ref text env
 external rust_parser_errors :
   Full_fidelity_source_text.t ->
   Rust_pointer.t ->
-  ParserOptions.ffi_t ->
+  Parser_options.ffi_t ->
   Full_fidelity_syntax_error.t list = "rust_parser_errors_positioned"

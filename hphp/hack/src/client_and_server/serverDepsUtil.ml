@@ -8,9 +8,9 @@
 
 open Hh_prelude
 
-let symbol_in_call_hierarchy (sym_occ : Relative_path.t SymbolOccurrence.t) :
+let symbol_in_call_hierarchy (sym_occ : Relative_path.t Symbol_occurrence.t) :
     bool =
-  let open SymbolOccurrence in
+  let open Symbol_occurrence in
   match sym_occ.type_ with
   | Class _ -> true
   | BuiltInType _ -> false
@@ -32,9 +32,9 @@ let symbol_in_call_hierarchy (sym_occ : Relative_path.t SymbolOccurrence.t) :
   | HhIgnore -> false
   | Module -> true
 
-let is_target target_line target_char (occ : Relative_path.t SymbolOccurrence.t)
-    =
-  let open SymbolOccurrence in
+let is_target
+    target_line target_char (occ : Relative_path.t Symbol_occurrence.t) =
+  let open Symbol_occurrence in
   let pos = occ.pos in
   let (l, start, end_) = Pos.info_pos pos in
   l = target_line && start <= target_char && target_char - 1 <= end_
@@ -42,12 +42,12 @@ let is_target target_line target_char (occ : Relative_path.t SymbolOccurrence.t)
 let body_symbols
     ~(ctx : Provider_context.t)
     ~(entry : Provider_context.entry)
-    (filter_against : Relative_path.t SymbolOccurrence.t list)
-    (occ : Relative_path.t SymbolOccurrence.t)
-    (def : Relative_path.t SymbolDefinition.t) :
-    Relative_path.t SymbolOccurrence.t list =
-  let open SymbolOccurrence in
-  let open SymbolDefinition in
+    (filter_against : Relative_path.t Symbol_occurrence.t list)
+    (occ : Relative_path.t Symbol_occurrence.t)
+    (def : Relative_path.t Symbol_definition.t) :
+    Relative_path.t Symbol_occurrence.t list =
+  let open Symbol_occurrence in
+  let open Symbol_definition in
   let node_opt =
     ServerSymbolDefinition.get_definition_cst_node_ctx
       ~ctx
@@ -64,7 +64,7 @@ let body_symbols
     (match span_pos_opt with
     | None -> []
     | Some span_pos ->
-      let pos_filter (o : Relative_path.t SymbolOccurrence.t) =
+      let pos_filter (o : Relative_path.t Symbol_occurrence.t) =
         (not (phys_equal o occ)) && Pos.contains span_pos o.pos
       in
       List.filter filter_against ~f:pos_filter)

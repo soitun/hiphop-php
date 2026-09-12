@@ -30,7 +30,7 @@ let () = Folly.ensure_folly_init ()
 let server_config = ServerEnvBuild.default_genv.ServerEnv.config
 
 let po =
-  ParserOptions.
+  Parser_options.
     {
       default with
       disable_xhp_element_mangling = false;
@@ -78,7 +78,7 @@ let test_init_common ?(hhi_files = []) () =
   ServerMain.force_break_recheck_loop_for_test true;
 
   List.iter hhi_files ~f:(fun (fn, contents) ->
-      TestDisk.set (Filename.concat hhi fn) contents);
+      Test_disk.set (Filename.concat hhi fn) contents);
   ()
 
 (* Hhi files are loaded during server setup. If given a list of string + contents, we add them
@@ -131,7 +131,8 @@ let run_loop_once :
   let disk_changes =
     List.map inputs.disk_changes ~f:(fun (x, y) -> (root ^ x, y))
   in
-  List.iter disk_changes ~f:(fun (path, contents) -> TestDisk.set path contents);
+  List.iter disk_changes ~f:(fun (path, contents) ->
+      Test_disk.set path contents);
 
   let did_read_disk_changes_ref = ref false in
   let get_changes_sync () =
@@ -326,7 +327,7 @@ let assert_response loop_output =
 let assert_find_refs loop_output expected =
   let results = assert_response loop_output in
   let results =
-    List.map results ~f:(fun SearchTypes.Find_refs.{ name; pos } ->
+    List.map results ~f:(fun Search_types.Find_refs.{ name; pos } ->
         name ^ ": " ^ Pos.string pos)
   in
   let results_as_string = list_to_string results in
@@ -397,8 +398,8 @@ module Client = struct
     in
     List.iter files_and_contents ~f:(fun (path, contents) ->
         let file = Relative_path.to_absolute path in
-        RealDisk.write_file ~file ~contents;
-        TestDisk.set file contents);
+        Real_disk.write_file ~file ~contents;
+        Test_disk.set file contents);
     Client_ide_daemon.Test.index
       env
       (Relative_path.Set.of_list (List.map files_and_contents ~f:fst))
@@ -417,7 +418,8 @@ module Client = struct
   let open_file (env : env) (suffix : string) :
       env * Client_ide_message.diagnostic list SMap.t =
     let contents =
-      TestDisk.get (Relative_path.from_root ~suffix |> Relative_path.to_absolute)
+      Test_disk.get
+        (Relative_path.from_root ~suffix |> Relative_path.to_absolute)
     in
     edit_file env suffix contents
 

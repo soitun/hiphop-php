@@ -47,28 +47,29 @@ let filename_in_allowed filename allowed =
 let mk_env filename tcopt =
   let file_str = Relative_path.suffix filename in
   let is_hhi = String.is_suffix (Relative_path.suffix filename) ~suffix:".hhi"
-  and is_systemlib = TypecheckerOptions.is_systemlib tcopt
+  and is_systemlib = Typechecker_options.is_systemlib tcopt
   and allow_module_def =
-    TypecheckerOptions.allow_all_files_for_module_declarations tcopt
+    Typechecker_options.allow_all_files_for_module_declarations tcopt
     || filename_in_allowed
          file_str
-         (TypecheckerOptions.allowed_files_for_module_declarations tcopt)
+         (Typechecker_options.allowed_files_for_module_declarations tcopt)
   and allow_ignore_readonly =
     filename_in_allowed
       file_str
-      (TypecheckerOptions.allowed_files_for_ignore_readonly tcopt)
-  and everything_sdt = TypecheckerOptions.everything_sdt tcopt
+      (Typechecker_options.allowed_files_for_ignore_readonly tcopt)
+  and everything_sdt = Typechecker_options.everything_sdt tcopt
   and supportdynamic_type_hint_enabled =
-    TypecheckerOptions.legacy_experimental_feature_enabled
+    Typechecker_options.legacy_experimental_feature_enabled
       tcopt
-      TypecheckerOptions.experimental_supportdynamic_type_hint
-  and soft_as_like = TypecheckerOptions.interpret_soft_types_as_like_types tcopt
+      Typechecker_options.experimental_supportdynamic_type_hint
+  and soft_as_like =
+    Typechecker_options.interpret_soft_types_as_like_types tcopt
   and consistent_ctor_level =
-    TypecheckerOptions.explicit_consistent_constructors tcopt
-  and typed_open_shapes = TypecheckerOptions.typed_open_shapes tcopt
-  and named_variadic_type = TypecheckerOptions.named_variadic_type tcopt
+    Typechecker_options.explicit_consistent_constructors tcopt
+  and typed_open_shapes = Typechecker_options.typed_open_shapes tcopt
+  and named_variadic_type = Typechecker_options.named_variadic_type tcopt
   and variadic_named_parameters =
-    TypecheckerOptions.variadic_named_parameters tcopt
+    Typechecker_options.variadic_named_parameters tcopt
   in
   Env.
     {
@@ -225,7 +226,7 @@ let program_filename defs =
 
 let fun_def ctx fd =
   let tcopt = Provider_context.get_tcopt ctx in
-  let custom_err_config = TypecheckerOptions.custom_error_config tcopt in
+  let custom_err_config = Typechecker_options.custom_error_config tcopt in
   let filename = Pos.filename fd.Aast.fd_fun.Aast.f_span in
   let elab_ns = Naming_elaborate_namespaces_endo.elaborate_fun_def
   and elab_capture = Naming_captures.elab_fun_def ~custom_err_config
@@ -241,7 +242,7 @@ let fun_def ctx fd =
 
 let class_ ctx c =
   let tcopt = Provider_context.get_tcopt ctx in
-  let custom_err_config = TypecheckerOptions.custom_error_config tcopt in
+  let custom_err_config = Typechecker_options.custom_error_config tcopt in
   let filename = Pos.filename c.Aast.c_span in
   let elab_ns = Naming_elaborate_namespaces_endo.elaborate_class_
   and elab_capture = Naming_captures.elab_class ~custom_err_config
@@ -257,7 +258,7 @@ let class_ ctx c =
 
 let module_ ctx md =
   let tcopt = Provider_context.get_tcopt ctx in
-  let custom_err_config = TypecheckerOptions.custom_error_config tcopt in
+  let custom_err_config = Typechecker_options.custom_error_config tcopt in
   let filename = Pos.filename md.Aast.md_span in
   let elab_ns = Naming_elaborate_namespaces_endo.elaborate_module_def
   and elab_capture = Naming_captures.elab_module_def ~custom_err_config
@@ -273,7 +274,7 @@ let module_ ctx md =
 
 let global_const ctx cst =
   let tcopt = Provider_context.get_tcopt ctx in
-  let custom_err_config = TypecheckerOptions.custom_error_config tcopt in
+  let custom_err_config = Typechecker_options.custom_error_config tcopt in
   let filename = Pos.filename cst.Aast.cst_span in
   let elab_ns = Naming_elaborate_namespaces_endo.elaborate_gconst
   and elab_capture = Naming_captures.elab_gconst ~custom_err_config
@@ -289,7 +290,7 @@ let global_const ctx cst =
 
 let typedef ctx td =
   let tcopt = Provider_context.get_tcopt ctx in
-  let custom_err_config = TypecheckerOptions.custom_error_config tcopt in
+  let custom_err_config = Typechecker_options.custom_error_config tcopt in
   let filename = Pos.filename @@ td.Aast.t_span in
   let elab_ns = Naming_elaborate_namespaces_endo.elaborate_typedef
   and elab_capture = Naming_captures.elab_typedef ~custom_err_config
@@ -317,7 +318,7 @@ let fun_def_of_stmts ctx stmts : Nast.fun_def option =
   let popt = Provider_context.get_popt ctx in
   let custom_err_config =
     let tcopt = Provider_context.get_tcopt ctx in
-    TypecheckerOptions.custom_error_config tcopt
+    Typechecker_options.custom_error_config tcopt
   in
   let stmts =
     List.filter stmts ~f:(function
@@ -339,7 +340,7 @@ let fun_def_of_stmts ctx stmts : Nast.fun_def option =
              Aast.PackageConfigAssignment (snd pkg.Package.name))
     in
     let ns_ns_uses =
-      popt.ParserOptions.auto_namespace_map
+      popt.Parser_options.auto_namespace_map
       |> SMap.of_list
       |> SMap.union Namespace_env.(empty_with_default.ns_ns_uses)
     in
@@ -355,7 +356,7 @@ let fun_def_of_stmts ctx stmts : Nast.fun_def option =
                 empty_with_default with
                 ns_ns_uses;
                 ns_disable_xhp_element_mangling =
-                  popt.ParserOptions.disable_xhp_element_mangling;
+                  popt.Parser_options.disable_xhp_element_mangling;
               };
           fd_file_attributes = [];
           fd_mode = FileInfo.Mstrict;
@@ -409,7 +410,7 @@ let adjust_toplevel_stmts ctx program : Nast.program =
 
 let program ctx program =
   let tcopt = Provider_context.get_tcopt ctx in
-  let custom_err_config = TypecheckerOptions.custom_error_config tcopt in
+  let custom_err_config = Typechecker_options.custom_error_config tcopt in
   let filename = program_filename program in
   let program = adjust_toplevel_stmts ctx program in
   let elab_ns = Naming_elaborate_namespaces_endo.elaborate_program

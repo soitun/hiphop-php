@@ -9,10 +9,10 @@
 
 val print_readable :
   ?short_pos:bool ->
-  ('a SymbolOccurrence.t * string SymbolDefinition.t option) list ->
+  ('a Symbol_occurrence.t * string Symbol_definition.t option) list ->
   unit
 
 val go :
-  (string SymbolOccurrence.t * string SymbolDefinition.t option) list ->
+  (string Symbol_occurrence.t * string Symbol_definition.t option) list ->
   bool ->
   unit

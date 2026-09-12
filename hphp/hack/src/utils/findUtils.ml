@@ -56,7 +56,7 @@ let rec has_ancestor path ancestor_name =
 let file_filter f =
   (* Filter the relative path *)
   let f = Relative_path.strip_root_if_possible f |> Option.value ~default:f in
-  is_hack f && not (FilesToIgnore.should_ignore f)
+  is_hack f && not (Files_to_ignore.should_ignore f)
 
 let path_filter f = Relative_path.suffix f |> file_filter
 

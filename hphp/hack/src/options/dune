@@ -80,7 +80,7 @@
 (library
  (name parser_options)
  (wrapped false)
- (modules parserOptions experimental_features)
+ (modules parser_options experimental_features)
  (libraries collections package_info utils_core yojson)
  (foreign_archives options_ffi)
  (preprocess
@@ -114,7 +114,7 @@
 (library
  (name typechecker_options)
  (wrapped false)
- (modules typecheckerOptions)
+ (modules typechecker_options)
  (libraries
   global_options)
  (preprocess

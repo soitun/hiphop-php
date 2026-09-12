@@ -159,13 +159,13 @@ run_hh_oxidize \
   hphp/hack/src/options/decl_parser_options.ml                                  \
   hphp/hack/src/options/experimental_features.ml                              \
   hphp/hack/src/options/globalOptions.ml                                      \
-  hphp/hack/src/options/parserOptions.ml                                      \
+  hphp/hack/src/options/parser_options.ml                                      \
   hphp/hack/src/options/saved_state_rollouts.ml                               \
-  hphp/hack/src/options/typecheckerOptions.ml                                 \
+  hphp/hack/src/options/typechecker_options.ml                                 \
   hphp/hack/src/packages/package.ml                                            \
   hphp/hack/src/packages/package_info.ml                                      \
   hphp/hack/src/parser/full_fidelity_parser_env.ml                             \
-  hphp/hack/src/search/utils/searchTypes.ml                                   \
+  hphp/hack/src/search/utils/search_types.ml                                   \
   hphp/hack/src/typing/service/reason_collector.ml                            \
   hphp/hack/src/typing/service/refinement_counter.ml                           \
   hphp/hack/src/typing/service/tast_collector.ml                              \
@@ -180,7 +180,7 @@ run_hh_oxidize \
   hphp/hack/src/typing/typing_tyvar_occurrences.ml                            \
   hphp/hack/src/typing/xhp_attribute.ml                                       \
   hphp/hack/src/utils/decl_reference.ml                                       \
-  hphp/hack/src/utils/ignore/facebook/filesToIgnore.ml                        \
+  hphp/hack/src/utils/ignore/facebook/files_to_ignore.ml                        \
   hphp/hack/src/parser/scoured_comments.ml                                    \
 
 # Add exports in oxidized/lib.rs from oxidized/gen/mod.rs.

@@ -167,7 +167,7 @@ let init_eden root =
     {
       Edenfs_watcher_types.root;
       watch_spec =
-        { FilesToIgnore.include_extensions = []; include_file_names = [] };
+        { Files_to_ignore.include_extensions = []; include_file_names = [] };
       debug_logging = false;
       timeout_secs = 30;
       throttle_time_ms = 0;
@@ -194,7 +194,7 @@ let init ~use_eden ~watchman_debug_logging root =
         "InformantNotifier failed to initialize Edenfs_watcher, falling back to Watchman"
       in
       Hh_logger.log "%s" msg;
-      HackEventLogger.edenfs_watcher_fallback ~msg;
+      Hack_event_logger.edenfs_watcher_fallback ~msg;
       init_watchman ~watchman_debug_logging root
   ) else
     init_watchman ~watchman_debug_logging root

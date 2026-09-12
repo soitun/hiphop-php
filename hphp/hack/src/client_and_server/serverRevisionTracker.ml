@@ -86,7 +86,7 @@ let tracker_state =
 
 let set_current_mergebase rev =
   tracker_state.current_mergebase <- Some rev;
-  HackEventLogger.set_mergebase_globalrev rev;
+  Hack_event_logger.set_mergebase_globalrev rev;
   ()
 
 let initialize (mergebase : Hg.global_rev) =
@@ -142,7 +142,7 @@ let handler_fn () =
             |> Telemetry.string_opt ~key:"event_source" ~value:(Some e.source)
             |> Telemetry.bool_ ~key:"flushed_by_new_event" ~value:true
           in
-          HackEventLogger.server_revision_tracker_forced_reset ~telemetry;
+          Hack_event_logger.server_revision_tracker_forced_reset ~telemetry;
           []
         | _ -> outstanding
     in
@@ -238,15 +238,15 @@ let check_query future ~timeout ~current_t =
   match Future.get ~timeout future with
   | Error e ->
     let e = Future.error_to_string e in
-    HackEventLogger.check_mergebase_failed current_t e;
+    Hack_event_logger.check_mergebase_failed current_t e;
     Hh_logger.log "ServerRevisionTracker: %s" e
   | Ok new_global_rev ->
-    HackEventLogger.check_mergebase_success current_t;
+    Hack_event_logger.check_mergebase_success current_t;
     (match tracker_state.current_mergebase with
     | Some global_rev when global_rev <> new_global_rev ->
       set_current_mergebase new_global_rev;
       tracker_state.did_change_mergebase <- true;
-      HackEventLogger.set_changed_mergebase true;
+      Hack_event_logger.set_changed_mergebase true;
       Hh_logger.log
         "ServerRevisionTracker: Changing mergebase from r%d to r%d"
         global_rev
@@ -289,7 +289,7 @@ let rec check_non_blocking ~is_full_check_done =
       (* Clearing this flag because we somehow managed to get through this rebase,
        * so no need to restart anymore *)
       tracker_state.did_change_mergebase <- false;
-      HackEventLogger.set_changed_mergebase false
+      Hack_event_logger.set_changed_mergebase false
     )
   ) else
     let hg_rev = Queue.peek_exn tracker_state.pending_queries in

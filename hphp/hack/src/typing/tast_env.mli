@@ -45,15 +45,15 @@ val print_hint : env -> Aast.hint -> string
 val print_ty_with_identity :
   env ->
   Typing_defs.locl_ty ->
-  'b SymbolOccurrence.t ->
-  'b SymbolDefinition.t option ->
+  'b Symbol_occurrence.t ->
+  'b Symbol_definition.t option ->
   string
 
 val print_decl_ty_with_identity :
   env ->
   Typing_defs.decl_ty ->
-  'b SymbolOccurrence.t ->
-  'b SymbolDefinition.t option ->
+  'b Symbol_occurrence.t ->
+  'b Symbol_definition.t option ->
   string
 
 (** Return a JSON representation of the given type. *)
@@ -366,4 +366,4 @@ val add_typing_error : Typing_error.t -> env:env -> unit
 
 val add_warning : env -> ('x, 'a) Typing_warning.t -> unit
 
-val get_tcopt : env -> TypecheckerOptions.t
+val get_tcopt : env -> Typechecker_options.t

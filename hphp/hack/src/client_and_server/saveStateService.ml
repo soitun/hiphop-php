@@ -63,7 +63,7 @@ let load_saved_state_exn
         in which case we raise a failure, since the OCaml-marshalled
         naming table no longer exists.
       *)
-      HackEventLogger.naming_table_sqlite_missing ();
+      Hack_event_logger.naming_table_sqlite_missing ();
       let str =
         "No naming table path found, either from saved state directory or local config"
       in
@@ -107,7 +107,7 @@ let saved_state_info_file_name ~base_file_name = base_file_name ^ "_info.json"
 
 let saved_state_build_revision_read ~(base_file_name : string) : string =
   let info_file = saved_state_info_file_name ~base_file_name in
-  let contents = RealDisk.cat info_file in
+  let contents = Real_disk.cat info_file in
   let json = Some (Yojson.Safe.from_string contents) in
   let build_revision = Hh_json_helpers.Jget.string_exn json "build_revision" in
   build_revision

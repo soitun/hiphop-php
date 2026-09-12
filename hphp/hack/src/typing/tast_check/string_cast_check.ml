@@ -65,7 +65,7 @@ let rec is_stringish env ty =
   | Taccess _ ->
     false
   | Tclass_ptr _ ->
-    TypecheckerOptions.allow_class_string_cast (Env.get_tcopt env)
+    Typechecker_options.allow_class_string_cast (Env.get_tcopt env)
 
 let handler =
   object

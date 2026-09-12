@@ -25,7 +25,7 @@ let text_edits
       [Code_action_types.{ pos = classish_end; text = classish_end_new_text }]
     | None ->
       let () =
-        HackEventLogger.invariant_violation_bug
+        Hack_event_logger.invariant_violation_bug
           ~data:classish_end_name
           "Could not find class position for quickfix"
       in

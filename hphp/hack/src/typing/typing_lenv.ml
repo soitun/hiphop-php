@@ -216,7 +216,7 @@ let has_next env =
   | Some _ -> true
 
 let assert_package_loaded env pos pkg status =
-  let package_info = Env.get_tcopt env |> TypecheckerOptions.package_info in
+  let package_info = Env.get_tcopt env |> Typechecker_options.package_info in
   let per_cont_env =
     LEnvC.assert_package_loaded_in_cont
       ~package_info

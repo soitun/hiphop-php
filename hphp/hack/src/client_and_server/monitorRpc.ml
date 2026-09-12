@@ -80,7 +80,7 @@ let write_server_receipt_to_monitor_file
       "SERVER_RECEIPT_TO_MONITOR(write) %s\n%s"
       (Exception.get_ctor_string e)
       (Exception.get_backtrace_string e |> Exception.clean_stack);
-    HackEventLogger.server_receipt_to_monitor_write_exn
+    Hack_event_logger.server_receipt_to_monitor_write_exn
       ~server_receipt_to_monitor_file
       e;
     ()
@@ -109,7 +109,7 @@ let read_server_receipt_to_monitor_file
       (Exception.get_ctor_string e)
       (Exception.get_backtrace_string e |> Exception.clean_stack)
       !content;
-    HackEventLogger.server_receipt_to_monitor_read_exn
+    Hack_event_logger.server_receipt_to_monitor_read_exn
       ~server_receipt_to_monitor_file
       e
       !content;

@@ -31,7 +31,7 @@ let identify_foo_request =
 
 let check_identify_foo_response = function
   | [(_, def)] ->
-    let string_pos = Pos.string def.SymbolDefinition.pos |> Test.relativize in
+    let string_pos = Pos.string def.Symbol_definition.pos |> Test.relativize in
     let expected_pos = "File \"/foo.php\", line 3, characters 10-12:" in
     Test.assertEqual expected_pos string_pos
   | _ -> Test.fail "Expected to find exactly one definition"

@@ -29,7 +29,7 @@ module SaveNamingResultPrinter = Client_result_printer.Make (struct
       ]
 end)
 
-let print_refs (results : SearchTypes.Find_refs.absolute list) ~(json : bool) :
+let print_refs (results : Search_types.Find_refs.absolute list) ~(json : bool) :
     unit =
   if json then
     FindRefsWireFormat.HackAst.to_json results
@@ -156,7 +156,7 @@ let connect
         progress_callback =
           Client_spinner.report
             ~to_stderr:show_spinner
-            ~angery_reaccs_only:(ClientMessages.angery_reaccs_only ());
+            ~angery_reaccs_only:(Client_messages.angery_reaccs_only ());
         do_post_handoff_handshake;
         ignore_hh_version;
         save_64bit;
@@ -534,13 +534,13 @@ let main_internal
     let%lwt (result, telemetry) =
       rpc args @@ ServerCommandTypes.IDENTIFY_SYMBOL arg
     in
-    let definition_to_json (d : string SymbolDefinition.t) : Yojson.Safe.t =
+    let definition_to_json (d : string Symbol_definition.t) : Yojson.Safe.t =
       `Assoc
         [
-          ("full_name", `String (SymbolDefinition.full_name d));
-          ("pos", d.SymbolDefinition.pos |> Pos.json);
+          ("full_name", `String (Symbol_definition.full_name d));
+          ("pos", d.Symbol_definition.pos |> Pos.json);
           ( "kind",
-            d.SymbolDefinition.kind |> SymbolDefinition.string_of_kind
+            d.Symbol_definition.kind |> Symbol_definition.string_of_kind
             |> fun s -> `String s );
         ]
     in
@@ -783,7 +783,7 @@ let main_internal
          * options from the .hhconfig file (needs to be the same hhconfig file the
          * server used).
          * *)
-        ParserOptions.default
+        Parser_options.default
         content
     in
     Client_outline.go results args.output_json;
@@ -971,7 +971,7 @@ let main_internal
       Option.map (Sys.getenv_opt "HOME") ~f:(fun home_dir ->
           home_dir ^ "/.vscode-sockets/hhvm-paused")
     in
-    DeclarationsRewriter.start
+    Declarations_rewriter.start
       (Random.State.make_self_init ())
       ~file_whose_existence_indicates_hhvm_is_paused;
     Lwt.return (Exit_status.No_error, Telemetry.create ())
@@ -1137,7 +1137,7 @@ let main_internal
 
 let rec flush_event_logger () : unit Lwt.t =
   let%lwt () = Lwt_unix.sleep 1.0 in
-  let%lwt () = EventLoggerLwt.flush () in
+  let%lwt () = Event_logger_lwt.flush () in
   flush_event_logger ()
 
 let main
@@ -1145,10 +1145,10 @@ let main
     (config : ServerConfig.t)
     (local_config : ServerLocalConfig.t)
     ~(init_proc_stack : string list option) : _ =
-  HackEventLogger.client_set_mode
+  Hack_event_logger.client_set_mode
     (Client_env.Variants_of_client_mode.to_name args.mode);
 
-  HackEventLogger.client_check_start ~reason:args.reason;
+  Hack_event_logger.client_check_start ~reason:args.reason;
   Client_spinner.start_heartbeat_telemetry ();
   Lwt.dont_wait flush_event_logger (fun _exn -> ());
   let partial_telemetry_ref = ref None in
@@ -1163,7 +1163,11 @@ let main
           main_internal args config local_config partial_telemetry_ref)
     in
     let spinner = Client_spinner.get_latest_report () in
-    HackEventLogger.client_check exit_status telemetry ~init_proc_stack ~spinner;
+    Hack_event_logger.client_check
+      exit_status
+      telemetry
+      ~init_proc_stack
+      ~spinner;
     Hh_logger.log "CLIENT_CHECK %s" (Exit_status.show exit_status);
     Exit.exit exit_status
   with
@@ -1190,7 +1194,7 @@ let main
         (* [Interrupted] is raised by a SIGINT exit-handler installed in hh_client.
            [Client_broken_pipe] is raised in [clientCheckStatus.go_streaming] when
            it can't write errors to the pipe. *)
-        HackEventLogger.client_check_partial
+        Hack_event_logger.client_check_partial
           exit_status
           telemetry
           ~init_proc_stack
@@ -1200,7 +1204,7 @@ let main
           (Option.value_map spinner ~f:fst ~default:"")
           (Exit_status.show exit_status)
       | _ ->
-        HackEventLogger.client_check_bad_exit
+        Hack_event_logger.client_check_bad_exit
           exit_status
           e
           ~init_proc_stack

@@ -87,7 +87,7 @@ let default =
     symbolindex_quiet = false;
     tico_invalidate_files = false;
     tico_invalidate_smart = false;
-    per_file_profiling = HackEventLogger.PerFileProfilingConfig.default;
+    per_file_profiling = Hack_event_logger.PerFileProfilingConfig.default;
     memtrace_dir = None;
     go_to_implementation = true;
     allow_unstable_features = false;
@@ -766,7 +766,7 @@ let load_
   let profile_log =
     bool_if_min_version
       Config_keys.Hhconf.profile_log
-      ~default:HackEventLogger.PerFileProfilingConfig.(default.profile_log)
+      ~default:Hack_event_logger.PerFileProfilingConfig.(default.profile_log)
       ~current_version
       config
   in
@@ -774,7 +774,7 @@ let load_
     float_
       Config_keys.Hhconf.profile_type_check_duration_threshold
       ~default:
-        HackEventLogger.PerFileProfilingConfig.(
+        Hack_event_logger.PerFileProfilingConfig.(
           default.profile_type_check_duration_threshold)
       config
   in
@@ -782,7 +782,7 @@ let load_
     int_
       Config_keys.Hhconf.profile_type_check_memory_threshold_mb
       ~default:
-        HackEventLogger.PerFileProfilingConfig.(
+        Hack_event_logger.PerFileProfilingConfig.(
           default.profile_type_check_memory_threshold_mb)
       config
   in
@@ -790,7 +790,7 @@ let load_
     bool_if_min_version
       Config_keys.Hhconf.profile_type_check_twice
       ~default:
-        HackEventLogger.PerFileProfilingConfig.(
+        Hack_event_logger.PerFileProfilingConfig.(
           default.profile_type_check_twice)
       ~current_version
       config
@@ -799,10 +799,10 @@ let load_
     match string_opt Config_keys.Hhconf.profile_decling config with
     | None ->
       default.per_file_profiling
-        .HackEventLogger.PerFileProfilingConfig.profile_decling
+        .Hack_event_logger.PerFileProfilingConfig.profile_decling
     | Some value_s ->
       (match
-         HackEventLogger.PerFileProfilingConfig.ProfileDecling.of_config_value
+         Hack_event_logger.PerFileProfilingConfig.ProfileDecling.of_config_value
            value_s
        with
       | Some x -> x
@@ -818,7 +818,8 @@ let load_
     float_
       Config_keys.Hhconf.profile_slow_threshold
       ~default:
-        HackEventLogger.PerFileProfilingConfig.(default.profile_slow_threshold)
+        Hack_event_logger.PerFileProfilingConfig.(
+          default.profile_slow_threshold)
       config
   in
   let memtrace_dir = string_opt Config_keys.Hhconf.memtrace_dir config in
@@ -1197,7 +1198,7 @@ let load_
     tico_invalidate_smart;
     per_file_profiling =
       {
-        HackEventLogger.PerFileProfilingConfig.profile_log;
+        Hack_event_logger.PerFileProfilingConfig.profile_log;
         profile_type_check_duration_threshold;
         profile_type_check_memory_threshold_mb;
         profile_type_check_twice;
@@ -1298,8 +1299,8 @@ let load_from_config
     ~from:""
     ~overrides:(Config_file_common.empty ())
 
-let to_rollout_flags (options : t) : HackEventLogger.rollout_flags =
-  HackEventLogger.
+let to_rollout_flags (options : t) : Hack_event_logger.rollout_flags =
+  Hack_event_logger.
     {
       log_saved_state_age_and_distance =
         GlobalOptions.(

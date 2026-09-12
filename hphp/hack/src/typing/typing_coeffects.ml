@@ -129,7 +129,7 @@ let type_capability env ctxs unsafe_ctxs default_pos =
   let ((env, ty_err_opt1), cap_ty) =
     match cap with
     | CapTy ty ->
-      if TypecheckerOptions.strict_contexts (Env.get_tcopt env) then
+      if Typechecker_options.strict_contexts (Env.get_tcopt env) then
         validate_capability env decl_pos ty;
       Phase.localize_no_subst env ~ignore_errors:false ty
     | CapDefaults p -> ((env, None), MakeType.default_capability p)

@@ -15,18 +15,18 @@ external cgroup_watcher_get : unit -> int * int * float array
   = "cgroup_watcher_get"
 
 type initial_reading =
-  HackEventLogger.ProfileTypeCheck.stats * (CGroup.stats, string) result
+  Hack_event_logger.ProfileTypeCheck.stats * (C_group.stats, string) result
 
 (** This is the [initial_reading] that we capture upon module load, i.e. process startup *)
 let initial_reading_capture : initial_reading =
   let stats =
-    HackEventLogger.ProfileTypeCheck.get_stats
+    Hack_event_logger.ProfileTypeCheck.get_stats
       ~include_current_process:false
       ~include_slightly_costly_stats:true
       ~shmem_heap_size:0
       (Telemetry.create ())
   in
-  (stats, CGroup.get_stats ())
+  (stats, C_group.get_stats ())
 
 (** This is the [initial_reading] that we'll actually use, i.e. we'll record data relative to this.
 None means we won't use anything. *)
@@ -47,14 +47,14 @@ has previously called [use_initial_reading] and provided an Ok one, (2) the [cur
 parameter is Ok, (3) the [current_cgroup] has the same cgroup name as the initial one.
 Otherwise, it returns ({0...}, default). *)
 let initial_value_map current_cgroup ~f ~default =
-  let open CGroup in
+  let open C_group in
   match (!initial_reading, current_cgroup) with
   | (Some (_stats, Ok initial_cgroup), Ok current_cgroup)
     when String.equal initial_cgroup.cgroup_name current_cgroup.cgroup_name ->
     (initial_cgroup, f initial_cgroup)
   | _ ->
     ( {
-        CGroup.total = 0;
+        C_group.total = 0;
         memory_current = 0;
         memory_swap_current = 0;
         anon = 0;
@@ -94,7 +94,7 @@ let pretty_num i = Printf.sprintf "%0.2fGiB" (float i /. 1073741824.0)
 let log_cgroup_total cgroup ~step_group ~step ~suffix ~total_hwm =
   let (initial, initial_msg) =
     initial_value_map cgroup ~default:"" ~f:(fun i ->
-        Printf.sprintf " (relative to initial %s)" (pretty_num i.CGroup.total))
+        Printf.sprintf " (relative to initial %s)" (pretty_num i.C_group.total))
   in
   match cgroup with
   | Error _ -> ()
@@ -107,11 +107,11 @@ let log_cgroup_total cgroup ~step_group ~step ~suffix ~total_hwm =
       {
         time = Unix.gettimeofday ();
         log_label_and_suffix;
-        step_total = cgroup.CGroup.total;
+        step_total = cgroup.C_group.total;
       }
     in
     if
-      abs (cgroup.CGroup.total - !(step_group.last_printed_total))
+      abs (cgroup.C_group.total - !(step_group.last_printed_total))
       < threshold_for_logging
     then
       (* We didn't print this current step. But if the *next* step proves to have a big
@@ -121,14 +121,14 @@ let log_cgroup_total cgroup ~step_group ~step ~suffix ~total_hwm =
       (* This step is being shown right now. So if the next step proves to have a big
          increase in memory, we won't need to show this one again! *)
       step_group.prev_step_to_show := None;
-      step_group.last_printed_total := cgroup.CGroup.total;
+      step_group.last_printed_total := cgroup.C_group.total;
       let hwm =
-        if cgroup.CGroup.total >= total_hwm then
+        if cgroup.C_group.total >= total_hwm then
           ""
         else
           Printf.sprintf
             " (hwm %s)"
-            (pretty_num (total_hwm - initial.CGroup.total))
+            (pretty_num (total_hwm - initial.C_group.total))
       in
       let prev =
         match prev with
@@ -137,12 +137,12 @@ let log_cgroup_total cgroup ~step_group ~step ~suffix ~total_hwm =
           Printf.sprintf
             "\n   >%s %s  [@%s]  previous measurement"
             (Utils.timestring prev.time)
-            (pretty_num (prev.step_total - initial.CGroup.total))
+            (pretty_num (prev.step_total - initial.C_group.total))
             prev.log_label_and_suffix
       in
       Hh_logger.log
         "Cgroup: %s%s  [@%s]%s%s"
-        (pretty_num (cgroup.CGroup.total - initial.CGroup.total))
+        (pretty_num (cgroup.C_group.total - initial.C_group.total))
         hwm
         current.log_label_and_suffix
         initial_msg
@@ -184,7 +184,7 @@ let log_telemetry
     ~cgroup
     ~telemetry_ref
     ~secs_at_total_gb =
-  let open CGroup in
+  let open C_group in
   let (initial, initial_opt) =
     initial_value_map cgroup ~default:false ~f:(fun _ -> true)
   in
@@ -196,7 +196,7 @@ let log_telemetry
       ()
     else begin
       has_logged_error := SSet.add e !has_logged_error;
-      HackEventLogger.CGroup.error e
+      Hack_event_logger.CGroup.error e
     end
   | (Some (Ok start_cgroup), Ok cgroup) ->
     let total_hwm = max (max start_cgroup.total cgroup.total) total_hwm in
@@ -225,7 +225,7 @@ let log_telemetry
            ~key:"sysinfo_totalswap"
            ~value:(Option.map sysinfo ~f:(fun si -> si.Sys_utils.totalswap))
       |> Option.some;
-    HackEventLogger.CGroup.step
+    Hack_event_logger.CGroup.step
       ~cgroup:cgroup.cgroup_name
       ~step_group:step_group.name
       ~step
@@ -250,7 +250,7 @@ let log_telemetry
       Telemetry.create ()
       |> Telemetry.int_ ~key:"end" ~value:cgroup.total
       |> Option.some;
-    HackEventLogger.CGroup.step
+    Hack_event_logger.CGroup.step
       ~cgroup:cgroup.cgroup_name
       ~step_group:step_group.name
       ~step
@@ -289,7 +289,7 @@ let step step_group ?(telemetry_ref = ref None) name =
   else begin
     step_group.step_count := !(step_group.step_count) + 1;
     let step = Printf.sprintf "%02d_%s" !(step_group.step_count) name in
-    let cgroup = CGroup.get_stats () in
+    let cgroup = C_group.get_stats () in
     log_cgroup_total cgroup ~step_group ~step ~suffix:"" ~total_hwm:0;
     log_telemetry
       ~step_group
@@ -309,7 +309,7 @@ let step_start_end step_group ?(telemetry_ref = ref None) name f =
     step_group.step_count := !(step_group.step_count) + 1;
     let step = Printf.sprintf "%02d_%s" !(step_group.step_count) name in
     let start_time = Unix.gettimeofday () in
-    let start_cgroup = CGroup.get_stats () in
+    let start_cgroup = C_group.get_stats () in
     log_cgroup_total
       start_cgroup
       ~step_group
@@ -319,16 +319,16 @@ let step_start_end step_group ?(telemetry_ref = ref None) name f =
     let (initial, ()) =
       initial_value_map start_cgroup ~default:() ~f:(fun _ -> ())
     in
-    Result.iter start_cgroup ~f:(fun { CGroup.cgroup_name; _ } ->
+    Result.iter start_cgroup ~f:(fun { C_group.cgroup_name; _ } ->
         let path1 = "/sys/fs/cgroup/" ^ cgroup_name ^ "/memory.current" in
         let path2 = "/sys/fs/cgroup/" ^ cgroup_name ^ "/memory.swap.current" in
         cgroup_watcher_start
           path1
           path2
-          ~subtract_kb_for_array:(initial.CGroup.total / 1024));
+          ~subtract_kb_for_array:(initial.C_group.total / 1024));
     Utils.try_finally ~f ~finally:(fun () ->
         try
-          let cgroup = CGroup.get_stats () in
+          let cgroup = C_group.get_stats () in
           let (hwm_kb, _num_readings, secs_at_total_gb) =
             cgroup_watcher_get ()
           in

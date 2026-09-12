@@ -7,4 +7,4 @@
  *
  *)
 
-val go : string SymbolDefinition.t list -> bool -> unit
+val go : string Symbol_definition.t list -> bool -> unit

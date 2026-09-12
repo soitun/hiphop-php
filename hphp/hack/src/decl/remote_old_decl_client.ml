@@ -25,7 +25,7 @@ let fetch_old_decls_from_test_fixture ~(ctx : Provider_context.t) names :
       let parsed_file =
         Direct_decl_parser.parse_and_hash_decls
           opts
-          popt.ParserOptions.deregister_php_stdlib
+          popt.Parser_options.deregister_php_stdlib
           (Relative_path.create Relative_path.Dummy test_fixture_filename)
           contents
       in
@@ -123,7 +123,7 @@ let fetch_old_decls ~(ctx : Provider_context.t) (names : string list) :
         |> Telemetry.int_ ~key:"to_fetch" ~value:to_fetch
         |> Telemetry.int_ ~key:"fetched" ~value:(SMap.cardinal old_decls)
       in
-      HackEventLogger.remote_old_decl_end telemetry start_t;
+      Hack_event_logger.remote_old_decl_end telemetry start_t;
       Hh_logger.log
         "Fetched %d/%d decls remotely"
         (SMap.cardinal old_decls)

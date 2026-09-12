@@ -706,8 +706,8 @@ let method_occ receiver_class name fa =
         name = Util.make_name name;
         class_name =
           (match receiver_class with
-          | SymbolOccurrence.UnknownClass -> None
-          | SymbolOccurrence.ClassName class_name ->
+          | Symbol_occurrence.UnknownClass -> None
+          | Symbol_occurrence.ClassName class_name ->
             Some (Util.make_name class_name));
       }
       |> to_json_key)

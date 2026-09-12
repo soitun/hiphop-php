@@ -78,7 +78,7 @@ let error_while_hashing
   in
   { tast_hashes; error_hashes = ISet.empty }
 
-let is_enabled tcopt = TypecheckerOptions.dump_tast_hashes tcopt
+let is_enabled tcopt = Typechecker_options.dump_tast_hashes tcopt
 
 let map ctx path tasts errors : t =
   let file_info =

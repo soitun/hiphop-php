@@ -17,7 +17,7 @@ let check_local_capability (mk_required : env -> env * locl_ty) mk_err_opt env =
   (* gate the check behavior on coeffects TC option *)
   let tcopt = Env.get_tcopt env in
   let should_skip_check =
-    (not @@ TypecheckerOptions.local_coeffects tcopt)
+    (not @@ Typechecker_options.local_coeffects tcopt)
     || Tast.is_under_dynamic_assumptions env.checked
   in
   if not should_skip_check then (

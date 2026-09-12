@@ -197,7 +197,7 @@ let start_server ~informant_managed options exit_status =
 let maybe_start_first_server options informant : Server_process.server_process =
   if Informant.should_start_first_server informant then (
     Hh_logger.log "Starting first server";
-    HackEventLogger.starting_first_server ();
+    Hack_event_logger.starting_first_server ();
     start_server
       ~informant_managed:(Informant.is_managing informant)
       options
@@ -285,7 +285,7 @@ let kill_and_maybe_restart_server (env : env msg_update) exit_status :
       ^ "precomputed saved-state. Exiting monitor"
     in
     Hh_logger.log "%s" reason;
-    HackEventLogger.refuse_to_restart_server
+    Hack_event_logger.refuse_to_restart_server
       ~reason
       ~server_state:(Server_process.show_server_process env.server)
       ~version_matches;
@@ -395,7 +395,7 @@ let hand_off_client_connection_wrapper ~tracker server_fd client_fd =
             ~tracker
             "Handoff FD failed unexpectedly - %s"
             (Exception.to_string e);
-          HackEventLogger.send_fd_failure e)
+          Hack_event_logger.send_fd_failure e)
     ~finally:(fun () ->
       match !to_finally_close with
       | None -> ()
@@ -694,7 +694,7 @@ let update_status_ (env : env msg_update) monitor_config :
             (telemetry, Some exit_status)
         in
         Hh_logger.log "TYPECHECKER_EXIT %s" (Telemetry.to_string telemetry);
-        HackEventLogger.typechecker_exit
+        Hack_event_logger.typechecker_exit
           telemetry
           time_taken
           (monitor_config.server_log_file, monitor_config.monitor_log_file)
@@ -904,7 +904,7 @@ let update_status (env : env msg_update) monitor_config : env msg_update =
              ~value:(Server_process.show_server_process new_server)
         |> Telemetry.string_opt ~key:"new_error" ~value:new_error
       in
-      HackEventLogger.monitor_update_status reason telemetry
+      Hack_event_logger.monitor_update_status reason telemetry
   end;
   msg_update
 
@@ -922,7 +922,7 @@ let check_and_run_loop_
        we're unable to grab a lock on the file currently under pathname "lock_file".
        Or, maybe users just manually deleted the file. *)
     Hh_logger.log "Lost lock; terminating.\n%!";
-    HackEventLogger.lock_stolen lock_file;
+    Hack_event_logger.lock_stolen lock_file;
     Exit.exit Exit_status.Lock_stolen
   );
   let sequence_receipt_high_water_mark =
@@ -949,7 +949,7 @@ let check_and_run_loop_
       try Unix.accept socket with
       | exn ->
         let e = Exception.wrap exn in
-        HackEventLogger.accepting_on_socket_exception e;
+        Hack_event_logger.accepting_on_socket_exception e;
         Hh_logger.log
           "ACCEPTING_ON_SOCKET_EXCEPTION; closing client FD. %s"
           (Exception.to_string e |> Exception.clean_stack);
@@ -1006,7 +1006,7 @@ let rec check_and_run_loop
         Hh_logger.log
           "Probably an uncaught exception rethrown each retry. Exiting. %s"
           (Exception.to_string e);
-        HackEventLogger.monitor_giving_up_exception e;
+        Hack_event_logger.monitor_giving_up_exception e;
         Exit.exit (Exit_status.Uncaught_exception e)
       );
       Hh_logger.log

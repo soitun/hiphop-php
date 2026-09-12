@@ -66,8 +66,8 @@ let mean_kill env =
   let root_s = Path.to_string env.root in
   Printf.eprintf "Attempting to meanly kill server for %s\n%!" root_s;
   let pids =
-    try PidLog.get_pids (ServerFiles.pids_file env.root) with
-    | PidLog.FailedToGetPids ->
+    try Pid_log.get_pids (ServerFiles.pids_file env.root) with
+    | Pid_log.FailedToGetPids ->
       Printf.eprintf
         "Unable to figure out pids of running Hack server. Try manually killing it with `pkill hh_server`\n%!";
       raise FailedToKill
@@ -100,7 +100,7 @@ let do_kill env =
     | FailedToKill -> raise Exit_status.(Exit_with Kill_error))
 
 let main (env : env) : Exit_status.t Lwt.t =
-  HackEventLogger.client_stop ();
+  Hack_event_logger.client_stop ();
   do_kill env;
   Lwt.return Exit_status.No_error
 

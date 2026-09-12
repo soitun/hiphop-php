@@ -219,7 +219,7 @@ and hint_ p env = function
       | None -> (false, paraml)
     in
     let everything_sdt =
-      TypecheckerOptions.everything_sdt (Decl_env.tcopt env)
+      Typechecker_options.everything_sdt (Decl_env.tcopt env)
     in
     let ft_tparams =
       List.map

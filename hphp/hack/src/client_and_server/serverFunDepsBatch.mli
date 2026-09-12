@@ -12,10 +12,11 @@ val go :
   ServerEnv.env ->
   string list
 
-module Results : Stdlib.Set.S with type elt = Relative_path.t SymbolOccurrence.t
+module Results :
+  Stdlib.Set.S with type elt = Relative_path.t Symbol_occurrence.t
 
 val handlers :
   ( Results.t,
-    Relative_path.t SymbolDefinition.t option list,
+    Relative_path.t Symbol_definition.t option list,
     Nast.program )
   ServerRxApiShared.handlers

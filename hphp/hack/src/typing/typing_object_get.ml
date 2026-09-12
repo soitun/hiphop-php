@@ -719,7 +719,7 @@ and obj_get_concrete_class_with_member_info
       TVis.check_expression_tree_vis ~use_pos:id_pos ~def_pos:mem_pos env vis;
       (if
        args.meth_caller
-       && TypecheckerOptions.meth_caller_only_public_visibility
+       && Typechecker_options.meth_caller_only_public_visibility
             (Env.get_tcopt env)
       then
         TVis.check_meth_caller_access

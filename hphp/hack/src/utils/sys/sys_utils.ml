@@ -106,7 +106,7 @@ let cat = Disk.cat
 
 let cat_or_failed file =
   try Some (Disk.cat file) with
-  | TestDisk.No_such_file_or_directory _
+  | Test_disk.No_such_file_or_directory _
   | Sys_error _
   | Failure _ ->
     None
@@ -185,7 +185,7 @@ let parse_path_list (paths : string list) : string list =
 
 let rm_dir_tree ?(skip_mocking = false) =
   if skip_mocking then
-    RealDisk.rm_dir_tree
+    Real_disk.rm_dir_tree
   else
     Disk.rm_dir_tree
 
@@ -358,7 +358,7 @@ let write_strings_to_file ~file (ss : string list) =
 
 let mkdir_p ?(skip_mocking = false) =
   if skip_mocking then
-    RealDisk.mkdir_p
+    Real_disk.mkdir_p
   else
     Disk.mkdir_p
 

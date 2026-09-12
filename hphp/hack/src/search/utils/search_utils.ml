@@ -10,9 +10,9 @@ open Reordered_argument_collections
 
 type mock_on_find =
   query_text:string ->
-  context:SearchTypes.autocomplete_type ->
+  context:Search_types.autocomplete_type ->
   kind_filter:FileInfo.si_kind option ->
-  SearchTypes.si_item list
+  Search_types.si_item list
 
 (* Known search providers *)
 type search_provider =

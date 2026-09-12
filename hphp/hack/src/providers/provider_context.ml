@@ -26,14 +26,14 @@ type entry = {
   mutable cst: PositionedSyntaxTree.t option;
   mutable tast: Tast.program Tast_with_dynamic.t option;
   mutable all_diagnostics: Diagnostics.t option;
-  mutable symbols: Relative_path.t SymbolOccurrence.t list option;
+  mutable symbols: Relative_path.t Symbol_occurrence.t list option;
 }
 
 type entries = entry Relative_path.Map.t
 
 type t = {
-  popt: ParserOptions.t;
-  tcopt: TypecheckerOptions.t;
+  popt: Parser_options.t;
+  tcopt: Typechecker_options.t;
   backend: Provider_backend.t;
   deps_mode: Typing_deps_mode.t;
   entries: entries;
@@ -100,14 +100,15 @@ let add_entry_if_missing ~(ctx : t) ~(path : Relative_path.t) : t * entry =
     let entry = make_entry ~path ~contents:Not_yet_read_from_disk in
     (add_or_overwrite_entry ~ctx entry, entry)
 
-let get_popt (t : t) : ParserOptions.t = t.popt
+let get_popt (t : t) : Parser_options.t = t.popt
 
-let get_tcopt (t : t) : TypecheckerOptions.t = t.tcopt
+let get_tcopt (t : t) : Typechecker_options.t = t.tcopt
 
 let get_package_info (t : t) : Package_info.t =
-  t.popt.ParserOptions.package_info
+  t.popt.Parser_options.package_info
 
-let map_tcopt (t : t) ~(f : TypecheckerOptions.t -> TypecheckerOptions.t) : t =
+let map_tcopt (t : t) ~(f : Typechecker_options.t -> Typechecker_options.t) : t
+    =
   { t with tcopt = f t.tcopt }
 
 let get_backend (t : t) : Provider_backend.t = t.backend
@@ -295,7 +296,7 @@ let ctx_with_pessimisation_info_exn ctx info =
       Provider_backend.Pessimised_shared_memory backend."
 
 let implicit_sdt_for_fun ctx fe =
-  TypecheckerOptions.everything_sdt (get_tcopt ctx)
+  Typechecker_options.everything_sdt (get_tcopt ctx)
   && not fe.Typing_defs.fe_no_auto_dynamic
 
 let no_auto_likes_for_fun fe = fe.Typing_defs.fe_no_auto_likes
@@ -303,8 +304,8 @@ let no_auto_likes_for_fun fe = fe.Typing_defs.fe_no_auto_likes
 let with_tcopt_for_autocomplete t =
   let tcopt =
     t.tcopt
-    |> TypecheckerOptions.set_tco_autocomplete_mode
-    |> TypecheckerOptions.set_skip_check_under_dynamic
-    |> TypecheckerOptions.set_skip_hierarchy_checks
+    |> Typechecker_options.set_tco_autocomplete_mode
+    |> Typechecker_options.set_skip_check_under_dynamic
+    |> Typechecker_options.set_skip_hierarchy_checks
   in
   { t with tcopt }

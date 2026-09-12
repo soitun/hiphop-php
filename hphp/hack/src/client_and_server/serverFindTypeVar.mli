@@ -10,4 +10,4 @@ val go :
   ('a, 'b) Aast.program ->
   Pos.t ->
   string ->
-  Relative_path.t SymbolDefinition.t option
+  Relative_path.t Symbol_definition.t option

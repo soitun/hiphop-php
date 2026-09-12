@@ -17,6 +17,6 @@ let from_global_options (gopt : GlobalOptions.t) =
   let open GlobalOptions in
   {
     implicit_inherit_sdt = gopt.tco_implicit_inherit_sdt;
-    everything_sdt = gopt.po.ParserOptions.everything_sdt;
+    everything_sdt = gopt.po.Parser_options.everything_sdt;
     class_class_type = gopt.class_class_type;
   }

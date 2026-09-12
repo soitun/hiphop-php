@@ -14,7 +14,7 @@ module type MapReducer = sig
 
   (** A function that takes type checker options and returns whether the
       map-reducer is enabled *)
-  val is_enabled : TypecheckerOptions.t -> bool
+  val is_enabled : Typechecker_options.t -> bool
 
   (** A map function that takes in a TAST and produces the intermediate data.
 

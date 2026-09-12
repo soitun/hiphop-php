@@ -231,7 +231,7 @@ let test_dupe_setup ~(sqlite : bool) =
   let setup =
     Common_setup.setup ~sqlite GlobalOptions.default ~xhp_as:`Namespaces
   in
-  let sienv = SearchUtils.quiet_si_env in
+  let sienv = Search_utils.quiet_si_env in
   let ctx = setup.Common_setup.ctx in
 
   (* In the common_setup, 'foo.php' defines symbols Foo,f1,f2.
@@ -358,7 +358,7 @@ let test_xhp_name_mangling ~(sqlite : bool) () =
   let setup =
     Common_setup.setup ~sqlite GlobalOptions.default ~xhp_as:`MangledSymbols
   in
-  let sienv = SearchUtils.quiet_si_env in
+  let sienv = Search_utils.quiet_si_env in
   let ctx = setup.Common_setup.ctx in
   let xhp_class = {|
   class :my:xhp:cls {}

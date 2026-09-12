@@ -33,8 +33,8 @@ let dummy_env () =
   let () = Typing_subtype.set_fun_refs () in
   let ctx =
     Provider_context.empty_for_test
-      ~popt:ParserOptions.default
-      ~tcopt:TypecheckerOptions.default
+      ~popt:Parser_options.default
+      ~tcopt:Typechecker_options.default
       ~deps_mode:(Typing_deps_mode.InMemoryMode None)
   in
   let env = Typing_env_types.empty ctx Relative_path.default ~droot:None in

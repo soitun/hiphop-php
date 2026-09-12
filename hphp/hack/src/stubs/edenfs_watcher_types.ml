@@ -8,7 +8,7 @@
 
 type settings = {
   root: Path.t;
-  watch_spec: FilesToIgnore.watch_spec;
+  watch_spec: Files_to_ignore.watch_spec;
   debug_logging: bool;
   timeout_secs: int;  (** Timeout, in seconds *)
   throttle_time_ms: int;

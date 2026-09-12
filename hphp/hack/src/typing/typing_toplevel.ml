@@ -23,7 +23,7 @@ module Env = Typing_env
 module MakeType = Typing_make_type
 module Phase = Typing_phase
 module EnvFromDef = Typing_env_from_def
-module TCO = TypecheckerOptions
+module TCO = Typechecker_options
 module SN = Naming_special_names
 module Profile = Typing_toplevel_profile
 module Enable = Typing_toplevel_enable
@@ -53,7 +53,7 @@ let check_if_this_def_is_the_winner ctx name_type (pos, name) : bool =
          gives slightly different answers from what direct-decl-parser provides
          e.g. in case of incorrect parse trees, or order of winner; (2) disk race
          where the file on disk has changed but we haven't yet updated naming table. *)
-      HackEventLogger.decl_consistency_bug
+      Hack_event_logger.decl_consistency_bug
         "Decl consistency: Ast definition but no decl"
         ~data:name
         ~pos:(Pos.to_relative_string pos |> Pos.string);
@@ -479,7 +479,7 @@ let set_tcopt_unstable_features ctx { Aast.fa_user_attributes; _ } =
             if String.equal s SN.UnstableFeatures.expression_trees then
               Provider_context.map_tcopt
                 ~f:(fun t ->
-                  TypecheckerOptions.set_tco_enable_expression_trees t true)
+                  Typechecker_options.set_tco_enable_expression_trees t true)
                 ctx
             else
               ctx
@@ -487,7 +487,7 @@ let set_tcopt_unstable_features ctx { Aast.fa_user_attributes; _ } =
           let ctx =
             if String.equal s SN.UnstableFeatures.recursive_case_types then
               Provider_context.map_tcopt
-                ~f:TypecheckerOptions.enable_recursive_case_types
+                ~f:Typechecker_options.enable_recursive_case_types
                 ctx
             else
               ctx
@@ -498,7 +498,7 @@ let set_tcopt_unstable_features ctx { Aast.fa_user_attributes; _ } =
 let nast_to_tast ~(do_tast_checks : bool) (ctx : Provider_context.t) nast :
     Tast.program Tast_with_dynamic.t =
   let convert_def def =
-    WorkerCancel.raise_if_stop_requested ();
+    Worker_cancel.raise_if_stop_requested ();
     match def with
     (* Sometimes typing will just return `None` but that should only be the case
      * if an error had already been registered e.g. in naming
@@ -541,7 +541,7 @@ let nast_to_tast ~(do_tast_checks : bool) (ctx : Provider_context.t) nast :
     end
     | Stmt ((pos, stmt_) as s) ->
       let () =
-        HackEventLogger.invariant_violation_bug
+        Hack_event_logger.invariant_violation_bug
           ~pos:(Pos.show_absolute (Pos.to_absolute pos))
           ~data:
             (let show_ex_en _ _ = () in

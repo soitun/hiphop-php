@@ -19,7 +19,7 @@ module Type = Typing_ops
 module Phase = Typing_phase
 module EnvFromDef = Typing_env_from_def
 module TUtils = Typing_utils
-module TCO = TypecheckerOptions
+module TCO = Typechecker_options
 module Cls = Folded_class
 module SN = Naming_special_names
 module Profile = Typing_toplevel_profile
@@ -222,7 +222,7 @@ let method_return ~supportdyn env cls m ret_decl_ty =
   (env, return)
 
 let method_def ~is_disposable env cls m =
-  WorkerCancel.raise_if_stop_requested ();
+  Worker_cancel.raise_if_stop_requested ();
   let tcopt = Env.get_tcopt env in
   Enable.if_matches_regexp tcopt (Some env) ~default:None m.m_name @@ fun () ->
   Profile.measure_elapsed_time_and_report tcopt (Some env) m.m_name @@ fun () ->
@@ -1964,7 +1964,7 @@ let class_wellformedness_checks env c tc (parents : class_parents) =
   let (env, (user_attributes, file_attrs)) =
     Env.run_with_no_self env (check_class_attributes ~cls:c)
   in
-  NastInitCheck.class_ env c;
+  Nast_init_check.class_ env c;
   check_tests_bypass_visibility_on_internal_class env c;
   let env = check_class_type_parameters_add_constraints env c tc in
   let env = check_hint_wellformedness_in_class env c parents in
@@ -1984,7 +1984,7 @@ let check_no_redeclared_promoted_props env c (parents : class_parents) =
   match constructor with
   | _
     when not
-           (TypecheckerOptions.reject_promoted_property_redeclaration
+           (Typechecker_options.reject_promoted_property_redeclaration
               (Env.get_tcopt env)) ->
     (* Rollout flag, off by default: re-promoting an inherited property is a
        widespread pattern in existing code, so this is gated behind
@@ -2253,7 +2253,7 @@ let class_def ctx (c : _ class_) =
   match Env.get_class env (snd c.c_name) with
   | Decl_entry.DoesNotExist
   | Decl_entry.NotYetAvailable ->
-    HackEventLogger.decl_consistency_bug
+    Hack_event_logger.decl_consistency_bug
       "Decl consistency: class_def, but can't find a decl"
       ~data:(snd c.c_name)
       ~pos:(Pos.to_relative_string (fst c.c_name) |> Pos.string);

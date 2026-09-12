@@ -28,7 +28,7 @@ type naming_table = Naming_table.t * Relative_path.t SymbolMap.t
 let deps_mode = Typing_deps_mode.InMemoryMode None
 
 let popt =
-  ParserOptions.
+  Parser_options.
     { default with disable_xhp_element_mangling = false; everything_sdt = true }
 
 (* `--config` settings are applied on top, so a test can turn on any `.hhconfig`

@@ -319,61 +319,61 @@ let gen_hierarchy : hierarchy Quickcheck.Generator.t =
 (* ------------------------------------------------------------------ *)
 
 module TagDomain :
-  ApproxSet_intf.DomainType with type t = tag and type ctx = hierarchy = struct
+  Approx_set_intf.DomainType with type t = tag and type ctx = hierarchy = struct
   type t = tag
 
   type ctx = hierarchy
 
-  let relation (t1 : t) ~(ctx : ctx) (t2 : t) : SetRelation.t =
+  let relation (t1 : t) ~(ctx : ctx) (t2 : t) : Set_relation.t =
     let h = ctx in
     match (t1, t2) with
-    | (Mixed, Mixed) -> SetRelation.equivalent
-    | (Mixed, _) -> SetRelation.superset
-    | (_, Mixed) -> SetRelation.subset
+    | (Mixed, Mixed) -> Set_relation.equivalent
+    | (Mixed, _) -> Set_relation.superset
+    | (_, Mixed) -> Set_relation.subset
     (* BuiltIn overlaps with Object *)
-    | (BuiltIn, BuiltIn) -> SetRelation.equivalent
+    | (BuiltIn, BuiltIn) -> Set_relation.equivalent
     | (BuiltIn, Object)
     | (Object, BuiltIn) ->
-      SetRelation.none
+      Set_relation.none
     (* Shape ⊂ Dict at runtime *)
-    | (Shape, Shape) -> SetRelation.equivalent
+    | (Shape, Shape) -> Set_relation.equivalent
     | (Shape, Dict)
     | (Dict, Shape) ->
-      SetRelation.none
-    | (Dict, Dict) -> SetRelation.equivalent
+      Set_relation.none
+    | (Dict, Dict) -> Set_relation.equivalent
     (* Tuple ⊂ Vec at runtime *)
-    | (Tuple, Tuple) -> SetRelation.equivalent
+    | (Tuple, Tuple) -> Set_relation.equivalent
     | (Tuple, Vec)
     | (Vec, Tuple) ->
-      SetRelation.none
-    | (Vec, Vec) -> SetRelation.equivalent
+      Set_relation.none
+    | (Vec, Vec) -> Set_relation.equivalent
     (* Equal tags *)
-    | (Prim p1, Prim p2) when equal_prim p1 p2 -> SetRelation.equivalent
-    | (Object, Object) -> SetRelation.equivalent
+    | (Prim p1, Prim p2) when equal_prim p1 p2 -> Set_relation.equivalent
+    | (Object, Object) -> Set_relation.equivalent
     (* Object ⊃ Instance *)
-    | (Object, Instance _) -> SetRelation.superset
-    | (Instance _, Object) -> SetRelation.subset
+    | (Object, Instance _) -> Set_relation.superset
+    | (Instance _, Object) -> Set_relation.subset
     (* Instance vs Instance *)
     | (Instance { id = id1; _ }, Instance { id = id2; kind = kind2; _ }) ->
       if id1 = id2 then
-        SetRelation.equivalent
+        Set_relation.equivalent
       else if Set.mem (h.ancestors id2) id1 then
-        SetRelation.superset
+        Set_relation.superset
       else if Set.mem (h.ancestors id1) id2 then
-        SetRelation.subset
+        Set_relation.subset
       else begin
         (* Unrelated *)
         match (t1, Instance { id = id2; kind = kind2; ancestor_count = 0 }) with
         | (Instance { kind = Final; _ }, _)
         | (_, Instance { kind = Final; _ }) ->
-          SetRelation.disjoint
+          Set_relation.disjoint
         | (Instance { kind = Interface; _ }, _)
         | (_, Instance { kind = Interface; _ }) ->
-          SetRelation.none
-        | _ -> (* both NonFinal *) SetRelation.disjoint
+          Set_relation.none
+        | _ -> (* both NonFinal *) Set_relation.disjoint
       end
     (* All other cross-category pairs *)
-    | _ -> SetRelation.disjoint
+    | _ -> Set_relation.disjoint
 end
 
 (* ------------------------------------------------------------------ *)
@@ -381,7 +381,7 @@ end
 (* ------------------------------------------------------------------ *)
 
 module OrderedTagDomain :
-  ApproxSet_intf.OrderedDomainType with type t = tag and type ctx = hierarchy =
+  Approx_set_intf.OrderedDomainType with type t = tag and type ctx = hierarchy =
 struct
   include TagDomain
 
@@ -531,7 +531,7 @@ let make_denotation (h : hierarchy) : tag -> Int.Set.t =
 (* ------------------------------------------------------------------ *)
 
 module type S_for_test = sig
-  include ApproxSet_intf.S with module Domain := TagDomain
+  include Approx_set_intf.S with module Domain := TagDomain
 
   val name : string
 

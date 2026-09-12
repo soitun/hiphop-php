@@ -55,7 +55,7 @@ val go_from_file_ctx_with_symbol_definition :
   ctx:Provider_context.t ->
   entry:Provider_context.entry ->
   File_content.Position.t ->
-  (Relative_path.t SymbolDefinition.t * action) option
+  (Relative_path.t Symbol_definition.t * action) option
 
 (**
  * Given a position in a file, returns the name of the symbol
@@ -75,6 +75,6 @@ val go_from_file_ctx :
 val go_for_localvar :
   Provider_context.t ->
   action ->
-  (SearchTypes.Find_refs.t list, action) Hh_prelude.result
+  (Search_types.Find_refs.t list, action) Hh_prelude.result
 
 val to_absolute : server_result -> result

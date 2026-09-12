@@ -121,7 +121,7 @@ module Todo : sig
     are currently in progress so that these can be cancelled. *)
   type t
 
-  val create : workitem BigList.t -> t
+  val create : workitem Big_list.t -> t
 
   (** [update progress todo] updates [todo] with the [progress] made. *)
   val update : TypingProgress.t -> t -> unit
@@ -138,7 +138,7 @@ module Todo : sig
   val files_checked_count : t -> int
 end = struct
   type t = {
-    to_process: workitem BigList.t ref;
+    to_process: workitem Big_list.t ref;
     in_progress: workitem Hash_set.Poly.t;
     files_checked_count: int ref;
   }
@@ -153,8 +153,8 @@ end = struct
   let update_to_process progress to_process : unit =
     to_process :=
       !to_process
-      |> BigList.append (TypingProgress.remaining progress)
-      |> BigList.append (TypingProgress.deferred progress)
+      |> Big_list.append (TypingProgress.remaining progress)
+      |> Big_list.append (TypingProgress.deferred progress)
 
   let update_in_progress progress in_progress =
     (* If workers can steal work from each other, then it's possible that
@@ -204,23 +204,24 @@ end = struct
   let consume
       (how_many : to_process_count:int -> int)
       { to_process; in_progress; files_checked_count = _ } =
-    if BigList.is_empty !to_process then
+    if Big_list.is_empty !to_process then
       if Hash_set.Poly.is_empty in_progress then
         Bucket.Done
       else
         Bucket.Wait
     else
       let (next, remaining) =
-        BigList.split_n
+        Big_list.split_n
           !to_process
-          (how_many ~to_process_count:(BigList.length !to_process))
+          (how_many ~to_process_count:(Big_list.length !to_process))
       in
       to_process := remaining;
       List.iter next ~f:(Hash_set.Poly.add in_progress);
       Bucket.Job next
 
   let cancel { to_process; in_progress; files_checked_count = _ } =
-    to_process := BigList.append (Hash_set.Poly.to_list in_progress) !to_process
+    to_process :=
+      Big_list.append (Hash_set.Poly.to_list in_progress) !to_process
 end
 
 type seconds_since_epoch = float
@@ -270,7 +271,7 @@ end = struct
                    elapsed
                    cpu_delta
                    (Telemetry.to_string counters_delta);
-                 HackEventLogger.client_check_heartbeat
+                 Hack_event_logger.client_check_heartbeat
                    ~path:(path_of_workitem workitem)
                    ~start_time;
                  schedule ()))
@@ -398,7 +399,7 @@ let process_file
           file_map_reduce_data = Map_reduce.map ctx fn tasts file_errors;
         }
       with
-      | WorkerCancel.Worker_should_exit as exn ->
+      | Worker_cancel.Worker_should_exit as exn ->
         (* Cancellation requests must be re-raised *)
         let e = Exception.wrap exn in
         Exception.reraise e
@@ -458,14 +459,14 @@ module ProcessFilesTally = struct
 end
 
 let get_stats ~include_slightly_costly_stats tally :
-    HackEventLogger.ProfileTypeCheck.stats =
+    Hack_event_logger.ProfileTypeCheck.stats =
   let telemetry =
     Counters.get_counters ()
     |> Telemetry.object_
          ~key:"tally"
          ~value:(ProcessFilesTally.get_telemetry tally)
   in
-  HackEventLogger.ProfileTypeCheck.get_stats
+  Hack_event_logger.ProfileTypeCheck.get_stats
     ~include_current_process:true
     ~include_slightly_costly_stats
     ~shmem_heap_size:(SharedMem.SMTelemetry.heap_size ())
@@ -477,7 +478,7 @@ type workitem_accumulator = {
   diagnostics: Diagnostics.t;
   map_reduce_data: Map_reduce.t;
   tally: ProcessFilesTally.t;
-  stats: HackEventLogger.ProfileTypeCheck.stats;
+  stats: Hack_event_logger.ProfileTypeCheck.stats;
 }
 
 let process_one_workitem
@@ -493,7 +494,7 @@ let process_one_workitem
   let workitem_cap_mb = Option.value memory_cap ~default:Int.max_value in
   let type_check_twice =
     check_info.per_file_profiling
-      .HackEventLogger.PerFileProfilingConfig.profile_type_check_twice
+      .Hack_event_logger.PerFileProfilingConfig.profile_type_check_twice
   in
 
   let ( file,
@@ -588,14 +589,14 @@ let process_one_workitem
       workitem_ends_under_cap
     else begin
       SharedMem.invalidate_local_caches ();
-      HackEventLogger.flush ();
+      Hack_event_logger.flush ();
       Gc.compact ();
       hh_malloc_trim ();
       Gc_utils.get_heap_size () <= workitem_cap_mb
     end
   in
 
-  HackEventLogger.ProfileTypeCheck.process_workitem
+  Hack_event_logger.ProfileTypeCheck.process_workitem
     ~batch_info
     ~workitem_index:(ProcessFilesTally.count tally)
     ~file:(Option.map file ~f:(fun file -> file.path))
@@ -621,14 +622,14 @@ let process_workitems
     ~(check_info : check_info)
     ~(worker_id : string)
     ~(batch_number : int)
-    ~(typecheck_info : HackEventLogger.ProfileTypeCheck.typecheck_info) :
+    ~(typecheck_info : Hack_event_logger.ProfileTypeCheck.typecheck_info) :
     typing_result * TypingProgress.t =
   Decl_counters.set_mode
     check_info.per_file_profiling
-      .HackEventLogger.PerFileProfilingConfig.profile_decling;
+      .Hack_event_logger.PerFileProfilingConfig.profile_decling;
   let _prev_counters_state = Counters.reset () in
   let batch_info =
-    HackEventLogger.ProfileTypeCheck.get_batch_info
+    Hack_event_logger.ProfileTypeCheck.get_batch_info
       ~typecheck_info
       ~worker_id
       ~batch_number
@@ -668,7 +669,7 @@ let process_workitems
   let dep_edges = Typing_deps.merge_dep_edges dep_edges new_dep_edges in
   if
     Provider_context.get_tcopt ctx
-    |> TypecheckerOptions.record_fine_grained_dependencies
+    |> Typechecker_options.record_fine_grained_dependencies
   then
     Typing_pessimisation_deps.finalize (Provider_context.get_deps_mode ctx);
 
@@ -682,7 +683,7 @@ let process_workitems
   in
   let profiling_info = Telemetry.add profiling_info this_batch_profiling_info in
 
-  TypingLogger.flush_buffers ();
+  Typing_logger.flush_buffers ();
   Ast_provider.local_changes_pop_sharedmem_stack ();
   File_provider.local_changes_pop_sharedmem_stack ();
   ({ diagnostics; map_reduce_data; dep_edges; profiling_info }, progress)
@@ -696,7 +697,7 @@ let load_and_process_workitems
     ~(check_info : check_info)
     ~(worker_id : string)
     ~(batch_number : int)
-    ~(typecheck_info : HackEventLogger.ProfileTypeCheck.typecheck_info) :
+    ~(typecheck_info : Hack_event_logger.ProfileTypeCheck.typecheck_info) :
     typing_result * TypingProgress.t =
   Option.iter check_info.memtrace_dir ~f:(fun temp_dir ->
       let file =
@@ -1105,7 +1106,7 @@ let exit_distc_failed ~(phase : distc_failure_phase) (msg : string) : 'a =
     Printf.sprintf "[%s] %s" (string_of_distc_failure_phase phase) msg
   in
   Hh_logger.log "Error with hh_distc: %s" tagged;
-  HackEventLogger.invariant_violation_bug "hh_distc failure" ~data:tagged;
+  Hack_event_logger.invariant_violation_bug "hh_distc failure" ~data:tagged;
   raise Exit_status.(Exit_with Distc_failed)
 
 (**
@@ -1126,10 +1127,10 @@ let exit_distc_failed ~(phase : distc_failure_phase) (msg : string) : 'a =
 *)
 let process_with_hh_distc
     ~(root : Path.t option)
-    ~(fanout : Typing_service_types.workitem BigList.t option)
+    ~(fanout : Typing_service_types.workitem Big_list.t option)
     ~(interrupt : 'a MultiThreadedCall.interrupt_config)
     ~(check_info : check_info)
-    ~(tcopt : TypecheckerOptions.t)
+    ~(tcopt : Typechecker_options.t)
     ~warnings_saved_state : _ distc_outcome =
   (* We don't want to use with_tempdir because we need to keep the folder around
      for subseqent typechecks that will read the dep graph in the folder *)
@@ -1143,7 +1144,7 @@ let process_with_hh_distc
     | None -> None
     | Some fanout ->
       Some
-        (List.filter_map (BigList.as_list fanout) ~f:(fun wi ->
+        (List.filter_map (Big_list.as_list fanout) ~f:(fun wi ->
              match wi with
              | Check { path; _ } -> Some (Relative_path.suffix path)
              | _ -> None))
@@ -1184,13 +1185,13 @@ let process_in_parallel
     (ctx : Provider_context.t)
     (workers : MultiWorker.worker list option)
     (telemetry : Telemetry.t)
-    (workitems : workitem BigList.t)
+    (workitems : workitem Big_list.t)
     ~(interrupt : 'a MultiThreadedCall.interrupt_config)
     ~(memory_cap : int option)
     ~(longlived_workers : bool)
     ~(check_info : check_info)
     ~warnings_saved_state
-    ~(typecheck_info : HackEventLogger.ProfileTypeCheck.typecheck_info) :
+    ~(typecheck_info : Hack_event_logger.ProfileTypeCheck.typecheck_info) :
     _
     * typing_result
     * Telemetry.t
@@ -1200,7 +1201,7 @@ let process_in_parallel
   let record = Measure.create () in
   (* [record] is used by [next] *)
   let todo = Todo.create workitems in
-  let workitems_initial_count = BigList.length workitems in
+  let workitems_initial_count = Big_list.length workitems in
   let error_stats = ref ErrorStats.empty in
   let batch_counts_by_worker_id = ref SMap.empty in
 
@@ -1275,9 +1276,9 @@ type 'a job_result =
 module type Mocking_sig = sig
   val with_test_mocking :
     (* real job payload, that we can modify... *)
-    workitem BigList.t ->
+    workitem Big_list.t ->
     ((* ... before passing it to the real job executor... *)
-     workitem BigList.t ->
+     workitem Big_list.t ->
     'a job_result) ->
     (* ... which output we can also modify. *)
     'a job_result
@@ -1295,10 +1296,10 @@ module TestMocking = struct
   let is_cancelled x = Relative_path.Set.mem !cancelled x
 
   let with_test_mocking
-      (fnl : workitem BigList.t) (f : workitem BigList.t -> 'a job_result) :
+      (fnl : workitem Big_list.t) (f : workitem Big_list.t -> 'a job_result) :
       'a job_result =
     let (mock_cancelled, fnl) =
-      List.partition_map (BigList.as_list fnl) ~f:(fun computation ->
+      List.partition_map (Big_list.as_list fnl) ~f:(fun computation ->
           match computation with
           | Check { path; _ } ->
             if is_cancelled path then
@@ -1309,7 +1310,7 @@ module TestMocking = struct
     in
     (* Only cancel once to avoid infinite loops *)
     cancelled := Relative_path.Set.empty;
-    let (res, unfinished_and_reason) = f (BigList.create fnl) in
+    let (res, unfinished_and_reason) = f (Big_list.create fnl) in
     let unfinished_and_reason =
       match unfinished_and_reason with
       | None when List.is_empty mock_cancelled -> None
@@ -1351,13 +1352,13 @@ let go_with_interrupt
     ~(check_info : check_info)
     ~warnings_saved_state : (_ * result) job_result =
   let typecheck_info =
-    HackEventLogger.ProfileTypeCheck.get_typecheck_info
+    Hack_event_logger.ProfileTypeCheck.get_typecheck_info
       ~init_id:check_info.init_id
       ~check_reason:check_info.check_reason
       ~recheck_id:check_info.recheck_id
       ~start_hh_stats:(CgroupProfiler.get_initial_stats ())
       ~start_typecheck_stats:
-        (HackEventLogger.ProfileTypeCheck.get_stats
+        (Hack_event_logger.ProfileTypeCheck.get_stats
            ~include_current_process:false
            ~include_slightly_costly_stats:true
            ~shmem_heap_size:(SharedMem.SMTelemetry.heap_size ())
@@ -1365,29 +1366,29 @@ let go_with_interrupt
       ~config:check_info.per_file_profiling
   in
   let tcopt = Provider_context.get_tcopt ctx in
-  let sample_rate = TypecheckerOptions.typecheck_sample_rate tcopt in
+  let sample_rate = Typechecker_options.typecheck_sample_rate tcopt in
   let original_fnl = fnl in
-  let fnl = BigList.create fnl in
-  Server_progress.write "typechecking %d files" (BigList.length fnl);
+  let fnl = Big_list.create fnl in
+  Server_progress.write "typechecking %d files" (Big_list.length fnl);
   let fnl =
     if Float.(sample_rate >= 1.0) then
       fnl
     else
       let result =
-        BigList.filter ~f:(FindUtils.sample_filter ~sample_rate) fnl
+        Big_list.filter ~f:(FindUtils.sample_filter ~sample_rate) fnl
       in
       Hh_logger.log
         "Sampling %f percent of files: %d out of %d"
         sample_rate
-        (BigList.length result)
-        (BigList.length fnl);
+        (Big_list.length result)
+        (Big_list.length fnl);
       result
   in
   let fnl =
-    BigList.map fnl ~f:(fun path ->
+    Big_list.map fnl ~f:(fun path ->
         Check { path; was_already_deferred = false })
   in
-  let num_workers = TypecheckerOptions.num_local_workers tcopt in
+  let num_workers = Typechecker_options.num_local_workers tcopt in
   let workers =
     match (workers, num_workers) with
     | (Some workers, Some num_local_workers) ->
@@ -1404,7 +1405,7 @@ let go_with_interrupt
         env,
         cancelled_fnl_and_reason,
         time_first_error ) =
-    let fanout_size = BigList.length fnl in
+    let fanout_size = Big_list.length fnl in
     let (will_use_distc, fanout_aware_distc) =
       match hh_distc_config with
       | Some distc_config ->

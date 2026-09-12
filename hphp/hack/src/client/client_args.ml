@@ -169,19 +169,19 @@ end = struct
           (* Arg parsing failed, so there is no trustworthy root, --from or
            * --custom-telemetry-data yet; initialize with placeholders so that
            * the sample below has a base env to build on. *)
-          HackEventLogger.client_init
+          Hack_event_logger.client_init
           (* ~init_id is used for correlating things, specific value doesn't matter *)
             ~init_id:(Random_id.short_string ())
             ~from:""
             ~is_interactive:false
             ~custom_columns:[]
             (Path.make ".");
-          HackEventLogger.client_bad_args
+          Hack_event_logger.client_bad_args
             ~command_name:"Args"
             ~exit_code
             exit_status
             e;
-          HackEventLogger.flush ()
+          Hack_event_logger.flush ()
         with
         (* hh_client's SIGINT handler raises this. Swallowing it would make Ctrl-C
            look like it did nothing. *)
@@ -1483,7 +1483,7 @@ let parse_rage_args () =
         else if String.equal response "3" then
           ("hh monitor problem", `Verbose_hh_start)
         else if String.equal response "4" then begin
-          ClientRage.verify_typechecker_err_src ();
+          Client_rage.verify_typechecker_err_src ();
           ("internal typecheck bug", `No_info)
         end else if String.equal response "5" then
           let () =
@@ -1533,7 +1533,7 @@ let parse_rage_args () =
   in
   CRage
     {
-      ClientRage.root;
+      Client_rage.root;
       from = !from;
       desc;
       rageid = !rageid;
@@ -1655,7 +1655,7 @@ let root = function
   | CStart { Client_start.root; _ }
   | CRestart { Client_start.root; _ }
   | CStop { Client_stop.root; _ }
-  | CRage { ClientRage.root; _ }
+  | CRage { Client_rage.root; _ }
   | CSavedStateProjectMetadata { Client_env.root; _ }
   | CDownloadSavedState { Client_download_saved_state.root; _ } ->
     root
@@ -1681,7 +1681,7 @@ let from = function
   | CSavedStateProjectMetadata { Client_env.from; _ }
   | CStop { Client_stop.from; _ }
   | CDownloadSavedState { Client_download_saved_state.from; _ }
-  | CRage { ClientRage.from; _ } ->
+  | CRage { Client_rage.from; _ } ->
     from
 
 let dump_config = function

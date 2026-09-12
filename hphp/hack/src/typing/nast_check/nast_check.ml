@@ -7,11 +7,13 @@ open Hh_prelude
 let visitor ctx =
   let tcopt = Provider_context.get_tcopt ctx in
   let record_fine_grained_dependencies =
-    TypecheckerOptions.record_fine_grained_dependencies tcopt
+    Typechecker_options.record_fine_grained_dependencies tcopt
   in
 
   let with_refinement_alias_enabled =
-    TypecheckerOptions.is_unstable_feature_enabled tcopt "with_refinement_alias"
+    Typechecker_options.is_unstable_feature_enabled
+      tcopt
+      "with_refinement_alias"
   in
 
   let handlers =
@@ -54,7 +56,8 @@ let visitor ctx =
   in
 
   let handlers =
-    if TypecheckerOptions.skip_tast_checks (Provider_context.get_tcopt ctx) then
+    if Typechecker_options.skip_tast_checks (Provider_context.get_tcopt ctx)
+    then
       []
     else
       handlers
@@ -64,7 +67,7 @@ let visitor ctx =
 
 let stateful_visitor ctx =
   let tcopt = Provider_context.get_tcopt ctx in
-  let custom_err_config = TypecheckerOptions.custom_error_config tcopt in
+  let custom_err_config = Typechecker_options.custom_error_config tcopt in
   Stateful_aast_visitor.checker
     (Stateful_aast_visitor.combine_visitors
        (Unbound_name_check.handler ctx)

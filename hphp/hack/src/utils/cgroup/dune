@@ -12,5 +12,5 @@
 (library
   (name cgroup)
   (wrapped false)
-  (modules CGroup)
+  (modules C_group)
   (libraries core_kernel core_kernel.caml_unix procfs))

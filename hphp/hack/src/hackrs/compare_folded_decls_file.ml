@@ -17,7 +17,7 @@ let popt
     ~interpret_soft_types_as_like_types
     ~everything_sdt
     ~enable_class_pointer_hint =
-  ParserOptions.
+  Parser_options.
     {
       default with
       disable_xhp_element_mangling;

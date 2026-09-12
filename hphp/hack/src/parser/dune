@@ -122,7 +122,7 @@
   rust_pointer
   rust_parser_ffi
   rust_lazy_trivia_ffi
-  syntaxTransforms
+  syntax_transforms
   ; from smart_constructors
   smartConstructors
   smartConstructorsWrappers

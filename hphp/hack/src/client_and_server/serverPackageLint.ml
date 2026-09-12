@@ -78,7 +78,7 @@ let target_names_of_ast ast =
     any member access implies a Class occurrence on the same receiver,
     so the class-level match is sufficient. *)
 let references_target names sym =
-  let module SO = SymbolOccurrence in
+  let module SO = Symbol_occurrence in
   match sym.SO.type_ with
   | SO.Class _
   | SO.Function
@@ -103,7 +103,7 @@ let has_prod_ref_to ctx target_names cand =
     ctx
     tast.Tast_with_dynamic.under_normal_assumptions
   |> List.exists ~f:(fun sym ->
-         sym.SymbolOccurrence.affects_prod_build
+         sym.Symbol_occurrence.affects_prod_build
          && references_target target_names sym)
 
 (** [go _genv env file candidate_files] answers: "If we removed the

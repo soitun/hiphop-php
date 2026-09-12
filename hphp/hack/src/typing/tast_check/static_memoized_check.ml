@@ -36,7 +36,7 @@ let handler =
     method! at_class_ env c =
       let custom_err_config =
         let tcopt = Tast_env.get_tcopt env in
-        TypecheckerOptions.custom_error_config tcopt
+        Typechecker_options.custom_error_config tcopt
       in
       let (_, static_methods, _) = split_methods c.c_methods in
       if c.c_final then

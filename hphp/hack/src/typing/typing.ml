@@ -38,11 +38,11 @@ module Phase = Typing_phase
 module TOG = Typing_object_get
 module Subst = Decl_subst
 module ExprDepTy = Typing_dependent_type.ExprDepTy
-module TCO = TypecheckerOptions
+module TCO = Typechecker_options
 module C = Typing_continuations
 module CMap = C.Map
 module Try = Typing_try
-module FL = FeatureLogging
+module FL = Feature_logging
 module MakeType = Typing_make_type
 module Cls = Folded_class
 module Fake = Typing_fake_members
@@ -663,7 +663,7 @@ let as_expr env ty1 pe e =
      so constraints from using the loop variable are attributed to it, not
      the collection. *)
   let has_shadow =
-    TypecheckerOptions.tco_dynamic_inference (Env.get_tcopt env)
+    Typechecker_options.tco_dynamic_inference (Env.get_tcopt env)
     &&
     let ty_check =
       match get_node ty1 with
@@ -1392,7 +1392,7 @@ end = struct
         let tcopt = Env.get_tcopt env in
         if
           not
-            (TypecheckerOptions.is_unstable_feature_enabled tcopt feature_name)
+            (Typechecker_options.is_unstable_feature_enabled tcopt feature_name)
         then
           Typing_error_utils.add_typing_error
             ~env
@@ -3645,7 +3645,7 @@ end = struct
         Option.iter ~f:(Typing_error_utils.add_typing_error ~env) ty_err_opt;
         make_result env p (Aast.Id id) ty)
     | Method_caller (class_name, method_name)
-      when TypecheckerOptions.tco_poly_function_pointers env.genv.tcopt ->
+      when Typechecker_options.tco_poly_function_pointers env.genv.tcopt ->
       Method_caller.synth_function_ref_type p (class_name, method_name) env
     | Method_caller (((pos, class_name) as pos_cname), meth_name) ->
       (* meth_caller(X::class, 'foo') desugars to:
@@ -4744,7 +4744,7 @@ end = struct
       in
       Option.iter ~f:(Typing_error_utils.add_typing_error ~env) ty_err_opt;
       let env =
-        if TypecheckerOptions.tco_dynamic_inference (Env.get_tcopt env) then
+        if Typechecker_options.tco_dynamic_inference (Env.get_tcopt env) then
           match get_node ty2 with
           | Tdynamic (Some v) -> Env.add_tyvar_upper_bound env v (LoclType ty)
           | _ -> env
@@ -5126,7 +5126,7 @@ end = struct
       (* Unreachable: the lowerer only produces DestructureShape/DestructureTuple
          in LvaluePosition (LHS of assignment, foreach value). See ExprLocation
          in lowerer.rs. *)
-      HackEventLogger.invariant_violation_bug
+      Hack_event_logger.invariant_violation_bug
         ~pos:(Pos.show_absolute (Pos.to_absolute p))
         "DestructureShape/DestructureTuple reached rvalue typing";
       let (env, ty) = Env.fresh_type_error env p in
@@ -5689,7 +5689,7 @@ end = struct
     let (env, ty) =
       Typing_class_pointers.coerce_to_name
         ~level:
-          (TypecheckerOptions.tco_class_pointer_array_literal_keys
+          (Typechecker_options.tco_class_pointer_array_literal_keys
              env.genv.tcopt)
         env
         ty
@@ -5912,7 +5912,7 @@ end = struct
          array_get, so we handle it here. *)
       let (env, ty) =
         if
-          TypecheckerOptions.tco_dynamic_inference (Env.get_tcopt env)
+          Typechecker_options.tco_dynamic_inference (Env.get_tcopt env)
           && (String.equal (snd id) SN.FB.idx
              || String.equal (snd id) SN.Readonly.idx)
         then
@@ -5964,7 +5964,7 @@ end = struct
           ~require_class_ptr:
             (Class_id.classname_error
                env
-               TypecheckerOptions.class_pointer_ban_classname_static_meth)
+               Typechecker_options.class_pointer_ban_classname_static_meth)
           env
           []
           e1
@@ -6165,7 +6165,7 @@ end = struct
                that the target type is recorded as an upper bound on any shadow
                type variables, capturing "this dynamic was cast to T". *)
             let env =
-              if TypecheckerOptions.tco_dynamic_inference (Env.get_tcopt env)
+              if Typechecker_options.tco_dynamic_inference (Env.get_tcopt env)
               then
                 match tel with
                 | Anormal (input_ty, _, _) :: _ ->
@@ -6380,7 +6380,8 @@ end = struct
                 expr ~expected:None ~ctxt:Context.default env value
               in
               (* compute assignment type *)
-              if TypecheckerOptions.constraint_array_index_assign env.genv.tcopt
+              if
+                Typechecker_options.constraint_array_index_assign env.genv.tcopt
               then (
                 let (env, val_ty) = Env.fresh_type_invariant env p in
                 let (env, ty_err_opt) =
@@ -6607,9 +6608,9 @@ end = struct
         else if
           maybe_use_constraint_inference
           && Option.is_some env.in_expr_tree
-          && TypecheckerOptions.legacy_experimental_feature_enabled
+          && Typechecker_options.legacy_experimental_feature_enabled
                (Env.get_tcopt env)
-               TypecheckerOptions.experimental_try_constraint_method_inference
+               Typechecker_options.experimental_try_constraint_method_inference
         then
           (* Inside of an expression tree, we can use constraint inference if the appropriate experimental_tc_feature is enabled.
              Many of the features that constraint inference doesn't support are not allowed in expression trees: inout, disposable, etc. *)
@@ -9552,7 +9553,7 @@ end = struct
     let (_, _, source) = fpid_args in
     match source with
     | Aast_defs.Code
-      when TypecheckerOptions.tco_poly_function_pointers env.genv.tcopt ->
+      when Typechecker_options.tco_poly_function_pointers env.genv.tcopt ->
       synth_poly pos fpid_args env
     | Aast_defs.Code
     | Aast_defs.Lowered ->
@@ -9609,7 +9610,7 @@ end = struct
 
     let () =
       if
-        TypecheckerOptions.meth_caller_only_public_visibility
+        Typechecker_options.meth_caller_only_public_visibility
           (Env.get_tcopt env)
       then
         Option.iter
@@ -12736,7 +12737,7 @@ end = struct
          shadow tyvar, the RHS type constrains what the dynamic value must be
          when non-null. Add ty2 as an upper bound on the shadow. *)
       let env =
-        if TypecheckerOptions.tco_dynamic_inference (Env.get_tcopt env) then
+        if Typechecker_options.tco_dynamic_inference (Env.get_tcopt env) then
           match get_node ty1 with
           | Tdynamic (Some v) -> Env.add_tyvar_upper_bound env v (LoclType ty2)
           | _ -> env
@@ -13519,7 +13520,7 @@ end = struct
         let (env, ty) =
           Typing_class_pointers.coerce_to_name
             ~level:
-              (TypecheckerOptions.tco_class_pointer_array_write_keys
+              (Typechecker_options.tco_class_pointer_array_write_keys
                  env.genv.tcopt)
             env
             ty
@@ -13541,7 +13542,7 @@ end = struct
                 arr_ty_mismatch_opt,
                 key_ty_mismatch_opt,
                 val_ty_mismatch_opt ) ) =
-          if TypecheckerOptions.constraint_array_index_assign env.genv.tcopt
+          if Typechecker_options.constraint_array_index_assign env.genv.tcopt
           then (
             let (env, val_ty) = Env.fresh_type_invariant env p in
             let (env, ty_err_opt) =
@@ -14103,7 +14104,8 @@ end = struct
               has_tests_bypass_visibility
               && (not is_method)
               && not
-                   (TypecheckerOptions.tests_bypass_visibility_static_properties
+                   (Typechecker_options
+                    .tests_bypass_visibility_static_properties
                       (Env.get_tcopt env))
             in
             let tests_bypass_visibility =

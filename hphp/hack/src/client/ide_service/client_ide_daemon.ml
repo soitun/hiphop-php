@@ -167,7 +167,7 @@ type istate = {
       know which shallow decls to invalidate. Note: while the forward-naming-table
       is stored here, the reverse-naming-table is instead stored in ctx. *)
   error_filter: Tast_provider.ErrorFilter.t; [@opaque]
-  sienv: SearchUtils.si_env; [@opaque]
+  sienv: Search_utils.si_env; [@opaque]
       (** sienv provides autocomplete and find-symbols. It is constructed during
       initialize and updated during process_changed_files. It stores a few
       in-memory structures such as namespace-list, plus in-memory deltas. *)
@@ -246,7 +246,7 @@ let write_message
 let log_startup_time
     ?(count : int option) (component : string) (start_time : float) : float =
   let now = Unix.gettimeofday () in
-  HackEventLogger.serverless_ide_startup ?count ~start_time component;
+  Hack_event_logger.serverless_ide_startup ?count ~start_time component;
   now
 
 let restore_hhi_root_if_necessary (istate : istate) : istate =
@@ -284,10 +284,10 @@ let remove_hhi (state : state) : unit =
 let batch_update_naming_table_and_invalidate_caches
     ~(ctx : Provider_context.t)
     ~(naming_table : Naming_table.t)
-    ~(sienv : SearchUtils.si_env)
+    ~(sienv : Search_utils.si_env)
     ~(local_memory : Provider_backend.local_memory)
     ~(open_files : open_files_state)
-    (changes : Relative_path.Set.t) : Naming_table.t * SearchUtils.si_env =
+    (changes : Relative_path.Set.t) : Naming_table.t * Search_utils.si_env =
   let start_time = Unix.gettimeofday () in
   let Client_ide_incremental.{ changes; naming_table; sienv } =
     Client_ide_incremental.update_naming_tables_and_si
@@ -303,7 +303,7 @@ let batch_update_naming_table_and_invalidate_caches
       ~changes
       ~entries:(Relative_path.Map.map open_files ~f:(fun { entry; _ } -> entry))
   in
-  HackEventLogger.ProfileTypeCheck.invalidate
+  Hack_event_logger.ProfileTypeCheck.invalidate
     ~count:(List.length changes)
     ~start_time
     ~path:(List.hd changes |> Option.map ~f:(fun change -> change.FileInfo.path))
@@ -342,7 +342,7 @@ let initialize1
       Client_ide_message.Initialize_from_saved_state.t) : dstate =
   log_debug "initialize1";
   let start_time = Unix.gettimeofday () in
-  HackEventLogger.serverless_ide_set_root root;
+  Hack_event_logger.serverless_ide_set_root root;
   set_up_hh_logger_for_client_ide_service root;
 
   Relative_path.set_path_prefix Relative_path.Root root;
@@ -354,11 +354,12 @@ let initialize1
   let (config, local_config) =
     ServerConfig.load ~silent:true ~cli_config_overrides:config ~from:""
   in
-  HackEventLogger.set_hhconfig_version
+  Hack_event_logger.set_hhconfig_version
     (ServerConfig.version config |> Config_file.version_to_string_opt);
-  HackEventLogger.set_rollout_flags
+  Hack_event_logger.set_rollout_flags
     (ServerLocalConfigLoad.to_rollout_flags local_config);
-  HackEventLogger.set_rollout_group local_config.ServerLocalConfig.rollout_group;
+  Hack_event_logger.set_rollout_group
+    local_config.ServerLocalConfig.rollout_group;
 
   Provider_backend.set_local_memory_backend
     ~max_num_decls:5000
@@ -883,7 +884,8 @@ let handle_request
                       ~filename
                     |> ServerFindRefs.to_absolute
                     |> List.map
-                         ~f:(fun SearchTypes.Find_refs.{ name = _; pos } -> pos)
+                         ~f:(fun Search_types.Find_refs.{ name = _; pos } ->
+                           pos)
                   in
                   let urikey =
                     Lsp_helpers.path_string_to_lsp_uri
@@ -1003,12 +1005,12 @@ let handle_request
                           name
                       in
                       log "%s" err;
-                      HackEventLogger.invariant_violation_bug err;
+                      Hack_event_logger.invariant_violation_bug err;
                       failwith err
                     | positions ->
                       let filename =
                         List.hd_exn positions
-                        |> (fun SearchTypes.Find_refs.{ name = _; pos } -> pos)
+                        |> (fun Search_types.Find_refs.{ name = _; pos } -> pos)
                         |> Pos.filename
                       in
                       let uri =
@@ -1030,7 +1032,7 @@ let handle_request
                         name
                     in
                     log "%s" err;
-                    HackEventLogger.invariant_violation_bug err;
+                    Hack_event_logger.invariant_violation_bug err;
                     failwith err
                 in
                 Client_ide_message.Find_refs_success
@@ -1045,7 +1047,7 @@ let handle_request
                   Printf.sprintf "Failed to find refs for localvar %s" name
                 in
                 log "%s" err;
-                HackEventLogger.invariant_violation_bug err;
+                Hack_event_logger.invariant_violation_bug err;
                 failwith err
             in
             (istate, result)
@@ -1094,7 +1096,7 @@ let handle_request
             in
             let sienv_ref = ref istate.sienv in
             let hints =
-              SymbolIndex.find_refs ~sienv_ref ~action ~max_results:100
+              Symbol_index.find_refs ~sienv_ref ~action ~max_results:100
             in
             let hint_suffixes =
               Option.value_map hints ~default:[] ~f:(fun hints ->
@@ -1135,7 +1137,7 @@ let handle_request
   (* Autocomplete docblock resolve *)
   | ( Initialized istate,
       Completion_resolve Completion_resolve.{ fullname = symbol; kind } ) ->
-    HackEventLogger.completion_call ~method_name:"Completion_resolve";
+    Hack_event_logger.completion_call ~method_name:"Completion_resolve";
     let ctx = make_empty_ctx istate.icommon in
     let result = ServerDocblockAt.go_docblock_for_symbol ~ctx ~symbol ~kind in
     let signature = ServerAutoComplete.get_signature ctx symbol in
@@ -1147,7 +1149,7 @@ let handle_request
        We will only serve autocomplete docblocks as of truth on disk.
        Hence, we construct temporary entry to reflect the file which
        contained the target of the resolve. *)
-    HackEventLogger.completion_call ~method_name:"Completion_resolve_location";
+    Hack_event_logger.completion_call ~method_name:"Completion_resolve_location";
     let path = path_to_relative_path file_path in
     let ctx = make_empty_ctx istate.icommon in
     let (ctx, entry) = Provider_context.add_entry_if_missing ~ctx ~path in
@@ -1306,13 +1308,13 @@ let handle_one_message_exn
     failwith ("Unexpected GotNamingTable in " ^ state_to_log_string state)
   | (_, Some (ClientRequest { Client_ide_message.tracking_id; message })) ->
     let unblocked_time = Unix.gettimeofday () in
-    HackEventLogger.serverless_ide_set_tracking_id tracking_id;
+    Hack_event_logger.serverless_ide_set_tracking_id tracking_id;
     (* Our caller has an exception handler which logs the exception.
        But we instead must fulfil our contract of responding to the client,
        even if we have an exception. Hence we need our own handler here. *)
     let (state, response) =
       try handle_request message_queue state tracking_id message with
-      | WorkerCancel.Worker_should_exit as exn ->
+      | Worker_cancel.Worker_should_exit as exn ->
         let e = Exception.wrap exn in
         (* When is this exception raised? several places during Typing_toplevel
            inner-loops call [WorkerCancel.raise_if_stop_requested]. So: it will
@@ -1350,9 +1352,9 @@ let serve
   let rec flush_event_logger () : unit Lwt.t =
     dbg_set_activity ~key:"flush" "sleep";
     let%lwt () = Lwt_unix.sleep 0.5 in
-    HackEventLogger.Memory.profile_if_needed ();
+    Hack_event_logger.Memory.profile_if_needed ();
     dbg_set_activity ~key:"flush" "flush";
-    Lwt.async EventLoggerLwt.flush;
+    Lwt.async Event_logger_lwt.flush;
     dbg_set_activity ~key:"flush" "recheck";
     EventLogger.recheck_disk_files ();
     flush_event_logger ()
@@ -1463,7 +1465,7 @@ let daemon_main
   let daemon_init_id =
     Printf.sprintf "%s.%s" init_id (Random_id.short_string ())
   in
-  HackEventLogger.serverless_ide_init ~init_id:daemon_init_id;
+  Hack_event_logger.serverless_ide_init ~init_id:daemon_init_id;
 
   Typing_log.out_channel := stderr;
   (* where 'hh_show' goes *)
@@ -1483,7 +1485,7 @@ let daemon_main
       try
         let activities = dbg_dump_activity () in
         Hh_logger.log "SERVERLESS_IDE_EXIT\n%s" activities;
-        HackEventLogger.serverless_ide_exit activities
+        Hack_event_logger.serverless_ide_exit activities
       with
       | _ -> ());
   try
@@ -1493,7 +1495,7 @@ let daemon_main
       serve ~in_fd ~out_fd ~error_filter );
     dbg_set_activity ~key:"main" "done";
     Hh_logger.log "SERVERLESS_IDE_DONE(ok)";
-    HackEventLogger.serverless_ide_done None
+    Hack_event_logger.serverless_ide_done None
   with
   | exn ->
     let e = Exception.wrap exn in
@@ -1501,7 +1503,7 @@ let daemon_main
     Hh_logger.log
       "SERVERLESS_IDE_DONE(exn)\n%s"
       (Exception.to_string e |> Exception.clean_stack);
-    HackEventLogger.serverless_ide_done (Some e)
+    Hack_event_logger.serverless_ide_done (Some e)
 
 let daemon_entry_point :
     (Client_ide_message.daemon_args, unit, unit) Daemon.entry =
@@ -1524,9 +1526,9 @@ module Test = struct
       | _ -> failwith "expected local memory backend"
     in
     let sienv =
-      SymbolIndex.initialize
+      Symbol_index.initialize
         ~gleanopt:(ServerConfig.glean_options config)
-        ~namespace_map:tcopt.GlobalOptions.po.ParserOptions.auto_namespace_map
+        ~namespace_map:tcopt.GlobalOptions.po.Parser_options.auto_namespace_map
         ~provider_name:
           local_config.ServerLocalConfig.ide_symbolindex_search_provider
         ~quiet:local_config.ServerLocalConfig.symbolindex_quiet

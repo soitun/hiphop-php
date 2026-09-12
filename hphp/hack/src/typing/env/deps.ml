@@ -50,7 +50,7 @@ let add_fine_dep_if_enabled env dependency =
     | _ -> dependency
   in
   if
-    TypecheckerOptions.record_fine_grained_dependencies
+    Typechecker_options.record_fine_grained_dependencies
     @@ Typing_env_types.(env.genv.tcopt)
   then
     let dependency = dependency_on_origin () in

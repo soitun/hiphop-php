@@ -373,7 +373,7 @@ let generate_ast_decl_hash ast =
      primitive type, which we hash.
   *)
   let str = Marshal.to_string (remove_pos_and_docblock ast) [] in
-  OpaqueDigest.string str
+  Opaque_digest.string str
 
 (*****************************************************************************)
 (** This module defines a visitor class on the Nast data structure.

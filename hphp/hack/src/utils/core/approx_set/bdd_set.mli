@@ -5,4 +5,4 @@
  * LICENSE file in the "hack" directory of this source tree.
  *
  *)
-include ApproxSet_intf.BddSet
+include Approx_set_intf.BddSet

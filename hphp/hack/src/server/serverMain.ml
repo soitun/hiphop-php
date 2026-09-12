@@ -130,7 +130,7 @@ let finalize_init init_env typecheck_telemetry init_telemetry =
          ~key:"heap_size"
          ~value:(SharedMem.SMTelemetry.heap_size ())
   in
-  HackEventLogger.server_is_ready telemetry;
+  Hack_event_logger.server_is_ready telemetry;
   Hh_logger.log
     "SERVER_IS_READY. Took %f seconds to init. Telemetry:\n%s"
     (t' -. init_env.init_start_t)
@@ -257,7 +257,7 @@ let query_notifier
     |> Telemetry.int_ ~key:"updates" ~value:(Relative_path.Set.cardinal updates)
   in
   if not @@ Relative_path.Set.is_empty updates then
-    HackEventLogger.notifier_returned start_time (SSet.cardinal raw_updates);
+    Hack_event_logger.notifier_returned start_time (SSet.cardinal raw_updates);
   (env, updates, clock, updates_stale, telemetry)
 
 let update_stats_after_recheck :
@@ -523,7 +523,7 @@ let idle_if_no_client env waiting_client =
      * correspond to massive rebases. However, the logging call is done in
      * the SharedMem module, which doesn't know anything about Server stuff.
      * So we wrap the call here. *)
-    HackEventLogger.with_rechecked_stats
+    Hack_event_logger.with_rechecked_stats
       ~update_batch_count:(List.length per_batch_telemetry)
       ~total_changed_files:total_changed_files_count
       ~total_rechecked:total_rechecked_count
@@ -556,7 +556,7 @@ let log_recheck_end (stats : ServerEnv.RecheckLoopStats.t) ~diagnostics =
   } =
     stats
   in
-  HackEventLogger.recheck_end
+  Hack_event_logger.recheck_end
     ~last_recheck_duration:duration
     ~update_batch_count:(List.length per_batch_telemetry - 1)
     ~total_changed_files:total_changed_files_count
@@ -648,7 +648,7 @@ let serve_one_iteration genv env client_provider =
     else
       `Recheck
   in
-  HackEventLogger.with_id ~stage recheck_id @@ fun () ->
+  Hack_event_logger.with_id ~stage recheck_id @@ fun () ->
   (* We'll first do "recheck_until_no_changes_left" to handle all outstanding changes, so that
    * after that we'll be able to give an up-to-date answer to the client.
    * Except: this might be stopped early in some cases, e.g. IDE checks. *)
@@ -715,12 +715,12 @@ let serve_one_iteration genv env client_provider =
             client
           |> main_loop_command_handler client
         in
-        HackEventLogger.handled_connection t_start_recheck;
+        Hack_event_logger.handled_connection t_start_recheck;
         env
       with
       | exn ->
         let e = Exception.wrap exn in
-        HackEventLogger.handle_connection_exception "outer" e;
+        Hack_event_logger.handle_connection_exception "outer" e;
         Hh_logger.log
           "HANDLE_CONNECTION_EXCEPTION(outer) [ignoring request] %s"
           (Exception.to_string e);
@@ -1054,7 +1054,11 @@ let program_init genv env =
          ~key:"deps_mode"
          ~value:(Typing_deps_mode.to_opaque_json env.deps_mode)
   in
-  HackEventLogger.init_lazy_end telemetry ~approach_name ~init_error ~init_type;
+  Hack_event_logger.init_lazy_end
+    telemetry
+    ~approach_name
+    ~init_error
+    ~init_type;
   env
 
 let num_workers options local_config =
@@ -1160,7 +1164,7 @@ let initialize_logging
     config |> ServerConfig.version |> Config_file.version_to_string_opt
   in
   if is_worker then
-    HackEventLogger.init_worker
+    Hack_event_logger.init_worker
       ~root
       ~hhconfig_version
       ~init_id
@@ -1170,7 +1174,7 @@ let initialize_logging
       ~time:(Unix.gettimeofday ())
       ~per_file_profiling:local_config.ServerLocalConfig.per_file_profiling
   else
-    HackEventLogger.init
+    Hack_event_logger.init
       ~root
       ~hhconfig_version
       ~init_id
@@ -1191,7 +1195,7 @@ let check_nfs ~root options local_config =
     && not local_config.ServerLocalConfig.enable_on_nfs
   then (
     Hh_logger.log "Refusing to run on %s: root is on NFS!" root_s;
-    HackEventLogger.nfs_root ();
+    Hack_event_logger.nfs_root ();
     Exit.exit Exit_status.Nfs_root
   )
 
@@ -1262,10 +1266,10 @@ let make_workers
     ~logging_init:worker_logging_init
 
 let log_pids root ~monitor_pid =
-  PidLog.init (ServerFiles.pids_file root);
+  Pid_log.init (ServerFiles.pids_file root);
   Option.iter monitor_pid ~f:(fun monitor_pid ->
-      PidLog.log ~reason:"monitor" monitor_pid);
-  PidLog.log ~reason:"main" (Unix.getpid ())
+      Pid_log.log ~reason:"monitor" monitor_pid);
+  Pid_log.log ~reason:"main" (Unix.getpid ())
 
 (** Does a bunch of operations to get the server up and running, among other things:
   - Initialize shared memory
@@ -1295,7 +1299,7 @@ let setup_server
 
   configure_gc ();
 
-  List.iter (ServerConfig.ignored_paths config) ~f:FilesToIgnore.ignore_path;
+  List.iter (ServerConfig.ignored_paths config) ~f:Files_to_ignore.ignore_path;
 
   initialize_logging
     ~is_worker:false
@@ -1307,7 +1311,7 @@ let setup_server
     config
     local_config;
 
-  HackEventLogger.init_start
+  Hack_event_logger.init_start
     ~experiments_config_meta:
       local_config.ServerLocalConfig.experiments_config_meta
     (Memory_stats.get_host_hw_telemetry ());
@@ -1376,7 +1380,7 @@ let run_once options config local_config =
 
 let log_pid_cgroup () =
   let pid = Unix.getpid () in
-  match ProcFS.first_cgroup_for_pid pid with
+  match Proc_fs.first_cgroup_for_pid pid with
   | Ok cgroup ->
     Hh_logger.log "Server Pid: %d" pid;
     Hh_logger.log "Server cGroup: %s" cgroup
@@ -1384,7 +1388,7 @@ let log_pid_cgroup () =
 
 let log_server_ready () =
   Hh_logger.log "Server is partially ready";
-  HackEventLogger.server_is_partially_ready ()
+  Hack_event_logger.server_is_partially_ready ()
 
 let time f =
   let t = Unix.gettimeofday () in
@@ -1423,7 +1427,7 @@ let daemon_main_exn ~informant_managed options monitor_pid in_fds =
   in
   let genv = ServerEnvBuild.make_genv options config local_config workers in
 
-  HackEventLogger.with_id ~stage:`Init env.init_env.init_id @@ fun () ->
+  Hack_event_logger.with_id ~stage:`Init env.init_env.init_id @@ fun () ->
   log_pid_cgroup ();
   Hh_logger.log "Initializing Server (This might take some time)";
 

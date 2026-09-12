@@ -18,12 +18,12 @@ module Make (LangService : LanguageServiceProvider) = struct
     (* Create a symbol occurrence for a method or constructor *)
     let create_symbol_occurrence class_name method_name =
       let dummy_pos = Pos.none in
-      SymbolOccurrence.
+      Symbol_occurrence.
         {
           name = method_name;
           type_ =
-            SymbolOccurrence.Method
-              (SymbolOccurrence.ClassName class_name, method_name);
+            Symbol_occurrence.Method
+              (Symbol_occurrence.ClassName class_name, method_name);
           is_declaration = None;
           pos = dummy_pos;
           affects_prod_build = true;

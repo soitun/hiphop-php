@@ -108,7 +108,7 @@ let strip_ns id =
   id |> Utils.strip_ns |> Hh_autoimport.strip_HH_namespace_if_autoimport
 
 let show_supportdyn env =
-  (not (TypecheckerOptions.everything_sdt env.genv.tcopt))
+  (not (Typechecker_options.everything_sdt env.genv.tcopt))
   || Typing_env_types.get_log_level env "show" >= 1
 
 (*****************************************************************************)
@@ -1664,14 +1664,14 @@ module Full = struct
       text "<<__SupportDynamicType>>" ^^ Newline ^^ prefix
     in
     match (occurrence, get_node x) with
-    | ( SymbolOccurrence.{ type_ = Function | Method _; _ },
+    | ( Symbol_occurrence.{ type_ = Function | Method _; _ },
         Tnewtype (name, [tyarg], _) )
       when String.equal name SN.Classes.cSupportDyn ->
       if show_supportdyn env then
         (add_prefix prefix, tyarg)
       else
         (prefix, tyarg)
-    | ( SymbolOccurrence.{ type_ = Function | Method _; _ },
+    | ( Symbol_occurrence.{ type_ = Function | Method _; _ },
         Tapply ((_, name), [tyarg]) )
       when String.equal name SN.Classes.cSupportDyn ->
       if show_supportdyn env then
@@ -1696,15 +1696,17 @@ module Full = struct
       ~constraints
       occurrence
       definition_opt =
-    let open SymbolOccurrence in
+    let open Symbol_occurrence in
     let penv = Loclenv env in
     let prefix =
-      let print_mod m = text (SymbolDefinition.string_of_modifier m) ^^ Space in
-      match (definition_opt, occurrence.SymbolOccurrence.type_) with
+      let print_mod m =
+        text (Symbol_definition.string_of_modifier m) ^^ Space
+      in
+      match (definition_opt, occurrence.Symbol_occurrence.type_) with
       | (None, _) -> Nothing
       | (_, XhpLiteralAttr _) -> Nothing
       | (Some def, _) -> begin
-        match def.SymbolDefinition.modifiers with
+        match def.Symbol_definition.modifiers with
         | [] -> Nothing
         (* It looks weird if we line break after a single modifier. *)
         | [m] -> print_mod m
@@ -2060,7 +2062,7 @@ end
 (*****************************************************************************)
 
 let supply_fuel ?(msg = true) tcopt printer =
-  let type_printer_fuel = TypecheckerOptions.type_printer_fuel tcopt in
+  let type_printer_fuel = Typechecker_options.type_printer_fuel tcopt in
   let fuel = Fuel.init type_printer_fuel in
   let (fuel, str) = printer ~fuel in
   if Fuel.has_enough fuel || not msg then

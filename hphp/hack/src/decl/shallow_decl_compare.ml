@@ -37,7 +37,7 @@ let compute_class_diffs
     (ctx : Provider_context.t) ~during_init ~(class_names : VersionedSSet.diff)
     : (string * Class_diff.t) list =
   let enable_annotation_agnostic_decl_diffing =
-    TypecheckerOptions.enable_annotation_agnostic_decl_diffing
+    Typechecker_options.enable_annotation_agnostic_decl_diffing
       (Provider_context.get_tcopt ctx)
   in
   let { VersionedSSet.added; kept; removed } = class_names in

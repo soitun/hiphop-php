@@ -7,7 +7,7 @@
  *
  *)
 
-include HackEventLoggerTypes
+include Hack_event_logger_types
 
 type serialized_globals = Serialized_globals
 

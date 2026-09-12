@@ -9,7 +9,7 @@
 (** Measure the time it takes to evaluate the last argument and write the
     result to console along with the given identifier. *)
 val measure_elapsed_time_and_report :
-  TypecheckerOptions.t ->
+  Typechecker_options.t ->
   Typing_env_types.env option ->
   'a * string ->
   (unit -> 'b) ->

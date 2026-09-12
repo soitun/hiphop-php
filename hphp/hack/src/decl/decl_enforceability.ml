@@ -34,7 +34,7 @@ let noautodynamic (this_class : Shallow_decl_defs.shallow_class option) =
       sc.Shallow_decl_defs.sc_user_attributes
 
 let implicit_sdt_for_class tcopt this_class =
-  TypecheckerOptions.everything_sdt tcopt && not (noautodynamic this_class)
+  Typechecker_options.everything_sdt tcopt && not (noautodynamic this_class)
 
 let make_unenforced ty pr =
   match ty with
@@ -88,7 +88,7 @@ module type Provider = sig
   (** [class_t] is the type that represents a class *)
   type class_t
 
-  val get_tcopt : t -> TypecheckerOptions.t
+  val get_tcopt : t -> Typechecker_options.t
 
   val get_class_or_typedef :
     t -> string -> class_t class_or_typedef_result option
@@ -176,7 +176,7 @@ end = struct
       enf =
     let tcopt = ContextAccess.get_tcopt ctx in
     let tc_enforced =
-      TypecheckerOptions.(
+      Typechecker_options.(
         legacy_experimental_feature_enabled
           tcopt
           experimental_consider_type_const_enforceable)

@@ -21,16 +21,16 @@ module T = Aast
 module SN = Naming_special_names
 
 module Results = Stdlib.Set.Make (struct
-  type t = Relative_path.t SymbolOccurrence.t
+  type t = Relative_path.t Symbol_occurrence.t
 
-  let compare = SymbolOccurrence.compare Relative_path.compare
+  let compare = Symbol_occurrence.compare Relative_path.compare
 end)
 
 let process_method_cid n cid =
   Results.singleton
     {
-      SymbolOccurrence.name = cid ^ "::" ^ snd n;
-      type_ = SymbolOccurrence.Method (SymbolOccurrence.ClassName cid, snd n);
+      Symbol_occurrence.name = cid ^ "::" ^ snd n;
+      type_ = Symbol_occurrence.Method (Symbol_occurrence.ClassName cid, snd n);
       is_declaration = None;
       pos = fst n;
       affects_prod_build = true;
@@ -44,8 +44,8 @@ let process_method env ty n =
 let process_function id =
   Results.singleton
     {
-      SymbolOccurrence.name = snd id;
-      type_ = SymbolOccurrence.Function;
+      Symbol_occurrence.name = snd id;
+      type_ = Symbol_occurrence.Function;
       is_declaration = None;
       pos = fst id;
       affects_prod_build = true;
@@ -54,8 +54,8 @@ let process_function id =
 let process_local id =
   Results.singleton
     {
-      SymbolOccurrence.name = snd id;
-      type_ = SymbolOccurrence.LocalVar;
+      Symbol_occurrence.name = snd id;
+      type_ = Symbol_occurrence.LocalVar;
       is_declaration = None;
       pos = fst id;
       affects_prod_build = true;
@@ -117,7 +117,7 @@ let result_to_string result (fn, line, char) =
                   match def_opt with
                   | None -> `Null
                   | Some def ->
-                    let module SD = SymbolDefinition in
+                    let module SD = Symbol_definition in
                     let props =
                       [
                         ("name", `String (SD.full_name def));
@@ -149,11 +149,11 @@ let remove_duplicates_except_none ~compare l =
 
 let handlers :
     ( Results.t,
-      Relative_path.t SymbolDefinition.t option list,
+      Relative_path.t Symbol_definition.t option list,
       Nast.program )
     ServerRxApiShared.handlers =
   let compare =
-    Option.compare (SymbolDefinition.compare Relative_path.compare)
+    Option.compare (Symbol_definition.compare Relative_path.compare)
   in
   {
     ServerRxApiShared.result_to_string;

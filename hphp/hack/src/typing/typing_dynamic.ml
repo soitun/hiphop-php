@@ -32,7 +32,7 @@ let add_require_dynamic_bounds env cls =
         (* Implicit pessimisation should ignore the RequireDynamic attribute
            because everything should be pessimised enough that it isn't necessary. *)
         && not
-             (TypecheckerOptions.everything_sdt
+             (Typechecker_options.everything_sdt
                 Typing_env_types.(env.genv.tcopt))
       then
         Env.add_lower_bound env (snd tp.tp_name) dtype

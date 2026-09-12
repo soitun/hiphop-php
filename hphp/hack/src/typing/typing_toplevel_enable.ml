@@ -10,7 +10,7 @@ open Hh_prelude
 module Env = Typing_env
 
 let if_matches_regexp ~default tcopt env_opt id f =
-  match TypecheckerOptions.typecheck_if_name_matches_regexp tcopt with
+  match Typechecker_options.typecheck_if_name_matches_regexp tcopt with
   | None -> f ()
   | Some regexp ->
     let id =

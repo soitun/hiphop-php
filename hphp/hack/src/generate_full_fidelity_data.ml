@@ -956,7 +956,7 @@ SYNTAX
   val rust_parser_errors :
     Full_fidelity_source_text.t ->
     Rust_pointer.t ->
-    ParserOptions.ffi_t ->
+    Parser_options.ffi_t ->
     Full_fidelity_syntax_error.t list
   val has_leading_trivia : TriviaKind.t -> Token.t -> bool
   val to_json : ?with_value:bool -> ?ignore_missing:bool -> t -> Yojson.Safe.t

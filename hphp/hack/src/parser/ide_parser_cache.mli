@@ -31,12 +31,12 @@ val get_digest : Relative_path.t -> string -> string
  * of path and content, and we assume that all callers will pass in ParserOptions
  * that result in equivalent AST.
  * Under this assumption, it's safe never invalidate this cache. *)
-val get_ast : ParserOptions.t -> Relative_path.t -> string -> Parser_return.t
+val get_ast : Parser_options.t -> Relative_path.t -> string -> Parser_return.t
 
 (* Optional version of get_ast that can be used on code paths that are shared between
  * "safe" and "unsafe" code paths *)
 val get_ast_if_active :
-  ParserOptions.t -> Relative_path.t -> string -> Parser_return.t option
+  Parser_options.t -> Relative_path.t -> string -> Parser_return.t option
 
 val get_cst :
   Full_fidelity_source_text.t ->

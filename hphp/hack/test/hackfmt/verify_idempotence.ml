@@ -22,13 +22,13 @@ module Token = Full_fidelity_editable_token
 module TokenKind = Full_fidelity_token_kind
 
 let parse args filename text =
-  let popt = FullFidelityParseArgs.to_parser_options args in
+  let popt = Full_fidelity_parse_args.to_parser_options args in
   (* Parse with the full fidelity parser *)
   let file = Relative_path.create Relative_path.Dummy filename in
   let source_text = SourceText.make file text in
   let mode = Full_fidelity_parser.parse_mode source_text in
   let env =
-    FullFidelityParseArgs.to_parser_env ~leak_rust_tree:true ~mode args
+    Full_fidelity_parse_args.to_parser_env ~leak_rust_tree:true ~mode args
   in
   let syntax_tree = PositionedSyntaxTree.make ~env source_text in
   let error_env =
@@ -60,7 +60,7 @@ let text_of_tree syntax_tree =
   PositionedSyntaxTree.text syntax_tree |> SourceText.text
 
 let get_non_comma_tokens tree =
-  SyntaxTransforms.editable_from_positioned tree
+  Syntax_transforms.editable_from_positioned tree
   |> EditableSyntax.all_tokens
   |> List.filter (fun t ->
          match Token.kind t with
@@ -166,6 +166,6 @@ let main args files =
   List.iter (Unix.handle_unix_error (handle_file args)) files
 
 let () =
-  let args = FullFidelityParseArgs.parse_args () in
+  let args = Full_fidelity_parse_args.parse_args () in
   EventLogger.init_fake ();
-  main args args.FullFidelityParseArgs.files
+  main args args.Full_fidelity_parse_args.files

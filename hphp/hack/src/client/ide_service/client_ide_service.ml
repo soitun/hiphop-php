@@ -212,7 +212,7 @@ let rpc
              ~value:(Client_ide_message.t_to_string message)
       in
       if not (Active_rpc_requests.is_empty t.active_rpc_requests) then
-        HackEventLogger.invariant_violation_bug
+        Hack_event_logger.invariant_violation_bug
           "Multiple concurrent ide_rpc requests"
           ~telemetry:
             (Telemetry.create ()
@@ -400,9 +400,9 @@ let destroy (t : t) ~(tracking_id : string) : unit Lwt.t =
       in
       let () =
         match result with
-        | Ok () -> HackEventLogger.serverless_ide_destroy_ok start_time
+        | Ok () -> Hack_event_logger.serverless_ide_destroy_ok start_time
         | Error { message; data; _ } ->
-          HackEventLogger.serverless_ide_destroy_error start_time message data;
+          Hack_event_logger.serverless_ide_destroy_error start_time message data;
           log "ClientIdeService.destroy %s" message
       in
       Daemon.force_quit t.daemon_handle;

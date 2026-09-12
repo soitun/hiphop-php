@@ -211,7 +211,7 @@ val global_namespace_alias :
   from:string -> to_:string -> Fact_acc.t -> Fact_id.t * Fact_acc.t
 
 val method_occ :
-  SymbolOccurrence.receiver_class ->
+  Symbol_occurrence.receiver_class ->
   string ->
   Fact_acc.t ->
   Fact_id.t * Fact_acc.t

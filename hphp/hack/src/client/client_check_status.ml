@@ -419,7 +419,7 @@ let go_streaming_on_fd
         (Sys_utils.show_inode fd)
         user_message
         log_message;
-      HackEventLogger.client_check_errors_file_restarted
+      Hack_event_logger.client_check_errors_file_restarted
         (user_message ^ "\n" ^ log_message);
       if output_jsonl then
         Client_jsonl_printer.print_restarted ~message:user_message
@@ -492,7 +492,7 @@ let watchman_get_raw_updates_since
               ( "expression",
                 Hh_json_helpers.AdhocJsonHelpers.pred
                   "allof"
-                  FilesToIgnore.watchman_server_expression_terms );
+                  Files_to_ignore.watchman_server_expression_terms );
             ]);
       ]
     (* unsorted: watchman query, consumed by external tool *)
@@ -530,7 +530,7 @@ let watchman_get_raw_updates_since
           stdout
       in
       Hh_logger.log "%s" msg;
-      HackEventLogger.invariant_violation_bug msg;
+      Hack_event_logger.invariant_violation_bug msg;
       Lwt.return_error msg
     | Ok (json, files) ->
       let has_changed = ref false in
@@ -550,7 +550,7 @@ let watchman_get_raw_updates_since
   end
 
 let edenfs_watcher_get_raw_updates_since ~root ~clock ~local_config =
-  let watch_spec = FilesToIgnore.server_watch_spec in
+  let watch_spec = Files_to_ignore.server_watch_spec in
   let {
     ServerLocalConfig.EdenfsFileWatcher.debug_logging;
     timeout_secs;

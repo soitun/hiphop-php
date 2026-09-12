@@ -30,7 +30,7 @@ let make_workers
     gc_control
     heap_handle
     ~logging_init:(fun () ->
-      HackEventLogger.init_worker
+      Hack_event_logger.init_worker
         ~root
         ~custom_columns:[]
         ~rollout_flags:
@@ -289,7 +289,7 @@ let () =
       ~www_root:(Path.to_string www_root)
       Decl_fold_options.
         {
-          everything_sdt = popt.ParserOptions.everything_sdt;
+          everything_sdt = popt.Parser_options.everything_sdt;
           implicit_inherit_sdt = GlobalOptions.(tcopt.tco_implicit_inherit_sdt);
         }
       (Decl_parser_options.from_parser_options popt)

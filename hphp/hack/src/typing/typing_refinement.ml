@@ -406,7 +406,8 @@ module TyPredicate = struct
       | EnumTag id ->
         let (_env, cstr) = Typing_utils.get_newtype_super env reason id [] in
         let enum_ty = mk (reason, Tnewtype (id, [], cstr)) in
-        if TypecheckerOptions.pessimise_builtins (Typing_env.get_tcopt env) then
+        if Typechecker_options.pessimise_builtins (Typing_env.get_tcopt env)
+        then
           (* Mirror localization of E to ~E & arraykey *)
           Typing_make_type.intersection
             reason

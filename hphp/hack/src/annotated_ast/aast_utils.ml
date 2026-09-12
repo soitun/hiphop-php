@@ -257,7 +257,7 @@ let expr_to_arg pk ~(arg_name : sid option) e =
   | (Ast_defs.Pnormal, None) -> Anormal e
   | (Ast_defs.Pinout p, Some (pos, _)) ->
     let () =
-      HackEventLogger.invariant_violation_bug
+      Hack_event_logger.invariant_violation_bug
         ~pos:(Pos.show_absolute (Pos.to_absolute pos))
         "An argument can't be both named and inout. This should be enforced by the structure of Aast_defs.argument"
     in

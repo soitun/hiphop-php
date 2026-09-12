@@ -762,7 +762,7 @@ type lhs = {
 
 (* Just some shorthand *)
 let should_cls_sub_cn env =
-  TypecheckerOptions.class_sub_classname env.genv.tcopt
+  Typechecker_options.class_sub_classname env.genv.tcopt
 
 (* Find the first generic occurring in [ty] with a rank higher than [rank]  *)
 let check_rank env ty rank =
@@ -1042,7 +1042,7 @@ end = struct
 
   let simplify_subtype_by_physical_equality env ty_sub ty_super simplify =
     if
-      (not (TypecheckerOptions.disable_physical_equality env.genv.tcopt))
+      (not (Typechecker_options.disable_physical_equality env.genv.tcopt))
       && phys_equal ty_sub ty_super
     then
       (env, TL.valid)
@@ -1599,7 +1599,7 @@ end = struct
 
   and simplify_subtype_implicit_params
       ~subtype_env { capability = sub_cap } { capability = super_cap } env =
-    if TypecheckerOptions.any_coeffects (Env.get_tcopt env) then
+    if Typechecker_options.any_coeffects (Env.get_tcopt env) then
       let expected = Typing_coeffects.get_type sub_cap in
       let got = Typing_coeffects.get_type super_cap in
       let reasons =
@@ -5951,7 +5951,7 @@ end = struct
                    has_require_dynamic
                    (* Implicit pessimisation should ignore the RequireDynamic attribute
                       because everything should be pessimised enough that it isn't necessary. *)
-                   && not (TypecheckerOptions.everything_sdt env.genv.tcopt)
+                   && not (Typechecker_options.everything_sdt env.genv.tcopt)
                   then
                     (* If the class is marked <<__SupportDynamicType>> then for any
                        * type parameters marked <<__RequireDynamic>> then the class does not
@@ -8189,7 +8189,7 @@ end = struct
       Typing_union.union env ty (MakeType.dynamic (get_reason ty))
     in
     let maybe_pessimise_type env ty =
-      if TypecheckerOptions.pessimise_builtins (Env.get_tcopt env) then
+      if Typechecker_options.pessimise_builtins (Env.get_tcopt env) then
         pessimise_type env ty
       else
         (env, ty)
@@ -8919,7 +8919,7 @@ end = struct
       Typing_union.union env ty (MakeType.dynamic (get_reason ty))
     in
     let maybe_pessimise_type env ty =
-      if TypecheckerOptions.pessimise_builtins (Env.get_tcopt env) then
+      if Typechecker_options.pessimise_builtins (Env.get_tcopt env) then
         pessimise_type env ty
       else
         (env, ty)
@@ -10131,9 +10131,9 @@ end = struct
           let ety_env = { empty_expand_env with this_ty } in
           let ((env, _ty_err_opt), lty) =
             if
-              TypecheckerOptions.legacy_experimental_feature_enabled
+              Typechecker_options.legacy_experimental_feature_enabled
                 (Env.get_tcopt env)
-                TypecheckerOptions.experimental_sound_enum_class_type_const
+                Typechecker_options.experimental_sound_enum_class_type_const
             then
               Phase.localize env ~ety_env dty
             else

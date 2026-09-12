@@ -27,7 +27,7 @@ module Phase = Typing_phase
 module SN = Naming_special_names
 module Cls = Folded_class
 module MakeType = Typing_make_type
-module TCO = TypecheckerOptions
+module TCO = Typechecker_options
 
 module MemberKind = struct
   type t =
@@ -908,7 +908,7 @@ let check_needs_concrete_override
     ~class_pos
     ~member_name =
   if
-    TypecheckerOptions.needs_concrete_override_check env.genv.tcopt
+    Typechecker_options.needs_concrete_override_check env.genv.tcopt
     && (not (get_ce_readonly_prop_or_needs_concrete parent_class_elt))
     && get_ce_readonly_prop_or_needs_concrete class_elt
   then
@@ -1938,7 +1938,7 @@ let check_members_from_all_parents
         in
         (acc @ missing, env)
       in
-      WorkerCancel.raise_if_stop_requested ();
+      Worker_cancel.raise_if_stop_requested ();
       ParentClassEltSet.fold ~f:check class_elts ~init:(acc, env)
     in
     MemberNameMap.fold check member_map (acc, env)

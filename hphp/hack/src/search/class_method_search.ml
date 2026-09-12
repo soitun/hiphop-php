@@ -11,7 +11,7 @@ open Hh_prelude
 
 let query_class_methods
     (ctx : Provider_context.t) (class_name : string) (method_query : string) :
-    SearchUtils.result =
+    Search_utils.result =
   Option.Monad_infix.(
     let method_query = String.lowercase method_query in
     let matches_query method_name =
@@ -29,7 +29,7 @@ let query_class_methods
             let (pos, name) = m.Aast.m_name in
             if matches_query name then
               Some
-                SearchUtils.
+                Search_utils.
                   {
                     name;
                     pos = Pos.to_absolute pos;

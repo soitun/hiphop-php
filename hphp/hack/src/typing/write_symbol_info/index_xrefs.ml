@@ -233,7 +233,7 @@ let process_attribute_xref ctx File_info.{ occ; _ } (xrefs, fa) =
   in
   (* Process <<__Override>>, for which we write a MethodOverrides fact
      instead of a cross-reference *)
-  let SymbolOccurrence.{ name; pos; _ } = occ in
+  let Symbol_occurrence.{ name; pos; _ } = occ in
   if String.is_prefix name ~prefix:"__" then
     (xrefs, fa)
   (* Process user-defined attributes *)
@@ -254,7 +254,7 @@ let process_attribute_xref ctx File_info.{ occ; _ } (xrefs, fa) =
       (xrefs, fa)
 
 let receiver_type ctx occ =
-  let open SymbolOccurrence in
+  let open Symbol_occurrence in
   match occ.type_ with
   | Method (ClassName receiver, _) ->
     let qname = Util.make_qname receiver in
@@ -284,7 +284,7 @@ let receiver_type ctx occ =
   | _ -> None
 
 let process_def_xref ctx occ pos def (xrefs, fa) =
-  let open SymbolOccurrence in
+  let open Symbol_occurrence in
   match def with
   | None ->
     (* no symbol info - likely dynamic *)
@@ -376,7 +376,7 @@ let process_def_xref ctx occ pos def (xrefs, fa) =
   * [fa] The fact accumulator that collects Glean facts during indexing.
   *)
 let process_xrefs ~path ctx symbols fa : Xrefs.t * Fact_acc.t =
-  let open SymbolOccurrence in
+  let open Symbol_occurrence in
   let (xrefs, fa) =
     List.fold
       symbols

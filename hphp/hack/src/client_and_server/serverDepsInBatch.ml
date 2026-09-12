@@ -6,9 +6,9 @@ let references
     ~(entry : Provider_context.entry)
     ~(genv : ServerEnv.genv)
     ~(env : ServerEnv.env)
-    (occ : Relative_path.t SymbolOccurrence.t) :
+    (occ : Relative_path.t Symbol_occurrence.t) :
     ServerCommandTypes.Find_refs.result_or_retry =
-  let (line, column, _) = Pos.info_pos occ.SymbolOccurrence.pos in
+  let (line, column, _) = Pos.info_pos occ.Symbol_occurrence.pos in
   match
     ServerFindRefs.go_from_file_ctx
       ~ctx
@@ -26,11 +26,11 @@ let body_references
     ~(entry : Provider_context.entry)
     ~(genv : ServerEnv.genv)
     ~(env : ServerEnv.env)
-    ~(declarations : Relative_path.t SymbolOccurrence.t list)
+    ~(declarations : Relative_path.t Symbol_occurrence.t list)
     ~(get_def :
-       Relative_path.t SymbolOccurrence.t ->
-       Relative_path.t SymbolDefinition.t option)
-    (occ : Relative_path.t SymbolOccurrence.t) :
+       Relative_path.t Symbol_occurrence.t ->
+       Relative_path.t Symbol_definition.t option)
+    (occ : Relative_path.t Symbol_occurrence.t) :
     ServerCommandTypes.Find_refs.result_or_retry list =
   match get_def occ with
   | None -> [ServerCommandTypes.Done_or_retry.Done []]
@@ -53,7 +53,7 @@ let go
     let declarations =
       IdentifySymbolService.all_symbols_ctx ~ctx:acc_ctx_out ~entry
       |> List.filter ~f:(fun s ->
-             Option.is_some s.SymbolOccurrence.is_declaration)
+             Option.is_some s.Symbol_occurrence.is_declaration)
     in
     let target_symbols = List.filter declarations ~f:(is_target line column) in
     let deps =

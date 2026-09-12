@@ -10,7 +10,7 @@ open Hh_prelude
 module Class = Folded_class
 
 type symbol = {
-  occ: Relative_path.t SymbolOccurrence.t;
+  occ: Relative_path.t Symbol_occurrence.t;
   def: Sym_def.t option;
 }
 [@@deriving show]
@@ -53,7 +53,7 @@ let compute_sym_hash symbols init =
     let full_name =
       Option.map def ~f:Sym_def.show |> Option.value ~default:""
     in
-    let str = SymbolOccurrence.(occ.name ^ show_kind occ.type_ ^ full_name) in
+    let str = Symbol_occurrence.(occ.name ^ show_kind occ.type_ ^ full_name) in
     concat_hash str cur
   in
   List.fold ~init ~f symbols

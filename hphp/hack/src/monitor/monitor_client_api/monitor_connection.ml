@@ -76,7 +76,7 @@ let rec consume_prehandoff_messages
   | PH.Server_not_alive_dormant _ ->
     Printf.eprintf
       "Waiting for a server to be started...%s\n%!"
-      ClientMessages.waiting_for_server_to_be_started_doc;
+      Client_messages.waiting_for_server_to_be_started_doc;
     consume_prehandoff_messages ic oc
   | PH.Server_died_config_change ->
     Printf.eprintf
@@ -125,7 +125,7 @@ let read_and_log_process_information ~timeout =
       "[monitorConnection] found %d processes when hh took more than 3 seconds to connect to monitor"
       (List.length process_list);
     Printf.eprintf "%s\n%!" matching_processes;
-    HackEventLogger.client_connect_to_monitor_slow_log ()
+    Hack_event_logger.client_connect_to_monitor_slow_log ()
   | Error e ->
     let failure_msg = Process.failure_msg e in
     Printf.eprintf "pgrep failed with reason: %s\n%!" failure_msg;
@@ -158,7 +158,7 @@ let read_and_log_process_information ~timeout =
       "INVARIANT VIOLATION BUG: [%s] [%s]"
       desc
       (Telemetry.to_string telemetry);
-    HackEventLogger.invariant_violation_bug desc ~telemetry;
+    Hack_event_logger.invariant_violation_bug desc ~telemetry;
     ()
 
 let connect_to_monitor
@@ -397,11 +397,11 @@ let connect_once
   (* oops too heavy *)
   Result.iter result ~f:(fun _ ->
       log ~tracker "CLIENT_CONNECT_ONCE";
-      HackEventLogger.client_connect_once ~t_start;
+      Hack_event_logger.client_connect_once ~t_start;
       ());
   Result.iter_error result ~f:(fun e ->
       let (reason, telemetry) = Monitor_utils.connection_error_to_telemetry e in
       log ~tracker "CLIENT_CONNECT_ONCE %s" reason;
-      HackEventLogger.client_connect_once_failure ~t_start reason telemetry;
+      Hack_event_logger.client_connect_once_failure ~t_start reason telemetry;
       ());
   result

@@ -120,7 +120,7 @@ let update_rechecked_files env rechecked =
     | Prechecked_files_ready dirty_deps ->
       Prechecked_files_ready (add_rechecked dirty_deps)
   in
-  HackEventLogger.prechecked_update_rechecked t;
+  Hack_event_logger.prechecked_update_rechecked t;
   env
 
 (** Update:
@@ -189,7 +189,7 @@ let update_after_recheck genv env rechecked ~start_time =
     in
     let clean_local_deps = dirty_local_deps in
     let dirty_local_deps = Typing_deps.DepSet.make () in
-    HackEventLogger.prechecked_evaluate_init t size;
+    Hack_event_logger.prechecked_evaluate_init t size;
     let telemetry =
       telemetry
       |> Telemetry.duration ~key:"fanout_end" ~start_time
@@ -318,7 +318,7 @@ let update_after_local_changes genv env changes ~start_time =
                ~value:(ServerEnv.show_full_check_status env.full_check_status)
           |> Telemetry.object_ ~key:"intersect" ~value:intersect_telemetry
         in
-        HackEventLogger.prechecked_evaluate_incremental t size;
+        Hack_event_logger.prechecked_evaluate_incremental t size;
         let env =
           set
             env

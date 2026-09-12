@@ -9,7 +9,7 @@
 (** Typecheck only definitions whose identifier matches the regular expression. *)
 val if_matches_regexp :
   default:'b ->
-  TypecheckerOptions.t ->
+  Typechecker_options.t ->
   Typing_env_types.env option ->
   'a * string ->
   (unit -> 'b) ->

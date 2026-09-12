@@ -76,7 +76,7 @@ let actually_handle genv client msg full_recheck_needed ~is_stale env =
       ~key:Connection_tracker.Server_end_handle
       ~log:true;
     let (major_gc_time, minor_gc_time) = Sys_utils.get_gc_time () in
-    HackEventLogger.handled_command
+    Hack_event_logger.handled_command
       (ServerCommandTypesUtils.debug_describe_t cmd)
       ~start_t:t_start
       ~major_gc_time

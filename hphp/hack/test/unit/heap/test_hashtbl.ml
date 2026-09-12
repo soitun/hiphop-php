@@ -8,7 +8,7 @@
  *
  *)
 
-type key = OpaqueDigest.t
+type key = Opaque_digest.t
 
 external hh_add : evictable:bool -> key -> string -> unit = "hh_add"
 
@@ -32,7 +32,7 @@ let expect ~msg bool =
     exit 1
   )
 
-let to_key = OpaqueDigest.string
+let to_key = Opaque_digest.string
 
 let add key value = hh_add ~evictable:false (to_key key) value
 

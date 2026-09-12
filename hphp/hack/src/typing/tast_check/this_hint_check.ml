@@ -18,7 +18,7 @@ let handler =
         | None ->
           let custom_err_config =
             let tcopt = Tast_env.get_tcopt env in
-            TypecheckerOptions.custom_error_config tcopt
+            Typechecker_options.custom_error_config tcopt
           in
           Diagnostics.add_diagnostic
             (Naming_error_utils.to_user_diagnostic

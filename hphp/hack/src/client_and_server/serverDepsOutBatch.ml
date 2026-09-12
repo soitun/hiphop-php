@@ -5,21 +5,21 @@ let build_json_def def =
   `Assoc
     [
       ( "kind",
-        `String (SymbolDefinition.string_of_kind def.SymbolDefinition.kind) );
-      ("name", `String (SymbolDefinition.full_name def));
+        `String (Symbol_definition.string_of_kind def.Symbol_definition.kind) );
+      ("name", `String (Symbol_definition.full_name def));
       ( "position",
-        Pos.to_absolute def.SymbolDefinition.pos |> Pos.multiline_json );
+        Pos.to_absolute def.Symbol_definition.pos |> Pos.multiline_json );
     ]
 
 let rec build_json_entry
     ~(ctx : Provider_context.t)
     ~(entry : Provider_context.entry)
-    ~(total_occ_list : Relative_path.t SymbolOccurrence.t list)
+    ~(total_occ_list : Relative_path.t Symbol_occurrence.t list)
     ~(get_def :
-       Relative_path.t SymbolOccurrence.t ->
-       Relative_path.t SymbolDefinition.t option)
-    (occ : Relative_path.t SymbolOccurrence.t) : Yojson.Safe.t =
-  let open SymbolOccurrence in
+       Relative_path.t Symbol_occurrence.t ->
+       Relative_path.t Symbol_definition.t option)
+    (occ : Relative_path.t Symbol_occurrence.t) : Yojson.Safe.t =
+  let open Symbol_occurrence in
   let def_opt = get_def occ in
   let depends_json =
     match def_opt with
@@ -46,8 +46,8 @@ let rec build_json_entry
       ("depends_on", depends_json);
     ]
 
-let interesting_occ (occ : Relative_path.t SymbolOccurrence.t) : bool =
-  let open SymbolOccurrence in
+let interesting_occ (occ : Relative_path.t Symbol_occurrence.t) : bool =
+  let open Symbol_occurrence in
   match occ.type_ with
   | Keyword _
   | LocalVar

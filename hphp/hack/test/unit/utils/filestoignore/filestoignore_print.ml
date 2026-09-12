@@ -16,7 +16,7 @@ FilesToIgnore.watchman_server_expression_terms.
 let main () =
   let pretty =
     Yojson.Safe.pretty_to_string
-      (`List FilesToIgnore.watchman_server_expression_terms)
+      (`List Files_to_ignore.watchman_server_expression_terms)
   in
   Printf.printf "%s" pretty
 

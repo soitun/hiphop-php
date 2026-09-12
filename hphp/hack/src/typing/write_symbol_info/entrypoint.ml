@@ -159,7 +159,7 @@ let write_json
      in
      write_facts_file out_dir files json_chunks
    with
-   | WorkerCancel.Worker_should_exit as exn ->
+   | Worker_cancel.Worker_should_exit as exn ->
      (* Cancellation requests must be re-raised *)
      let e = Exception.wrap exn in
      Exception.reraise e
@@ -214,7 +214,7 @@ let recheck_job
           | Some fi -> (fi :: ok_acc, err_acc)
           | None -> (ok_acc, err_acc)
         with
-        | WorkerCancel.Worker_should_exit as exn ->
+        | Worker_cancel.Worker_should_exit as exn ->
           let e = Exception.wrap exn in
           Exception.reraise e
         | e ->

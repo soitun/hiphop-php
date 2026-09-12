@@ -150,7 +150,7 @@ let run_saved_state_future
             dirty_master_files;
           local_changes = dirty_local_files;
         } ->
-      let () = HackEventLogger.state_loader_dirty_files t in
+      let () = Hack_event_logger.state_loader_dirty_files t in
       let changed_files_since_saved_state =
         Relative_path.Set.of_list changed_files_since_saved_state
       in
@@ -388,7 +388,7 @@ let use_precomputed_state_exn
   let log_saved_state_age_and_distance =
     ctx
     |> Provider_context.get_tcopt
-    |> TypecheckerOptions.log_saved_state_age_and_distance
+    |> Typechecker_options.log_saved_state_age_and_distance
   in
   let saved_state_revs_info =
     if log_saved_state_age_and_distance then
@@ -460,7 +460,7 @@ let remove_items_from_reverse_naming_table_or_build_new_reverse_naming_table
               backend
               (modules |> List.map ~f:snd))
     | None ->
-      HackEventLogger.invariant_violation_bug
+      Hack_event_logger.invariant_violation_bug
         "unexpected saved-state build-new-reverse-naming-table";
       (* Name all the files from the old naming-table (except the new ones we parsed since
          they'll be named by our caller, next). We assume the old naming-table came from a clean
@@ -472,7 +472,7 @@ let remove_items_from_reverse_naming_table_or_build_new_reverse_naming_table
       Naming_table.fold old_hack_names ~init:() ~f:(fun k info () ->
           Naming_global.ndecl_file_skip_if_already_bound ctx k info.FileInfo.ids)
   end;
-  HackEventLogger.naming_from_saved_state_end t;
+  Hack_event_logger.naming_from_saved_state_end t;
   Hh_logger.log_duration "NAMING_FROM_SAVED_STATE_END" t
 
 (* Prechecked files are gated with a flag and not supported in AI/check modes. *)
@@ -817,7 +817,7 @@ let calculate_fanout_and_defer_or_do_type_check
         ~telemetry_label:"type_check_dirty"
         ~cgroup_steps
     in
-    HackEventLogger.type_check_dirty
+    Hack_event_logger.type_check_dirty
       ~start_t
       ~dirty_count:(Relative_path.Set.cardinal dirty_files_changed_decls)
       ~recheck_count:(Relative_path.Set.cardinal to_recheck);
@@ -857,7 +857,7 @@ let get_updates_exn ~(genv : ServerEnv.genv) ~(root : Path.t) :
        start_t
       : float);
   Hh_logger.log "Watchclock: %s" (ServerEnv.show_clock clock);
-  HackEventLogger.changed_while_parsing_end start_t;
+  Hack_event_logger.changed_while_parsing_end start_t;
   (files_changed_while_parsing, clock)
 
 let initialize_naming_table
@@ -954,7 +954,7 @@ let write_symbol_info
     in
     let opts = Indexer_options.create env.swriteopt ~out_dir in
     let namespace_map =
-      env.tcopt.GlobalOptions.po.ParserOptions.auto_namespace_map
+      env.tcopt.GlobalOptions.po.Parser_options.auto_namespace_map
     in
     let ctx = Provider_utils.ctx_from_server_env env in
     Entrypoint.go genv.workers ctx opts ~namespace_map ~files;
@@ -994,7 +994,7 @@ let full_init
       "INVARIANT_VIOLATION_BUG [%s] count=%d"
       desc
       existing_name_count;
-    HackEventLogger.invariant_violation_bug desc ~data_int:existing_name_count
+    Hack_event_logger.invariant_violation_bug desc ~data_int:existing_name_count
   end;
   Hh_logger.log "full init";
 
@@ -1285,10 +1285,11 @@ let post_saved_state_initialization
   in
   if genv.local_config.SLC.hg_aware then
     if ServerArgs.is_using_precomputed_saved_state genv.options then begin
-      HackEventLogger.tried_to_be_hg_aware_with_precomputed_saved_state_warning
+      Hack_event_logger
+      .tried_to_be_hg_aware_with_precomputed_saved_state_warning
         ();
       Option.iter
-        ~f:HackEventLogger.set_mergebase_globalrev
+        ~f:Hack_event_logger.set_mergebase_globalrev
         saved_state_revs_info.ServerEnv.mergebase_globalrev;
       Hh_logger.log
         "Warning: disabling restart on rebase (server was started with precomputed saved-state)"
@@ -1298,7 +1299,7 @@ let post_saved_state_initialization
         ~f:ServerRevisionTracker.initialize
   else
     Option.iter
-      ~f:HackEventLogger.set_mergebase_globalrev
+      ~f:Hack_event_logger.set_mergebase_globalrev
       saved_state_revs_info.ServerEnv.mergebase_globalrev;
   let env =
     {
@@ -1340,11 +1341,11 @@ let post_saved_state_initialization
   begin
     match Naming_table.get_backed_delta_TEST_ONLY old_naming_table with
     | None ->
-      HackEventLogger.invariant_violation_bug
+      Hack_event_logger.invariant_violation_bug
         "saved-state naming table not backed"
     | Some { Naming_sqlite.file_deltas; _ }
       when not (Relative_path.Map.is_empty file_deltas) ->
-      HackEventLogger.invariant_violation_bug
+      Hack_event_logger.invariant_violation_bug
         "saved-state naming table has deltas"
     | Some _ -> ()
   end;
@@ -1353,22 +1354,22 @@ let post_saved_state_initialization
     match Naming_table.get_backed_delta_TEST_ONLY env.naming_table with
     | None -> ()
     | Some _ ->
-      HackEventLogger.invariant_violation_bug
+      Hack_event_logger.invariant_violation_bug
         "ServerLazyInit env.naming_table is backed"
   end;
   let count =
     Naming_table.fold env.naming_table ~init:0 ~f:(fun _ _ acc -> acc + 1)
   in
   if count > 0 then
-    HackEventLogger.invariant_violation_bug
+    Hack_event_logger.invariant_violation_bug
       "ServerLazyInit env.naming_table is non-empty"
       ~data_int:count;
   (* Invariant: env.disk_needs_parsing and env.needs_recheck are empty *)
   if not (Relative_path.Set.is_empty env.disk_needs_parsing) then
-    HackEventLogger.invariant_violation_bug
+    Hack_event_logger.invariant_violation_bug
       "SeverLazyInit env.disk_needs_parsing is non-empty";
   if not (Relative_path.Set.is_empty env.needs_recheck) then
-    HackEventLogger.invariant_violation_bug
+    Hack_event_logger.invariant_violation_bug
       "SeverLazyInit env.needs_recheck is non-empty";
 
   (***********************************************************
@@ -1401,14 +1402,14 @@ let check_credentials genv =
   let attempt_fix = genv.local_config.SLC.attempt_fix_credentials in
   match Security.check_credentials ~attempt_fix with
   | Ok success ->
-    HackEventLogger.credentials_check_end
+    Hack_event_logger.credentials_check_end
       (Printf.sprintf "saved_state_init: %s" (Security.show_success success))
       t
   | Error error ->
     let kind = Security.to_error_kind_string error in
     let message = Security.to_error_message_string error in
     Hh_logger.log "Error kind: %s\nError message: %s" kind message;
-    HackEventLogger.credentials_check_failure
+    Hack_event_logger.credentials_check_failure
       (Printf.sprintf "saved_state_init: [%s]" kind)
       t
 
@@ -1446,7 +1447,7 @@ let saved_state_init
       let e = Exception.wrap exn in
       Error (Load_state_unhandled_exception e)
   in
-  HackEventLogger.saved_state_download_and_load_done
+  Hack_event_logger.saved_state_download_and_load_done
     ~load_state_approach:(show_load_state_approach load_state_approach)
     ~success:(Result.is_ok state_result)
     ~state_result:

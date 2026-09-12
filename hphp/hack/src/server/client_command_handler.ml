@@ -41,7 +41,7 @@ end = struct
       env
     | exn ->
       let e = Exception.wrap exn in
-      HackEventLogger.handle_connection_exception "inner" e;
+      Hack_event_logger.handle_connection_exception "inner" e;
       Hh_logger.log
         "HANDLE_CONNECTION_EXCEPTION(inner) %s"
         (Exception.to_string e);

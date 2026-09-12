@@ -211,10 +211,10 @@ and locl_cache_get =
 and setup_cache env =
   let tcopts = Env.get_tcopt env in
   let module Settings = struct
-    let capacity = TypecheckerOptions.locl_cache_capacity tcopts
+    let capacity = Typechecker_options.locl_cache_capacity tcopts
 
     let node_count_threshold =
-      TypecheckerOptions.locl_cache_node_threshold tcopts
+      Typechecker_options.locl_cache_node_threshold tcopts
   end in
   let module Cache = MakeTyCache (Settings) in
   locl_cache_add := Cache.add;
@@ -1732,7 +1732,7 @@ let localize_hint_for_refinement env hint =
     env
     ~on_error:(Some (Typing_error.Reasons_callback.invalid_type_hint pos))
     ~wildcard_action:Wildcard_fresh_generic
-    ~ish_weakening:(Env.get_tcopt env |> TypecheckerOptions.pessimise_builtins)
+    ~ish_weakening:(Env.get_tcopt env |> Typechecker_options.pessimise_builtins)
     h
 
 let localize_hint_for_lambda env h =

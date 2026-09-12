@@ -119,7 +119,7 @@ let init
         (in_fd, log_fd, log_fd)
         (GlobalConfig.scuba_table_name, [root])
     in
-    HackEventLogger.set_file_watcher_dfind ();
+    Hack_event_logger.set_file_watcher_dfind ();
     Dfind { root; ready = ref false; dfind }
   in
 
@@ -140,7 +140,7 @@ let init
               Some Watchman.Defer_changes
             else
               None);
-          expression_terms = FilesToIgnore.watchman_server_expression_terms;
+          expression_terms = Files_to_ignore.watchman_server_expression_terms;
           debug_logging =
             ServerArgs.watchman_debug_logging options || debug_logging;
           sockname;
@@ -150,7 +150,7 @@ let init
         ()
     in
     Option.map wenv ~f:(fun wenv ->
-        HackEventLogger.set_file_watcher_watchman ();
+        Hack_event_logger.set_file_watcher_watchman ();
         Watchman
           {
             wenv;
@@ -163,7 +163,7 @@ let init
 
   let try_init_edenfs_watcher () : t option =
     Hh_logger.log "Using EdenFS file watcher";
-    let watch_spec = FilesToIgnore.server_watch_spec in
+    let watch_spec = Files_to_ignore.server_watch_spec in
     let {
       ServerLocalConfig.EdenfsFileWatcher.debug_logging;
       timeout_secs;
@@ -205,7 +205,7 @@ let init
       Hh_logger.log
         "Failed to initialize EdenFS watcher, failed with message:\n%s"
         msg;
-      HackEventLogger.edenfs_watcher_fallback ~msg;
+      Hack_event_logger.edenfs_watcher_fallback ~msg;
       None
     | Result.Error Edenfs_watcher_types.NonEdenWWW ->
       let msg =
@@ -214,7 +214,7 @@ let init
           (Path.to_string root)
       in
       Hh_logger.log "%s" msg;
-      HackEventLogger.edenfs_watcher_fallback ~msg;
+      Hack_event_logger.edenfs_watcher_fallback ~msg;
       None
     | Result.Error (Edenfs_watcher_types.LostChanges reason) ->
       let msg =
@@ -223,11 +223,11 @@ let init
           reason
       in
       Hh_logger.log "%s" msg;
-      HackEventLogger.edenfs_watcher_fallback ~msg;
+      Hack_event_logger.edenfs_watcher_fallback ~msg;
       None
     | Result.Ok (instance, initial_clock) ->
       let last_clock = ref initial_clock in
-      HackEventLogger.set_file_watcher_edenfs ();
+      Hack_event_logger.set_file_watcher_edenfs ();
       Some
         (EdenfsFileWatcher
            { instance; num_workers; root; local_config; last_clock })

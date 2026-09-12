@@ -83,7 +83,7 @@ let go_xhp_tags
   | [result] -> Some result
   | [] -> None
   | _ ->
-    HackEventLogger.invariant_violation_bug
+    Hack_event_logger.invariant_violation_bug
       "Should only find one close tag, found more than 1";
     None
 

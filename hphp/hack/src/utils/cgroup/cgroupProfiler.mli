@@ -52,4 +52,4 @@ by the child upon child process startup. *)
 val use_initial_reading : initial_reading -> unit
 
 (** A helper to fetch just the HackEventLogger-related parts of the initial reading *)
-val get_initial_stats : unit -> HackEventLogger.ProfileTypeCheck.stats
+val get_initial_stats : unit -> Hack_event_logger.ProfileTypeCheck.stats

@@ -11,7 +11,7 @@
 val go_comments_for_symbol_ctx :
   ctx:Provider_context.t ->
   entry:Provider_context.entry ->
-  def:'a SymbolDefinition.t ->
+  def:'a Symbol_definition.t ->
   base_class_name:string option ->
   string option
 

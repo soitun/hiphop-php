@@ -85,7 +85,7 @@ end
 (* ------------------------------------------------------------------ *)
 
 module type ImplForBench = sig
-  include ApproxSet_intf.S with module Domain := TagDomain
+  include Approx_set_intf.S with module Domain := TagDomain
 
   val name : string
 end
@@ -467,13 +467,13 @@ end
 (* ------------------------------------------------------------------ *)
 
 module ApproxSetBench : ImplForBench = struct
-  include ApproxSet.Make (TagDomain)
+  include Approx_set.Make (TagDomain)
 
   let name = "ApproxSet"
 end
 
 module BddSetBench : ImplForBench = struct
-  include BddSet.Make (OrderedTagDomain)
+  include Bdd_set.Make (OrderedTagDomain)
 
   let name = "BddSet"
 end

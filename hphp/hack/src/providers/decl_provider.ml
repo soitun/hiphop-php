@@ -184,7 +184,7 @@ let remove_classes ctx (names : SSet.t) ~old_members ~new_members : unit =
     SSet.iter Cache.remove names;
     let names = FileInfo.{ empty_names with n_classes = names } in
     if
-      TypecheckerOptions.disable_rust_provider_shallow_decl_invalidation
+      Typechecker_options.disable_rust_provider_shallow_decl_invalidation
         (Provider_context.get_tcopt ctx)
     then
       Rust_provider_backend.Decl.remove_folded_classes be names
@@ -231,7 +231,7 @@ let maybe_pessimise_fun_decl ctx fun_decl =
 
 let maybe_pessimise_typedef_decl ctx typedef_decl =
   if
-    TypecheckerOptions.everything_sdt (Provider_context.get_tcopt ctx)
+    Typechecker_options.everything_sdt (Provider_context.get_tcopt ctx)
     && not
          (Typing_defs.Attributes.mem
             Naming_special_names.UserAttributes.uaNoAutoDynamic
@@ -393,7 +393,7 @@ let is_this_def_the_winner ctx name_type (pos, name) =
       match get_pos_from_decl_of_winner_FOR_TESTS_ONLY ctx name_type cname with
       | None -> Not_found
       | Some winner_pos when Pos.overlaps pos winner_pos ->
-        HackEventLogger.invariant_violation_bug
+        Hack_event_logger.invariant_violation_bug
           "caller provided wrong capitalization of fun name (unnecessarily slow path; should avoid)"
           ~pos:(Pos.to_relative_string pos |> Pos.string)
           ~data:(Printf.sprintf "name=%s cname=%s" name cname);
@@ -421,7 +421,7 @@ let is_this_def_the_winner ctx name_type (pos, name) =
       (match winner_pos_opt with
       | None -> Not_found
       | Some winner_pos when Pos.overlaps pos winner_pos ->
-        HackEventLogger.decl_consistency_bug
+        Hack_event_logger.decl_consistency_bug
           "caller provided wrong capitalization of type name (unnecessarily slow path; should avoid)"
           ~pos:(Pos.to_relative_string pos |> Pos.string)
           ~data:(Printf.sprintf "name=%s cname=%s" name cname);

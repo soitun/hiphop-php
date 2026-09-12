@@ -59,9 +59,9 @@ module ValSet = struct
       for j = i to n - 1 do
         if !ok then begin
           let rel = TagDomain.relation atoms_arr.(i) ~ctx:h atoms_arr.(j) in
-          if SetRelation.is_disjoint rel && in_ i && in_ j then ok := false;
-          if SetRelation.is_subset rel && in_ i && not (in_ j) then ok := false;
-          if SetRelation.is_superset rel && in_ j && not (in_ i) then
+          if Set_relation.is_disjoint rel && in_ i && in_ j then ok := false;
+          if Set_relation.is_subset rel && in_ i && not (in_ j) then ok := false;
+          if Set_relation.is_superset rel && in_ j && not (in_ i) then
             ok := false
         end
       done
@@ -395,7 +395,7 @@ module Test (Impl : S_for_test) = struct
 end
 
 module ApproxSetImpl : S_for_test = struct
-  include ApproxSet.Make (TagDomain)
+  include Approx_set.Make (TagDomain)
 
   let name = "ApproxSet"
 
@@ -403,7 +403,7 @@ module ApproxSetImpl : S_for_test = struct
 end
 
 module BddSetImpl : S_for_test = struct
-  include BddSet.Make (OrderedTagDomain)
+  include Bdd_set.Make (OrderedTagDomain)
 
   let name = "BddSet"
 

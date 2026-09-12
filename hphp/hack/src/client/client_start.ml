@@ -269,7 +269,7 @@ let should_start env =
   | Error Monitor_utils.Server_died ->
     true
   | Error (Monitor_utils.Build_id_mismatched_client_must_terminate _) ->
-    HackEventLogger.invariant_violation_bug
+    Hack_event_logger.invariant_violation_bug
       "we requested terminate_monitor_on_version_mismatch";
     Printf.eprintf "Internal error. Please try `hh stop`\n";
     false
@@ -284,7 +284,7 @@ let should_start env =
     true
 
 let main (env : env) : Exit_status.t Lwt.t =
-  HackEventLogger.client_start ();
+  Hack_event_logger.client_start ();
 
   (* TODO(ljw): There are some race conditions here. First scenario: two      *)
   (* processes simultaneously do 'hh start' while the server isn't running.   *)

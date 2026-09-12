@@ -21,15 +21,15 @@ let parallel_limit = 10
 
 let find_positions_of_classes
     (ctx : Provider_context.t)
-    (acc : SearchTypes.Find_refs.t list)
-    (child_classes : string list) : SearchTypes.Find_refs.t list =
+    (acc : Search_types.Find_refs.t list)
+    (child_classes : string list) : Search_types.Find_refs.t list =
   acc
   @ List.map child_classes ~f:(fun child_class ->
         match Naming_provider.get_type_pos ctx child_class with
         | None ->
           failwith ("Could not find definition of child class: " ^ child_class)
         | Some (FileInfo.Full pos) ->
-          SearchTypes.Find_refs.{ name = child_class; pos }
+          Search_types.Find_refs.{ name = child_class; pos }
         | Some (FileInfo.File (FileInfo.Class, path)) ->
           (match
              Ast_provider.find_class_in_file ctx path child_class ~full:false
@@ -41,7 +41,7 @@ let find_positions_of_classes
                  child_class
                  (Relative_path.to_absolute path))
           | Some { Aast.c_name = (name_pos, _); _ } ->
-            SearchTypes.Find_refs.{ name = child_class; pos = name_pos })
+            Search_types.Find_refs.{ name = child_class; pos = name_pos })
         | Some FileInfo.(File ((Fun | Typedef | Const | Module), _path)) ->
           failwith
             (Printf.sprintf
@@ -51,7 +51,7 @@ let find_positions_of_classes
 let parallel_find_positions_of_classes
     (ctx : Provider_context.t)
     (child_classes : string list)
-    (workers : MultiWorker.worker list option) : SearchTypes.Find_refs.t list =
+    (workers : MultiWorker.worker list option) : Search_types.Find_refs.t list =
   MultiWorker.call
     workers
     ~job:(find_positions_of_classes ctx)
@@ -61,7 +61,7 @@ let parallel_find_positions_of_classes
 
 let add_if_valid_origin ctx class_elt child_class method_name result =
   if String.equal class_elt.ce_origin child_class then
-    SearchTypes.Find_refs.
+    Search_types.Find_refs.
       {
         name = method_name;
         pos =
@@ -74,7 +74,7 @@ let add_if_valid_origin ctx class_elt child_class method_name result =
     | Decl_entry.Found origin_decl ->
       let origin_kind = Folded_class.kind origin_decl in
       if Ast_defs.is_c_trait origin_kind then
-        SearchTypes.Find_refs.
+        Search_types.Find_refs.
           {
             name = method_name;
             pos =
@@ -91,8 +91,8 @@ let add_if_valid_origin ctx class_elt child_class method_name result =
 let find_positions_of_methods
     (ctx : Provider_context.t)
     (method_name : string)
-    (acc : SearchTypes.Find_refs.t list)
-    (child_classes : string list) : SearchTypes.Find_refs.t list =
+    (acc : Search_types.Find_refs.t list)
+    (child_classes : string list) : Search_types.Find_refs.t list =
   List.fold child_classes ~init:acc ~f:(fun result child_class ->
       let class_decl = Decl_provider.get_class ctx child_class in
       match class_decl with
@@ -115,7 +115,7 @@ let parallel_find_positions_of_methods
     (ctx : Provider_context.t)
     (child_classes : string list)
     (method_name : string)
-    (workers : MultiWorker.worker list option) : SearchTypes.Find_refs.t list =
+    (workers : MultiWorker.worker list option) : Search_types.Find_refs.t list =
   MultiWorker.call
     workers
     ~job:(find_positions_of_methods ctx method_name)

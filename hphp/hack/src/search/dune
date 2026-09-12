@@ -2,8 +2,8 @@
  (name search_core)
  (wrapped false)
  (modules
-  localSearchService
-  symbolIndexCore)
+  local_search_service
+  symbol_index_core)
  (libraries
   ast
   decl_provider
@@ -18,9 +18,9 @@
  (name search)
  (wrapped false)
  (modules
-  classMethodSearch
-  customSearchService
-  symbolIndex)
+  class_method_search
+  custom_search_service
+  symbol_index)
  (libraries
   ast
   ast_provider

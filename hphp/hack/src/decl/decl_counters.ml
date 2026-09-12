@@ -8,7 +8,7 @@
 
 open Hh_prelude
 
-let mode = ref HackEventLogger.PerFileProfilingConfig.DeclingOff
+let mode = ref Hack_event_logger.PerFileProfilingConfig.DeclingOff
 
 type decl_kind =
   | Class
@@ -206,8 +206,9 @@ type decl = {
       (** wall-time at the moment of top-level decl retrieval *)
 }
 
-let set_mode (new_mode : HackEventLogger.PerFileProfilingConfig.profile_decling)
-    : unit =
+let set_mode
+    (new_mode : Hack_event_logger.PerFileProfilingConfig.profile_decling) : unit
+    =
   mode := new_mode
 
 let count_decl
@@ -216,12 +217,13 @@ let count_decl
     (decl_name : string)
     (f : decl option -> 'a) : 'a =
   match !mode with
-  | HackEventLogger.PerFileProfilingConfig.DeclingOff ->
+  | Hack_event_logger.PerFileProfilingConfig.DeclingOff ->
     (* CARE! This path must be highly performant. *)
     f None
-  | HackEventLogger.PerFileProfilingConfig.DeclingTopCounts ->
+  | Hack_event_logger.PerFileProfilingConfig.DeclingTopCounts ->
     Counters.count Counters.Category.Decl_provider_get (fun () -> f None)
-  | HackEventLogger.PerFileProfilingConfig.DeclingAllTelemetry { callstacks } ->
+  | Hack_event_logger.PerFileProfilingConfig.DeclingAllTelemetry { callstacks }
+    ->
     let start_time = Unix.gettimeofday () in
     let start_cpu_time = Sys.time () in
     let decl_id = Random_id.short_string () in
@@ -242,7 +244,7 @@ let count_decl
       }
     in
     let result = f (Some decl) in
-    HackEventLogger.ProfileDecl.count_decl
+    Hack_event_logger.ProfileDecl.count_decl
       ~kind:(show_decl_kind decl_kind)
       ~cpu_duration:(Sys.time () -. start_cpu_time)
       ~decl_id
@@ -273,7 +275,7 @@ let count_subdecl
           Exception.get_current_callstack_string 99 |> Exception.clean_stack)
     in
     let result = f () in
-    HackEventLogger.ProfileDecl.count_decl
+    Hack_event_logger.ProfileDecl.count_decl
       ~kind:("Class." ^ show_subdecl_kind subdecl_kind)
       ~cpu_duration:(Sys.time () -. start_cpu_time)
       ~decl_id:decl.decl_id

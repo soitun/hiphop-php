@@ -11,7 +11,7 @@ type t
 module Ident : sig
   type t [@@deriving ord, eq, hash, show]
 
-  module Map : WrappedMap_sig.S with type key = t
+  module Map : Wrapped_map_sig.S with type key = t
 
   module Set : Set.S with type elt = t
 

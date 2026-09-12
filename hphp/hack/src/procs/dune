@@ -31,7 +31,7 @@
  (name procs_entry_point)
  (wrapped false)
  (modules
-  workerControllerEntryPoint)
+  worker_controller_entry_point)
  (libraries procs_procs folly_stubs))
 
 (library

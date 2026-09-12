@@ -9,20 +9,20 @@
 
 open Hh_prelude
 open Reordered_argument_collections
-open SymbolDefinition
+open Symbol_definition
 open Aast
 module Parser = Full_fidelity_ast
 
-type outline = string SymbolDefinition.t list
+type outline = string Symbol_definition.t list
 
 let modifiers_to_list ~is_final ~visibility ~is_abstract ~is_static =
   let modifiers =
     match visibility with
-    | Public -> [SymbolDefinition.Public]
-    | Private -> [SymbolDefinition.Private]
-    | Protected -> [SymbolDefinition.Protected]
-    | Internal -> [SymbolDefinition.Internal]
-    | ProtectedInternal -> [SymbolDefinition.ProtectedInternal]
+    | Public -> [Symbol_definition.Public]
+    | Private -> [Symbol_definition.Private]
+    | Protected -> [Symbol_definition.Protected]
+    | Internal -> [Symbol_definition.Internal]
+    | ProtectedInternal -> [Symbol_definition.ProtectedInternal]
   in
   let modifiers =
     if is_final then
@@ -176,9 +176,9 @@ let summarize_param param =
   let modifiers = modifier_of_param_kind [] param.param_callconv in
   let modifiers =
     match param.param_visibility with
-    | Some Public -> SymbolDefinition.Public :: modifiers
-    | Some Private -> SymbolDefinition.Private :: modifiers
-    | Some Protected -> SymbolDefinition.Protected :: modifiers
+    | Some Public -> Symbol_definition.Public :: modifiers
+    | Some Private -> Symbol_definition.Private :: modifiers
+    | Some Protected -> Symbol_definition.Protected :: modifiers
     | _ -> modifiers
   in
   let kind = Param in
@@ -374,8 +374,8 @@ let summarize_class ~(source_text : string option) class_ ~no_children =
   }
 
 let summarize_typedef ~(source_text : string option) (tdef : _ typedef) :
-    Relative_path.t SymbolDefinition.t =
-  let kind = SymbolDefinition.Typedef in
+    Relative_path.t Symbol_definition.t =
+  let kind = Symbol_definition.Typedef in
   let name = Utils.strip_ns (snd tdef.t_name) in
   let pos = fst tdef.t_name in
   let hint_for_end_pos = tdef.t_runtime_type in
@@ -399,7 +399,7 @@ let summarize_fun ~(source_text : string option) fd =
   let f = fd.fd_fun in
   let modifiers = modifier_of_fun_kind [] f.f_fun_kind in
   let params = Some (List.map f.f_params ~f:summarize_param) in
-  let kind = SymbolDefinition.Function in
+  let kind = Symbol_definition.Function in
   let name = Utils.strip_ns (snd fd.fd_name) in
   let detail =
     Option.map source_text ~f:(fun source_text ->
@@ -417,7 +417,7 @@ let summarize_fun ~(source_text : string option) fd =
   }
 
 let summarize_gconst ~(source_text : string option) (cst : _ gconst) :
-    Relative_path.t SymbolDefinition.t =
+    Relative_path.t Symbol_definition.t =
   let pos = fst cst.cst_name in
   let gconst_start = Option.value_map cst.cst_type ~f:fst ~default:pos in
   let (_, gconst_end, _) = cst.cst_value in
@@ -453,7 +453,7 @@ let summarize_local name span =
   }
 
 let summarize_module_def md =
-  let kind = SymbolDefinition.Module in
+  let kind = Symbol_definition.Module in
   let name = snd md.md_name in
   let span = md.md_span in
   let doc_comment = md.md_doc_comment in
@@ -491,7 +491,7 @@ let outline_ast ast ~(source_text : string option) =
           None)
   in
 
-  List.map outline ~f:SymbolDefinition.to_absolute
+  List.map outline ~f:Symbol_definition.to_absolute
 
 let should_add_docblock = function
   | Function
@@ -518,7 +518,7 @@ let add_def_docblock finder previous_def_line def =
 
 let add_docblocks defs comments =
   let finder = Docblock_finder.make_docblock_finder comments in
-  let rec map_def f (acc : int) (def : string SymbolDefinition.t) =
+  let rec map_def f (acc : int) (def : string Symbol_definition.t) =
     let (acc, def) = f acc def in
     let (acc, kind) =
       match def.kind with
@@ -536,7 +536,7 @@ let add_docblocks defs comments =
       | Module -> (acc, Module)
     in
     (acc, { def with kind })
-  and map_def_list f (acc : int) (defs : string SymbolDefinition.t list) =
+  and map_def_list f (acc : int) (defs : string Symbol_definition.t list) =
     let (acc, defs) =
       List.fold_left
         defs
@@ -572,8 +572,8 @@ let outline popt source_text =
   add_docblocks result comments
 
 let outline_entry_no_comments
-    ~(popt : ParserOptions.t) ~(entry : Provider_context.entry) :
-    string SymbolDefinition.t list =
+    ~(popt : Parser_options.t) ~(entry : Provider_context.entry) :
+    string Symbol_definition.t list =
   let source_text = Provider_context.get_file_contents_if_present entry in
   Ast_provider.compute_ast ~popt ~entry |> outline_ast ~source_text
 
@@ -587,7 +587,7 @@ let rec print_def ~short_pos indent def =
   in
   Printf.printf "%s%s\n" indent name;
   Printf.printf "%s  kind: %s\n" indent (string_of_kind kind);
-  Option.iter (SymbolDefinition.identifier def) ~f:(fun id ->
+  Option.iter (Symbol_definition.identifier def) ~f:(fun id ->
       Printf.printf "%s  id: %s\n" indent id);
   Printf.printf "%s  position: %s\n" indent (print_pos pos);
   Printf.printf "%s  span: %s\n" indent (print_span span);
@@ -614,35 +614,36 @@ let print_def ?(short_pos = false) = print_def ~short_pos
 let print ?(short_pos = false) = print ~short_pos ""
 
 let summarize_method :
-    string -> ('a, 'b) Aast.method_ -> Relative_path.t SymbolDefinition.t =
+    string -> ('a, 'b) Aast.method_ -> Relative_path.t Symbol_definition.t =
  (fun s meth -> summarize_method ~source_text:None s meth)
 
 let summarize_class :
     ('a, 'b) Aast.class_ ->
     no_children:bool ->
-    Relative_path.t SymbolDefinition.t =
+    Relative_path.t Symbol_definition.t =
  fun class_ ~no_children ->
   summarize_class ~source_text:None class_ ~no_children
 
-let summarize_fun : ('a, 'b) Aast.fun_def -> Relative_path.t SymbolDefinition.t
+let summarize_fun : ('a, 'b) Aast.fun_def -> Relative_path.t Symbol_definition.t
     =
  (fun fd -> summarize_fun ~source_text:None fd)
 
-let summarize_gconst (cst : _ gconst) : Relative_path.t SymbolDefinition.t =
+let summarize_gconst (cst : _ gconst) : Relative_path.t Symbol_definition.t =
   summarize_gconst ~source_text:None cst
 
-let summarize_typedef (tdef : _ typedef) : Relative_path.t SymbolDefinition.t =
+let summarize_typedef (tdef : _ typedef) : Relative_path.t Symbol_definition.t =
   summarize_typedef ~source_text:None tdef
 
 let summarize_property class_name var =
   summarize_property ~source_text:None class_name var
 
 let summarize_class_const :
-    string -> _ Aast.class_const -> Relative_path.t SymbolDefinition.t =
+    string -> _ Aast.class_const -> Relative_path.t Symbol_definition.t =
  fun class_name c_const ->
   summarize_class_const ~source_text:None class_name c_const
 
 let summarize_class_typeconst :
-    string -> _ Aast.class_typeconst_def -> Relative_path.t SymbolDefinition.t =
+    string -> _ Aast.class_typeconst_def -> Relative_path.t Symbol_definition.t
+    =
  fun class_name tconst_def ->
   summarize_class_typeconst ~source_text:None class_name tconst_def

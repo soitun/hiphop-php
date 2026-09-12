@@ -25,7 +25,8 @@ type by_names = {
 
 type t = by_names Relative_path.Map.t [@@deriving yojson_of]
 
-let is_enabled opts = not @@ List.is_empty @@ TypecheckerOptions.dump_tasts opts
+let is_enabled opts =
+  not @@ List.is_empty @@ Typechecker_options.dump_tasts opts
 
 let error_while_mapping tasts msg =
   let { Tast.fun_tasts; class_tasts; typedef_tasts; gconst_tasts; module_tasts }
@@ -44,7 +45,7 @@ let error_while_mapping tasts msg =
 let map ctx path (tasts : Tast.by_names) _errors : t =
   if
     List.mem
-      (TypecheckerOptions.dump_tasts (Provider_context.get_tcopt ctx))
+      (Typechecker_options.dump_tasts (Provider_context.get_tcopt ctx))
       (Relative_path.suffix path)
       ~equal:String.equal
   then

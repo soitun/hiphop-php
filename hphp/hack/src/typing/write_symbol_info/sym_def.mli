@@ -44,7 +44,7 @@ type t =
 [@@deriving show]
 
 val resolve :
-  Provider_context.t -> Relative_path.t SymbolOccurrence.t -> t option
+  Provider_context.t -> Relative_path.t Symbol_occurrence.t -> t option
 
 val get_kind : Provider_context.t -> string -> Ast_defs.classish_kind option
 

@@ -104,7 +104,7 @@ allowed_decl_fixme_codes = 4336
 
 let test () =
   let po =
-    ParserOptions.
+    Parser_options.
       { default with allowed_decl_fixme_codes = ISet.of_list [4336] }
   in
   let global_opts : GlobalOptions.t =

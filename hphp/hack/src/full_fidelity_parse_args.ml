@@ -309,10 +309,10 @@ No errors are filtered out."
     !ignore_missing_json
     !disallow_static_constants_in_default_func_arg
 
-let to_parser_options (args : t) : ParserOptions.t =
+let to_parser_options (args : t) : Parser_options.t =
   {
-    ParserOptions.default with
-    ParserOptions.codegen = args.codegen;
+    Parser_options.default with
+    Parser_options.codegen = args.codegen;
     const_static_props = args.const_static_props;
     abstract_static_props = args.abstract_static_props;
     disable_xhp_element_mangling = args.disable_xhp_element_mangling;

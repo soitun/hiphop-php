@@ -22,7 +22,7 @@ let directory_walk
       ~indexer:(genv.indexer FindUtils.file_filter)
       ~extra_roots:(ServerConfig.extra_paths genv.config)
   in
-  HackEventLogger.indexing_end ~desc:telemetry_label t;
+  Hack_event_logger.indexing_end ~desc:telemetry_label t;
   let t = Hh_logger.log_duration ("indexing " ^ telemetry_label) t in
   (get_next, t)
 
@@ -64,7 +64,7 @@ let parse_files_and_update_forward_naming_table
      But our caller provides us 'count' option in cases where it knows the number in
      advance, e.g. during init. We'll log that for now. In future it'd be nice to
      log the actual number parsed. *)
-  HackEventLogger.parsing_end_for_init
+  Hack_event_logger.parsing_end_for_init
     t
     hs
     ~parsed_count:count
@@ -97,7 +97,7 @@ let update_reverse_naming_table_from_env_and_get_duplicate_name_errors
         })
       ~init:env
   in
-  HackEventLogger.global_naming_end
+  Hack_event_logger.global_naming_end
     ~count:!count
     ~desc:telemetry_label
     ~heap_size:(SharedMem.SMTelemetry.heap_size ())
@@ -114,7 +114,7 @@ let validate_no_errors (errors : Diagnostics.t) : unit =
   | Some (path, error) ->
     let error = User_diagnostic.to_absolute error |> Diagnostics.to_string in
     Hh_logger.log "Unexpected error during init: %s" error;
-    HackEventLogger.invariant_violation_bug
+    Hack_event_logger.invariant_violation_bug
       "unexpected error during init"
       ~path
       ~data:error;
@@ -144,7 +144,7 @@ let log_type_check_end
          ~key:"repo_states"
          ~value:(ServerNotifier.get_repo_states_telemetry genv.notifier)
   in
-  HackEventLogger.type_check_end
+  Hack_event_logger.type_check_end
     (Some telemetry)
     ~heap_size:(SharedMem.SMTelemetry.heap_size ())
     ~started_count:total_rechecked_count

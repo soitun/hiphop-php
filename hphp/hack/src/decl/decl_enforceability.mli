@@ -28,7 +28,7 @@ module type Provider = sig
   (** [class_t] is the type that represents a class *)
   type class_t
 
-  val get_tcopt : t -> TypecheckerOptions.t
+  val get_tcopt : t -> Typechecker_options.t
 
   val get_class_or_typedef :
     t -> string -> class_t class_or_typedef_result option

@@ -200,7 +200,7 @@ module Common = struct
            (Relative_path.to_absolute current_file)
            (String.concat message ~sep:"\n")
            stack;
-         HackEventLogger.type_check_primary_position_bug
+         Hack_event_logger.type_check_primary_position_bug
            ~current_file
            ~message
            ~stack;
@@ -5862,7 +5862,7 @@ end = struct
   let to_user_diagnostic t ~env ~current_span =
     let result = eval t ~env ~current_span in
     let custom_err_config =
-      TypecheckerOptions.custom_error_config (Typing_env.get_tcopt env)
+      Typechecker_options.custom_error_config (Typing_env.get_tcopt env)
     in
     let custom_msgs =
       List.map ~f:(render_custom_error ~env)
@@ -6185,7 +6185,7 @@ end = struct
 
     let lod =
       Option.value ~default:GlobalOptions.Legacy
-      @@ TypecheckerOptions.tco_extended_reasons
+      @@ Typechecker_options.tco_extended_reasons
            Typing_env_types.(env.genv.tcopt)
     in
     let explanation =
@@ -6312,7 +6312,7 @@ end = struct
     let reason_super = Typing_reason.reverse_flow reason_super in
     let lod =
       Option.value ~default:GlobalOptions.Legacy
-      @@ TypecheckerOptions.tco_extended_reasons
+      @@ Typechecker_options.tco_extended_reasons
            Typing_env_types.(env.genv.tcopt)
     in
     let explanation =
@@ -6502,7 +6502,7 @@ end = struct
     let r_super = Typing_reason.reverse_flow r_super in
     let lod =
       Option.value ~default:GlobalOptions.Legacy
-      @@ TypecheckerOptions.tco_extended_reasons
+      @@ Typechecker_options.tco_extended_reasons
            Typing_env_types.(env.genv.tcopt)
     in
     let explanation =

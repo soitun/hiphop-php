@@ -23,7 +23,7 @@ type env = {
    * Hotfix until we can properly set up saved states to surface parse errors during
    * typechecking properly. *)
   show_all_errors: bool;
-  parser_options: ParserOptions.t;
+  parser_options: Parser_options.t;
   file: Relative_path.t;
   is_systemlib: bool;
 }
@@ -36,11 +36,11 @@ let make_env
     ?(include_line_comments = false)
     ?(quick_mode = false)
     ?(show_all_errors = false)
-    ?(parser_options = ParserOptions.default)
+    ?(parser_options = Parser_options.default)
     ?(is_systemlib = false)
     (file : Relative_path.t) : env =
   let codegen = Namespace_env.(equal_mode mode ForCodegen) in
-  let parser_options = ParserOptions.{ parser_options with codegen } in
+  let parser_options = Parser_options.{ parser_options with codegen } in
   {
     mode;
     php5_compat_mode;

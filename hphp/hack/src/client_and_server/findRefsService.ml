@@ -71,11 +71,11 @@ let process_member_id
 let process_class_id
     target_class
     (pos, class_name)
-    (class_id_type : SymbolOccurrence.class_id_type)
+    (class_id_type : Symbol_occurrence.class_id_type)
     (include_all_ci_types : bool) =
   if String.equal target_class class_name then
     match (include_all_ci_types, class_id_type) with
-    | (false, SymbolOccurrence.Other) -> Pos.Map.empty
+    | (false, Symbol_occurrence.Other) -> Pos.Map.empty
     | _ -> Pos.Map.singleton pos class_name
   else
     Pos.Map.empty
@@ -235,7 +235,7 @@ let get_deps_set_gconst ctx cst_name =
   | None -> Relative_path.Set.empty
 
 let fold_one_tast ctx target acc symbol =
-  let module SO = SymbolOccurrence in
+  let module SO = Symbol_occurrence in
   let SO.{ type_; pos; name; _ } = symbol in
   Pos.Map.union acc
   @@
@@ -289,9 +289,9 @@ module Iter = struct
   type acc = {
     last_cancellation_check: float;
         (** When did we last check for cancellation? *)
-    results: SearchTypes.Find_refs.t list list;
+    results: Search_types.Find_refs.t list list;
         (** Accumulates all results from [find_refs] *)
-    to_stream_at_end_of_batch: SearchTypes.Find_refs.absolute list list;
+    to_stream_at_end_of_batch: Search_types.Find_refs.absolute list list;
         (** Accumulates only those results that should be streamed at the end of [find_refs] *)
     streamed_so_far: int;
         (** How many individual references have been streamed so far *)
@@ -332,7 +332,7 @@ module Iter = struct
       in
       let abs_results =
         List.map per_file ~f:(fun r ->
-            SearchTypes.Find_refs.{ r with pos = Pos.to_absolute r.pos })
+            Search_types.Find_refs.{ r with pos = Pos.to_absolute r.pos })
       in
       if should_stream_now then
         let () =
@@ -364,12 +364,12 @@ end
 let find_refs
     (ctx : Provider_context.t)
     (target : action_internal)
-    (job_acc : (SearchTypes.Find_refs.t list, unit) Result.t)
+    (job_acc : (Search_types.Find_refs.t list, unit) Result.t)
     (files : Relative_path.t list)
     ~(omit_declaration : bool)
     ~(stream_file : Path.t option)
     ~(deadline : float option)
-    ~(t_start : float) : (SearchTypes.Find_refs.t list, unit) Result.t =
+    ~(t_start : float) : (Search_types.Find_refs.t list, unit) Result.t =
   (* The helper function 'results_from_tast' takes a tast, looks at all
      use-sites in the tast e.g. "foo(1)" is a use-site of symbol foo,
      and returns a list of use-site-position along with the string name they used. *)
@@ -381,7 +381,7 @@ let find_refs
         IdentifySymbolService.all_symbols ctx tast
         |> List.filter ~f:(fun symbol ->
                if omit_declaration then
-                 Option.is_none symbol.SymbolOccurrence.is_declaration
+                 Option.is_none symbol.Symbol_occurrence.is_declaration
                else
                  true)
         |> List.fold ~init:Pos.Map.empty ~f:(fold_one_tast ctx target)
@@ -389,7 +389,7 @@ let find_refs
       let results_list =
         Pos.Map.fold
           (fun p str acc ->
-            SearchTypes.Find_refs.{ name = str; pos = p } :: acc)
+            Search_types.Find_refs.{ name = str; pos = p } :: acc)
           results_map
           []
       in
@@ -467,16 +467,16 @@ let find_refs
 let find_refs_ctx
     ~(ctx : Provider_context.t)
     ~(entry : Provider_context.entry)
-    ~(target : action_internal) : SearchTypes.Find_refs.t list =
+    ~(target : action_internal) : Search_types.Find_refs.t list =
   let symbols = IdentifySymbolService.all_symbols_ctx ~ctx ~entry in
   let results =
     symbols
     |> List.filter ~f:(fun symbol ->
-           Option.is_none symbol.SymbolOccurrence.is_declaration)
+           Option.is_none symbol.Symbol_occurrence.is_declaration)
     |> List.fold ~init:Pos.Map.empty ~f:(fold_one_tast ctx target)
   in
   Pos.Map.fold
-    (fun p str acc -> SearchTypes.Find_refs.{ name = str; pos = p } :: acc)
+    (fun p str acc -> Search_types.Find_refs.{ name = str; pos = p } :: acc)
     results
     []
 
@@ -519,7 +519,7 @@ let get_definitions ctx action =
             match get method_name with
             | Some meth when String.equal meth.ce_origin (Cls.name class_) ->
               let pos = resolve @@ get_pos @@ Lazy.force meth.ce_type in
-              SearchTypes.Find_refs.{ name = method_name; pos } :: acc
+              Search_types.Find_refs.{ name = method_name; pos } :: acc
             | _ -> acc
           in
           let acc = add_meth (Cls.get_method class_) acc in
@@ -537,7 +537,7 @@ let get_definitions ctx action =
             | Some class_const
               when String.equal class_const.cc_origin (Cls.name class_) ->
               let pos = resolve @@ class_const.cc_pos in
-              SearchTypes.Find_refs.{ name = class_const_name; pos } :: acc
+              Search_types.Find_refs.{ name = class_const_name; pos } :: acc
             | _ -> acc
           in
           let acc = add_class_const (Cls.get_const class_) acc in
@@ -555,7 +555,7 @@ let get_definitions ctx action =
          >>= fun class_ ->
          Some
            [
-             SearchTypes.Find_refs.
+             Search_types.Find_refs.
                { name = class_name; pos = resolve @@ Cls.pos class_ };
            ]
        | Naming_types.TTypedef ->
@@ -563,13 +563,13 @@ let get_definitions ctx action =
          >>= fun type_ ->
          Some
            [
-             SearchTypes.Find_refs.
+             Search_types.Find_refs.
                { name = class_name; pos = resolve @@ type_.td_pos };
            ])
   | IFunction fun_name -> begin
     match Decl_provider.get_fun ctx fun_name with
     | Decl_entry.Found { fe_pos; _ } ->
-      [SearchTypes.Find_refs.{ name = fun_name; pos = resolve @@ fe_pos }]
+      [Search_types.Find_refs.{ name = fun_name; pos = resolve @@ fe_pos }]
     | _ -> []
   end
   | IGConst _

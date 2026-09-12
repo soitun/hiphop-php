@@ -9,8 +9,8 @@
 open Hh_prelude
 
 type env = {
-  popt: ParserOptions.t;
-  tcopt: TypecheckerOptions.t;
+  popt: Parser_options.t;
+  tcopt: Typechecker_options.t;
   local_memory: Provider_backend.local_memory;
 }
 

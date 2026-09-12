@@ -63,7 +63,7 @@ let assert_is_using_cgroup_v2 =
 (* I don't really expect us to switch cgroups often, but let's only cache for 5 seconds *)
 let get_cgroup_name =
   Memoize.until ~seconds:5.0 ~f:(fun () ->
-      ProcFS.first_cgroup_for_pid (Unix.getpid ()))
+      Proc_fs.first_cgroup_for_pid (Unix.getpid ()))
 
 type stats = {
   memory_current: int;

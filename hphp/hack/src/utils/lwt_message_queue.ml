@@ -8,16 +8,16 @@
  *)
 
 type 'a t = {
-  mutable messages: 'a ImmQueue.t;
+  mutable messages: 'a Imm_queue.t;
   mutable is_open: bool;
   cv: unit Lwt_condition.t;
       (** Broadcasted whenever any of the above state changes. *)
 }
 
 let create () : 'a t =
-  { messages = ImmQueue.empty; is_open = true; cv = Lwt_condition.create () }
+  { messages = Imm_queue.empty; is_open = true; cv = Lwt_condition.create () }
 
-let set_messages (queue : 'a t) (messages : 'a ImmQueue.t) : unit =
+let set_messages (queue : 'a t) (messages : 'a Imm_queue.t) : unit =
   queue.messages <- messages;
   Lwt_condition.broadcast queue.cv ()
 
@@ -27,13 +27,13 @@ let set_is_open (queue : 'a t) (is_open : bool) : unit =
 
 let push (queue : 'a t) (message : 'a) : bool =
   if queue.is_open then (
-    set_messages queue (ImmQueue.push queue.messages message);
+    set_messages queue (Imm_queue.push queue.messages message);
     true
   ) else
     false
 
 let rec pop (queue : 'a t) : 'a option Lwt.t =
-  match (queue.is_open, ImmQueue.pop queue.messages) with
+  match (queue.is_open, Imm_queue.pop queue.messages) with
   | (false, _) -> Lwt.return None
   | (true, (None, _)) ->
     let%lwt () = Lwt_condition.wait queue.cv in
@@ -43,12 +43,12 @@ let rec pop (queue : 'a t) : 'a option Lwt.t =
     Lwt.return (Some hd)
 
 let close (queue : 'a t) : unit =
-  set_messages queue ImmQueue.empty;
+  set_messages queue Imm_queue.empty;
   set_is_open queue false
 
-let is_empty (queue : 'a t) : bool = ImmQueue.is_empty queue.messages
+let is_empty (queue : 'a t) : bool = Imm_queue.is_empty queue.messages
 
-let length (queue : 'a t) : int = ImmQueue.length queue.messages
+let length (queue : 'a t) : int = Imm_queue.length queue.messages
 
 let exists (queue : 'a t) ~(f : 'a -> bool) : bool =
-  ImmQueue.exists ~f queue.messages
+  Imm_queue.exists ~f queue.messages

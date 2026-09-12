@@ -209,7 +209,7 @@ module Test (Impl : S_for_test) = struct
 end
 
 module ApproxSetImpl : S_for_test = struct
-  include ApproxSet.Make (TagDomain)
+  include Approx_set.Make (TagDomain)
 
   let name = "ApproxSet"
 
@@ -217,7 +217,7 @@ module ApproxSetImpl : S_for_test = struct
 end
 
 module BddSetImpl : S_for_test = struct
-  include BddSet.Make (OrderedTagDomain)
+  include Bdd_set.Make (OrderedTagDomain)
 
   let name = "BddSet"
 

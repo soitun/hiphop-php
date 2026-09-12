@@ -11,7 +11,7 @@ open Hh_prelude
 type init_result = {
   naming_table: Naming_table.t;
   warnings_saved_state: Warnings_saved_state.t option;
-  sienv: SearchUtils.si_env;
+  sienv: Search_utils.si_env;
   changed_files: Saved_state_loader.changed_files;
 }
 
@@ -78,7 +78,9 @@ let init_via_fetch
     ~(eden_opts : Saved_state_loader.Eden_options.t)
     ~(ignore_hh_version : bool) :
     State_loader_lwt.FromDisk.load_result outcome Lwt.t =
-  let ssopt = TypecheckerOptions.saved_state (Provider_context.get_tcopt ctx) in
+  let ssopt =
+    Typechecker_options.saved_state (Provider_context.get_tcopt ctx)
+  in
   let%lwt load_result =
     State_loader_lwt.load
       ~ssopt
@@ -115,7 +117,7 @@ and then loading it. Also returns [si_addenda] from what we gathered
 during the full index. *)
 let init_via_build
     ~(config : ServerConfig.t) ~(root : Path.t) ~(hhi_root : Path.t) :
-    (Path.t * SymbolIndexCore.paths_with_addenda) outcome Lwt.t =
+    (Path.t * Symbol_index_core.paths_with_addenda) outcome Lwt.t =
   let path = Path.make (ServerFiles.client_ide_naming_table root) in
   let rec poll_build_until_complete_exn progress =
     match Naming_table_builder_ffi_externs.poll_exn progress with
@@ -143,7 +145,7 @@ let init_via_build
     } ->
       let paths_with_addenda =
         List.map si_addenda ~f:(fun (path, addenda) ->
-            (path, addenda, SearchUtils.TypeChecker))
+            (path, addenda, Search_utils.TypeChecker))
       in
       Lwt.return (Success (path, paths_with_addenda))
     | { Naming_table_builder_ffi_externs.exit_status; time_taken_secs = _; _ }
@@ -168,7 +170,7 @@ let init_via_find
   end else begin
     let%lwt project_metadata =
       State_loader_lwt.get_project_metadata
-        ~opts:(Provider_context.get_tcopt ctx |> TypecheckerOptions.saved_state)
+        ~opts:(Provider_context.get_tcopt ctx |> Typechecker_options.saved_state)
         ~repo:root
         ~ignore_hh_version
     in
@@ -211,13 +213,15 @@ let map_attempt
     ~(prev : Telemetry.t * Client_ide_message.rich_error)
     ~(f :
        a ->
-       saved_state_paths * Saved_state_loader.changed_files * SearchUtils.si_env)
+       saved_state_paths
+       * Saved_state_loader.changed_files
+       * Search_utils.si_env)
     (promise : a outcome Lwt.t) :
     ( Telemetry.t
       * Naming_table.t
       * Warnings_saved_state.t option
       * Saved_state_loader.changed_files
-      * SearchUtils.si_env,
+      * Search_utils.si_env,
       Telemetry.t * Client_ide_message.rich_error )
     result
     Lwt.t =
@@ -322,9 +326,9 @@ let init
       ~deps_mode:(Typing_deps_mode.InMemoryMode None)
   in
   let sienv =
-    SymbolIndex.initialize
+    Symbol_index.initialize
       ~gleanopt
-      ~namespace_map:tcopt.GlobalOptions.po.ParserOptions.auto_namespace_map
+      ~namespace_map:tcopt.GlobalOptions.po.Parser_options.auto_namespace_map
       ~provider_name:
         local_config.ServerLocalConfig.ide_symbolindex_search_provider
       ~quiet:local_config.ServerLocalConfig.symbolindex_quiet
@@ -430,20 +434,20 @@ let init
            ~prev
            ~f:(fun (naming_table_path, paths_with_addenda) ->
              let sienv =
-               SymbolIndexCore.update_from_addenda ~sienv ~paths_with_addenda
+               Symbol_index_core.update_from_addenda ~sienv ~paths_with_addenda
              in
              ({ naming_table_path; warnings_saved_state_path = None }, [], sienv))
   in
 
   match result with
   | Ok (telemetry, naming_table, warnings_saved_state, changed_files, sienv) ->
-    HackEventLogger.serverless_ide_load_naming_table
+    Hack_event_logger.serverless_ide_load_naming_table
       ~start_time
       ~local_file_count:(Some (List.length changed_files))
       telemetry;
     Lwt.return_ok { naming_table; warnings_saved_state; sienv; changed_files }
   | Error (telemetry, e) ->
-    HackEventLogger.serverless_ide_load_naming_table
+    Hack_event_logger.serverless_ide_load_naming_table
       ~start_time
       ~local_file_count:None
       telemetry;

@@ -169,7 +169,7 @@ let make_return_type
       MakeType.awaitable (Reason.ret_fun_kind_from_decl (p, Ast_defs.FAsync)) ty
     in
     let localize ~wrap (env : env) (dty : decl_ty) =
-      if TypecheckerOptions.everything_sdt env.genv.tcopt then (
+      if Typechecker_options.everything_sdt env.genv.tcopt then (
         let pos = get_pos dty in
         let dty =
           match get_node dty with

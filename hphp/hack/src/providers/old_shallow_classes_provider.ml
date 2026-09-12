@@ -10,10 +10,10 @@ open Hh_prelude
 open Shallow_decl_defs
 
 let fetch_remote_old_decl_flag (ctx : Provider_context.t) =
-  TypecheckerOptions.fetch_remote_old_decls (Provider_context.get_tcopt ctx)
+  Typechecker_options.fetch_remote_old_decls (Provider_context.get_tcopt ctx)
 
 let only_fetch_remote_old_decl_during_init (ctx : Provider_context.t) =
-  TypecheckerOptions.only_fetch_remote_old_decl_during_init
+  Typechecker_options.only_fetch_remote_old_decl_during_init
     (Provider_context.get_tcopt ctx)
 
 let fetch_remote_old_decls ctx ~during_init =

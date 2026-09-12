@@ -73,7 +73,7 @@ type entry = {
       (** NOT monotonic: depends on the decls of other files. See invariants in Provider_utils.mli. *)
   mutable all_diagnostics: Diagnostics.t option;
       (** NOT monotonic for the same reason as [tast]. *)
-  mutable symbols: Relative_path.t SymbolOccurrence.t list option;
+  mutable symbols: Relative_path.t Symbol_occurrence.t list option;
 }
 
 (** We often operate on collection of entries. *)
@@ -101,8 +101,8 @@ have a [ServerEnv.env].
 If you have a [ServerEnv.env], you probably want to use
 [Provider_utils.ctx_from_server_env] instead. *)
 val empty_for_tool :
-  popt:ParserOptions.t ->
-  tcopt:TypecheckerOptions.t ->
+  popt:Parser_options.t ->
+  tcopt:Typechecker_options.t ->
   backend:Provider_backend.t ->
   deps_mode:Typing_deps_mode.t ->
   t
@@ -112,24 +112,24 @@ backend is shared memory. We don't want to serialize and send the entire
 [ServerEnv.env] to these workers because a [ServerEnv.env] contains large data
 objects (such as the forward naming table). *)
 val empty_for_worker :
-  popt:ParserOptions.t ->
-  tcopt:TypecheckerOptions.t ->
+  popt:Parser_options.t ->
+  tcopt:Typechecker_options.t ->
   deps_mode:Typing_deps_mode.t ->
   t
 
 (** The empty context, for use in tests, where there may not be a
 [ServerEnv.env] available. *)
 val empty_for_test :
-  popt:ParserOptions.t ->
-  tcopt:TypecheckerOptions.t ->
+  popt:Parser_options.t ->
+  tcopt:Typechecker_options.t ->
   deps_mode:Typing_deps_mode.t ->
   t
 
 (** The empty context, for use in debugging aides in production code, where
 there may not be a [ServerEnv.env] available. *)
 val empty_for_debugging :
-  popt:ParserOptions.t ->
-  tcopt:TypecheckerOptions.t ->
+  popt:Parser_options.t ->
+  tcopt:Typechecker_options.t ->
   deps_mode:Typing_deps_mode.t ->
   t
 
@@ -157,13 +157,13 @@ contents can't be read. *)
 val add_entry_if_missing : ctx:t -> path:Relative_path.t -> t * entry
 
 (** Get the [ParserOptions.t] contained within the [t]. *)
-val get_popt : t -> ParserOptions.t
+val get_popt : t -> Parser_options.t
 
 (** Get the [TypecheckerOptions.t] contained within the [t]. *)
-val get_tcopt : t -> TypecheckerOptions.t
+val get_tcopt : t -> Typechecker_options.t
 
 (** Update the [TypecheckerOptions.t] contained within the [t]. *)
-val map_tcopt : t -> f:(TypecheckerOptions.t -> TypecheckerOptions.t) -> t
+val map_tcopt : t -> f:(Typechecker_options.t -> Typechecker_options.t) -> t
 
 (** Get the [Provider_backend.t] that backs this [t]. *)
 val get_backend : t -> Provider_backend.t

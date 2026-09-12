@@ -18,7 +18,7 @@ val make_immutable : t -> t
 
 val is_immutable : t -> bool
 
-module Map : WrappedMap_sig.S with type key = t
+module Map : Wrapped_map_sig.S with type key = t
 
 val display : t -> string
 

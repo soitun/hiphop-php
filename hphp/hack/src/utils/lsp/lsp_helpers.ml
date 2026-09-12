@@ -34,7 +34,7 @@ let lsp_uri_to_path (uri : DocumentUri.t) : string =
 let path_string_to_lsp_uri (path : string) ~(default_path : string) :
     Lsp.DocumentUri.t =
   if String.equal path "" then begin
-    HackEventLogger.invariant_violation_bug "missing path";
+    Hack_event_logger.invariant_violation_bug "missing path";
     Hh_logger.log
       "missing path %s"
       (Exception.get_current_callstack_string 99 |> Exception.clean_stack);
@@ -105,10 +105,10 @@ let apply_changes_unsafe
   | Ok r -> r
   | Error (e, _stack) -> failwith e
 
-let sym_occ_kind_to_lsp_sym_info_kind (sym_occ_kind : SymbolOccurrence.kind) :
+let sym_occ_kind_to_lsp_sym_info_kind (sym_occ_kind : Symbol_occurrence.kind) :
     Lsp.SymbolInformation.symbolKind =
   let open Lsp.SymbolInformation in
-  let open SymbolOccurrence in
+  let open Symbol_occurrence in
   match sym_occ_kind with
   | Class _ -> Class
   | BuiltInType _ -> Class

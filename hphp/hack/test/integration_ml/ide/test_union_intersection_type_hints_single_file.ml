@@ -59,7 +59,7 @@ let test () =
      the feature is not OngoingRelease, keeping the typing-phase gate
      ([is_unstable_feature_enabled]) dependent solely on the per-file attribute
      being applied -- exactly the code path under test. *)
-  let po = ParserOptions.{ default with allow_unstable_features = true } in
+  let po = Parser_options.{ default with allow_unstable_features = true } in
   let global_opts : GlobalOptions.t =
     GlobalOptions.set ~po GlobalOptions.default
   in

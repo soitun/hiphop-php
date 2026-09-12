@@ -13,13 +13,13 @@ let first_top_level_def symbols =
       match res with
       | Some _ -> res
       | None ->
-        if SymbolOccurrence.is_top_level_definition symbol then
-          Some (Utils.strip_ns symbol.SymbolOccurrence.name)
+        if Symbol_occurrence.is_top_level_definition symbol then
+          Some (Utils.strip_ns symbol.Symbol_occurrence.name)
         else
           None)
 
 let go_quarantined ctx entry pos : string option =
-  let (symbols : _ SymbolOccurrence.t list) =
+  let (symbols : _ Symbol_occurrence.t list) =
     IdentifySymbolService.go_quarantined
       ~ctx
       ~entry

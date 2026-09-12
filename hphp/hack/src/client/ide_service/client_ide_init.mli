@@ -12,7 +12,7 @@ type init_result = {
       (** An open connection to sqlite naming-table file. (Naming_table.t is able to store an in-memory
       delta, but in our case the result of [init] always has an empty delta.) *)
   warnings_saved_state: Warnings_saved_state.t option;
-  sienv: SearchUtils.si_env;
+  sienv: Search_utils.si_env;
       (** search+autocomplete index, either full (in case we built) or delta
       plus a connection to whatever symbolindex is specified in hh.conf and .hhconfig
       (in other cases) *)

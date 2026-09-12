@@ -9,7 +9,7 @@
 
 type update_result = {
   naming_table: Naming_table.t;
-  sienv: SearchUtils.si_env;
+  sienv: Search_utils.si_env;
   changes: FileInfo.change list;
 }
 
@@ -28,6 +28,6 @@ type update_result = {
 val update_naming_tables_and_si :
   ctx:Provider_context.t ->
   naming_table:Naming_table.t ->
-  sienv:SearchUtils.si_env ->
+  sienv:Search_utils.si_env ->
   changes:Relative_path.Set.t ->
   update_result

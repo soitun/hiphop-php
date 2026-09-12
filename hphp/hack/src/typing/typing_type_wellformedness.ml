@@ -290,7 +290,7 @@ and hint_ ~in_signature env p h_ =
        admitted at parse time by `shape_splat_concrete`. *)
     let splat_feature_errors =
       if
-        TypecheckerOptions.is_unstable_feature_enabled
+        Typechecker_options.is_unstable_feature_enabled
           env.tenv.genv.tcopt
           "shape_splat_type_parameters"
       then
@@ -439,7 +439,7 @@ let fun_ tenv f =
   let add_implicit_upper_bound =
     support_dynamic_type
     && (not no_auto_likes)
-    && TypecheckerOptions.everything_sdt tenv.genv.tcopt
+    && Typechecker_options.everything_sdt tenv.genv.tcopt
   in
 
   let (tenv, ty_err_opt) =

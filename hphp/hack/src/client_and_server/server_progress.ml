@@ -72,7 +72,7 @@ let write_file (t : t) : unit =
         "SERVER_PROGRESS_EXCEPTION(write) %s\n%s"
         (Exception.get_ctor_string e)
         (Exception.get_backtrace_string e |> Exception.clean_stack);
-      HackEventLogger.server_progress_write_exn ~server_progress_file e;
+      Hack_event_logger.server_progress_write_exn ~server_progress_file e;
       ())
 
 (** This reads the specified progress file, which is assumed to exist.
@@ -111,7 +111,7 @@ let read () : t =
         (Exception.get_ctor_string e)
         (Exception.get_backtrace_string e |> Exception.clean_stack)
         !content;
-      HackEventLogger.server_progress_read_exn ~server_progress_file e;
+      Hack_event_logger.server_progress_read_exn ~server_progress_file e;
       synthesize_stopped "unknown state")
 
 let write_message ?(include_in_logs = true) ?(disposition = DWorking) message =
@@ -303,7 +303,7 @@ module ErrorsFile = struct
                 Printf.sprintf "some telemetry of %d characters" nchar
               | End _ -> "the end sentinel"))
       in
-      HackEventLogger.invariant_violation_bug msg;
+      Hack_event_logger.invariant_violation_bug msg;
       failwith msg
     )
 
@@ -501,7 +501,7 @@ module ErrorsWrite = struct
                    Relative_path.is_root (Relative_path.prefix path)
                  in
                  if not is_root then
-                   HackEventLogger.invariant_violation_bug
+                   Hack_event_logger.invariant_violation_bug
                      "error in file outside root"
                      ~path;
                  is_root)

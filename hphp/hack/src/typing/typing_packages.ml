@@ -60,7 +60,7 @@ type check_reason =
 let is_excluded env (file : Relative_path.t) =
   let filename = Relative_path.to_absolute file in
   let excluded_patterns =
-    Env.get_tcopt env |> TypecheckerOptions.package_exclude_patterns
+    Env.get_tcopt env |> Typechecker_options.package_exclude_patterns
   in
   List.exists excluded_patterns ~f:(fun pattern ->
       Str.(string_match (regexp pattern) filename 0))

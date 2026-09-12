@@ -12,8 +12,8 @@ open Typing_defs
 open Typing_defs_core
 open Utils
 open String_utils
-open SearchUtils
-open SearchTypes
+open Search_utils
+open Search_types
 include AutocompleteTypes
 open Tast
 module Phase = Typing_phase
@@ -42,11 +42,11 @@ let autocomplete_is_complete : bool ref = ref true
  * Take the results, look them up, and add file position information.
  *)
 let add_position_to_results
-    (ctx : Provider_context.t) (raw_results : SearchTypes.si_item list) :
-    SearchUtils.result =
-  SearchUtils.(
+    (ctx : Provider_context.t) (raw_results : Search_types.si_item list) :
+    Search_utils.result =
+  Search_utils.(
     List.filter_map raw_results ~f:(fun r ->
-        match SymbolIndexCore.get_pos_for_item_opt ctx r with
+        match Symbol_index_core.get_pos_for_item_opt ctx r with
         | Some pos ->
           Some { name = r.si_fullname; pos; result_type = r.si_kind }
         | None -> None))
@@ -1629,31 +1629,31 @@ let autocomplete_enum_value_in_call env (ft : Typing_defs.locl_fun_type) args :
 
 let builtin_type_hints =
   [
-    (SymbolOccurrence.BImixed, "mixed");
-    (SymbolOccurrence.BIdynamic, "dynamic");
-    (SymbolOccurrence.BInothing, "nothing");
-    (SymbolOccurrence.BInonnull, "nonnull");
-    (SymbolOccurrence.BIshape, "shape");
-    (SymbolOccurrence.BIstring, "string");
-    (SymbolOccurrence.BIprimitive Aast_defs.Tnull, "null");
+    (Symbol_occurrence.BImixed, "mixed");
+    (Symbol_occurrence.BIdynamic, "dynamic");
+    (Symbol_occurrence.BInothing, "nothing");
+    (Symbol_occurrence.BInonnull, "nonnull");
+    (Symbol_occurrence.BIshape, "shape");
+    (Symbol_occurrence.BIstring, "string");
+    (Symbol_occurrence.BIprimitive Aast_defs.Tnull, "null");
     (* TODO: only offer void in return positions. *)
-    (SymbolOccurrence.BIprimitive Aast_defs.Tvoid, "void");
-    (SymbolOccurrence.BIprimitive Aast_defs.Tint, "int");
-    (SymbolOccurrence.BIprimitive Aast_defs.Tbool, "bool");
-    (SymbolOccurrence.BIprimitive Aast_defs.Tfloat, "float");
-    (SymbolOccurrence.BIprimitive Aast_defs.Tresource, "resource");
-    (SymbolOccurrence.BIprimitive Aast_defs.Tnum, "num");
-    (SymbolOccurrence.BIprimitive Aast_defs.Tarraykey, "arraykey");
-    (SymbolOccurrence.BIprimitive Aast_defs.Tnoreturn, "noreturn");
+    (Symbol_occurrence.BIprimitive Aast_defs.Tvoid, "void");
+    (Symbol_occurrence.BIprimitive Aast_defs.Tint, "int");
+    (Symbol_occurrence.BIprimitive Aast_defs.Tbool, "bool");
+    (Symbol_occurrence.BIprimitive Aast_defs.Tfloat, "float");
+    (Symbol_occurrence.BIprimitive Aast_defs.Tresource, "resource");
+    (Symbol_occurrence.BIprimitive Aast_defs.Tnum, "num");
+    (Symbol_occurrence.BIprimitive Aast_defs.Tarraykey, "arraykey");
+    (Symbol_occurrence.BIprimitive Aast_defs.Tnoreturn, "noreturn");
   ]
 
 (* Find global autocomplete results *)
 let find_global_results
     ~(env : Tast_env.env)
     ~(id : Pos.t * string)
-    ~(completion_type : SearchTypes.autocomplete_type)
+    ~(completion_type : Search_types.autocomplete_type)
     ~(autocomplete_context : AutocompleteTypes.legacy_autocomplete_context)
-    ~(sienv_ref : SearchUtils.si_env ref)
+    ~(sienv_ref : Search_utils.si_env ref)
     ~(pctx : Provider_context.t) : unit =
   (* First step: Check obvious cases where autocomplete is not warranted.   *)
   (*                                                                        *)
@@ -1714,7 +1714,7 @@ let find_global_results
        then the TAST will have a node with id "FLibSL\Vec\chAUTO332".
        This then will be the [query_text] that we send to [find_matching_symbols]. *)
     let (results, is_complete) =
-      SymbolIndex.find_matching_symbols
+      Symbol_index.find_matching_symbols
         ~sienv_ref
         ~query_text
         ~max_results
@@ -1722,7 +1722,7 @@ let find_global_results
         ~context:completion_type
     in
     autocomplete_is_complete :=
-      SearchTypes.equal_si_complete is_complete SearchTypes.Complete;
+      Search_types.equal_si_complete is_complete Search_types.Complete;
     (* Looking up a function signature using Tast_env.get_fun consumes ~67KB
      * and can cause complex typechecking which can take from 2-100 milliseconds
      * per result.  When tested in summer 2019 it was possible to load 1.4GB of data
@@ -1805,7 +1805,7 @@ let find_global_results
              String.is_prefix name ~prefix:query_text)
       |> List.iter ~f:(fun (hint, name) ->
              let kind = FileInfo.SI_Typedef in
-             let documentation = SymbolOccurrence.built_in_type_hover hint in
+             let documentation = Symbol_occurrence.built_in_type_hover hint in
              add_res
                {
                  res_decl_pos = absolute_none;
@@ -1825,7 +1825,7 @@ let find_global_results
 let complete_xhp_tag
     ~(id : Pos.t * string)
     ~(does_autocomplete_snippet : bool)
-    ~(sienv_ref : SearchUtils.si_env ref)
+    ~(sienv_ref : Search_utils.si_env ref)
     ~(pctx : Provider_context.t) : unit =
   let tast_env = Tast_env.empty pctx in
   let query_text = strip_suffix (snd id) in
@@ -1833,7 +1833,7 @@ let complete_xhp_tag
   auto_complete_for_global := query_text;
   let absolute_none = Pos.none |> Pos.to_absolute in
   let (results, _is_complete) =
-    SymbolIndex.find_matching_symbols
+    Symbol_index.find_matching_symbols
       ~sienv_ref
       ~query_text
       ~max_results
@@ -2568,7 +2568,7 @@ let go_ctx
     ~(ctx : Provider_context.t)
     ~(entry : Provider_context.entry)
     ~(autocomplete_context : AutocompleteTypes.legacy_autocomplete_context)
-    ~(sienv_ref : SearchUtils.si_env ref)
+    ~(sienv_ref : Search_utils.si_env ref)
     ~(naming_table : Naming_table.t) =
   reset ();
 
@@ -2591,7 +2591,7 @@ let go_ctx
           value = autocomplete_items;
         }
       in
-      SymbolIndexCore.log_symbol_index_search
+      Symbol_index_core.log_symbol_index_search
         ~sienv:!sienv_ref
         ~start_time
         ~query_text:!auto_complete_for_global

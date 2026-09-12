@@ -25,7 +25,7 @@ let from_absolute (pos : Pos.absolute) : half_open_one_based =
 let pos_to_one_based_json
     ?(timestamp : float option)
     ~(half_open_interval : bool)
-    SearchTypes.Find_refs.{ name; pos } : Yojson.Safe.t =
+    Search_types.Find_refs.{ name; pos } : Yojson.Safe.t =
   let { filename; line; char_start; char_end } =
     if half_open_interval then
       from_absolute pos
@@ -60,7 +60,7 @@ let half_open_one_based_json_to_pos_exn (json : Yojson.Safe.t) :
 
 (** Produced by "hh --ide-find-refs-by-symbol" and parsed by clientLsp *)
 module IdeShellout = struct
-  let to_string (results : SearchTypes.Find_refs.absolute list) : string =
+  let to_string (results : Search_types.Find_refs.absolute list) : string =
     let entries =
       List.map results ~f:(pos_to_one_based_json ~half_open_interval:true)
     in
@@ -76,7 +76,7 @@ end
 (** Used by hh_server's findRefsService to write to a streaming file, read by clientLsp *)
 module Ide_stream = struct
   let lock_and_append
-      (fd : Unix.file_descr) (results : SearchTypes.Find_refs.absolute list) :
+      (fd : Unix.file_descr) (results : Search_types.Find_refs.absolute list) :
       unit =
     if List.is_empty results then
       ()
@@ -130,7 +130,7 @@ end
 (** Used by "hh --find-refs" *)
 module CliHumanReadable = struct
   let print_results results =
-    List.iter results ~f:(fun SearchTypes.Find_refs.{ name; pos } ->
+    List.iter results ~f:(fun Search_types.Find_refs.{ name; pos } ->
         Printf.printf "%s %s\n" (Pos.string pos) name);
     Printf.printf "%d total results\n" (List.length results)
 end
@@ -138,11 +138,11 @@ end
 (** CliArgs is produced by clientLsp when it invokes "hh --ide-find-refs-by-symbol <args>"
 and consumed by clientArgs when it parses that argument. *)
 module CliArgs = struct
-  open SearchTypes.Find_refs
+  open Search_types.Find_refs
 
   type t = {
     symbol_name: string;
-    action: SearchTypes.Find_refs.action;
+    action: Search_types.Find_refs.action;
     stream_file: Path.t option;
     hint_suffixes: string list;
   }

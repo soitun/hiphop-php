@@ -26,11 +26,11 @@ type request = Request of (serializer -> unit) * metadata_in
 
 and serializer = { send: 'a. 'a -> unit }
 
-and metadata_in = { log_globals: HackEventLogger.serialized_globals }
+and metadata_in = { log_globals: Hack_event_logger.serialized_globals }
 
 type metadata_out = {
   stats: Measure.record_data;
-  log_globals: HackEventLogger.serialized_globals;
+  log_globals: Hack_event_logger.serialized_globals;
 }
 
 type subprocess_job_status = Subprocess_terminated of Unix.process_status
@@ -111,9 +111,11 @@ let read_and_process_job ic oc : job_outcome =
       (float (end_major_collections - !start_major_collections));
 
     begin
-      match (!start_proc_fs_status, ProcFS.status_for_pid (Unix.getpid ())) with
-      | ( Some { ProcFS.rss_total = start; _ },
-          Ok { ProcFS.rss_total = total; rss_hwm = hwm; _ } ) ->
+      match
+        (!start_proc_fs_status, Proc_fs.status_for_pid (Unix.getpid ()))
+      with
+      | ( Some { Proc_fs.rss_total = start; _ },
+          Ok { Proc_fs.rss_total = total; rss_hwm = hwm; _ } ) ->
         Measure.sample "worker_rss_start" (float start);
         Measure.sample "worker_rss_delta" (float (total - start));
         Measure.sample "worker_rss_hwm_delta" (float (hwm - start))
@@ -122,7 +124,7 @@ let read_and_process_job ic oc : job_outcome =
 
     (* After this point, it is critical to not throw a Worker_should_exit
        exception; otherwise outfd might end up being corrupted *)
-    WorkerCancel.with_no_cancellations (fun () ->
+    Worker_cancel.with_no_cancellations (fun () ->
         let len =
           Measure.time "worker_send_response" (fun () ->
               Marshal_tools.to_fd_with_preamble
@@ -137,7 +139,7 @@ let read_and_process_job ic oc : job_outcome =
             ^^ "If you are sending closures, double-check to ensure that "
             ^^ "they have not captured large values in their environment.")
             len;
-          HackEventLogger.worker_large_data_send
+          Hack_event_logger.worker_large_data_send
             ~path:Relative_path.default
             (Telemetry.create () |> Telemetry.int_ ~key:"len" ~value:len)
         );
@@ -147,7 +149,7 @@ let read_and_process_job ic oc : job_outcome =
         let metadata_out =
           {
             stats = Measure.serialize (Measure.pop_global ());
-            log_globals = HackEventLogger.serialize_globals ();
+            log_globals = Hack_event_logger.serialize_globals ();
           }
         in
         let _ = Marshal_tools.to_fd_with_preamble outfd metadata_out in
@@ -173,13 +175,13 @@ let read_and_process_job ic oc : job_outcome =
     start_major_collections := gc.Gc.major_collections;
     start_wall_time := Unix.gettimeofday ();
     start_proc_fs_status :=
-      ProcFS.status_for_pid (Unix.getpid ()) |> Core.Result.ok;
-    HackEventLogger.deserialize_globals log_globals;
+      Proc_fs.status_for_pid (Unix.getpid ()) |> Core.Result.ok;
+    Hack_event_logger.deserialize_globals log_globals;
     Mem_profile.start ();
     do_process { send = send_result };
     `Success
   with
-  | WorkerCancel.Worker_should_exit -> `Worker_cancelled
+  | Worker_cancel.Worker_should_exit -> `Worker_cancelled
   | SharedMem.Out_of_shared_memory -> `Error Exit_status.Out_of_shared_memory
   | SharedMem.Hash_table_full -> `Error Exit_status.Hash_table_full
   | SharedMem.Heap_full -> `Error Exit_status.Heap_full
@@ -225,7 +227,7 @@ let read_and_process_job ic oc : job_outcome =
     in
     Hh_logger.log "%s" msg;
     EventLogger.log_if_initialized (fun () ->
-        HackEventLogger.invariant_violation_bug msg);
+        Hack_event_logger.invariant_violation_bug msg);
     `Error Exit_status.Type_error
   | exn ->
     let e = Exception.wrap exn in
@@ -233,7 +235,7 @@ let read_and_process_job ic oc : job_outcome =
       "WORKER_EXCEPTION %s"
       (Exception.to_string e |> Exception.clean_stack);
     EventLogger.log_if_initialized (fun () ->
-        HackEventLogger.worker_exception e);
+        Hack_event_logger.worker_exception e);
     (* What exit code should we emit for an uncaught exception?
        The ocaml runtime emits exit code 2 for uncaught exceptions.
        We should really pick our own different code here, but (history) we don't.
@@ -342,7 +344,7 @@ let unix_worker_main restore (state, controller_fd) (ic, oc) =
         Stdlib.flush stdout;
         Stdlib.exit code
       | Unix.WSIGNALED x ->
-        let sig_str = PrintSignal.string_of_signal x in
+        let sig_str = Print_signal.string_of_signal x in
         Printf.printf "Worker interrupted with signal: %s\n" sig_str;
         Stdlib.flush stdout;
         Stdlib.exit 2

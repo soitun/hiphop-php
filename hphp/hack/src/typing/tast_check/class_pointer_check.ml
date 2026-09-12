@@ -47,7 +47,7 @@ let handler =
           let ty_str = Typing_print.error env ty in
           (match get_node ty with
           | Tclass_ptr _
-            when TypecheckerOptions.class_pointer_ban_class_array_key
+            when Typechecker_options.class_pointer_ban_class_array_key
                    env.genv.tcopt ->
             ClassPointer.error_at_cls_ptr_type env pos ty_str
           | _ -> ())

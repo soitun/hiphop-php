@@ -9,7 +9,7 @@ val codes : ('x, 'a) Typing_warning.kind -> Error_codes.Warning.t list
 
 val code_is_enabled : GlobalOptions.t -> Error_codes.Warning.t -> bool
 
-val add_ : TypecheckerOptions.t -> ('x, 'a) Typing_warning.t -> unit
+val add_ : Typechecker_options.t -> ('x, 'a) Typing_warning.t -> unit
 
 val add : Typing_env_types.env -> ('x, 'a) Typing_warning.t -> unit
 

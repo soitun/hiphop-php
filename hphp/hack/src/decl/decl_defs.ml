@@ -14,7 +14,7 @@ open Typing_defs
 exception Decl_not_found of string
 
 let raise_decl_not_found (path : Relative_path.t option) (name : string) : 'a =
-  HackEventLogger.decl_consistency_bug ?path ~data:name "Decl_not_found";
+  Hack_event_logger.decl_consistency_bug ?path ~data:name "Decl_not_found";
   let err_str =
     Printf.sprintf
       "%s not found in %s"

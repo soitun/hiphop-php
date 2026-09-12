@@ -23,7 +23,7 @@ let popt
     ~everything_sdt
     ~enable_class_pointer_hint
     ~include_enum_member_values =
-  ParserOptions.
+  Parser_options.
     {
       default with
       auto_namespace_map;
@@ -299,7 +299,7 @@ let name_and_then_print_name_results ctx files ~decl_make_env =
         in
         let ast =
           let { Parser_return.ast; _ } = parsed_file in
-          if popt.ParserOptions.deregister_php_stdlib then
+          if popt.Parser_options.deregister_php_stdlib then
             Nast.deregister_ignored_attributes ast
           else
             ast
@@ -545,7 +545,7 @@ let () =
       && not
          @@ String.is_substring
               ~substring:"No errors"
-              (RealDisk.cat (file ^ ".exp"))
+              (Real_disk.cat (file ^ ".exp"))
     then begin
       print_endline "Skipping because input file has errors";
       exit 0

@@ -333,10 +333,10 @@ let add env ?(tyvar_pos = Pos.none) v ty =
 let check_env_pos_invariant env =
   match env.pos with
   | Some pos when Pos.equal pos Pos.none ->
-    HackEventLogger.invariant_violation_bug
+    Hack_event_logger.invariant_violation_bug
       "missing env.pos. Make sure we're propagating positions correctly, see D91705550."
   | None ->
-    HackEventLogger.invariant_violation_bug
+    Hack_event_logger.invariant_violation_bug
       "expected Some pos, but env.pos is None. Make sure we're propagating positions correctly, see D91705550."
   | Some _ -> ()
 

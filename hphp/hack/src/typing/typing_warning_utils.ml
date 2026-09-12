@@ -1140,7 +1140,7 @@ let is_type_dependent (type a x) (kind : (x, a) Typing_warning.kind) : bool =
   | Typing_warning.Tany_found -> true
 
 let code_is_enabled tcopt code =
-  match TypecheckerOptions.hack_warnings tcopt with
+  match Typechecker_options.hack_warnings tcopt with
   | GlobalOptions.NNone -> false
   | GlobalOptions.All_except disabled_codes ->
     not (List.mem disabled_codes (Codes.to_enum code) ~equal:Int.equal)

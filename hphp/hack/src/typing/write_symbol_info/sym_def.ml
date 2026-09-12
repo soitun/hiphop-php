@@ -6,7 +6,7 @@
  *
  *)
 
-module SO = SymbolOccurrence
+module SO = Symbol_occurrence
 open Hh_prelude
 open Option.Monad_infix
 

@@ -28,7 +28,7 @@ module Time = struct
   let to_string x = string_of_int x
 end
 
-module TimeFiles = MonoidAvl.Make (struct
+module TimeFiles = Monoid_avl.Make (struct
   (* Timestamp + filename *)
   type elt = Time.t * string
 

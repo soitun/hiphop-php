@@ -110,7 +110,7 @@ let count ctx program =
           | Result.Error err ->
             let pos_opt =
               let log_level =
-                TypecheckerOptions.log_levels (Tast_env.get_tcopt env)
+                Typechecker_options.log_levels (Tast_env.get_tcopt env)
                 |> SMap.find_opt "refinement_counter"
               in
               match log_level with
@@ -127,7 +127,7 @@ let count ctx program =
   reducer#go ctx program
 
 let is_enabled tcopt =
-  TypecheckerOptions.log_levels tcopt
+  Typechecker_options.log_levels tcopt
   |> SMap.find_opt "refinement_counter"
   |> Option.map ~f:(fun level -> level >= 1)
   |> Option.value ~default:false

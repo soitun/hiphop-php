@@ -96,7 +96,7 @@ type extended_reasons_config =
   - so_<feature/flag/setting> - server option
 *)
 type t = {
-  po: ParserOptions.t;
+  po: Parser_options.t;
   tco_saved_state: saved_state;
   tco_legacy_experimental_features: SSet.t;
   tco_migration_flags: SSet.t;
@@ -213,7 +213,7 @@ type t = {
 
 let default =
   {
-    po = ParserOptions.default;
+    po = Parser_options.default;
     tco_saved_state = default_saved_state;
     tco_legacy_experimental_features = SSet.empty;
     tco_migration_flags = SSet.empty;

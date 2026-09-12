@@ -7,7 +7,7 @@
  *
  *)
 
-module Result_set : Set.S with type elt = Relative_path.t SymbolOccurrence.t
+module Result_set : Set.S with type elt = Relative_path.t Symbol_occurrence.t
 
 val clean_member_name : string -> string
 
@@ -25,4 +25,4 @@ val go_quarantined :
   entry:Provider_context.entry ->
   File_content.Position.t ->
   use_declaration_spans:bool ->
-  Relative_path.t SymbolOccurrence.t list
+  Relative_path.t Symbol_occurrence.t list

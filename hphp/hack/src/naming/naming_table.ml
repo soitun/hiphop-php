@@ -617,7 +617,7 @@ let load_from_sqlite_for_type_checking
     (Some db_path);
   (* I believe that changes_since_baseline is never used. I want to check... *)
   if Option.is_some changes_since_baseline then
-    HackEventLogger.naming_sqlite_has_changes_since_baseline ();
+    Hack_event_logger.naming_sqlite_has_changes_since_baseline ();
   let local_changes =
     choose_local_changes
       ~local_changes:(Naming_sqlite.get_local_changes db_path)
@@ -693,7 +693,7 @@ module SaveAsync = struct
   (* The main entry point of the daemon process that saves the naming table
       from a blob to the SQLite format. *)
   let save { blob_path; destination_path; root; init_id } : unit =
-    HackEventLogger.init_batch_tool
+    Hack_event_logger.init_batch_tool
       ~init_id
       ~root:(Path.make root)
       ~time:(Unix.gettimeofday ());
@@ -727,7 +727,7 @@ let save_async naming_table ~init_id ~root ~destination_path =
   Stdlib.close_out chan;
 
   let open SaveAsync in
-  FutureProcess.make
+  Future_process.make
     (Process.run_entry
        Process_types.Default
        save_entry

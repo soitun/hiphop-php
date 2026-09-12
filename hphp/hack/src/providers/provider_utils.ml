@@ -210,7 +210,7 @@ let respect_but_quarantine_unsaved_changes
         let start_time = Unix.gettimeofday () in
         let entries = Provider_context.get_entries ctx in
         if Relative_path.Map.cardinal entries <> 1 then
-          HackEventLogger.invariant_violation_bug
+          Hack_event_logger.invariant_violation_bug
             ~data_int:
               (Provider_context.get_entries ctx |> Relative_path.Map.cardinal)
             "Should only enter quarantine with exactly one entry";
@@ -233,7 +233,7 @@ let respect_but_quarantine_unsaved_changes
             telemetry
             |> Telemetry.duration ~key:"duration_nonsticky_ms" ~start_time
         in
-        HackEventLogger.ProfileTypeCheck.quarantine
+        Hack_event_logger.ProfileTypeCheck.quarantine
           ~count:(Relative_path.Map.cardinal entries)
           ~start_time
           ~path:(Relative_path.Map.choose_opt entries |> Option.map ~f:fst)

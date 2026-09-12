@@ -28,7 +28,7 @@ module WithSyntax (Syntax : Syntax_sig.Syntax_S) : sig
              error_level ->
       ?hhvm_compat_mode:hhvm_compat_mode ->
       ?hhi_mode:bool (* Required parts *) ->
-      parser_options:ParserOptions.t ->
+      parser_options:Parser_options.t ->
       Full_fidelity_syntax_tree.WithSyntax(Syntax).WithSmartConstructors
         (SmartConstructors)
       .t ->

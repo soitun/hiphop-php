@@ -201,7 +201,7 @@ module DepSet : sig
 end
 
 module DepMap : sig
-  include WrappedMap_sig.S with type key = Dep.t
+  include Wrapped_map_sig.S with type key = Dep.t
 
   val pp : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
 

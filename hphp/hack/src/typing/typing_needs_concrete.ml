@@ -23,7 +23,8 @@ let is_warnings_generated_file : Typing_env_types.env -> Pos.t -> bool =
   let cache_for_regexp = ref None in
   fun env pos ->
     if
-      List.is_empty (TypecheckerOptions.warnings_generated_files env.genv.tcopt)
+      List.is_empty
+        (Typechecker_options.warnings_generated_files env.genv.tcopt)
     then
       false
     else
@@ -32,7 +33,7 @@ let is_warnings_generated_file : Typing_env_types.env -> Pos.t -> bool =
         | Some regexp -> regexp
         | None ->
           let regexp =
-            TypecheckerOptions.warnings_generated_files env.genv.tcopt
+            Typechecker_options.warnings_generated_files env.genv.tcopt
             |> String.concat ~sep:{|\||}
             |> Str.regexp
           in
@@ -69,7 +70,7 @@ let check_class_get
     (ce : Typing_defs.class_elt)
     (e : ('ex, 'en) Aast_defs.class_id_)
     (is_method : bool) : unit =
-  if TypecheckerOptions.needs_concrete env.genv.tcopt then
+  if Typechecker_options.needs_concrete env.genv.tcopt then
     let callee_is_needs_concrete_method : bool =
       is_method && Typing_defs.get_ce_readonly_prop_or_needs_concrete ce
     in
@@ -165,7 +166,7 @@ let check_instantiation
     (env : Typing_env_types.env)
     (instantiation_pos : Pos.t)
     (cid : ('ex, 'en) Aast_defs.class_id_) : unit =
-  if TypecheckerOptions.needs_concrete env.genv.tcopt then
+  if Typechecker_options.needs_concrete env.genv.tcopt then
     match cid with
     | CIstatic when not (Typing_env.static_points_to_concrete_class env) ->
       Typing_env.get_self_class env
@@ -203,7 +204,7 @@ let check_class_def
     (env : Typing_env_types.env)
     (c : Nast.class_)
     (tc : Decl_provider.class_decl) : unit =
-  if TypecheckerOptions.needs_concrete env.genv.tcopt then
+  if Typechecker_options.needs_concrete env.genv.tcopt then
     (* Check for __NeedsConcrete on instance methods (non-static methods) and constructors *)
     List.iter c.c_methods ~f:(fun m ->
         if

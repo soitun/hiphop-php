@@ -460,7 +460,7 @@ let get_newtype_super env r name tyargs =
     | Decl_entry.NotYetAvailable
     | _ ->
       let ty =
-        if TypecheckerOptions.everything_sdt env.genv.tcopt then
+        if Typechecker_options.everything_sdt env.genv.tcopt then
           Typing_make_type.supportdyn_mixed r
         else
           Typing_make_type.mixed r
@@ -882,7 +882,7 @@ let is_tests_bypass_visibility_context env =
   match Env.get_self_id env with
   | None -> false
   | Some self_id ->
-    TypecheckerOptions.permits_bypassing_visibility (Env.get_tcopt env)
+    Typechecker_options.permits_bypassing_visibility (Env.get_tcopt env)
     |> List.exists ~f:(has_ancestor_including_req_refl env self_id)
 
 (* Return true if the type is known to support dynamic (i.e. is a subtype of supportdyn<mixed>)

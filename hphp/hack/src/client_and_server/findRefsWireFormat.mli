@@ -17,7 +17,7 @@ val from_absolute : Pos.absolute -> half_open_one_based
 
 (** Produced by "hh --ide-find-refs-by-symbol" and parsed by clientLsp *)
 module IdeShellout : sig
-  val to_string : SearchTypes.Find_refs.absolute list -> string
+  val to_string : Search_types.Find_refs.absolute list -> string
 
   val from_string_exn : string -> half_open_one_based list
 end
@@ -26,7 +26,7 @@ end
 module Ide_stream : sig
   (** Locks the file and appends refs to it *)
   val lock_and_append :
-    Unix.file_descr -> SearchTypes.Find_refs.absolute list -> unit
+    Unix.file_descr -> Search_types.Find_refs.absolute list -> unit
 
   (** Reads the refs in the file that came after [pos], if any;
   returns a new [pos] after the last ref that was read. Caller must acquire F_RLOCK first. *)
@@ -36,12 +36,12 @@ end
 
 (** Used "hh --find-refs --json" and read by HackAst and other tools *)
 module HackAst : sig
-  val to_json : SearchTypes.Find_refs.absolute list -> Yojson.Safe.t
+  val to_json : Search_types.Find_refs.absolute list -> Yojson.Safe.t
 end
 
 (** Used by "hh --find-refs" *)
 module CliHumanReadable : sig
-  val print_results : SearchTypes.Find_refs.absolute list -> unit
+  val print_results : Search_types.Find_refs.absolute list -> unit
 end
 
 (** CliArgs is produced by clientLsp when it invokes "hh --ide-find-refs-by-symbol <args>"
@@ -49,7 +49,7 @@ and consumed by clientArgs when it parses that argument. *)
 module CliArgs : sig
   type t = {
     symbol_name: string;
-    action: SearchTypes.Find_refs.action;
+    action: Search_types.Find_refs.action;
     stream_file: Path.t option;
     hint_suffixes: string list;
   }

@@ -203,7 +203,7 @@ let go :
   let ctx = Provider_utils.ctx_from_server_env env in
   let start_time = Unix.gettimeofday () in
   (* Just for now, as a rollout telemetry defense against crashes, we'll log at the start *)
-  HackEventLogger.type_at_pos_batch
+  Hack_event_logger.type_at_pos_batch
     ~start_time
     ~num_files
     ~num_positions
@@ -214,7 +214,7 @@ let go :
     else
       parallel_helper workers ctx pos_list
   in
-  HackEventLogger.type_at_pos_batch
+  Hack_event_logger.type_at_pos_batch
     ~start_time
     ~num_files
     ~num_positions

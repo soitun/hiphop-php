@@ -8,8 +8,8 @@
  *
  *)
 open Hh_prelude
-open SearchUtils
-open SearchTypes
+open Search_utils
+open Search_types
 open Test_harness
 module Args = Test_harness_common_args
 module SA = Asserter.String_asserter
@@ -33,7 +33,7 @@ let assert_glean_autocomplete_results
   let max_results = 10 in
   (* Search for the symbol using Glean *)
   let (results, _is_complete) =
-    SymbolIndex.find_matching_symbols
+    Symbol_index.find_matching_symbols
       ~sienv_ref
       ~query_text
       ~max_results
@@ -45,7 +45,7 @@ let assert_glean_autocomplete_results
     (List.length results)
     (Printf.sprintf "Should be %d result(s) for [%s]" expected query_text);
   let (custom_search_results, _is_complete) =
-    CustomSearchService.search_symbols
+    Custom_search_service.search_symbols
       ~sienv_ref
       ~query_text
       ~max_results
@@ -95,7 +95,7 @@ let run_index_builder (harness : Test_harness.t) : si_env =
 
   (* Scan the repo folder *)
   let sienv =
-    SymbolIndex.initialize
+    Symbol_index.initialize
       ~gleanopt:Glean_options.default
       ~namespace_map:[]
       ~provider_name:"CustomIndex"
@@ -113,9 +113,11 @@ let run_index_builder (harness : Test_harness.t) : si_env =
            | None -> None
            | Some decls ->
              let addenda = Direct_decl_parser.decls_to_addenda decls in
-             Some (path, addenda, SearchUtils.TypeChecker))
+             Some (path, addenda, Search_utils.TypeChecker))
   in
-  let sienv = SymbolIndexCore.update_from_addenda ~sienv ~paths_with_addenda in
+  let sienv =
+    Symbol_index_core.update_from_addenda ~sienv ~paths_with_addenda
+  in
 
   sienv
 

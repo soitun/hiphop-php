@@ -187,7 +187,7 @@ let rec wait_for_server_message
         | _ -> Exit_status.Server_hung_up_should_retry finale_data
       in
       (* log to telemetry *)
-      HackEventLogger.server_hung_up
+      Hack_event_logger.server_hung_up
         ~external_exit_status
         ~server_exit_status
         ~client_exn
@@ -358,7 +358,7 @@ let rec connect
     | Monitor_utils.(Connect_to_monitor_failure { server_exists = false; _ }) ->
       log ~tracker "connect: autostart=%b" autostart;
       if autostart then (
-        HackEventLogger.client_connect_autostart ();
+        Hack_event_logger.client_connect_autostart ();
         Client_start.(
           start_server
             {
@@ -426,7 +426,7 @@ let rec connect
 let connect (env : env) : conn Lwt.t =
   let start_time = Unix.time () in
   let%lwt ({ channels = (_, oc); _ } as conn) = connect env start_time in
-  HackEventLogger.client_established_connection start_time;
+  Hack_event_logger.client_established_connection start_time;
   if env.do_post_handoff_handshake then begin
     (* read by [ServerClientProvider.read_connection_type_from_channel] *)
     Marshal.to_channel oc ServerCommandTypes.Non_persistent [];

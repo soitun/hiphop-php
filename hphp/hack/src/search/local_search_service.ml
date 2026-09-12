@@ -7,8 +7,8 @@
  *
  *)
 open Hh_prelude
-open SearchUtils
-open SearchTypes
+open Search_utils
+open Search_types
 
 (* How many locally changed files are in this env? *)
 let count_local_fileinfos ~(sienv : si_env) : int =
@@ -27,7 +27,7 @@ let strip_first_char char s =
 let get_tombstone (path : Relative_path.t) : int64 =
   let rel_path_str = Relative_path.suffix path in
   let fixed_path_str = strip_first_char '/' rel_path_str in
-  let path_hash = SharedMemHash.hash_string fixed_path_str in
+  let path_hash = Shared_mem_hash.hash_string fixed_path_str in
   path_hash
 
 (** see .mli **)
@@ -37,7 +37,7 @@ let update_file_from_addenda
     ~(addenda : FileInfo.si_addendum list) : si_env =
   let tombstone = get_tombstone path in
   let filepath = Relative_path.suffix path in
-  let contents : SearchUtils.si_capture =
+  let contents : Search_utils.si_capture =
     List.map addenda ~f:(fun addendum ->
         {
           sif_name = addendum.FileInfo.sia_name;
@@ -92,13 +92,14 @@ let search_local_symbols
       ~(path : Relative_path.t) : si_item list =
     let is_valid_match =
       match (context, kind_filter) with
-      | (Actype, _) -> SearchTypes.valid_for_actype symbol.SearchUtils.sif_kind
+      | (Actype, _) ->
+        Search_types.valid_for_actype symbol.Search_utils.sif_kind
       | (Acnew, _) ->
-        SearchTypes.valid_for_acnew symbol.SearchUtils.sif_kind
-        && not symbol.SearchUtils.sif_is_abstract
+        Search_types.valid_for_acnew symbol.Search_utils.sif_kind
+        && not symbol.Search_utils.sif_is_abstract
       | (Acclassish, _) ->
-        SearchTypes.valid_for_acclassish symbol.SearchUtils.sif_kind
-      | (Acid, _) -> SearchTypes.valid_for_acid symbol.SearchUtils.sif_kind
+        Search_types.valid_for_acclassish symbol.Search_utils.sif_kind
+      | (Acid, _) -> Search_types.valid_for_acid symbol.Search_utils.sif_kind
       | (Actrait_only, _) -> is_si_trait symbol.sif_kind
       | (Ac_workspace_symbol, Some kind_match) ->
         FileInfo.equal_si_kind symbol.sif_kind kind_match
@@ -151,12 +152,12 @@ let search_local_symbols
   | BreakOutOfScan acc -> acc
 
 (* Filter the results to extract any dead objects *)
-let extract_dead_results ~(sienv : SearchUtils.si_env) ~(results : si_item list)
-    : si_item list =
+let extract_dead_results
+    ~(sienv : Search_utils.si_env) ~(results : si_item list) : si_item list =
   List.filter results ~f:(fun item ->
       match item.si_file with
-      | SearchTypes.SI_Path path ->
+      | Search_types.SI_Path path ->
         not (Relative_path.Set.mem sienv.lss_tombstones path)
-      | SearchTypes.SI_Filehash hash_str ->
+      | Search_types.SI_Filehash hash_str ->
         let hash = Int64.of_string hash_str in
         not (Tombstone_set.mem sienv.lss_tombstone_hashes hash))

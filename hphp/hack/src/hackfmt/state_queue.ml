@@ -15,7 +15,7 @@ module SolveStateKey = struct
   let compare = Solve_state.compare
 end
 
-include PriorityQueue.Make (SolveStateKey)
+include Priority_queue.Make (SolveStateKey)
 
 (**
  * This kind of defeats the purpose of having a priority queue in the first

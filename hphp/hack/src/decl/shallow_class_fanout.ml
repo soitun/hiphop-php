@@ -161,7 +161,7 @@ module Log : sig
     unit
 end = struct
   let do_log ctx ~fanout_cardinal =
-    TypecheckerOptions.log_fanout ~fanout_cardinal
+    Typechecker_options.log_fanout ~fanout_cardinal
     @@ Provider_context.get_tcopt ctx
 
   let max_class_cnt = 10
@@ -189,7 +189,7 @@ end = struct
       Hh_logger.log "(truncated)";
     if do_log ~fanout_cardinal ctx then
       let mode = Provider_context.get_deps_mode ctx in
-      HackEventLogger.Fanouts.log_class
+      Hack_event_logger.Fanouts.log_class
         ~class_name:name
         ~class_diff:(Class_diff.show diff)
         ~fanout_cardinal
@@ -203,7 +203,7 @@ end = struct
       unit =
     let fanout_cardinal = Fanout.cardinal fanout in
     if do_log ~fanout_cardinal ctx then
-      HackEventLogger.Fanouts.log
+      Hack_event_logger.Fanouts.log
         ~changes_cardinal:(List.length changes)
         ~max_class_fanout_cardinal
         ~fanout_cardinal

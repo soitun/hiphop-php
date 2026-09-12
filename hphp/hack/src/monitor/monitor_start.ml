@@ -29,7 +29,7 @@ let log_monitor_exit (finale_data : Exit_status.finale_data) =
     let { Exit_status.exit_status; msg; stack; telemetry } = finale_data in
     let stack = Utils.show_callstack stack in
 
-    HackEventLogger.monitor_exit ~msg ~stack telemetry exit_status
+    Hack_event_logger.monitor_exit ~msg ~stack telemetry exit_status
 
 (** Main method of the server monitor daemon. The daemon is responsible for
     listening to socket requests from hh_client, checking Build ID, and relaying
@@ -79,7 +79,7 @@ let monitor_daemon_main
       ~from:(ServerArgs.from options)
       ~cli_config_overrides:(ServerArgs.config options)
   in
-  HackEventLogger.init_monitor
+  Hack_event_logger.init_monitor
     ~from:(ServerArgs.from options)
     ~custom_columns:(ServerArgs.custom_telemetry_data options)
     ~hhconfig_version:

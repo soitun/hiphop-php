@@ -32,7 +32,7 @@ module SyntaxTree =
 module SourceText = Full_fidelity_source_text
 module ParserErrors =
   Full_fidelity_parser_errors.WithSyntax (Full_fidelity_positioned_syntax)
-open FullFidelityParseArgs
+open Full_fidelity_parse_args
 
 (* Prints a single FFP error. *)
 let print_full_fidelity_error source_text error =
@@ -54,7 +54,7 @@ let print_ast_check_errors errors =
     error_list
 
 let handle_existing_file args filename =
-  let popt = FullFidelityParseArgs.to_parser_options args in
+  let popt = Full_fidelity_parse_args.to_parser_options args in
   (* Parse with the full fidelity parser *)
   let file = Relative_path.create Relative_path.Dummy filename in
   let source_text = SourceText.from_file file in
@@ -63,7 +63,7 @@ let handle_existing_file args filename =
     args.codegen || args.full_fidelity_errors || args.full_fidelity_errors_all
   in
   let env =
-    FullFidelityParseArgs.to_parser_env
+    Full_fidelity_parse_args.to_parser_env
     (* When print_errors is true, the leaked tree will be passed to ParserErrors,
      * which will consume it. *)
       ~leak_rust_tree:print_errors
@@ -71,7 +71,7 @@ let handle_existing_file args filename =
       args
   in
   let syntax_tree = SyntaxTree.make ~env source_text in
-  let editable = SyntaxTransforms.editable_from_positioned syntax_tree in
+  let editable = Syntax_transforms.editable_from_positioned syntax_tree in
   if args.show_file_name then Printf.printf "%s\n" filename;
   (if args.program_text then
     let text = Full_fidelity_editable_syntax.text editable in

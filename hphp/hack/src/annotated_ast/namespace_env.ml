@@ -37,7 +37,7 @@ let default_const_uses = hh_autoimport_map_of_list Hh_autoimport.consts
 let default_ns_uses = hh_autoimport_map_of_list Hh_autoimport.namespaces
 
 let empty_with_default : env =
-  let open ParserOptions in
+  let open Parser_options in
   let popt = default in
   let auto_ns_map = popt.auto_namespace_map in
   let ns_mode =

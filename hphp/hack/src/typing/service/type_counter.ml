@@ -406,7 +406,7 @@ let summary_of_counts (cnts : count list) =
         m)
 
 let is_enabled tcopt =
-  TypecheckerOptions.log_levels tcopt
+  Typechecker_options.log_levels tcopt
   |> SMap.find_opt "type_counter"
   |> Option.map ~f:(fun level -> level = 1)
   |> Option.value ~default:false

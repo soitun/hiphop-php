@@ -10,9 +10,9 @@
 open Hh_prelude
 
 let get_target symbol =
-  SymbolOccurrence.(
+  Symbol_occurrence.(
     let module Types = ServerCommandTypes.Find_refs in
-    let module SO = SymbolOccurrence in
+    let module SO = Symbol_occurrence in
     FindRefsService.(
       match symbol.type_ with
       | SO.Class _ -> Some (IClass symbol.name)
@@ -36,9 +36,9 @@ let highlight_symbol ctx entry pos symbol =
       let results = FindRefsService.find_refs_ctx ~ctx ~entry ~target in
       List.rev (List.map results ~f:(fun { name = _; pos } -> pos))
     | None
-      when SymbolOccurrence.equal_kind
-             symbol.SymbolOccurrence.type_
-             SymbolOccurrence.LocalVar ->
+      when Symbol_occurrence.equal_kind
+             symbol.Symbol_occurrence.type_
+             Symbol_occurrence.LocalVar ->
       ServerFindLocals.go ~ctx ~entry pos
     | None -> []
   in
