@@ -26,8 +26,8 @@ let take_max_errors
 let single_ctx env path file_input =
   let contents =
     match file_input with
-    | ServerCommandTypes.FileName path -> Sys_utils.cat path
-    | ServerCommandTypes.FileContent contents -> contents
+    | Server_command_types.FileName path -> Sys_utils.cat path
+    | Server_command_types.FileContent contents -> contents
   in
   let ctx = Provider_utils.ctx_from_server_env env in
   Provider_context.add_or_overwrite_entry_contents ~ctx ~path ~contents
@@ -42,11 +42,11 @@ let handle :
     ServerEnv.genv ->
     ServerEnv.env ->
     is_stale:bool ->
-    ServerCommandTypes.cmd_metadata ->
-    a ServerCommandTypes.t ->
+    Server_command_types.cmd_metadata ->
+    a Server_command_types.t ->
     ServerEnv.env * a =
  fun genv env ~is_stale metadata -> function
-  | ServerCommandTypes.STATUS { max_errors; error_filter } ->
+  | Server_command_types.STATUS { max_errors; error_filter } ->
     log_check_response env;
     let (error_list, dropped_count) =
       env.ServerEnv.diagnostics
@@ -56,9 +56,9 @@ let handle :
     in
     let liveness =
       if is_stale then
-        ServerCommandTypes.Stale_status
+        Server_command_types.Stale_status
       else
-        ServerCommandTypes.Live_status
+        Server_command_types.Live_status
     in
     let last_recheck_stats =
       match env.ServerEnv.last_recheck_loop_stats_for_actual_work with
@@ -72,13 +72,13 @@ let handle :
     in
     ( env,
       {
-        ServerCommandTypes.Server_status.liveness;
+        Server_command_types.Server_status.liveness;
         error_list;
         dropped_count;
         last_recheck_stats;
         file_watcher_clock = env.ServerEnv.clock;
       } )
-  | ServerCommandTypes.STATUS_SINGLE
+  | Server_command_types.STATUS_SINGLE
       {
         file_names;
         max_errors;
@@ -98,13 +98,13 @@ let handle :
     let (errors, tasts) =
       let use_cached_diagnostics =
         genv.ServerEnv.local_config
-          .ServerLocalConfig.status_single_use_cached_diagnostics
+          .Server_local_config.status_single_use_cached_diagnostics
       in
       let uses_partial_typecheck =
         genv.ServerEnv.local_config
-          .ServerLocalConfig.enable_type_check_filter_files
+          .Server_local_config.enable_type_check_filter_files
         || Option.is_some
-             genv.ServerEnv.local_config.ServerLocalConfig.workload_quantile
+             genv.ServerEnv.local_config.Server_local_config.workload_quantile
       in
       let cached_result =
         if use_cached_diagnostics then
@@ -147,7 +147,7 @@ let handle :
         None
     in
     (env, (errors, tasts))
-  | ServerCommandTypes.LOG_ERRORS
+  | Server_command_types.LOG_ERRORS
       { files; log_file; error_filter; preexisting_warnings } ->
     let telemetry =
       Server_log_errors.go
@@ -167,23 +167,24 @@ let handle :
       | None ->
         Hack_event_logger.LogFileErrors.log
           telemetry
-          ~from:metadata.ServerCommandTypes.from
+          ~from:metadata.Server_command_types.from
     in
     (env, ())
-  | ServerCommandTypes.INFER_TYPE (file_input, pos) ->
+  | Server_command_types.INFER_TYPE (file_input, pos) ->
     let path =
       match file_input with
-      | ServerCommandTypes.FileName fn -> Relative_path.create_detect_prefix fn
-      | ServerCommandTypes.FileContent _ ->
+      | Server_command_types.FileName fn ->
+        Relative_path.create_detect_prefix fn
+      | Server_command_types.FileContent _ ->
         Relative_path.create_detect_prefix ""
     in
     let (ctx, entry) = single_ctx env path file_input in
     let result =
       Provider_utils.respect_but_quarantine_unsaved_changes ~ctx ~f:(fun () ->
-          ServerInferType.go_ctx ~ctx ~entry pos)
+          Server_infer_type.go_ctx ~ctx ~entry pos)
     in
     (env, result)
-  | ServerCommandTypes.INFER_DYNAMIC (identifier, as_data) ->
+  | Server_command_types.INFER_DYNAMIC (identifier, as_data) ->
     let ctx = Provider_utils.ctx_from_server_env env in
     let ctx =
       Provider_context.map_tcopt ctx ~f:(fun tcopt ->
@@ -191,10 +192,10 @@ let handle :
     in
     let result =
       Provider_utils.respect_but_quarantine_unsaved_changes ~ctx ~f:(fun () ->
-          ServerInferDynamic.go ~ctx ~identifier ~as_data)
+          Server_infer_dynamic.go ~ctx ~identifier ~as_data)
     in
     (env, result)
-  | ServerCommandTypes.ENFORCEMENT_AT_POS_BATCH positions ->
+  | Server_command_types.ENFORCEMENT_AT_POS_BATCH positions ->
     let ctx = Provider_utils.ctx_from_server_env env in
     let results =
       List.map positions ~f:(fun (fn, pos) ->
@@ -208,44 +209,46 @@ let handle :
           Server_enforcement_at_pos.result_to_json_string result (fn, pos))
     in
     (env, results)
-  | ServerCommandTypes.INFER_TYPE_BATCH positions ->
-    (env, ServerInferTypeBatch.go genv.ServerEnv.workers positions env)
-  | ServerCommandTypes.IS_SUBTYPE stdin ->
+  | Server_command_types.INFER_TYPE_BATCH positions ->
+    (env, Server_infer_type_batch.go genv.ServerEnv.workers positions env)
+  | Server_command_types.IS_SUBTYPE stdin ->
     (env, Server_is_subtype.check genv.ServerEnv.workers stdin env)
-  | ServerCommandTypes.TAST_HOLES (file_input, hole_filter) ->
+  | Server_command_types.TAST_HOLES (file_input, hole_filter) ->
     let path =
       match file_input with
-      | ServerCommandTypes.FileName fn -> Relative_path.create_detect_prefix fn
-      | ServerCommandTypes.FileContent _ ->
+      | Server_command_types.FileName fn ->
+        Relative_path.create_detect_prefix fn
+      | Server_command_types.FileContent _ ->
         Relative_path.create_detect_prefix ""
     in
     let (ctx, entry) = single_ctx env path file_input in
     let result =
       Provider_utils.respect_but_quarantine_unsaved_changes ~ctx ~f:(fun () ->
-          ServerCollectTastHoles.go_ctx ~ctx ~entry ~hole_filter)
+          Server_collect_tast_holes.go_ctx ~ctx ~entry ~hole_filter)
     in
     (env, result)
-  | ServerCommandTypes.TAST_HOLES_BATCH files ->
+  | Server_command_types.TAST_HOLES_BATCH files ->
     (env, Server_tast_holes_batch.go genv.ServerEnv.workers files env)
-  | ServerCommandTypes.INFER_TYPE_ERROR (file_input, line, column) ->
+  | Server_command_types.INFER_TYPE_ERROR (file_input, line, column) ->
     let path =
       match file_input with
-      | ServerCommandTypes.FileName fn -> Relative_path.create_detect_prefix fn
-      | ServerCommandTypes.FileContent _ ->
+      | Server_command_types.FileName fn ->
+        Relative_path.create_detect_prefix fn
+      | Server_command_types.FileContent _ ->
         Relative_path.create_detect_prefix ""
     in
     let (ctx, entry) = single_ctx env path file_input in
     let result =
       Provider_utils.respect_but_quarantine_unsaved_changes ~ctx ~f:(fun () ->
-          ServerInferTypeError.go_ctx ~ctx ~entry ~line ~column)
+          Server_infer_type_error.go_ctx ~ctx ~entry ~line ~column)
     in
     (env, result)
   (* TODO: edit this to look for classname *)
-  | ServerCommandTypes.IDENTIFY_SYMBOL arg ->
+  | Server_command_types.IDENTIFY_SYMBOL arg ->
     let module SO = Symbol_occurrence in
     let ctx = Provider_utils.ctx_from_server_env env in
     let get_def_opt type_ name =
-      ServerSymbolDefinition.go
+      Server_symbol_definition.go
         ctx
         None
         SO.
@@ -285,35 +288,35 @@ let handle :
       | _ -> []
     in
     (env, results)
-  | ServerCommandTypes.IDENTIFY_FUNCTION (filename, file_input, pos) ->
+  | Server_command_types.IDENTIFY_FUNCTION (filename, file_input, pos) ->
     let (ctx, entry) =
       single_ctx env (Relative_path.create_detect_prefix filename) file_input
     in
     let result =
       Provider_utils.respect_but_quarantine_unsaved_changes ~ctx ~f:(fun () ->
-          ServerIdentifyFunction.go_quarantined_absolute ~ctx ~entry pos)
+          Server_identify_function.go_quarantined_absolute ~ctx ~entry pos)
     in
     (env, result)
-  | ServerCommandTypes.METHOD_JUMP (class_, filter, find_children) ->
+  | Server_command_types.METHOD_JUMP (class_, filter, find_children) ->
     Printf.printf "%s" class_;
     let ctx = Provider_utils.ctx_from_server_env env in
     ( env,
-      MethodJumps.get_inheritance
+      Method_jumps.get_inheritance
         ctx
         class_
         ~filter
         ~find_children
         env.ServerEnv.naming_table
         genv.ServerEnv.workers )
-  | ServerCommandTypes.METHOD_JUMP_BATCH (classes, filter) ->
+  | Server_command_types.METHOD_JUMP_BATCH (classes, filter) ->
     let ctx = Provider_utils.ctx_from_server_env env in
     (env, Server_method_jumps_batch.go ctx genv.ServerEnv.workers classes filter)
-  | ServerCommandTypes.FIND_REFS find_refs_action ->
+  | Server_command_types.FIND_REFS find_refs_action ->
     let ctx = Provider_utils.ctx_from_server_env env in
     Provider_utils.respect_but_quarantine_unsaved_changes ~ctx ~f:(fun () ->
-        let open ServerCommandTypes.Done_or_retry in
+        let open Server_command_types.Done_or_retry in
         let include_defs = false in
-        ServerFindRefs.(
+        Server_find_refs.(
           go
             ctx
             find_refs_action
@@ -323,13 +326,13 @@ let handle :
             genv
             env
           |> map_env ~f:to_absolute))
-  | ServerCommandTypes.GO_TO_IMPL go_to_impl_action ->
-    ServerCommandTypes.Done_or_retry.(
-      ServerGoToImpl.go ~action:go_to_impl_action ~genv ~env
-      |> map_env ~f:ServerFindRefs.to_absolute)
-  | ServerCommandTypes.IDE_FIND_REFS_BY_SYMBOL
+  | Server_command_types.GO_TO_IMPL go_to_impl_action ->
+    Server_command_types.Done_or_retry.(
+      Server_go_to_impl.go ~action:go_to_impl_action ~genv ~env
+      |> map_env ~f:Server_find_refs.to_absolute)
+  | Server_command_types.IDE_FIND_REFS_BY_SYMBOL
       {
-        FindRefsWireFormat.CliArgs.symbol_name = _;
+        Find_refs_wire_format.CliArgs.symbol_name = _;
         action;
         stream_file;
         hint_suffixes;
@@ -339,11 +342,11 @@ let handle :
     in
     let ctx = Provider_utils.ctx_from_server_env env in
     Provider_utils.respect_but_quarantine_unsaved_changes ~ctx ~f:(fun () ->
-        let open ServerCommandTypes.Done_or_retry in
+        let open Server_command_types.Done_or_retry in
         let include_defs = false in
         map_env
-          ~f:ServerFindRefs.to_absolute
-          (ServerFindRefs.go
+          ~f:Server_find_refs.to_absolute
+          (Server_find_refs.go
              ctx
              action
              include_defs
@@ -351,15 +354,15 @@ let handle :
              ~hints
              genv
              env))
-  | ServerCommandTypes.IDE_GO_TO_IMPL_BY_SYMBOL
-      { FindRefsWireFormat.CliArgs.symbol_name = _; action; _ } ->
+  | Server_command_types.IDE_GO_TO_IMPL_BY_SYMBOL
+      { Find_refs_wire_format.CliArgs.symbol_name = _; action; _ } ->
     let ctx = Provider_utils.ctx_from_server_env env in
     Provider_utils.respect_but_quarantine_unsaved_changes ~ctx ~f:(fun () ->
-        let open ServerCommandTypes.Done_or_retry in
+        let open Server_command_types.Done_or_retry in
         map_env
-          ~f:ServerFindRefs.to_absolute
-          (ServerGoToImpl.go ~action ~genv ~env))
-  | ServerCommandTypes.RENAME rename_action ->
+          ~f:Server_find_refs.to_absolute
+          (Server_go_to_impl.go ~action ~genv ~env))
+  | Server_command_types.RENAME rename_action ->
     let ctx = Provider_utils.ctx_from_server_env env in
     Provider_utils.respect_but_quarantine_unsaved_changes ~ctx ~f:(fun () ->
         let definition_for_wrapper =
@@ -369,7 +372,7 @@ let handle :
           | ServerRenameTypes.LocalVarRename _ ->
             None
           | ServerRenameTypes.MethodRename { class_name; old_name; _ } ->
-            ServerSymbolDefinition.go
+            Server_symbol_definition.go
               ctx
               None
               {
@@ -383,7 +386,7 @@ let handle :
                 affects_prod_build = true;
               }
           | ServerRenameTypes.FunctionRename { old_name; _ } ->
-            ServerSymbolDefinition.go
+            Server_symbol_definition.go
               ctx
               None
               {
@@ -394,14 +397,14 @@ let handle :
                 affects_prod_build = true;
               }
         in
-        ServerRename.go ctx rename_action genv env ~definition_for_wrapper)
-  | ServerCommandTypes.IDE_RENAME_BY_SYMBOL (action, new_name, symbol_definition)
-    ->
+        Server_rename.go ctx rename_action genv env ~definition_for_wrapper)
+  | Server_command_types.IDE_RENAME_BY_SYMBOL
+      (action, new_name, symbol_definition) ->
     let ctx = Provider_utils.ctx_from_server_env env in
     Provider_utils.respect_but_quarantine_unsaved_changes ~ctx ~f:(fun () ->
-        let open ServerCommandTypes.Done_or_retry in
+        let open Server_command_types.Done_or_retry in
         match
-          ServerRename.go_ide_with_find_refs_action
+          Server_rename.go_ide_with_find_refs_action
             ctx
             ~find_refs_action:action
             ~new_name
@@ -411,42 +414,43 @@ let handle :
         with
         | Error e -> (env, Done (Error e))
         | Ok r -> map_env r ~f:(fun x -> Ok x))
-  | ServerCommandTypes.REMOVE_DEAD_FIXMES codes ->
+  | Server_command_types.REMOVE_DEAD_FIXMES codes ->
     log_check_response env;
-    (env, `Ok (ServerRename.get_fixme_patches codes env))
-  | ServerCommandTypes.REMOVE_DEAD_UNSAFE_CASTS ->
+    (env, `Ok (Server_rename.get_fixme_patches codes env))
+  | Server_command_types.REMOVE_DEAD_UNSAFE_CASTS ->
     log_check_response env;
-    (env, `Ok (ServerRename.get_dead_unsafe_cast_patches env))
-  | ServerCommandTypes.REWRITE_LAMBDA_PARAMETERS files ->
+    (env, `Ok (Server_rename.get_dead_unsafe_cast_patches env))
+  | Server_command_types.REWRITE_LAMBDA_PARAMETERS files ->
     let ctx = Provider_utils.ctx_from_server_env env in
-    (env, ServerRename.get_lambda_parameter_rewrite_patches ctx files)
-  | ServerCommandTypes.DUMP_SYMBOL_INFO file_list ->
+    (env, Server_rename.get_lambda_parameter_rewrite_patches ctx files)
+  | Server_command_types.DUMP_SYMBOL_INFO file_list ->
     (env, Symbol_info_service.go genv.ServerEnv.workers file_list env)
-  | ServerCommandTypes.IN_MEMORY_DEP_TABLE_SIZE ->
+  | Server_command_types.IN_MEMORY_DEP_TABLE_SIZE ->
     (* TODO(hverr): Clean up 32-bit/migrate *)
     (env, Ok 0)
-  | ServerCommandTypes.SAVE_NAMING filename ->
-    (env, SaveStateService.go_naming env.ServerEnv.naming_table filename)
-  | ServerCommandTypes.CHECK_LIVENESS ->
+  | Server_command_types.SAVE_NAMING filename ->
+    (env, Save_state_service.go_naming env.ServerEnv.naming_table filename)
+  | Server_command_types.CHECK_LIVENESS ->
     (* This is for the client to know "is the server available to process requests?" *)
     (env, ())
-  | ServerCommandTypes.LINT fnl ->
+  | Server_command_types.LINT fnl ->
     let ctx = Provider_utils.ctx_from_server_env env in
     (env, Server_lint.go genv ctx fnl)
-  | ServerCommandTypes.LINT_STDIN ServerCommandTypes.{ filename; contents } ->
+  | Server_command_types.LINT_STDIN Server_command_types.{ filename; contents }
+    ->
     let ctx = Provider_utils.ctx_from_server_env env in
     (env, Server_lint.go_stdin ctx ~filename ~contents)
-  | ServerCommandTypes.LINT_ALL code ->
+  | Server_command_types.LINT_ALL code ->
     let ctx = Provider_utils.ctx_from_server_env env in
     (env, Server_lint.lint_all genv ctx code)
-  | ServerCommandTypes.STATS -> (env, Stats.get_stats ())
-  | ServerCommandTypes.DUMP_FULL_FIDELITY_PARSE file ->
+  | Server_command_types.STATS -> (env, Stats.get_stats ())
+  | Server_command_types.DUMP_FULL_FIDELITY_PARSE file ->
     (env, Full_fidelity_parse_service.go file)
-  | ServerCommandTypes.RAGE -> (env, Server_rage.go genv env)
-  | ServerCommandTypes.CST_SEARCH
-      ServerCommandTypes.{ sort_results; input; files_to_search } -> begin
+  | Server_command_types.RAGE -> (env, Server_rage.go genv env)
+  | Server_command_types.CST_SEARCH
+      Server_command_types.{ sort_results; input; files_to_search } -> begin
     try
-      (env, CstSearchService.go genv env ~sort_results ~files_to_search input)
+      (env, Cst_search_service.go genv env ~sort_results ~files_to_search input)
     with
     | MultiThreadedCall.Coalesced_failures failures ->
       let failures =
@@ -463,43 +467,43 @@ let handle :
       let e = Exception.wrap exn in
       (env, Error (Exception.to_string e))
   end
-  | ServerCommandTypes.NO_PRECHECKED_FILES ->
-    (ServerPrecheckedFiles.expand_all env, ())
-  | ServerCommandTypes.FUN_DEPS_BATCH positions ->
-    (env, ServerFunDepsBatch.go genv.ServerEnv.workers positions env)
-  | ServerCommandTypes.LIST_FILES_WITH_ERRORS ->
+  | Server_command_types.NO_PRECHECKED_FILES ->
+    (Server_prechecked_files.expand_all env, ())
+  | Server_command_types.FUN_DEPS_BATCH positions ->
+    (env, Server_fun_deps_batch.go genv.ServerEnv.workers positions env)
+  | Server_command_types.LIST_FILES_WITH_ERRORS ->
     (env, ServerEnv.list_files_with_errors env)
-  | ServerCommandTypes.FILE_DEPENDENTS filenames ->
-    let files = ServerFileDependents.go genv env filenames in
+  | Server_command_types.FILE_DEPENDENTS filenames ->
+    let files = Server_file_dependents.go genv env filenames in
     (env, files)
-  | ServerCommandTypes.FIND_ISOLATABLE_CLUSTERS ->
+  | Server_command_types.FIND_ISOLATABLE_CLUSTERS ->
     let seeds =
       Server_isolation.go genv env |> List.map ~f:Relative_path.suffix
     in
     (env, seeds)
-  | ServerCommandTypes.VERBOSE verbose ->
+  | Server_command_types.VERBOSE verbose ->
     if verbose then
       Hh_logger.Level.set_min_level Hh_logger.Level.Debug
     else
       Hh_logger.Level.set_min_level
-        genv.ServerEnv.local_config.ServerLocalConfig.min_log_level;
+        genv.ServerEnv.local_config.Server_local_config.min_log_level;
     (env, ())
-  | ServerCommandTypes.DEPS_OUT_BATCH positions ->
+  | Server_command_types.DEPS_OUT_BATCH positions ->
     let ctx = Provider_utils.ctx_from_server_env env in
-    (env, ServerDepsOutBatch.go ctx positions)
-  | ServerCommandTypes.DEPS_IN_BATCH positions ->
+    (env, Server_deps_out_batch.go ctx positions)
+  | Server_command_types.DEPS_IN_BATCH positions ->
     let ctx = Provider_utils.ctx_from_server_env env in
-    (env, ServerDepsInBatch.go ~ctx ~genv ~env positions)
-  | ServerCommandTypes.FIND_MY_TESTS (version, config, actions) ->
+    (env, Server_deps_in_batch.go ~ctx ~genv ~env positions)
+  | Server_command_types.FIND_MY_TESTS (version, config, actions) ->
     let ctx = Provider_utils.ctx_from_server_env env in
     let go =
       match version with
-      | ServerCommandTypes.Find_my_tests.V2 -> Find_my_tests_v2.go
-      | ServerCommandTypes.Find_my_tests.Staging -> Find_my_tests_staging.go
+      | Server_command_types.Find_my_tests.V2 -> Find_my_tests_v2.go
+      | Server_command_types.Find_my_tests.Staging -> Find_my_tests_staging.go
     in
     let result = go ~ctx ~genv ~env config actions in
     (env, result)
-  | ServerCommandTypes.PACKAGE_LINT file ->
-    ServerPackageLint.go_fast genv env file
-  | ServerCommandTypes.PACKAGE_LINT_FULL (file, candidates) ->
-    ServerPackageLint.go genv env file candidates
+  | Server_command_types.PACKAGE_LINT file ->
+    Server_package_lint.go_fast genv env file
+  | Server_command_types.PACKAGE_LINT_FULL (file, candidates) ->
+    Server_package_lint.go genv env file candidates

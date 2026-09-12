@@ -8,14 +8,14 @@
 
 val go_streaming :
   Client_env.client_check_env ->
-  ServerLocalConfig.t ->
+  Server_local_config.t ->
   Filter_diagnostics.Filter.t ->
   partial_telemetry_ref:Telemetry.t option ref ->
   connect_then_close:(unit -> unit Lwt.t) ->
   (Exit_status.t * Telemetry.t) Lwt.t
 
 val go :
-  ServerCommandTypes.Server_status.t ->
+  Server_command_types.Server_status.t ->
   Diagnostics.format option ->
   is_interactive:bool ->
   output_json:bool ->

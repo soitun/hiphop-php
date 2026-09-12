@@ -8,7 +8,7 @@
  *)
 
 open Hh_prelude
-open ServerCommandTypes.Symbol_info_service
+open Server_command_types.Symbol_info_service
 
 let recheck_naming ctx filename_l =
   List.iter filename_l ~f:(fun file ->
@@ -34,8 +34,8 @@ let helper ctx acc filename_l =
         in
         tast.Tast_with_dynamic.under_normal_assumptions)
   in
-  let fun_calls = SymbolFunCallService.find_fun_calls ctx tasts in
-  let symbol_types = SymbolTypeService.generate_types ctx tasts in
+  let fun_calls = Symbol_fun_call_service.find_fun_calls ctx tasts in
+  let symbol_types = Symbol_type_service.generate_types ctx tasts in
   (fun_calls, symbol_types) :: acc
 
 (* Format result from '(fun_calls * symbol_types) list' raw result into *)

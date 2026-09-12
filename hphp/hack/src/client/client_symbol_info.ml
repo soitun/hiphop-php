@@ -25,9 +25,9 @@ let go
     List.rev_map file_list ~f:(fun file_path -> expand_path file_path)
   in
   let command =
-    ServerCommandTypes.DUMP_SYMBOL_INFO (expand_path_list file_list)
+    Server_command_types.DUMP_SYMBOL_INFO (expand_path_list file_list)
   in
   let%lwt (result, _telemetry) = Client_connect.rpc conn ~desc command in
-  let result_json = ServerCommandTypes.Symbol_info_service.to_json result in
+  let result_json = Server_command_types.Symbol_info_service.to_json result in
   print_endline (Hh_json_helpers.Out.to_string result_json);
   Lwt.return_unit

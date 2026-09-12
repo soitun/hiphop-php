@@ -33,7 +33,7 @@ let build_ocaml_hh_config contents =
   (* Load ServerLocalConfig from parsed config *)
   let version = Config_file_version.parse_version None in
   let local_config =
-    ServerLocalConfigLoad.load_from_config
+    Server_local_config_load.load_from_config
       ~silent:true
       ~current_version:version
       ~current_rolled_out_flag_idx:0
@@ -41,30 +41,31 @@ let build_ocaml_hh_config contents =
       config
   in
   {
-    Hh_config.version = local_config.ServerLocalConfig.config_version;
-    ignored_paths = local_config.ServerLocalConfig.ignored_paths;
+    Hh_config.version = local_config.Server_local_config.config_version;
+    ignored_paths = local_config.Server_local_config.ignored_paths;
     hash = "";
     opts;
-    gc_minor_heap_size = local_config.ServerLocalConfig.gc_minor_heap_size;
-    gc_space_overhead = local_config.ServerLocalConfig.gc_space_overhead;
-    sharedmem_global_size = local_config.ServerLocalConfig.sharedmem_global_size;
+    gc_minor_heap_size = local_config.Server_local_config.gc_minor_heap_size;
+    gc_space_overhead = local_config.Server_local_config.gc_space_overhead;
+    sharedmem_global_size =
+      local_config.Server_local_config.sharedmem_global_size;
     sharedmem_hash_table_pow =
-      local_config.ServerLocalConfig.sharedmem_hash_table_pow;
-    sharedmem_heap_size = local_config.ServerLocalConfig.sharedmem_heap_size;
+      local_config.Server_local_config.sharedmem_hash_table_pow;
+    sharedmem_heap_size = local_config.Server_local_config.sharedmem_heap_size;
     ide_fall_back_to_full_index =
-      local_config.ServerLocalConfig.ide_fall_back_to_full_index;
+      local_config.Server_local_config.ide_fall_back_to_full_index;
     hh_distc_should_disable_trace_store =
       opts.GlobalOptions.hh_distc_should_disable_trace_store;
     hh_distc_exponential_backoff_num_retries =
-      local_config.ServerLocalConfig.hh_distc_exponential_backoff_num_retries;
+      local_config.Server_local_config.hh_distc_exponential_backoff_num_retries;
     naming_table_compression_level =
-      local_config.ServerLocalConfig.naming_table_compression_level;
+      local_config.Server_local_config.naming_table_compression_level;
     naming_table_compression_threads =
-      local_config.ServerLocalConfig.naming_table_compression_threads;
+      local_config.Server_local_config.naming_table_compression_threads;
     eden_fetch_parallelism =
-      local_config.ServerLocalConfig.eden_fetch_parallelism;
+      local_config.Server_local_config.eden_fetch_parallelism;
     use_distc_crawl_dircache =
-      local_config.ServerLocalConfig.use_distc_crawl_dircache;
+      local_config.Server_local_config.use_distc_crawl_dircache;
   }
 
 (* Test: OCaml and Rust produce equivalent full HhConfig from hh.conf *)

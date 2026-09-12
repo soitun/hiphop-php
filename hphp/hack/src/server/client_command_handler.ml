@@ -14,18 +14,19 @@ module NonPersistent : sig
   val handle_client_command_or_persistent_connection :
     ServerEnv.genv ->
     ServerEnv.env ->
-    ClientProvider.client ->
+    Client_provider.client ->
     ServerEnv.env ServerUtils.handle_command_result
 end = struct
   let handle_client_command_exception
-      ~(env : ServerEnv.env) ~(client : ClientProvider.client) (e : Exception.t)
-      : ServerEnv.env =
+      ~(env : ServerEnv.env)
+      ~(client : Client_provider.client)
+      (e : Exception.t) : ServerEnv.env =
     match Exception.to_exn e with
-    | ClientProvider.Client_went_away
-    | ServerCommandTypes.Read_command_timeout ->
+    | Client_provider.Client_went_away
+    | Server_command_types.Read_command_timeout ->
       Hh_logger.log
         "Client went away or server took too long to read command. Shutting down client socket.";
-      ClientProvider.shutdown_client client;
+      Client_provider.shutdown_client client;
       env
     (* Connection dropped off. Its unforunate that we don't actually know
      * which connection went bad (could be any write to any connection to
@@ -37,7 +38,7 @@ end = struct
     | Sys_error "Broken pipe"
     | Sys_error "Connection reset by peer" ->
       Hh_logger.log "Client channel went bad. Shutting down client socket";
-      ClientProvider.shutdown_client client;
+      Client_provider.shutdown_client client;
       env
     | exn ->
       let e = Exception.wrap exn in
@@ -45,7 +46,7 @@ end = struct
       Hh_logger.log
         "HANDLE_CONNECTION_EXCEPTION(inner) %s"
         (Exception.to_string e);
-      ClientProvider.shutdown_client client;
+      Client_provider.shutdown_client client;
       env
 
   [@@@warning "+52"]
@@ -65,13 +66,13 @@ end = struct
       return (handle_client_command_exception ~env ~client e)
 
   let handle_client_command_or_persistent_connection_ genv env client =
-    ClientProvider.track
+    Client_provider.track
       client
       ~key:Connection_tracker.Server_start_handle_connection;
     handle_client_command_try (fun x -> ServerUtils.Done x) client env
     @@ fun () ->
-    match ClientProvider.read_connection_type client with
-    | ServerCommandTypes.Non_persistent ->
+    match Client_provider.read_connection_type client with
+    | Server_command_types.Non_persistent ->
       Hh_logger.log "Handling non-persistent client command.";
       Server_command.handle genv env client
 

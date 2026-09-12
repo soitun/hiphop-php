@@ -133,7 +133,7 @@ let init (genv : ServerEnv.genv) (root : Path.t) : unit =
               (* We'll cycle the client-log if it gets bigger than 1Mb.
                  We do this cycling here in the server (rather than in the client)
                  to avoid races when multiple concurrent clients try to cycle it. *)
-              let client_log_fn = ServerFiles.client_log root in
+              let client_log_fn = Server_files.client_log root in
               let stat = Unix.stat client_log_fn in
               if stat.Unix.st_size > 1024 * 1024 then
                 Sys.rename client_log_fn (client_log_fn ^ ".old")
@@ -177,7 +177,7 @@ let init (genv : ServerEnv.genv) (root : Path.t) : unit =
                     | _ -> false)
                     (* We don't want to touch things like .watchman_failed *)
                     || String.is_prefix fn ~prefix:"."
-                    || not (ServerFiles.is_of_root root fn)
+                    || not (Server_files.is_of_root root fn)
                   then
                     ()
                   else

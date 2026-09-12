@@ -28,7 +28,7 @@ open Result.Export
 open Reordered_argument_collections
 open ServerEnv
 open Server_init_types
-module SLC = ServerLocalConfig
+module SLC = Server_local_config
 
 type deptable = CustomDeptable of string
 
@@ -47,7 +47,7 @@ let lock_and_load_deptable
              ~ignore_hh_version)
       then
         let build_revision =
-          SaveStateService.saved_state_build_revision_read ~base_file_name
+          Save_state_service.saved_state_build_revision_read ~base_file_name
         in
         if not (String.equal build_revision Build_id.build_revision) then
           raise
@@ -129,8 +129,9 @@ let run_saved_state_future
       ) else
         Server_check_utils.get_naming_table_fallback_path genv
     in
-    let (old_naming_table, { SaveStateServiceTypes.old_errors; old_warnings }) =
-      SaveStateService.load_saved_state_exn
+    let (old_naming_table, { Save_state_service_types.old_errors; old_warnings })
+        =
+      Save_state_service.load_saved_state_exn
         ctx
         ~naming_table_fallback_path
         ~errors_path:(Path.to_string errors_path)
@@ -211,10 +212,10 @@ let download_and_load_state_exn
   let (progress_naming_table_load, progress_dep_table_load) =
     (ref None, ref None)
   in
-  let ssopt = genv.local_config.ServerLocalConfig.saved_state in
+  let ssopt = genv.local_config.Server_local_config.saved_state in
   let watchman_sockname =
-    let { ServerLocalConfig.Watchman.sockname; _ } =
-      genv.local_config.ServerLocalConfig.watchman
+    let { Server_local_config.Watchman.sockname; _ } =
+      genv.local_config.Server_local_config.watchman
     in
     Option.map sockname ~f:Path.make
   in
@@ -376,10 +377,11 @@ let use_precomputed_state_exn
   in
   let errors_path = ServerArgs.errors_path_for_target_info info in
   let warning_hashes_path = ServerArgs.warnings_path_for_target_info info in
-  let (old_naming_table, { SaveStateServiceTypes.old_errors; old_warnings }) =
+  let (old_naming_table, { Save_state_service_types.old_errors; old_warnings })
+      =
     CgroupProfiler.step_start_end cgroup_steps "load saved state"
     @@ fun _cgroup_step ->
-    SaveStateService.load_saved_state_exn
+    Save_state_service.load_saved_state_exn
       ctx
       ~naming_table_fallback_path
       ~errors_path
@@ -477,7 +479,7 @@ let remove_items_from_reverse_naming_table_or_build_new_reverse_naming_table
 
 (* Prechecked files are gated with a flag and not supported in AI/check modes. *)
 let use_prechecked_files (genv : ServerEnv.genv) : bool =
-  ServerPrecheckedFiles.should_use genv.options genv.local_config
+  Server_prechecked_files.should_use genv.options genv.local_config
   && not (ServerArgs.check_mode genv.options)
 
 let file_names_to_deps names deps =
@@ -706,7 +708,7 @@ let calculate_fanout_and_defer_or_do_type_check
           files
       in
       let env =
-        ServerPrecheckedFiles.init
+        Server_prechecked_files.init
           env
           ~dirty_local_deps:local_deps
           ~dirty_master_deps:master_deps
@@ -760,7 +762,7 @@ let calculate_fanout_and_defer_or_do_type_check
       if
         not
           genv.ServerEnv.local_config
-            .ServerLocalConfig.enable_type_check_filter_files
+            .Server_local_config.enable_type_check_filter_files
       then
         to_recheck
       else
@@ -828,19 +830,19 @@ let calculate_fanout_and_defer_or_do_type_check
     result
 
 let get_updates_exn ~(genv : ServerEnv.genv) ~(root : Path.t) :
-    Relative_path.Set.t * ServerNotifier.clock option =
+    Relative_path.Set.t * Server_notifier.clock option =
   let start_t = Unix.gettimeofday () in
   Hh_logger.log "Getting files changed while parsing...";
-  ServerNotifier.wait_until_ready genv.notifier;
+  Server_notifier.wait_until_ready genv.notifier;
   let telemetry = Telemetry.create () in
   let (changes, clock, _telemetry) =
-    ServerNotifier.get_changes_async genv.notifier telemetry
+    Server_notifier.get_changes_async genv.notifier telemetry
   in
   let files_changed_while_parsing =
     match changes with
-    | ServerNotifier.Unavailable -> Relative_path.Set.empty
-    | ServerNotifier.SyncChanges updates
-    | ServerNotifier.AsyncChanges updates ->
+    | Server_notifier.Unavailable -> Relative_path.Set.empty
+    | Server_notifier.SyncChanges updates
+    | Server_notifier.AsyncChanges updates ->
       let root = Path.to_string root in
       let filter p =
         String.is_prefix p ~prefix:root && FindUtils.file_filter p
@@ -1059,7 +1061,7 @@ let update_naming_table
     genv
     ~(do_indexing : bool)
     ~(state_result :
-       loaded_info * Relative_path.Set.t * ServerNotifier.clock option)
+       loaded_info * Relative_path.Set.t * Server_notifier.clock option)
     (cgroup_steps : CgroupProfiler.step_group) =
   let ( (loaded_info : Server_init_types.loaded_info),
         changed_while_parsing,
@@ -1261,7 +1263,7 @@ let post_saved_state_initialization
     ~(genv : ServerEnv.genv)
     ~(env : ServerEnv.env)
     ~(state_result :
-       loaded_info * Relative_path.Set.t * ServerNotifier.clock option)
+       loaded_info * Relative_path.Set.t * Server_notifier.clock option)
     (cgroup_steps : CgroupProfiler.step_group) : ServerEnv.env * float =
   let ( (loaded_info : Server_init_types.loaded_info),
         _changed_while_parsing,
@@ -1296,7 +1298,7 @@ let post_saved_state_initialization
     end else
       Option.iter
         saved_state_revs_info.ServerEnv.mergebase_globalrev
-        ~f:ServerRevisionTracker.initialize
+        ~f:Server_revision_tracker.initialize
   else
     Option.iter
       ~f:Hack_event_logger.set_mergebase_globalrev

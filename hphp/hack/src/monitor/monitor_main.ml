@@ -137,7 +137,7 @@ type env = {
    *
    * String is the server name it wants to connect to. *)
   purgatory_clients:
-    (Connection_tracker.t * MonitorRpc.handoff_options * Unix.file_descr)
+    (Connection_tracker.t * Monitor_rpc.handoff_options * Unix.file_descr)
     Queue.t;
   (* Whether to ignore hh version mismatches *)
   ignore_hh_version: bool;
@@ -327,7 +327,7 @@ let hand_off_client_connection ~tracker server_fd client_fd =
   let m2s_sequence_number =
     Sent_fds_collector.get_and_increment_sequence_number ()
   in
-  let msg = MonitorRpc.{ m2s_tracker = tracker; m2s_sequence_number } in
+  let msg = Monitor_rpc.{ m2s_tracker = tracker; m2s_sequence_number } in
   msg_to_channel server_fd msg;
   log
     "Handed off tracker to server (client socket handoff #%d)"
@@ -403,7 +403,7 @@ let hand_off_client_connection_wrapper ~tracker server_fd client_fd =
         log
           ~tracker
           "Sending Monitor_failed_to_handoff to client, and closing FD";
-        msg_to_channel client_fd ServerCommandTypes.Monitor_failed_to_handoff;
+        msg_to_channel client_fd Server_command_types.Monitor_failed_to_handoff;
         ensure_fd_closed client_fd)
 
 (** Send (possibly empty) sequences of messages before handing off to
@@ -420,8 +420,8 @@ let rec client_prehandoff
   match env.server with
   | Alive server ->
     let server_fd =
-      MonitorRpc.PipeTypeMap.find
-        handoff_options.MonitorRpc.pipe_type
+      Monitor_rpc.PipeTypeMap.find
+        handoff_options.Monitor_rpc.pipe_type
         server.out_fds
     in
     let t_ready = Unix.gettimeofday () in
@@ -432,7 +432,7 @@ let rec client_prehandoff
     log
       "Got %s request for typechecker. Prior request %.1f seconds ago"
       ~tracker
-      (MonitorRpc.pipe_type_to_string handoff_options.MonitorRpc.pipe_type)
+      (Monitor_rpc.pipe_type_to_string handoff_options.Monitor_rpc.pipe_type)
       (t_ready -. !(server.last_request_handoff));
     msg_to_channel client_fd (PH.Sentinel server.server_specific_files);
     let tracker =
@@ -476,7 +476,7 @@ let rec client_prehandoff
     )
   | Not_yet_started ->
     let env : env msg_update =
-      if handoff_options.MonitorRpc.force_dormant_start then (
+      if handoff_options.Monitor_rpc.force_dormant_start then (
         msg_to_channel
           client_fd
           (PH.Server_not_alive_dormant
@@ -505,11 +505,11 @@ let rec client_prehandoff
 let handle_monitor_rpc (env : env msg_update) client_fd =
   (* WARNING! Don't use the (slow) HackEventLogger here, in the inner loop non-failure path. *)
   env >>= fun env ->
-  let cmd : MonitorRpc.command =
+  let cmd : Monitor_rpc.command =
     Marshal_tools.from_fd_with_preamble client_fd
   in
   match cmd with
-  | MonitorRpc.HANDOFF_TO_SERVER (tracker, handoff_options) ->
+  | Monitor_rpc.HANDOFF_TO_SERVER (tracker, handoff_options) ->
     let tracker =
       Connection_tracker.(track tracker ~key:Monitor_received_handoff)
     in
@@ -519,7 +519,7 @@ let handle_monitor_rpc (env : env msg_update) client_fd =
       (Ok env)
       handoff_options
       client_fd
-  | MonitorRpc.SHUT_DOWN tracker ->
+  | Monitor_rpc.SHUT_DOWN tracker ->
     log "Got shutdown RPC. Shutting down." ~tracker;
     kill_server_with_check_and_wait env.server;
     Exit.exit Exit_status.No_error
@@ -672,7 +672,7 @@ let update_status_ (env : env msg_update) monitor_config :
           match
             Exit_status.get_finale_data
               process.server_specific_files
-                .ServerCommandTypes.server_finale_file
+                .Server_command_types.server_finale_file
           with
           | None -> (telemetry, None)
           | Some
@@ -929,9 +929,9 @@ let check_and_run_loop_
     match env.server with
     | Server_process.Alive process_data ->
       let pid = process_data.Server_process.pid in
-      MonitorRpc.read_server_receipt_to_monitor_file
+      Monitor_rpc.read_server_receipt_to_monitor_file
         ~server_receipt_to_monitor_file:
-          (ServerFiles.server_receipt_to_monitor_file pid)
+          (Server_files.server_receipt_to_monitor_file pid)
       |> Option.value ~default:0
     | _ -> 0
   in

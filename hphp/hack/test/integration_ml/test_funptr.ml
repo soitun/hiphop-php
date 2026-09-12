@@ -37,7 +37,7 @@ function test() : void {
 
 let go_identify expected ~ctx ~entry pos =
   let actual =
-    ServerIdentifyFunction.go_quarantined_absolute ~ctx ~entry pos
+    Server_identify_function.go_quarantined_absolute ~ctx ~entry pos
     |> Nuclide_rpc_message_printer.identify_symbol_response_to_json
   in
   let (line, column) = File_content.Position.line_column_one_based pos in
@@ -49,7 +49,7 @@ let go_identify expected ~ctx ~entry pos =
 
 let go_hover expected ~ctx ~entry pos =
   let hovers_to_string h =
-    List.map h ~f:HoverService.string_of_result |> String.concat ~sep:"; "
+    List.map h ~f:Hover_service.string_of_result |> String.concat ~sep:"; "
   in
   let actual = Ide_hover.go_quarantined ~ctx ~entry pos in
   let (line, column) = File_content.Position.line_column_one_based pos in
@@ -84,7 +84,7 @@ let identify_tests =
       go_hover
         [
           {
-            HoverService.snippet =
+            Hover_service.snippet =
               make_hack_marked_code "function foo(string $s): string";
             addendum = [Lsp.MarkedString "foo_docblock"];
             pos = pos_at (17, 8) (17, 10);
@@ -104,7 +104,7 @@ let identify_tests =
       go_hover
         [
           {
-            HoverService.snippet = [Lsp.MarkedCode ("hack", "class Cardoor")];
+            Hover_service.snippet = [Lsp.MarkedCode ("hack", "class Cardoor")];
             addendum = [Lsp.MarkedString "Cardoor_docblock"];
             pos = pos_at (20, 8) (20, 14);
           };
@@ -123,7 +123,7 @@ let identify_tests =
       go_hover
         [
           {
-            HoverService.snippet =
+            Hover_service.snippet =
               [
                 Lsp.MarkedString "Defined in `Cardoor`";
                 Lsp.MarkedString "---";

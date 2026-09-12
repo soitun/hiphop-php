@@ -20,7 +20,7 @@ let first_top_level_def symbols =
 
 let go_quarantined ctx entry pos : string option =
   let (symbols : _ Symbol_occurrence.t list) =
-    IdentifySymbolService.go_quarantined
+    Identify_symbol_service.go_quarantined
       ~ctx
       ~entry
       pos
@@ -29,5 +29,5 @@ let go_quarantined ctx entry pos : string option =
   match first_top_level_def symbols with
   | Some def -> Some def
   | None ->
-    let symbols = IdentifySymbolService.all_symbols_ctx ~ctx ~entry in
+    let symbols = Identify_symbol_service.all_symbols_ctx ~ctx ~entry in
     first_top_level_def symbols

@@ -44,7 +44,8 @@ let with_line_numbers (code : string) : string =
 
 let apply_edit
     (orig_code : string)
-    ServerFormatTypes.{ new_text; range = Ide_api_types.{ st; ed } } : string =
+    Server_format_types.{ new_text; range = Ide_api_types.{ st; ed } } : string
+    =
   (* We expect only changed lines, not column-level information. Update the test if this changes *)
   assert (File_content.Position.is_beginning_of_line st);
   assert (File_content.Position.is_beginning_of_line ed);
@@ -76,10 +77,10 @@ let run_format_test (filename : string) : unit =
     Ide_format.go_ide
       ~filename_for_logging:"foo.php"
       ~content:code
-      ~action:ServerFormatTypes.Document
+      ~action:Server_format_types.Document
       ~options:Lsp.DocumentFormatting.{ tabSize = 2; insertSpaces = true }
   with
-  | Ok (ServerFormatTypes.{ new_text; range } as edit) -> begin
+  | Ok (Server_format_types.{ new_text; range } as edit) -> begin
     let new_code = apply_edit code edit in
     Printf.printf "> lines and columns in ranges are 1-indexed\n";
     Printf.printf "received code:\n%s\n\n" (with_line_numbers code);

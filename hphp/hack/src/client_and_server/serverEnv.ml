@@ -97,9 +97,9 @@ end
 type genv = {
   options: ServerArgs.options;
   config: ServerConfig.t;
-  local_config: ServerLocalConfig.t;
+  local_config: Server_local_config.t;
   workers: MultiWorker.worker list option;
-  notifier: ServerNotifier.t;
+  notifier: Server_notifier.t;
   indexer: (string -> bool) -> unit -> string list;
       (** Returns the list of files under .hhconfig, subject to a filter *)
   mutable debug_channels: (Timeout.in_channel * Out_channel.t) option;
@@ -319,7 +319,7 @@ type env = {
   disk_needs_parsing: Relative_path.Set.t;
       (** Files which parse trees were invalidated (because they changed on disk)
           and need to be re-parsed *)
-  clock: ServerNotifier.clock option;
+  clock: Server_notifier.clock option;
       (** This is the clock as of when disk_needs_parsing was last updated.
       None if not using Watchman or Edenfs_watcher. *)
   needs_phase2_redecl: Relative_path.Set.t;
@@ -343,7 +343,7 @@ type env = {
     env ->
     (Unix.file_descr * env MultiThreadedCall.interrupt_handler) list;
   nonpersistent_client_pending_command_needs_full_check:
-    ((env -> env) * string * ClientProvider.client) option;
+    ((env -> env) * string * Client_provider.client) option;
       [@opaque]
       (** When a non-persistent client sends a command that cannot be immediately handled
           (due to needing full check) we put the continuation that finishes handling
@@ -399,5 +399,5 @@ let add_changed_files env changed_files =
     changed_files = Relative_path.Set.union env.changed_files changed_files;
   }
 
-let show_clock (clock : ServerNotifier.clock option) : string =
-  Option.value_map ~f:ServerNotifier.show_clock ~default:"[noclock]" clock
+let show_clock (clock : Server_notifier.clock option) : string =
+  Option.value_map ~f:Server_notifier.show_clock ~default:"[noclock]" clock

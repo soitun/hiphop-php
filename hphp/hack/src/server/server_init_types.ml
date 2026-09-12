@@ -122,7 +122,7 @@ type loaded_info = {
       [@printer Relative_path.Set.pp_large]
       (** Files changed since the public merge base *)
   old_naming_table: (Naming_table.t[@yojson.opaque]); [@show.opaque]
-  old_errors: (SaveStateServiceTypes.saved_state_errors[@yojson.opaque]);
+  old_errors: (Save_state_service_types.saved_state_errors[@yojson.opaque]);
       [@show.opaque]
   old_warnings: (Warnings_saved_state.t[@yojson.opaque]); [@show.opaque]
   saved_state_revs_info: ServerEnv.saved_state_revs_info;

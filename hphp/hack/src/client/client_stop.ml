@@ -20,7 +20,7 @@ type env = {
 let wait_for_death root secs =
   let i = ref 0 in
   try
-    while MC.server_exists (ServerFiles.lock_file root) do
+    while MC.server_exists (Server_files.lock_file root) do
       incr i;
       if !i < secs then
         ignore @@ Unix.sleep 1
@@ -66,7 +66,7 @@ let mean_kill env =
   let root_s = Path.to_string env.root in
   Printf.eprintf "Attempting to meanly kill server for %s\n%!" root_s;
   let pids =
-    try Pid_log.get_pids (ServerFiles.pids_file env.root) with
+    try Pid_log.get_pids (Server_files.pids_file env.root) with
     | Pid_log.FailedToGetPids ->
       Printf.eprintf
         "Unable to figure out pids of running Hack server. Try manually killing it with `pkill hh_server`\n%!";

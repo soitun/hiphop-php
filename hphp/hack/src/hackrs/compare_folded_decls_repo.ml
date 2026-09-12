@@ -16,7 +16,7 @@ let usage =
 let make_workers
     (root : Path.t)
     (server_config : ServerConfig.t)
-    (server_local_config : ServerLocalConfig.t) : MultiWorker.worker list =
+    (server_local_config : Server_local_config.t) : MultiWorker.worker list =
   let num_workers = Sys_utils.nbr_procs in
   let gc_control = Gc.get () in
   let hhconfig_version =
@@ -34,13 +34,13 @@ let make_workers
         ~root
         ~custom_columns:[]
         ~rollout_flags:
-          (ServerLocalConfigLoad.to_rollout_flags server_local_config)
-        ~rollout_group:server_local_config.ServerLocalConfig.rollout_group
+          (Server_local_config_load.to_rollout_flags server_local_config)
+        ~rollout_group:server_local_config.Server_local_config.rollout_group
         ~hhconfig_version
         ~init_id:(Random_id.short_string ())
         ~time:(Unix.gettimeofday ())
         ~per_file_profiling:
-          server_local_config.ServerLocalConfig.per_file_profiling)
+          server_local_config.Server_local_config.per_file_profiling)
 
 let measure_time (action : string) (f : unit -> 'a) : 'a =
   Hh_logger.log "Start %s..." action;

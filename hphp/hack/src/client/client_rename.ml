@@ -128,7 +128,7 @@ let go
   in
   let%lwt patches =
     Client_connect.rpc_with_retry conn ~desc
-    @@ ServerCommandTypes.RENAME command
+    @@ Server_command_types.RENAME command
   in
   if args.output_json then
     print_patches_json patches

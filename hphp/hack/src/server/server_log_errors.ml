@@ -16,7 +16,7 @@ let go
     (error_filter : Filter_diagnostics.Filter.t)
     (preexisting_warnings : bool) : Telemetry.t =
   let file_names =
-    List.map files ~f:(fun filename -> ServerCommandTypes.FileName filename)
+    List.map files ~f:(fun filename -> Server_command_types.FileName filename)
   in
 
   let ctx = Provider_utils.ctx_from_server_env env in

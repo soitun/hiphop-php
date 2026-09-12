@@ -15,11 +15,11 @@ let test_process_data =
     {
       pid = 2758734;
       server_specific_files =
-        { ServerCommandTypes.server_finale_file = "2758734.fin" };
+        { Server_command_types.server_finale_file = "2758734.fin" };
       start_t = 0.0;
       in_fd = Unix.stdin;
       out_fds =
-        MonitorRpc.PipeTypeMap.of_list [(MonitorRpc.Default, Unix.stdout)];
+        Monitor_rpc.PipeTypeMap.of_list [(Monitor_rpc.Default, Unix.stdout)];
       last_request_handoff = ref 0.0;
     }
 
@@ -279,7 +279,7 @@ let test_quarantine () =
 let test_autocomplete_sort_text () =
   let make_item ~label ~explicit_sort_text =
     let position = File_content.Position.beginning_of_file in
-    AutocompleteTypes.
+    Autocomplete_types.
       {
         res_decl_pos = Pos.to_absolute Pos.none;
         res_replace_pos = Ide_api_types.{ st = position; ed = position };
@@ -306,7 +306,7 @@ let test_autocomplete_sort_text () =
     ]
     ~f:(fun (label, sort_text, expected) ->
       let actual =
-        AutocompleteTypes.sort_text
+        Autocomplete_types.sort_text
           (make_item ~label ~explicit_sort_text:sort_text)
       in
       Asserter.String_asserter.assert_equals

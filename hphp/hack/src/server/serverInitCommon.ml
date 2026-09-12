@@ -142,7 +142,7 @@ let log_type_check_end
          ~value:(Diagnostics.as_telemetry_summary env.diagnostics)
     |> Telemetry.object_
          ~key:"repo_states"
-         ~value:(ServerNotifier.get_repo_states_telemetry genv.notifier)
+         ~value:(Server_notifier.get_repo_states_telemetry genv.notifier)
   in
   Hack_event_logger.type_check_end
     (Some telemetry)
@@ -150,7 +150,7 @@ let log_type_check_end
     ~started_count:total_rechecked_count
     ~total_rechecked_count
     ~desc
-    ~experiments:genv.local_config.ServerLocalConfig.experiments
+    ~experiments:genv.local_config.Server_local_config.experiments
     ~start_t
 
 let defer_or_do_type_check
@@ -185,7 +185,7 @@ let defer_or_do_type_check
       if
         not
           genv.ServerEnv.local_config
-            .ServerLocalConfig.enable_type_check_filter_files
+            .Server_local_config.enable_type_check_filter_files
       then
         files_to_check
       else
@@ -209,23 +209,23 @@ let defer_or_do_type_check
       _;
     } =
       let longlived_workers =
-        genv.local_config.ServerLocalConfig.longlived_workers
+        genv.local_config.Server_local_config.longlived_workers
       in
       let hh_distc_config =
-        let use_distc = genv.local_config.ServerLocalConfig.use_distc in
+        let use_distc = genv.local_config.Server_local_config.use_distc in
         Option.some_if
           use_distc
           Typing_check_service.
             {
               enable_fanout_aware_distc =
                 genv.ServerEnv.local_config
-                  .ServerLocalConfig.enable_fanout_aware_distc;
+                  .Server_local_config.enable_fanout_aware_distc;
               fanout_threshold =
                 genv.ServerEnv.local_config
-                  .ServerLocalConfig.hh_distc_fanout_threshold;
+                  .Server_local_config.hh_distc_fanout_threshold;
               fanout_full_init_threshold =
                 genv.ServerEnv.local_config
-                  .ServerLocalConfig.hh_distc_fanout_full_init_threshold;
+                  .Server_local_config.hh_distc_fanout_full_init_threshold;
             }
       in
       let root = ServerArgs.root genv.ServerEnv.options in

@@ -91,18 +91,19 @@ val assertSingleDiagnostic : string -> Diagnostics.diagnostic list -> unit
 
 val diagnostic_strings : Diagnostics.diagnostic list -> string list
 
-val assert_ide_completions : AutocompleteTypes.ide_result -> string list -> unit
+val assert_ide_completions :
+  Autocomplete_types.ide_result -> string list -> unit
 
 val assert_needs_retry :
-  'a ServerCommandTypes.Done_or_retry.t loop_outputs -> unit
+  'a Server_command_types.Done_or_retry.t loop_outputs -> unit
 
 val assert_find_refs :
-  ServerCommandTypes.Find_refs.result_or_retry loop_outputs ->
+  Server_command_types.Find_refs.result_or_retry loop_outputs ->
   string list ->
   unit
 
 val assert_rename :
-  ServerCommandTypes.Rename.result_or_retry loop_outputs -> string -> unit
+  Server_command_types.Rename.result_or_retry loop_outputs -> string -> unit
 
 val assert_needs_recheck : ServerEnv.env -> string -> unit
 

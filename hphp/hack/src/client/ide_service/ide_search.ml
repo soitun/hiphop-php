@@ -74,7 +74,7 @@ let go
           ~context
           ~kind_filter
       in
-      AutocompleteService.add_position_to_results ctx temp_results
+      Autocomplete_service.add_position_to_results ctx temp_results
   in
   Symbol_index_core.log_symbol_index_search
     ~sienv:!sienv_ref

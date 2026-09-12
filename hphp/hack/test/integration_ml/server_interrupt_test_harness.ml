@@ -92,7 +92,7 @@ let wait_for_errors_file ~(deadline : float) (errors_file_path : string) :
 
 let with_current_errors_stream (env : t) (f : errors_stream -> 'a Lwt.t) :
     'a Lwt.t =
-  let errors_file_path = ServerFiles.errors_file_path env.root in
+  let errors_file_path = Server_files.errors_file_path env.root in
   let%lwt fd =
     wait_for_errors_file
       errors_file_path
@@ -143,12 +143,12 @@ let wait_for_event
       | exn -> Lwt.fail exn)
 
 let server_log_offset (env : t) : int =
-  let path = ServerFiles.log_link env.root in
+  let path = Server_files.log_link env.root in
   try (Unix.stat path).Unix.st_size with
   | Unix.Unix_error (Unix.ENOENT, _, _) -> 0
 
 let server_log_since (env : t) ~(offset : int) : string =
-  let contents = Sys_utils.cat (ServerFiles.log_link env.root) in
+  let contents = Sys_utils.cat (Server_files.log_link env.root) in
   String.drop_prefix contents offset
 
 let wait_for_server_log
@@ -191,7 +191,7 @@ let with_server
         (Path.concat root ".hg" |> Path.to_string);
       write_files env files;
       Server_progress.set_root root;
-      ServerFiles.set_tmp_FOR_TESTING_ONLY tmp;
+      Server_files.set_tmp_FOR_TESTING_ONLY tmp;
       f env)
     ~finally:(fun () ->
       let%lwt _ = hh env [| "stop" |] in

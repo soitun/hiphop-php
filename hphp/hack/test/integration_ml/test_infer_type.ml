@@ -301,8 +301,8 @@ let test () =
         match type_at with
         | Some info ->
           Tast_env.print_ty
-            (ServerInferType.get_env info)
-            (ServerInferType.get_type info)
+            (Server_infer_type.get_env info)
+            (Server_infer_type.get_type info)
         | None ->
           Test.fail
             (Printf.sprintf "No type inferred at %s:%d:%d" file line col)
@@ -320,7 +320,7 @@ let test () =
       Tast_provider.compute_tast_unquarantined ~ctx ~entry
     in
     let ty =
-      ServerInferType.type_at_pos
+      Server_infer_type.type_at_pos
         ctx
         tast
         (File_content.Position.from_one_based line col)

@@ -10,6 +10,6 @@
 val main :
   Client_env.client_check_env ->
   ServerConfig.t ->
-  ServerLocalConfig.t ->
+  Server_local_config.t ->
   init_proc_stack:string list option ->
   'a

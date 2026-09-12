@@ -5830,7 +5830,7 @@ end = struct
       make_result env p (Aast.Call { func; targs; args; unpacked_arg }) ty
     in
     let matches_auto_complete_suffix x =
-      String.is_suffix x ~suffix:AutocompleteTypes.autocomplete_token
+      String.is_suffix x ~suffix:Autocomplete_types.autocomplete_token
     in
     (* When autocompleting a call such as
      *   foo(#AUTO332

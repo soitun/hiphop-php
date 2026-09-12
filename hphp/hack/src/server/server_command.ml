@@ -9,11 +9,11 @@
 
 open Hh_prelude
 open Utils
-open ServerCommandTypes
+open Server_command_types
 
 exception Nonfatal_rpc_exception of Exception.t * ServerEnv.env
 
-let reason = ServerCommandTypesUtils.debug_describe_cmd
+let reason = Server_command_types_utils.debug_describe_cmd
 
 (****************************************************************************)
 (* Called by the server *)
@@ -48,15 +48,15 @@ let actually_handle genv client msg full_recheck_needed ~is_stale env =
     (not full_recheck_needed)
     || ServerEnv.(is_full_check_done env.full_check_status));
 
-  ClientProvider.track
+  Client_provider.track
     client
     ~key:Connection_tracker.Server_done_full_recheck
     ~long_delay_okay:true;
 
   let (metadata, cmd) = msg in
-  ClientProvider.ping client;
+  Client_provider.ping client;
   let t_start = Unix.gettimeofday () in
-  ClientProvider.track
+  Client_provider.track
     client
     ~key:Connection_tracker.Server_start_handle
     ~time:t_start;
@@ -71,13 +71,13 @@ let actually_handle genv client msg full_recheck_needed ~is_stale env =
     in
 
     let parsed_files = Full_fidelity_parser_profiling.stop_profiling () in
-    ClientProvider.track
+    Client_provider.track
       client
       ~key:Connection_tracker.Server_end_handle
       ~log:true;
     let (major_gc_time, minor_gc_time) = Sys_utils.get_gc_time () in
     Hack_event_logger.handled_command
-      (ServerCommandTypesUtils.debug_describe_t cmd)
+      (Server_command_types_utils.debug_describe_t cmd)
       ~start_t:t_start
       ~major_gc_time
       ~minor_gc_time
@@ -85,22 +85,22 @@ let actually_handle genv client msg full_recheck_needed ~is_stale env =
     result
   in
 
-  match ServerCommandTypes.handle_after_send cmd with
+  match Server_command_types.handle_after_send cmd with
   | None ->
     let (new_env, response) = handle_request cmd in
-    ClientProvider.send_response_to_client client response;
-    ClientProvider.shutdown_client client;
+    Client_provider.send_response_to_client client response;
+    Client_provider.shutdown_client client;
     new_env
   | Some (response, post_send_cmd) ->
-    ClientProvider.send_response_to_client client response;
-    ClientProvider.shutdown_client client;
+    Client_provider.send_response_to_client client response;
+    Client_provider.shutdown_client client;
     let (new_env, ()) = handle_request post_send_cmd in
     new_env
 
 let handle
     (genv : ServerEnv.genv)
     (env : ServerEnv.env)
-    (client : ClientProvider.client) :
+    (client : Client_provider.client) :
     ServerEnv.env ServerUtils.handle_command_result =
   (* In the case if LSP, it's normal that this [Server_waiting_for_cmd]
      track happens on a per-message basis, much later than the previous
@@ -108,12 +108,12 @@ let handle
      connection was established; the flag [long_delay_okay]
      means that the default behavior, of alarming log messages in case of delays,
      will be suppressed. *)
-  ClientProvider.track
+  Client_provider.track
     client
     ~key:Connection_tracker.Server_waiting_for_cmd
     ~long_delay_okay:false;
 
-  let msg = ClientProvider.read_client_msg client in
+  let msg = Client_provider.read_client_msg client in
 
   (* This is a helper to update progress.json to things like "[hh_client:idle done]" or "[HackAst:--type-at-pos check]"
      or "[HackAst:--type-at-pos]". We try to balance something useful to the user, with something that helps the hack
@@ -126,21 +126,21 @@ let handle
     Server_progress.write
       ~include_in_logs:false
       "%s%s"
-      (ServerCommandTypesUtils.status_describe_cmd msg)
+      (Server_command_types_utils.status_describe_cmd msg)
       phase
   in
 
   (* Once again, it's expected that [Server_got_cmd] happens a long time
      after we started waiting for one! *)
-  ClientProvider.track
+  Client_provider.track
     client
     ~key:Connection_tracker.Server_got_cmd
     ~log:true
     ~msg:
       (Printf.sprintf
          "%s [%s]"
-         (ServerCommandTypesUtils.debug_describe_cmd msg)
-         (ClientProvider.priority_to_string client))
+         (Server_command_types_utils.debug_describe_cmd msg)
+         (Client_provider.priority_to_string client))
     ~long_delay_okay:false;
   let full_recheck_needed = rpc_command_needs_full_check (snd msg) in
   let is_stale =

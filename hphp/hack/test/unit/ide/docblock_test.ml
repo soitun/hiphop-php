@@ -27,7 +27,7 @@ let test_clean_comments () =
   in
   Asserter.String_asserter.assert_equals
     ""
-    (ServerDocblockAt.clean_comments s)
+    (Server_docblock_at.clean_comments s)
     "clean";
 
   let s =
@@ -47,7 +47,7 @@ let test_clean_comments () =
   in
   Asserter.String_asserter.assert_equals
     ""
-    (ServerDocblockAt.clean_comments s)
+    (Server_docblock_at.clean_comments s)
     "clean";
 
   let s =
@@ -64,7 +64,7 @@ let test_clean_comments () =
   in
   Asserter.String_asserter.assert_equals
     ""
-    (ServerDocblockAt.clean_comments s)
+    (Server_docblock_at.clean_comments s)
     "clean";
 
   let s =
@@ -72,13 +72,13 @@ let test_clean_comments () =
   in
   Asserter.String_asserter.assert_equals
     ""
-    (ServerDocblockAt.clean_comments s)
+    (Server_docblock_at.clean_comments s)
     "clean";
 
   let s = "Copyright 2004-present Foobar. All Rights Reserved." in
   Asserter.String_asserter.assert_equals
     ""
-    (ServerDocblockAt.clean_comments s)
+    (Server_docblock_at.clean_comments s)
     "clean";
 
   let s =
@@ -86,19 +86,19 @@ let test_clean_comments () =
   in
   Asserter.String_asserter.assert_equals
     ""
-    (ServerDocblockAt.clean_comments s)
+    (Server_docblock_at.clean_comments s)
     "clean";
 
   let s = "(c) Contributor <contributor@email.com>" in
   Asserter.String_asserter.assert_equals
     s
-    (ServerDocblockAt.clean_comments s)
+    (Server_docblock_at.clean_comments s)
     "leave unchanged";
 
   let s = "Requirements\n(a) foo\n(b) bar\n(c) doo" in
   Asserter.String_asserter.assert_equals
     s
-    (ServerDocblockAt.clean_comments s)
+    (Server_docblock_at.clean_comments s)
     "leave unchanged";
 
   true

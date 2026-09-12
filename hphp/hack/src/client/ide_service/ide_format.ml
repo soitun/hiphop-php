@@ -157,13 +157,13 @@ let noop_edit =
     }
   in
   {
-    ServerFormatTypes.new_text = "";
+    Server_format_types.new_text = "";
     range = Ide_api_types.ide_range_from_fc range;
   }
 
 (* Return an IDE text edit that doesn't include unchanged leading or trailing lines. *)
 let minimal_edit (old_src : string) (new_src : string) :
-    ServerFormatTypes.ide_response =
+    Server_format_types.ide_response =
   let old_src_lines = String.split_lines old_src in
   let new_src_lines = String.split_lines new_src in
 
@@ -201,7 +201,7 @@ let minimal_edit (old_src : string) (new_src : string) :
       }
     in
     {
-      ServerFormatTypes.new_text;
+      Server_format_types.new_text;
       range = Ide_api_types.ide_range_from_fc range;
     }
   | _ -> noop_edit
@@ -209,14 +209,14 @@ let minimal_edit (old_src : string) (new_src : string) :
 let go_ide
     ~(filename_for_logging : string)
     ~(content : string)
-    ~(action : ServerFormatTypes.ide_action)
+    ~(action : Server_format_types.ide_action)
     ~(options : Lsp.DocumentFormatting.formattingOptions) :
-    ServerFormatTypes.ide_result =
+    Server_format_types.ide_result =
   let open File_content in
-  let open ServerFormatTypes in
+  let open Server_format_types in
   let convert_to_ide_result
-      (old_format_result : ServerFormatTypes.result)
-      ~(range : File_content.range) : ServerFormatTypes.ide_result =
+      (old_format_result : Server_format_types.result)
+      ~(range : File_content.range) : Server_format_types.ide_result =
     let range = Ide_api_types.ide_range_from_fc range in
     old_format_result |> Result.map ~f:(fun new_text -> { new_text; range })
   in

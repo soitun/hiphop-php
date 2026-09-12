@@ -16,4 +16,4 @@ let go res output_json =
   if output_json then
     print_json res
   else
-    FileOutline.print res
+    File_outline.print res

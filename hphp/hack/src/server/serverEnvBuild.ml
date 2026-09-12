@@ -16,7 +16,7 @@ open ServerEnv
 let make_genv options config local_config workers =
   Typing_deps.trace := not (ServerArgs.check_mode options);
   let (notifier, indexer) =
-    ServerNotifier.init options local_config ~num_workers:(List.length workers)
+    Server_notifier.init options local_config ~num_workers:(List.length workers)
   in
   {
     options;
@@ -33,9 +33,9 @@ let default_genv =
   {
     options = ServerArgs.default_options ~root:"";
     config = ServerConfig.default_config;
-    local_config = ServerLocalConfigLoad.default;
+    local_config = Server_local_config_load.default;
     workers = None;
-    notifier = ServerNotifier.init_null ();
+    notifier = Server_notifier.init_null ();
     indexer = (fun _ () -> []);
     debug_channels = None;
   }

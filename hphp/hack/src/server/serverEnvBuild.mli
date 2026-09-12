@@ -10,7 +10,7 @@
 val make_genv :
   ServerArgs.options ->
   ServerConfig.t ->
-  ServerLocalConfig.t ->
+  Server_local_config.t ->
   MultiWorker.worker list ->
   ServerEnv.genv
 

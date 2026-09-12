@@ -14,10 +14,10 @@ let main (env : Client_start.env) : Exit_status.t Lwt.t =
     ~data:
       (Config_file.Utils.parse_hhconfig_and_hh_conf_to_json
          ~root:env.Client_start.root
-         ~server_local_config_path:ServerLocalConfigLoad.system_config_path);
+         ~server_local_config_path:Server_local_config_load.system_config_path);
   if
     Monitor_connection.server_exists
-      (ServerFiles.lock_file env.Client_start.root)
+      (Server_files.lock_file env.Client_start.root)
   then
     Client_stop.kill_server env.Client_start.root env.Client_start.from
   else

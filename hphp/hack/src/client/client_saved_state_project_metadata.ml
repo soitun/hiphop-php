@@ -11,7 +11,7 @@
 
 exception GetProjectMetadataError of string
 
-let main (env : Client_env.client_check_env) (config : ServerLocalConfig.t) :
+let main (env : Client_env.client_check_env) (config : Server_local_config.t) :
     Exit_status.t Lwt.t =
   (* Command `hh saved-state-project-metadata` can accept the same flags as `hh`
      (even though most flags will be ignored),
@@ -60,7 +60,7 @@ let main (env : Client_env.client_check_env) (config : ServerLocalConfig.t) :
     State_loader_lwt.get_project_metadata
       ~repo:root
       ~ignore_hh_version
-      ~opts:config.ServerLocalConfig.saved_state
+      ~opts:config.Server_local_config.saved_state
   in
   match result with
   | Error (error, _telemetry) ->

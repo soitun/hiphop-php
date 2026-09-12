@@ -36,10 +36,10 @@ let get_type_at_pos ctx tast_map pos :
     (Typing_env_types.env * locl_ty, string) result =
   let (path, pos) = pos in
   let tast = Relative_path.Map.find tast_map path in
-  match ServerInferType.type_at_pos ctx tast pos with
+  match Server_infer_type.type_at_pos ctx tast pos with
   | Some info ->
     let Equal = Tast_env.eq_typing_env in
-    Ok (ServerInferType.get_env info, ServerInferType.get_type info)
+    Ok (Server_infer_type.get_env info, Server_infer_type.get_type info)
   | _ ->
     Error
       (Printf.sprintf
@@ -174,7 +174,7 @@ let helper
       List.filter_map query_with_path_alist ~f:(fun (_, path_opt, _) ->
           path_opt)
     in
-    ServerInferTypeBatch.get_tast_map ctx paths
+    Server_infer_type_batch.get_tast_map ctx paths
   in
   List.map query_with_path_alist ~f:(fun (i, _path_opt, query) ->
       let result =

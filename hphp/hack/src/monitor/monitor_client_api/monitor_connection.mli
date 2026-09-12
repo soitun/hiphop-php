@@ -14,8 +14,8 @@ val connect_once :
   timeout:int ->
   terminate_monitor_on_version_mismatch:bool ->
   Path.t ->
-  MonitorRpc.handoff_options ->
-  ( Stdlib.in_channel * out_channel * ServerCommandTypes.server_specific_files,
+  Monitor_rpc.handoff_options ->
+  ( Stdlib.in_channel * out_channel * Server_command_types.server_specific_files,
     Monitor_utils.connection_error )
   result
 

@@ -13,7 +13,7 @@ open Hh_prelude
    at toplevel, in order to be executed before
    [Daemon.check_entry_point]. *)
 let entry =
-  Worker_controller_entry_point.register ~restore:ServerGlobalState.restore
+  Worker_controller_entry_point.register ~restore:Server_global_state.restore
 
 (** We use the call_wrapper to classify some exceptions in all calls in the
  * same way. *)
@@ -38,7 +38,7 @@ let catch_and_classify_exceptions : 'x 'b. ('x -> 'b) -> 'x -> 'b =
 let make ~longlived_workers ~nbr_procs gc_control heap_handle ~logging_init =
   MultiWorker.make
     ~call_wrapper:{ WorkerController.wrap = catch_and_classify_exceptions }
-    ~saved_state:(ServerGlobalState.save ~logging_init)
+    ~saved_state:(Server_global_state.save ~logging_init)
     ~entry
     ~longlived_workers
     nbr_procs

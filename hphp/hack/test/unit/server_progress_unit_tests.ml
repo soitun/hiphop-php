@@ -37,7 +37,7 @@ let try_with_tmp (f : root:Path.t -> unit Lwt.t) : unit Lwt.t =
   Lwt_utils.try_finally
     ~f:(fun () ->
       (* We want ServerFiles.errors_file to be placed in this test's temp directory *)
-      ServerFiles.set_tmp_FOR_TESTING_ONLY tmp;
+      Server_files.set_tmp_FOR_TESTING_ONLY tmp;
       (* We need Server_progress.Errors to have a root (any root) so it knows how to name the errors file *)
       Server_progress.set_root root;
       Relative_path.set_path_prefix Relative_path.Root root;
@@ -86,7 +86,7 @@ let a_diagnostic : Diagnostics.t = make_diagnostics [(101, "c", "oops")]
 let test_completed () : bool Lwt.t =
   let%lwt () =
     try_with_tmp (fun ~root ->
-        let errors_file_path = ServerFiles.errors_file_path root in
+        let errors_file_path = Server_files.errors_file_path root in
         Server_progress.ErrorsWrite.new_empty_file
           ~clock:None
           ~ignore_hh_version:false
@@ -119,7 +119,7 @@ let test_completed () : bool Lwt.t =
 let test_read_empty () : bool Lwt.t =
   let%lwt () =
     try_with_tmp (fun ~root ->
-        let errors_file_path = ServerFiles.errors_file_path root in
+        let errors_file_path = Server_files.errors_file_path root in
         Sys_utils.touch
           (Sys_utils.Touch_existing_file_or_create_new
              { mkdir_if_new = false; perm_if_new = 0o666 })
@@ -137,7 +137,7 @@ let test_read_empty () : bool Lwt.t =
 let test_read_unlinked () : bool Lwt.t =
   let%lwt () =
     try_with_tmp (fun ~root ->
-        let errors_file_path = ServerFiles.errors_file_path root in
+        let errors_file_path = Server_files.errors_file_path root in
         Server_progress.ErrorsWrite.new_empty_file
           ~clock:None
           ~ignore_hh_version:false
@@ -157,7 +157,7 @@ let test_read_unlinked () : bool Lwt.t =
 let test_read_unlinked_empty () : bool Lwt.t =
   let%lwt () =
     try_with_tmp (fun ~root ->
-        let errors_file_path = ServerFiles.errors_file_path root in
+        let errors_file_path = Server_files.errors_file_path root in
         Server_progress.ErrorsWrite.new_empty_file
           ~clock:None
           ~ignore_hh_version:false
@@ -177,7 +177,7 @@ let test_read_unlinked_empty () : bool Lwt.t =
 let test_read_restarted () : bool Lwt.t =
   let%lwt () =
     try_with_tmp (fun ~root ->
-        let errors_file_path = ServerFiles.errors_file_path root in
+        let errors_file_path = Server_files.errors_file_path root in
         Server_progress.ErrorsWrite.new_empty_file
           ~clock:None
           ~ignore_hh_version:false
@@ -212,7 +212,7 @@ let test_locks () : bool Lwt.t =
 let test_read_half_message () : bool Lwt.t =
   let%lwt () =
     try_with_tmp (fun ~root ->
-        let errors_file_path = ServerFiles.errors_file_path root in
+        let errors_file_path = Server_files.errors_file_path root in
         let preamble = Marshal_tools.make_preamble 15 in
         Sys_utils.write_file ~file:errors_file_path (Bytes.to_string preamble);
         let fd = Unix.openfile errors_file_path [Unix.O_RDONLY] 0 in
@@ -229,7 +229,7 @@ let test_read_dead_pid () : bool Lwt.t =
   let%lwt () =
     try_with_tmp (fun ~root ->
         Server_progress.ErrorsWrite.create_file_FOR_TEST ~pid:1 ~cmdline:"bogus";
-        let errors_file_path = ServerFiles.errors_file_path root in
+        let errors_file_path = Server_files.errors_file_path root in
         let fd = Unix.openfile errors_file_path [Unix.O_RDONLY] 0 in
         begin
           match Server_progress.ErrorsRead.openfile fd with
@@ -360,7 +360,7 @@ let test_produce_disordered () : bool Lwt.t =
 let test_async_read_completed () : bool Lwt.t =
   let%lwt () =
     try_with_tmp (fun ~root ->
-        let errors_file_path = ServerFiles.errors_file_path root in
+        let errors_file_path = Server_files.errors_file_path root in
         Server_progress.ErrorsWrite.new_empty_file
           ~clock:None
           ~ignore_hh_version:false
@@ -385,7 +385,7 @@ let test_async_read_completed () : bool Lwt.t =
 let test_async_read_partial () : bool Lwt.t =
   let%lwt () =
     try_with_tmp (fun ~root ->
-        let errors_file_path = ServerFiles.errors_file_path root in
+        let errors_file_path = Server_files.errors_file_path root in
         Server_progress.ErrorsWrite.new_empty_file
           ~clock:None
           ~ignore_hh_version:false
@@ -412,9 +412,9 @@ let test_async_read_partial () : bool Lwt.t =
 let test_async_read_unlinked () : bool Lwt.t =
   let%lwt () =
     try_with_tmp (fun ~root ->
-        let errors_file_path = ServerFiles.errors_file_path root in
+        let errors_file_path = Server_files.errors_file_path root in
         Server_progress.ErrorsWrite.new_empty_file
-          ~clock:(Some (ServerNotifier.Watchman "clock123"))
+          ~clock:(Some (Server_notifier.Watchman "clock123"))
           ~ignore_hh_version:false
           ~cancel_reason;
         let fd = Unix.openfile errors_file_path [Unix.O_RDONLY] 0 in
@@ -424,8 +424,8 @@ let test_async_read_unlinked () : bool Lwt.t =
         in
         assert (
           Option.equal
-            ServerNotifier.equal_clock
-            (Some (ServerNotifier.Watchman "clock123"))
+            Server_notifier.equal_clock
+            (Some (Server_notifier.Watchman "clock123"))
             clock);
         assert (pid = Unix.getpid ());
         let q = Server_progress_lwt.watch_errors_file ~pid fd in
@@ -441,7 +441,7 @@ let test_start_read_killed () : bool Lwt.t =
   let%lwt () =
     try_with_tmp (fun ~root ->
         (* we'll write an incomplete file *)
-        let errors_file_path = ServerFiles.errors_file_path root in
+        let errors_file_path = Server_files.errors_file_path root in
         Sys_utils.write_file ~file:errors_file_path "a";
         let fd = Unix.openfile errors_file_path [Unix.O_RDONLY] 0 in
         (* files are created atomically; there should be no way to read
@@ -463,7 +463,7 @@ let test_start_read_killed () : bool Lwt.t =
 let test_async_read_killed () : bool Lwt.t =
   let%lwt () =
     try_with_tmp (fun ~root ->
-        let errors_file_path = ServerFiles.errors_file_path root in
+        let errors_file_path = Server_files.errors_file_path root in
         Server_progress.ErrorsWrite.new_empty_file
           ~clock:None
           ~ignore_hh_version:false
@@ -491,7 +491,7 @@ let test_async_pid_killed () : bool Lwt.t =
     try_with_tmp (fun ~root ->
         (* This will simulate a file which is in a complete state, but the producing
            PID simply died *)
-        let errors_file_path = ServerFiles.errors_file_path root in
+        let errors_file_path = Server_files.errors_file_path root in
         Server_progress.ErrorsWrite.new_empty_file
           ~clock:None
           ~ignore_hh_version:false
@@ -530,7 +530,7 @@ let test_async_pid_killed () : bool Lwt.t =
 let test_async_read_start () : bool Lwt.t =
   let%lwt () =
     try_with_tmp (fun ~root ->
-        let errors_file_path = ServerFiles.errors_file_path root in
+        let errors_file_path = Server_files.errors_file_path root in
         let pid = Unix.getpid () in
         Server_progress.ErrorsWrite.new_empty_file
           ~clock:None
@@ -612,7 +612,7 @@ let test_check_success () : bool Lwt.t =
         let check_future =
           Client_check_status.go_streaming
             env
-            ServerLocalConfigLoad.default
+            Server_local_config_load.default
             (make_error_filter env)
             ~partial_telemetry_ref
             ~connect_then_close
@@ -645,7 +645,7 @@ let test_check_errors () : bool Lwt.t =
         let check_future =
           Client_check_status.go_streaming
             env
-            ServerLocalConfigLoad.default
+            Server_local_config_load.default
             (make_error_filter env)
             ~partial_telemetry_ref
             ~connect_then_close
@@ -702,7 +702,7 @@ let test_check_jsonl_success () : bool Lwt.t =
         let check =
           Client_check_status.go_streaming
             env
-            ServerLocalConfigLoad.default
+            Server_local_config_load.default
             (make_error_filter env)
             ~partial_telemetry_ref
             ~connect_then_close
@@ -746,7 +746,7 @@ let test_check_jsonl_errors () : bool Lwt.t =
         let check =
           Client_check_status.go_streaming
             env
-            ServerLocalConfigLoad.default
+            Server_local_config_load.default
             (make_error_filter env)
             ~partial_telemetry_ref
             ~connect_then_close
@@ -808,7 +808,7 @@ let test_check_jsonl_warnings_only () : bool Lwt.t =
         let check =
           Client_check_status.go_streaming
             env
-            ServerLocalConfigLoad.default
+            Server_local_config_load.default
             (make_error_filter env)
             ~partial_telemetry_ref
             ~connect_then_close
@@ -881,7 +881,7 @@ let test_check_jsonl_mixed_errors_and_warnings () : bool Lwt.t =
         let check =
           Client_check_status.go_streaming
             env
-            ServerLocalConfigLoad.default
+            Server_local_config_load.default
             (make_error_filter env)
             ~partial_telemetry_ref
             ~connect_then_close
@@ -976,7 +976,7 @@ let test_check_jsonl_full_output () : bool Lwt.t =
         let check =
           Client_check_status.go_streaming
             env
-            ServerLocalConfigLoad.default
+            Server_local_config_load.default
             (make_error_filter env)
             ~partial_telemetry_ref
             ~connect_then_close
@@ -1044,7 +1044,7 @@ let test_check_jsonl_streaming () : bool Lwt.t =
         let check_future =
           Client_check_status.go_streaming
             env
-            ServerLocalConfigLoad.default
+            Server_local_config_load.default
             (make_error_filter env)
             ~partial_telemetry_ref
             ~connect_then_close
@@ -1140,7 +1140,7 @@ let test_check_connect_success () : bool Lwt.t =
         let check_future =
           Client_check_status.go_streaming
             env
-            ServerLocalConfigLoad.default
+            Server_local_config_load.default
             (make_error_filter env)
             ~partial_telemetry_ref
             ~connect_then_close
@@ -1189,7 +1189,7 @@ let test_check_connect_failure () : bool Lwt.t =
         let check_future =
           Client_check_status.go_streaming
             env
-            ServerLocalConfigLoad.default
+            Server_local_config_load.default
             (make_error_filter env)
             ~partial_telemetry_ref
             ~connect_then_close

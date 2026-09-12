@@ -17,5 +17,5 @@ must have returned false for the command we fetch from the client to handle. *)
 val handle :
   ServerEnv.genv ->
   ServerEnv.env ->
-  ClientProvider.client ->
+  Client_provider.client ->
   ServerEnv.env ServerUtils.handle_command_result

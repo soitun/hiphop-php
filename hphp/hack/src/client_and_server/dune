@@ -1,7 +1,7 @@
 (library
  (name server_pos)
  (wrapped false)
- (modules serverPos)
+ (modules server_pos)
  (libraries naming_provider tast_env)
  (preprocess
   (pps lwt_ppx ppx_deriving.std)))
@@ -9,7 +9,7 @@
 (library
  (name server_files)
  (wrapped false)
- (modules serverFiles)
+ (modules server_files)
  (libraries core_kernel hhi global_config sys_utils utils_core)
  (preprocess
   (pps lwt_ppx ppx_deriving.std)))
@@ -40,7 +40,7 @@
 (library
  (name server_file_outline)
  (wrapped false)
- (modules fileOutline)
+ (modules file_outline)
  (libraries search utils_core)
  (preprocess
   (pps lwt_ppx ppx_deriving.std)))
@@ -49,8 +49,8 @@
  (name server_autocomplete_services)
  (wrapped false)
  (modules
-  autocompleteService
-  serverAutoComplete)
+  autocomplete_service
+  server_auto_complete)
  (libraries
   provider_utils
   search
@@ -64,10 +64,10 @@
   (name server_symbol_definition)
   (wrapped false)
   (modules
-    identifySymbolService
-    serverFindLocals
-    serverFindTypeVar
-    serverSymbolDefinition)
+    identify_symbol_service
+    server_find_locals
+    server_find_type_var
+    server_symbol_definition)
   (libraries
     annotated_ast
     hint_print
@@ -81,23 +81,23 @@
  (name server_services)
  (wrapped false)
  (modules
-  autocloseTags
-  cstSearchService
-  findRefsService
-  methodJumps
-  saveStateService
-  serverDepsOutBatch
-  serverDepsUtil
+  autoclose_tags
+  cst_search_service
+  find_refs_service
+  method_jumps
+  save_state_service
+  server_deps_out_batch
+  server_deps_util
   serverError
-  serverFileDependents
-  serverFunDepsBatch
-  serverGlobalState
-  serverIdentifyFunction
-  serverRxApiShared
-  serverSignatureHelp
-  serverTypeDefinition
-  symbolFunCallService
-  symbolTypeService)
+  server_file_dependents
+  server_fun_deps_batch
+  server_global_state
+  server_identify_function
+  server_rx_api_shared
+  server_signature_help
+  server_type_definition
+  symbol_fun_call_service
+  symbol_type_service)
  (libraries
   ast
   cgroupprofiler
@@ -134,7 +134,7 @@
 (library
  (name server_codemod_type_printer)
  (wrapped false)
- (modules codemodTypePrinter)
+ (modules codemod_type_printer)
  (libraries typing_defs tast_env utils_core)
  (preprocess
   (pps lwt_ppx ppx_deriving.std)))
@@ -143,7 +143,7 @@
 (library
  (name server_revision_tracker)
  (wrapped false)
- (modules serverRevisionTracker)
+ (modules server_revision_tracker)
  (libraries hg server_config watchman_utils)
  (preprocess
   (pps lwt_ppx ppx_deriving.std)))
@@ -151,7 +151,7 @@
 (library
  (name server_prechecked_files)
  (wrapped false)
- (modules serverPrecheckedFiles)
+ (modules server_prechecked_files)
  (libraries provider_utils server_env server_revision_tracker)
  (preprocess
   (pps lwt_ppx ppx_deriving.std)))
@@ -159,7 +159,7 @@
 (library
  (name server_find_refs)
  (wrapped false)
- (modules serverFindRefs serverDepsInBatch serverPackageLint)
+ (modules server_find_refs server_deps_in_batch server_package_lint)
  (libraries
   package_info
   package_provider
@@ -177,7 +177,7 @@
 (library
  (name server_go_to)
  (wrapped false)
- (modules serverGoToDefinition serverGoToImpl)
+ (modules server_go_to_definition server_go_to_impl)
  (libraries provider_context server_find_refs server_services)
  (preprocess
   (pps lwt_ppx ppx_deriving.std)))
@@ -185,7 +185,7 @@
 (library
  (name server_infer_type)
  (wrapped false)
- (modules serverInferType serverInferTypeBatch serverInferTypeError serverCollectTastHoles serverInferDynamic)
+ (modules server_infer_type server_infer_type_batch server_infer_type_error server_collect_tast_holes server_infer_dynamic)
  (libraries
   annotated_ast
   ast
@@ -205,7 +205,7 @@
 (library
  (name server_docblock_at)
  (wrapped false)
- (modules serverDocblockAt)
+ (modules server_docblock_at)
  (libraries
   ast
   collections
@@ -229,7 +229,7 @@
 (library
  (name server_rewrite)
  (wrapped false)
- (modules serverRename serverRewriteLambdaParameters)
+ (modules server_rename server_rewrite_lambda_parameters)
  (libraries
   server_codemod_type_printer
   server_env
@@ -256,20 +256,20 @@
  (name server_command_types)
  (wrapped false)
  (modules
-  autocompleteTypes
-  docblockService
-  findRefsWireFormat
-  hoverService
-  inferAtPosService
-  inferErrorAtPosService
-  saveStateServiceTypes
-  serverCommandTypes
-  serverCommandTypesUtils
-  serverFormatTypes
-  serverLintTypes
-  serverRageTypes
+  autocomplete_types
+  docblock_service
+  find_refs_wire_format
+  hover_service
+  infer_at_pos_service
+  infer_error_at_pos_service
+  save_state_service_types
+  server_command_types
+  server_command_types_utils
+  server_format_types
+  server_lint_types
+  server_rage_types
   serverRenameTypes
-  tastHolesService)
+  tast_holes_service)
  (libraries
   base64
   connection_tracker
@@ -309,7 +309,7 @@
 (library
   (name monitor_rpc)
   (wrapped false)
-  (modules monitorRpc)
+  (modules monitor_rpc)
   (libraries
     connection_tracker
     hh_json
@@ -337,7 +337,7 @@
 (library
  (name server_notifier)
  (wrapped false)
- (modules serverNotifier)
+ (modules server_notifier)
  (libraries
    edenfs_watcher_stubs
    server_command_types
@@ -352,7 +352,7 @@
 (library
  (name server_notifier_types)
  (wrapped false)
- (modules serverNotifierTypes)
+ (modules server_notifier_types)
  (libraries
    edenfs_watcher_stubs watchman)
  (preprocess
@@ -365,8 +365,8 @@
   (modules
    config_keys
    serverConfig
-   serverLocalConfig
-   serverLocalConfigLoad)
+   server_local_config
+   server_local_config_load)
   (libraries
    custom_error_config
    server_args
@@ -408,11 +408,11 @@
  (name client_provider)
  (wrapped false)
  (modules
-  clientProvider
-  clientProvider_sig
-  serverClientProvider
-  serverIdleGc
-  testClientProvider)
+  client_provider
+  client_provider_sig
+  server_client_provider
+  server_idle_gc
+  test_client_provider)
  (libraries
   libancillary
   monitor_rpc
@@ -427,7 +427,7 @@
 (library
   (name custom_error_config)
   (wrapped false)
-  (modules customErrorConfig)
+  (modules custom_error_config_loader)
   (libraries
     custom_error_types
     relative_path

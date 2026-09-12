@@ -8,7 +8,7 @@
  *)
 
 open Hh_prelude
-open HoverService
+open Hover_service
 module SN = Naming_special_names
 
 (* Hovering doesn't introduce new dependencies *)
@@ -88,7 +88,7 @@ let make_hover_doc_block ctx entry occurrence def_opt =
        the definition site. *)
     let base_class_name = Symbol_occurrence.enclosing_class occurrence in
     let doc_block_hover =
-      ServerDocblockAt.go_comments_for_symbol_ctx
+      Server_docblock_at.go_comments_for_symbol_ctx
         ~ctx
         ~entry
         ~def
@@ -570,9 +570,9 @@ let show_type_with_instantiation
     (occurrence : _ Symbol_occurrence.t)
     (def_opt : _ Symbol_definition.t option)
     decl_ty
-    (type_info : ServerInferType.t) : string * Lsp.markedString list option =
-  let env = ServerInferType.get_env type_info in
-  let locl_ty = ServerInferType.get_type type_info in
+    (type_info : Server_infer_type.t) : string * Lsp.markedString list option =
+  let env = Server_infer_type.get_env type_info in
+  let locl_ty = Server_infer_type.get_type type_info in
   let snippet =
     Tast_env.print_decl_ty_with_identity env decl_ty occurrence def_opt
   in
@@ -585,13 +585,13 @@ let show_type_with_instantiation
 let make_hover_info
     under_dynamic_result
     ctx
-    (info_opt : ServerInferType.t option)
+    (info_opt : Server_infer_type.t option)
     entry
     (occurrence : _ Symbol_occurrence.t)
     def_opt : hover_info =
   let print_locl_ty_with_identity ?(do_not_strip_dynamic = false) info =
-    let env = ServerInferType.get_env info in
-    let ty = ServerInferType.get_type info in
+    let env = Server_infer_type.get_env info in
+    let ty = Server_infer_type.get_type info in
     let ty =
       if do_not_strip_dynamic then
         ty
@@ -708,7 +708,7 @@ let make_hover_info
   let snippet =
     List.intersperse main_section ~sep:[Lsp.MarkedString "---"] |> List.concat
   in
-  HoverService.
+  Hover_service.
     { snippet; addendum; pos = Some occurrence.Symbol_occurrence.pos }
 
 let make_hover_info_with_fallback under_dynamic_result results =
@@ -739,7 +739,7 @@ let make_hover_info_with_fallback under_dynamic_result results =
             |> List.map ~f:(fun s -> Lsp.MarkedString s)
           in
           ( occurrence,
-            HoverService.
+            Hover_service.
               {
                 snippet = hover_info.snippet;
                 addendum = fallback_doc_block @ hover_info.addendum;
@@ -759,28 +759,36 @@ let make_hover_info_with_fallback under_dynamic_result results =
 let go_quarantined
     ~(ctx : Provider_context.t)
     ~(entry : Provider_context.entry)
-    (pos : File_content.Position.t) : HoverService.result =
+    (pos : File_content.Position.t) : Hover_service.result =
   let identities : (_ Symbol_occurrence.t * _ Symbol_definition.t option) list =
-    ServerIdentifyFunction.go_quarantined ~ctx ~entry pos
+    Server_identify_function.go_quarantined ~ctx ~entry pos
   in
   let { Tast_provider.Compute_tast.tast; _ } =
     Tast_provider.compute_tast_quarantined ~ctx ~entry
   in
-  let info_opt : ServerInferType.t option =
-    ServerInferType.human_friendly_type_at_pos ~under_dynamic:false ctx tast pos
+  let info_opt : Server_infer_type.t option =
+    Server_infer_type.human_friendly_type_at_pos
+      ~under_dynamic:false
+      ctx
+      tast
+      pos
   in
-  let info_dynamic_opt : ServerInferType.t option =
-    ServerInferType.human_friendly_type_at_pos ~under_dynamic:true ctx tast pos
+  let info_dynamic_opt : Server_infer_type.t option =
+    Server_infer_type.human_friendly_type_at_pos
+      ~under_dynamic:true
+      ctx
+      tast
+      pos
   in
   let under_dynamic_result : string =
     match info_dynamic_opt with
     | Some info_dynamic ->
-      let ty_dynamic = ServerInferType.get_type info_dynamic in
+      let ty_dynamic = Server_infer_type.get_type info_dynamic in
       (match info_opt with
       | None -> ""
       | Some info ->
-        let ty = ServerInferType.get_type info in
-        let env = ServerInferType.get_env info_dynamic in
+        let ty = Server_infer_type.get_type info in
+        let env = Server_infer_type.get_env info_dynamic in
         (* If under dynamic the type is no worse then don't
          * bother presenting it. Example: ~int in static mode, dynamic under dynamic mode.
          *)
@@ -794,8 +802,8 @@ let go_quarantined
   in
   match (identities, info_opt) with
   | ([], Some info) ->
-    let ty = ServerInferType.get_type info in
-    let env = ServerInferType.get_env info in
+    let ty = Server_infer_type.get_type info in
+    let env = Server_infer_type.get_env info in
     (* There are no identities (named entities) at the cursor, but we
        know the type of the expression. Just show the type.
 
@@ -844,13 +852,13 @@ let go_quarantined
     let ty_result =
       match info_opt with
       | Some info ->
-        let ty = ServerInferType.get_type info in
+        let ty = Server_infer_type.get_type info in
         [
           {
             snippet =
               [
                 make_hack_marked_code
-                  (Tast_env.print_ty (ServerInferType.get_env info) ty
+                  (Tast_env.print_ty (Server_infer_type.get_env info) ty
                   ^ under_dynamic_result);
               ];
             addendum = [];

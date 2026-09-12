@@ -16,11 +16,11 @@ type seconds_since_epoch = float
 type genv = {
   options: ServerArgs.options;
   config: ServerConfig.t;
-  local_config: ServerLocalConfig.t;
+  local_config: Server_local_config.t;
   workers: MultiWorker.worker list option;
       (** Early-initialized workers to be used in MultiWorker jobs
           They are initialized early to keep their heaps as empty as possible. *)
-  notifier: ServerNotifier.t;
+  notifier: Server_notifier.t;
       (** Common abstraction for watchman/Edenfs_watcher/dfind *)
   indexer: (string -> bool) -> unit -> string list;
       (** Returns the list of files under .hhconfig, subject to a filter.
@@ -209,7 +209,7 @@ type env = {
       (** Timestamp of last query for disk changes *)
   last_idle_job_time: float;  (** Timestamp of last Server_idle.go run *)
   disk_needs_parsing: Relative_path.Set.t;
-  clock: ServerNotifier.clock option;
+  clock: Server_notifier.clock option;
       (** This is the clock as of when disk_needs_parsing was last updated.
       None if not using Watchman. *)
   needs_phase2_redecl: Relative_path.Set.t;
@@ -238,7 +238,7 @@ type env = {
     env ->
     (Unix.file_descr * env MultiThreadedCall.interrupt_handler) list;
   nonpersistent_client_pending_command_needs_full_check:
-    ((env -> env) * string * ClientProvider.client) option;
+    ((env -> env) * string * Client_provider.client) option;
       [@opaque]
       (** When a non-persistent client sends a command that cannot be immediately handled
           (due to needing full check) we put the continuation that finishes handling
@@ -265,4 +265,4 @@ val are_diagnostics_complete : env -> uses_partial_typecheck:bool -> bool
 
 val add_changed_files : env -> Relative_path.Set.t -> env
 
-val show_clock : ServerNotifier.clock option -> string
+val show_clock : Server_notifier.clock option -> string

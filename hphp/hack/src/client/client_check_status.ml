@@ -8,7 +8,7 @@
  *)
 
 open Hh_prelude
-open ServerCommandTypes
+open Server_command_types
 
 let print_diagnostic_raw e =
   Printf.printf "%s" (Raw_diagnostic_formatter.to_string e)
@@ -552,7 +552,7 @@ let watchman_get_raw_updates_since
 let edenfs_watcher_get_raw_updates_since ~root ~clock ~local_config =
   let watch_spec = Files_to_ignore.server_watch_spec in
   let {
-    ServerLocalConfig.EdenfsFileWatcher.debug_logging;
+    Server_local_config.EdenfsFileWatcher.debug_logging;
     timeout_secs;
     throttle_time_ms;
     report_telemetry;
@@ -561,7 +561,7 @@ let edenfs_watcher_get_raw_updates_since ~root ~clock ~local_config =
     tracked_states;
     _;
   } =
-    local_config.ServerLocalConfig.edenfs_file_watcher
+    local_config.Server_local_config.edenfs_file_watcher
   in
   let settings =
     {
@@ -604,8 +604,10 @@ let edenfs_watcher_get_raw_updates_since ~root ~clock ~local_config =
 let file_watcher_get_raw_updates_since ~root ~clock ~local_config :
     (string list * Telemetry.t option * bool, string) result Lwt.t =
   match clock with
-  | ServerNotifier.Watchman clock ->
-    let watchman_sockname = local_config.ServerLocalConfig.watchman.sockname in
+  | Server_notifier.Watchman clock ->
+    let watchman_sockname =
+      local_config.Server_local_config.watchman.sockname
+    in
     let%lwt changes =
       watchman_get_raw_updates_since
         ~root
@@ -615,7 +617,7 @@ let file_watcher_get_raw_updates_since ~root ~clock ~local_config :
         ~fail_during_state:false
     in
     Lwt.return (Result.map changes ~f:(fun changes -> (changes, None, true)))
-  | ServerNotifier.Eden clock ->
+  | Server_notifier.Eden clock ->
     let%lwt changes_and_telemetry =
       edenfs_watcher_get_raw_updates_since ~root ~clock ~local_config
     in
@@ -725,7 +727,7 @@ let show_progress_and_sleep progress_callback =
   * But it leaves the spinner at "file watcher sync" in case of success, in the expectation
   that subsequent code will update the spinner. *)
 let rec keep_trying_to_open
-    ~(local_config : ServerLocalConfig.t)
+    ~(local_config : Server_local_config.t)
     ~(has_already_attempted_connect : bool)
     ~(connect_then_close : unit -> unit Lwt.t)
     ~(already_checked_file : FileId.t option)
@@ -743,7 +745,7 @@ let rec keep_trying_to_open
     try
       Some
         (Unix.openfile
-           (ServerFiles.errors_file_path root)
+           (Server_files.errors_file_path root)
            [Unix.O_RDONLY; Unix.O_NONBLOCK]
            0)
     with
@@ -859,8 +861,8 @@ let rec keep_trying_to_open
         Hh_logger.log
           "Errors-file: %s is present, was started at clock %s, so querying %s..."
           (Sys_utils.show_inode fd)
-          (ServerNotifierTypes.show_clock clock)
-          (ServerNotifier.show_file_watcher_name clock);
+          (Server_notifier_types.show_clock clock)
+          (Server_notifier.show_file_watcher_name clock);
         (* Neither Watchman or Eden support "what files have changed from error.bin's clock until
            hh-invocation clock?". We'll instead use the (less permissive, still correct) query
            "what files have changed from error.bin's clock until now?". *)
@@ -913,8 +915,8 @@ let rec keep_trying_to_open
             Hh_logger.log
               "Errors-file: %s is present, was started at clock %s and %s reports no updates since then, so using it!"
               (Sys_utils.show_inode fd)
-              (ServerNotifierTypes.show_clock clock)
-              (ServerNotifier.show_file_watcher_name clock);
+              (Server_notifier_types.show_clock clock)
+              (Server_notifier.show_file_watcher_name clock);
             let telemetry =
               Telemetry.int_
                 telemetry
@@ -933,7 +935,7 @@ let rec keep_trying_to_open
             Hh_logger.log
               "Errors-file: %s is present, was started at clock %s, but file watcher reports updates since then, so trying again. %d updates, for example %s"
               (Sys_utils.show_inode fd)
-              (ServerNotifierTypes.show_clock clock)
+              (Server_notifier_types.show_clock clock)
               (Relative_path.Set.cardinal updates)
               (Relative_path.Set.choose updates |> Relative_path.suffix);
             keep_trying_to_open
@@ -954,7 +956,7 @@ let rec keep_trying_to_open
     Errors are printed soon after they are known instead of all at once at the end. *)
 let go_streaming
     (args : Client_env.client_check_env)
-    (local_config : ServerLocalConfig.t)
+    (local_config : Server_local_config.t)
     (error_filter : Filter_diagnostics.Filter.t)
     ~(partial_telemetry_ref : Telemetry.t option ref)
     ~(connect_then_close : unit -> unit Lwt.t) :

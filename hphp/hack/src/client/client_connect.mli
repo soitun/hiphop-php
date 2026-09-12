@@ -38,7 +38,7 @@ type conn = {
   t_received_hello: float;
   t_sent_connection_type: float;
   channels: Stdlib.in_channel * out_channel;
-  server_specific_files: ServerCommandTypes.server_specific_files;
+  server_specific_files: Server_command_types.server_specific_files;
   conn_progress_callback: string option -> unit;
   conn_root: Path.t;
   conn_deadline: float option;
@@ -52,7 +52,7 @@ val connect : env -> conn Lwt.t
 
 (** Sends a request to the server, and waits for the response *)
 val rpc :
-  conn -> desc:string -> 'a ServerCommandTypes.t -> ('a * Telemetry.t) Lwt.t
+  conn -> desc:string -> 'a Server_command_types.t -> ('a * Telemetry.t) Lwt.t
 
 (** A handful of rpc commands (find-refs, go-to-impl, refactor), for grotty implementation
 details, don't return an answer but instead return the message "Done_or_retry.Retry"
@@ -61,12 +61,12 @@ Which, through this API, it does. *)
 val rpc_with_retry :
   (unit -> conn Lwt.t) ->
   desc:string ->
-  'a ServerCommandTypes.Done_or_retry.t ServerCommandTypes.t ->
+  'a Server_command_types.Done_or_retry.t Server_command_types.t ->
   'a Lwt.t
 
 (**For batch commands, retries each result in turn **)
 val rpc_with_retry_list :
   (unit -> conn Lwt.t) ->
   desc:string ->
-  'a ServerCommandTypes.Done_or_retry.t list ServerCommandTypes.t ->
+  'a Server_command_types.Done_or_retry.t list Server_command_types.t ->
   'a list Lwt.t

@@ -5,4 +5,4 @@
  * LICENSE file in the "hack" directory of this source tree.
  *
  *)
-val go : InferErrorAtPosService.t option -> bool -> unit
+val go : Infer_error_at_pos_service.t option -> bool -> unit

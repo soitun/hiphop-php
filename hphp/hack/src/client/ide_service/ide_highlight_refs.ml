@@ -11,9 +11,9 @@ open Hh_prelude
 
 let get_target symbol =
   Symbol_occurrence.(
-    let module Types = ServerCommandTypes.Find_refs in
+    let module Types = Server_command_types.Find_refs in
     let module SO = Symbol_occurrence in
-    FindRefsService.(
+    Find_refs_service.(
       match symbol.type_ with
       | SO.Class _ -> Some (IClass symbol.name)
       | SO.Function -> Some (IFunction symbol.name)
@@ -33,13 +33,13 @@ let highlight_symbol ctx entry pos symbol =
   let res =
     match get_target symbol with
     | Some target ->
-      let results = FindRefsService.find_refs_ctx ~ctx ~entry ~target in
+      let results = Find_refs_service.find_refs_ctx ~ctx ~entry ~target in
       List.rev (List.map results ~f:(fun { name = _; pos } -> pos))
     | None
       when Symbol_occurrence.equal_kind
              symbol.Symbol_occurrence.type_
              Symbol_occurrence.LocalVar ->
-      ServerFindLocals.go ~ctx ~entry pos
+      Server_find_locals.go ~ctx ~entry pos
     | None -> []
   in
   List.map res ~f:Ide_api_types.pos_to_range
@@ -51,7 +51,7 @@ let go_quarantined
     ~(ctx : Provider_context.t) ~(entry : Provider_context.entry) pos :
     Ide_api_types.range list =
   let symbol_to_highlight =
-    IdentifySymbolService.go_quarantined
+    Identify_symbol_service.go_quarantined
       ~ctx
       ~entry
       pos

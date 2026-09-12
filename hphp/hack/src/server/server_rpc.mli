@@ -12,6 +12,6 @@ val handle :
   ServerEnv.genv ->
   ServerEnv.env ->
   is_stale:bool ->
-  ServerCommandTypes.cmd_metadata ->
-  'res ServerCommandTypes.t ->
+  Server_command_types.cmd_metadata ->
+  'res Server_command_types.t ->
   ServerEnv.env * 'res

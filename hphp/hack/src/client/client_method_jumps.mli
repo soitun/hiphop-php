@@ -7,4 +7,4 @@
  *
  *)
 
-val go : ServerCommandTypes.Method_jumps.result list -> bool -> bool -> unit
+val go : Server_command_types.Method_jumps.result list -> bool -> bool -> unit

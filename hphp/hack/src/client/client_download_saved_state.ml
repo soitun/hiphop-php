@@ -104,16 +104,16 @@ let make_replay_token
       Hh_logger.error "Failed to generate replay token from Clowder: %s" message;
       Lwt.return_none)
 
-let load_saved_state ~(env : env) ~(local_config : ServerLocalConfig.t) :
+let load_saved_state ~(env : env) ~(local_config : Server_local_config.t) :
     ( Saved_state_loader.load_result,
       Saved_state_loader.LoadError.t )
     Lwt_result.t =
   let ssopt =
     {
-      local_config.ServerLocalConfig.saved_state with
+      local_config.Server_local_config.saved_state with
       GlobalOptions.loading =
         {
-          local_config.ServerLocalConfig.saved_state.GlobalOptions.loading with
+          local_config.Server_local_config.saved_state.GlobalOptions.loading with
           GlobalOptions.log_saved_state_age_and_distance = false;
           saved_state_manifold_api_key = env.saved_state_manifold_api_key;
         };
@@ -122,8 +122,8 @@ let load_saved_state ~(env : env) ~(local_config : ServerLocalConfig.t) :
   match env.replay_token with
   | None ->
     let watchman_sockname =
-      let { ServerLocalConfig.Watchman.sockname; _ } =
-        local_config.ServerLocalConfig.watchman
+      let { Server_local_config.Watchman.sockname; _ } =
+        local_config.Server_local_config.watchman
       in
       Option.map sockname ~f:Path.make
     in
@@ -135,7 +135,8 @@ let load_saved_state ~(env : env) ~(local_config : ServerLocalConfig.t) :
       Saved_state_loader.Eden_options.
         {
           lookup_timeout =
-            local_config.ServerLocalConfig.load_state_natively_download_timeout;
+            local_config
+              .Server_local_config.load_state_natively_download_timeout;
         }
     in
     let%lwt result =
@@ -181,8 +182,8 @@ let load_saved_state ~(env : env) ~(local_config : ServerLocalConfig.t) :
       Lwt.return_ok load_result
     | Error (load_error, _telemetry) -> Lwt.return_error load_error)
 
-let main (env : env) (local_config : ServerLocalConfig.t) : Exit_status.t Lwt.t
-    =
+let main (env : env) (local_config : Server_local_config.t) :
+    Exit_status.t Lwt.t =
   Relative_path.set_path_prefix Relative_path.Root env.root;
   let%lwt result = load_saved_state ~env ~local_config in
   match result with

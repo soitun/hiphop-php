@@ -21,10 +21,10 @@ let from_channel_without_buffering tic =
 let hh_monitor_config root =
   Monitor_utils.
     {
-      lock_file = ServerFiles.lock_file root;
-      socket_file = ServerFiles.socket_file root;
-      server_log_file = ServerFiles.log_link root;
-      monitor_log_file = ServerFiles.monitor_log_link root;
+      lock_file = Server_files.lock_file root;
+      socket_file = Server_files.socket_file root;
+      server_log_file = Server_files.log_link root;
+      monitor_log_file = Server_files.monitor_log_link root;
     }
 
 let wait_on_server_restart ic =
@@ -61,7 +61,7 @@ let rec consume_prehandoff_messages
     (ic : Stdlib.in_channel) (oc : Stdlib.out_channel) :
     ( Stdlib.in_channel
       * Stdlib.out_channel
-      * ServerCommandTypes.server_specific_files,
+      * Server_command_types.server_specific_files,
       Monitor_utils.connection_error )
     result =
   let module PH = Prehandoff in
@@ -338,7 +338,7 @@ let connect_and_shut_down ~tracker root =
   let (_ : int) =
     Marshal_tools.to_fd_with_preamble
       (Unix.descr_of_out_channel oc)
-      (MonitorRpc.SHUT_DOWN tracker)
+      (Monitor_rpc.SHUT_DOWN tracker)
   in
   Timeout.with_timeout
     ~timeout:3
@@ -385,7 +385,7 @@ let connect_once
     let (_ : int) =
       Marshal_tools.to_fd_with_preamble
         (Unix.descr_of_out_channel oc)
-        (MonitorRpc.HANDOFF_TO_SERVER (tracker, handoff_options))
+        (Monitor_rpc.HANDOFF_TO_SERVER (tracker, handoff_options))
     in
     let elapsed_t = int_of_float (Unix.gettimeofday () -. t_start) in
     let timeout = max (timeout - elapsed_t) 1 in

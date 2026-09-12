@@ -10,7 +10,7 @@ open Hh_prelude
 (* Convert result type to tuple since it's not available to
    Nuclide_rpc_message_printer *)
 let tast_holes_result_to_tuple
-    TastHolesService.
+    Tast_holes_service.
       {
         pos;
         actual_ty_string;
@@ -33,7 +33,7 @@ let print_string ~print_file result =
       Pos.string_no_file pos
   in
   let print_elem
-      TastHolesService.{ pos; actual_ty_string; expected_ty_string; _ } =
+      Tast_holes_service.{ pos; actual_ty_string; expected_ty_string; _ } =
     print_endline
     @@ Format.sprintf
          {|%s actual type: %s, expected type: %s|}

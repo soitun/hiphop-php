@@ -9,7 +9,7 @@
  *)
 
 open Hh_prelude
-open HoverService
+open Hover_service
 module Test = Integration_test_base
 
 let pos_at (line1, column1) (line2, column2) =
@@ -1268,7 +1268,7 @@ let test () =
     List.filter_map cases ~f:(fun ((file, line, column), expectedHover) ->
         let list_to_string hover_list =
           let string_list =
-            hover_list |> List.map ~f:HoverService.string_of_result
+            hover_list |> List.map ~f:Hover_service.string_of_result
           in
           let inner =
             match string_list |> List.reduce ~f:(fun a b -> a ^ "; " ^ b) with

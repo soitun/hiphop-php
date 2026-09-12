@@ -58,7 +58,7 @@ type common_state = {
       (** hhi_root files are written during initialize, deleted at shutdown, and
       refreshed periodically in case the tmp-cleaner has deleted them. *)
   config: ServerConfig.t; [@opaque]
-  local_config: ServerLocalConfig.t; [@opaque]
+  local_config: Server_local_config.t; [@opaque]
   local_memory: Provider_backend.local_memory; [@opaque]
       (** Local_memory backend; includes decl caches *)
 }
@@ -225,7 +225,7 @@ let log_debug s = Hh_logger.debug ("[ide-daemon] " ^^ s)
 let set_up_hh_logger_for_client_ide_service (root : Path.t) : unit =
   (* Log to a file on disk. Note that calls to `Hh_logger` will always write to
      `stderr`; this is in addition to that. *)
-  let client_ide_log_fn = ServerFiles.client_ide_log root in
+  let client_ide_log_fn = Server_files.client_ide_log root in
   begin
     try Sys.rename client_ide_log_fn (client_ide_log_fn ^ ".old") with
     | _e -> ()
@@ -357,9 +357,9 @@ let initialize1
   Hack_event_logger.set_hhconfig_version
     (ServerConfig.version config |> Config_file.version_to_string_opt);
   Hack_event_logger.set_rollout_flags
-    (ServerLocalConfigLoad.to_rollout_flags local_config);
+    (Server_local_config_load.to_rollout_flags local_config);
   Hack_event_logger.set_rollout_group
-    local_config.ServerLocalConfig.rollout_group;
+    local_config.Server_local_config.rollout_group;
 
   Provider_backend.set_local_memory_backend
     ~max_num_decls:5000
@@ -803,7 +803,7 @@ let handle_request
   | (During_init dstate, Document_symbol document) ->
     let (dopen_files, entry, _) = update_file dstate.dopen_files document in
     let result =
-      FileOutline.outline_entry_no_comments
+      File_outline.outline_entry_no_comments
         ~popt:(ServerConfig.parser_options dstate.dcommon.config)
         ~entry
     in
@@ -811,7 +811,7 @@ let handle_request
   | (Initialized istate, Document_symbol document) ->
     let (iopen_files, entry, _) = update_file istate.iopen_files document in
     let result =
-      FileOutline.outline_entry_no_comments
+      File_outline.outline_entry_no_comments
         ~popt:(ServerConfig.parser_options istate.icommon.config)
         ~entry
     in
@@ -850,9 +850,9 @@ let handle_request
     let (istate, ctx, entry, _) = update_file_ctx istate document in
     let (istate, result) =
       Provider_utils.respect_but_quarantine_unsaved_changes ~ctx ~f:(fun () ->
-          match ServerFindRefs.go_from_file_ctx ~ctx ~entry pos with
+          match Server_find_refs.go_from_file_ctx ~ctx ~entry pos with
           | Some (_name, action)
-            when not @@ ServerGoToImpl.is_searchable ~action ->
+            when not @@ Server_go_to_impl.is_searchable ~action ->
             (istate, Client_ide_message.Invalid_symbol_impl)
           | Some (name, action) ->
             (*
@@ -877,12 +877,12 @@ let handle_request
                     Relative_path.create_detect_prefix stringified_path
                   in
                   let single_file_pos =
-                    ServerGoToImpl.go_for_single_file
+                    Server_go_to_impl.go_for_single_file
                       ~ctx
                       ~action
                       ~naming_table:istate.naming_table
                       ~filename
-                    |> ServerFindRefs.to_absolute
+                    |> Server_find_refs.to_absolute
                     |> List.map
                          ~f:(fun Search_types.Find_refs.{ name = _; pos } ->
                            pos)
@@ -912,15 +912,15 @@ let handle_request
     let (istate, result) =
       Provider_utils.respect_but_quarantine_unsaved_changes ~ctx ~f:(fun () ->
           match
-            ServerFindRefs.go_from_file_ctx_with_symbol_definition
+            Server_find_refs.go_from_file_ctx_with_symbol_definition
               ~ctx
               ~entry
               pos
           with
           | None -> (istate, Client_ide_message.Not_renameable_position)
-          | Some (_definition, action) when ServerFindRefs.is_local action ->
+          | Some (_definition, action) when Server_find_refs.is_local action ->
             let res =
-              match ServerRename.go_for_localvar ctx action new_name with
+              match Server_rename.go_for_localvar ctx action new_name with
               | Ok (Some patch_list) ->
                 Client_ide_message.Rename_success
                   { shellout = None; local = patch_list }
@@ -931,7 +931,7 @@ let handle_request
                 let str =
                   Printf.sprintf
                     "ClientIDEDaemon failed to rename for localvar %s"
-                    (ServerCommandTypes.Find_refs.show_action action)
+                    (Server_command_types.Find_refs.show_action action)
                 in
                 log "%s" str;
                 failwith "ClientIDEDaemon failed to rename for a localvar"
@@ -949,7 +949,7 @@ let handle_request
                     |> Relative_path.create_detect_prefix
                   in
                   let single_file_patches =
-                    ServerRename.go_for_single_file
+                    Server_rename.go_for_single_file
                       ctx
                       ~find_refs_action:action
                       ~filename
@@ -982,11 +982,11 @@ let handle_request
     let (istate, ctx, entry, _) = update_file_ctx istate document in
     let (istate, result) =
       Provider_utils.respect_but_quarantine_unsaved_changes ~ctx ~f:(fun () ->
-          match ServerFindRefs.go_from_file_ctx ~ctx ~entry pos with
-          | Some (name, action) when ServerFindRefs.is_local action ->
+          match Server_find_refs.go_from_file_ctx ~ctx ~entry pos with
+          | Some (name, action) when Server_find_refs.is_local action ->
             let result =
-              ServerFindRefs.go_for_localvar ctx action
-              >>| ServerFindRefs.to_absolute
+              Server_find_refs.go_for_localvar ctx action
+              >>| Server_find_refs.to_absolute
             in
             let result =
               match result with
@@ -1078,8 +1078,8 @@ let handle_request
                     Relative_path.create_detect_prefix stringified_path
                   in
                   let single_file_ref =
-                    ServerFindRefs.go_for_single_file ~ctx ~action ~filename
-                    |> ServerFindRefs.to_absolute
+                    Server_find_refs.go_for_single_file ~ctx ~action ~filename
+                    |> Server_find_refs.to_absolute
                   in
                   let urikey =
                     Lsp_helpers.path_string_to_lsp_uri
@@ -1124,7 +1124,7 @@ let handle_request
     let (istate, ctx, entry, _) = update_file_ctx istate document in
     let sienv_ref = ref istate.sienv in
     let result =
-      ServerAutoComplete.go_ctx
+      Server_auto_complete.go_ctx
         ~ctx
         ~entry
         ~sienv_ref
@@ -1139,8 +1139,8 @@ let handle_request
       Completion_resolve Completion_resolve.{ fullname = symbol; kind } ) ->
     Hack_event_logger.completion_call ~method_name:"Completion_resolve";
     let ctx = make_empty_ctx istate.icommon in
-    let result = ServerDocblockAt.go_docblock_for_symbol ~ctx ~symbol ~kind in
-    let signature = ServerAutoComplete.get_signature ctx symbol in
+    let result = Server_docblock_at.go_docblock_for_symbol ~ctx ~symbol ~kind in
+    let signature = Server_auto_complete.get_signature ctx symbol in
     (Initialized istate, Ok Completion_resolve.{ docblock = result; signature })
   (* Autocomplete docblock resolve *)
   | ( Initialized istate,
@@ -1155,10 +1155,10 @@ let handle_request
     let (ctx, entry) = Provider_context.add_entry_if_missing ~ctx ~path in
     let result =
       Provider_utils.respect_but_quarantine_unsaved_changes ~ctx ~f:(fun () ->
-          ServerDocblockAt.go_docblock_ctx ~ctx ~entry pos ~kind)
+          Server_docblock_at.go_docblock_ctx ~ctx ~entry pos ~kind)
     in
     let (Full_name s) = fullname in
-    let signature = ServerAutoComplete.get_signature ctx s in
+    let signature = Server_auto_complete.get_signature ctx s in
     (Initialized istate, Ok Completion_resolve.{ docblock = result; signature })
   (* Document highlighting *)
   | (Initialized istate, Document_highlight (document, pos)) ->
@@ -1173,7 +1173,7 @@ let handle_request
     let (istate, ctx, entry, _) = update_file_ctx istate document in
     let results =
       Provider_utils.respect_but_quarantine_unsaved_changes ~ctx ~f:(fun () ->
-          ServerSignatureHelp.go_quarantined ~ctx ~entry pos)
+          Server_signature_help.go_quarantined ~ctx ~entry pos)
     in
     (Initialized istate, Ok results)
   | (Initialized istate, Top_level_def_name_at_pos (document, pos)) ->
@@ -1183,7 +1183,7 @@ let handle_request
   (* AutoClose *)
   | (Initialized istate, AutoClose (document, pos)) ->
     let (istate, ctx, entry, _) = update_file_ctx istate document in
-    let close_tag = AutocloseTags.go_xhp_close_tag ~ctx ~entry pos in
+    let close_tag = Autoclose_tags.go_xhp_close_tag ~ctx ~entry pos in
     (Initialized istate, Ok close_tag)
   (* Code actions (refactorings, quickfixes) *)
   | (Initialized istate, Code_action (document, range)) ->
@@ -1256,7 +1256,7 @@ let handle_request
     let (istate, ctx, entry, _) = update_file_ctx istate document in
     let result =
       Provider_utils.respect_but_quarantine_unsaved_changes ~ctx ~f:(fun () ->
-          ServerGoToDefinition.go_quarantined ~ctx ~entry pos)
+          Server_go_to_definition.go_quarantined ~ctx ~entry pos)
     in
     (Initialized istate, Ok result)
   (* Type Definition *)
@@ -1264,7 +1264,7 @@ let handle_request
     let (istate, ctx, entry, _) = update_file_ctx istate document in
     let result =
       Provider_utils.respect_but_quarantine_unsaved_changes ~ctx ~f:(fun () ->
-          ServerTypeDefinition.go_quarantined ~ctx ~entry pos)
+          Server_type_definition.go_quarantined ~ctx ~entry pos)
     in
     (Initialized istate, Ok result)
   (* Workspace Symbol *)
@@ -1516,7 +1516,7 @@ module Test = struct
     let config =
       Option.value custom_config ~default:ServerConfig.default_config
     in
-    let local_config = ServerLocalConfigLoad.default in
+    let local_config = Server_local_config_load.default in
     let tcopt = ServerConfig.typechecker_options config in
     let popt = ServerConfig.parser_options config in
     Provider_backend.set_local_memory_backend_with_defaults_for_test ();
@@ -1530,8 +1530,8 @@ module Test = struct
         ~gleanopt:(ServerConfig.glean_options config)
         ~namespace_map:tcopt.GlobalOptions.po.Parser_options.auto_namespace_map
         ~provider_name:
-          local_config.ServerLocalConfig.ide_symbolindex_search_provider
-        ~quiet:local_config.ServerLocalConfig.symbolindex_quiet
+          local_config.Server_local_config.ide_symbolindex_search_provider
+        ~quiet:local_config.Server_local_config.symbolindex_quiet
     in
     let ctx =
       Provider_context.empty_for_tool

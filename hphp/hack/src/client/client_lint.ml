@@ -9,8 +9,8 @@
 
 open Hh_prelude
 
-let go (results : ServerLintTypes.result) output_json error_format =
+let go (results : Server_lint_types.result) output_json error_format =
   if output_json then
-    ServerLintTypes.output_json stdout results
+    Server_lint_types.output_json stdout results
   else
-    ServerLintTypes.output_text stdout results error_format
+    Server_lint_types.output_text stdout results error_format

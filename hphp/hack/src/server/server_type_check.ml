@@ -10,7 +10,7 @@
 open Hh_prelude
 open ServerEnv
 open Reordered_argument_collections
-module SLC = ServerLocalConfig
+module SLC = Server_local_config
 
 module CheckStats = struct
   type t = {
@@ -313,7 +313,7 @@ let do_type_checking
     Hh_logger.log "WARNING: rechecking definition in a dummy file";
   let interrupt = get_interrupt_config genv env in
   let longlived_workers =
-    genv.local_config.ServerLocalConfig.longlived_workers
+    genv.local_config.Server_local_config.longlived_workers
   in
   let hh_distc_config =
     let use_distc =
@@ -321,7 +321,7 @@ let do_type_checking
          duplicate name errors. Eventually we'll want to make duplicate
          name errors a typing error and this check can go away. *)
       Relative_path.Set.cardinal files_with_naming_errors = 0
-      && genv.ServerEnv.local_config.ServerLocalConfig.use_distc
+      && genv.ServerEnv.local_config.Server_local_config.use_distc
     in
     Option.some_if
       use_distc
@@ -329,13 +329,13 @@ let do_type_checking
         {
           enable_fanout_aware_distc =
             genv.ServerEnv.local_config
-              .ServerLocalConfig.enable_fanout_aware_distc;
+              .Server_local_config.enable_fanout_aware_distc;
           fanout_threshold =
             genv.ServerEnv.local_config
-              .ServerLocalConfig.hh_distc_fanout_threshold;
+              .Server_local_config.hh_distc_fanout_threshold;
           fanout_full_init_threshold =
             genv.ServerEnv.local_config
-              .ServerLocalConfig.hh_distc_fanout_full_init_threshold;
+              .Server_local_config.hh_distc_fanout_full_init_threshold;
         }
   in
   let cgroup_typecheck_telemetry = ref None in
@@ -495,7 +495,7 @@ let type_check_core
   in
   let time_first_error = None in
   let do_errors_file =
-    genv.local_config.ServerLocalConfig.produce_streaming_errors
+    genv.local_config.Server_local_config.produce_streaming_errors
   in
   let env = { env with full_check_status = Full_check_started } in
   let files_to_parse = env.disk_needs_parsing in
@@ -638,7 +638,7 @@ let type_check_core
     Telemetry.duration telemetry ~key:"revtrack_decl_changed_end" ~start_time
   in
 
-  ServerRevisionTracker.typing_changed
+  Server_revision_tracker.typing_changed
     genv.local_config
     (Relative_path.Set.cardinal to_recheck);
 
@@ -684,7 +684,7 @@ let type_check_core
   in
 
   let (env, prechecked1_telemetry) =
-    ServerPrecheckedFiles.update_after_local_changes
+    Server_prechecked_files.update_after_local_changes
       genv
       env
       changed
@@ -707,9 +707,10 @@ let type_check_core
 
   (* Checking this before starting typechecking because we want to attribute
    * big rechecks to rebases, even when restarting is disabled *)
-  if genv.local_config.ServerLocalConfig.hg_aware_recheck_restart_threshold = 0
+  if
+    genv.local_config.Server_local_config.hg_aware_recheck_restart_threshold = 0
   then
-    ServerRevisionTracker.check_blocking ();
+    Server_revision_tracker.check_blocking ();
   let telemetry =
     Telemetry.duration telemetry ~key:"revtrack3_check_blocking_end" ~start_time
   in
@@ -725,7 +726,8 @@ let type_check_core
      open in the IDE, leaving other affected files to be lazily checked later.
      In either case, don't attempt to typecheck files with parse errors. *)
   let enable_type_check_filter_files =
-    genv.ServerEnv.local_config.ServerLocalConfig.enable_type_check_filter_files
+    genv.ServerEnv.local_config
+      .Server_local_config.enable_type_check_filter_files
   in
   let lazy_check_later = Relative_path.Set.empty in
   (* If the user has enabled a custom file filter, we want to only
@@ -748,9 +750,9 @@ let type_check_core
     (Relative_path.Set.cardinal to_recheck);
 
   let to_recheck =
-    match genv.local_config.ServerLocalConfig.workload_quantile with
+    match genv.local_config.Server_local_config.workload_quantile with
     | None -> to_recheck
-    | Some { ServerLocalConfig.index; count } ->
+    | Some { Server_local_config.index; count } ->
       let to_recheck = quantile ~index ~count to_recheck in
       Hh_logger.log
         "Will typecheck %d-th %d-quantile only, containing %d files."
@@ -854,10 +856,10 @@ let type_check_core
     |> Telemetry.bool_
          ~key:"enable_type_check_filter_files"
          ~value:
-           genv.local_config.ServerLocalConfig.enable_type_check_filter_files
+           genv.local_config.Server_local_config.enable_type_check_filter_files
     |> Telemetry.bool_
          ~key:"typecheck_longlived_workers"
-         ~value:genv.local_config.ServerLocalConfig.longlived_workers
+         ~value:genv.local_config.Server_local_config.longlived_workers
     |> Telemetry.string_opt
          ~key:"cancel_reason"
          ~value:
@@ -884,7 +886,8 @@ let type_check_core
 
   (* WRAP-UP ***************************************************************)
   let needs_recheck =
-    if Option.is_some genv.local_config.ServerLocalConfig.workload_quantile then
+    if Option.is_some genv.local_config.Server_local_config.workload_quantile
+    then
       (* If we were typechecking quantiles only, then artificially assume that everything
          was typechecked. Otherwise the next recheck iteration will keep typechecking the other
          quantiles. *)
@@ -943,7 +946,7 @@ let type_check_core
          ~value:(Diagnostics.as_telemetry_summary env.diagnostics)
     |> Telemetry.object_
          ~key:"repo_states"
-         ~value:(ServerNotifier.get_repo_states_telemetry genv.notifier)
+         ~value:(Server_notifier.get_repo_states_telemetry genv.notifier)
   in
 
   (* HANDLE PRECHECKED FILES AFTER RECHECK *********************************)
@@ -954,7 +957,7 @@ let type_check_core
     Typing_deps.allow_dependency_table_reads env.deps_mode true
   in
   let (env, prechecked2_telemetry) =
-    ServerPrecheckedFiles.update_after_recheck
+    Server_prechecked_files.update_after_recheck
       genv
       env
       files_checked
@@ -971,7 +974,7 @@ let type_check_core
 
   (* We might have completed a full check, which might mean that a rebase was
    * successfully processed. *)
-  ServerRevisionTracker.check_non_blocking
+  Server_revision_tracker.check_non_blocking
     ~is_full_check_done:ServerEnv.(is_full_check_done env.full_check_status);
   let telemetry =
     Telemetry.duration
@@ -997,7 +1000,7 @@ let type_check_core
     ~heap_size
     ~started_count:to_recheck_count
     ~total_rechecked_count
-    ~experiments:genv.local_config.ServerLocalConfig.experiments
+    ~experiments:genv.local_config.Server_local_config.experiments
     ~desc:"serverTypeCheck"
     ~start_t:type_check_start_t;
   Hack_event_logger.TypingErrors.log_errors

@@ -10,7 +10,7 @@
 open Hh_prelude
 open Result.Export
 open ServerEnv
-module SLC = ServerLocalConfig
+module SLC = Server_local_config
 include Server_init_types
 
 let post_init genv (env, _t) =
@@ -103,7 +103,7 @@ let write_symbol_info_init genv env root (load_state : _ option) profiling =
       profiling
 
 let possibly_set_rust_provider_backend env genv : unit =
-  if genv.local_config.ServerLocalConfig.rust_provider_backend then (
+  if genv.local_config.Server_local_config.rust_provider_backend then (
     Hh_logger.log "ServerInit: using rust backend";
     let backend =
       Hh_server_provider_backend.make

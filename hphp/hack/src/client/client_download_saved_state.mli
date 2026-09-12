@@ -14,4 +14,4 @@ type env = {
   replay_token: string option;
 }
 
-val main : env -> ServerLocalConfig.t -> Exit_status.t Lwt.t
+val main : env -> Server_local_config.t -> Exit_status.t Lwt.t

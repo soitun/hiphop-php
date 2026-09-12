@@ -13,7 +13,7 @@ let go class_ find_children env genv oc =
   let ctx = Provider_utils.ctx_from_server_env env in
   let res_list =
     (* Might raise {!Naming_table.File_info_not_found} *)
-    MethodJumps.get_inheritance
+    Method_jumps.get_inheritance
       ctx
       class_
       ~find_children

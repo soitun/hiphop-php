@@ -7,4 +7,4 @@
  *
  *)
 
-val go : ServerLintTypes.result -> bool -> Diagnostics.format -> Base.unit
+val go : Server_lint_types.result -> bool -> Diagnostics.format -> Base.unit

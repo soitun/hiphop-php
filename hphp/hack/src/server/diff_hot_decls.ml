@@ -68,7 +68,7 @@ let load_hot_decls decls_path =
   Hh_logger.log "Loading hot decls from %s..." decls_path;
   let t = Unix.gettimeofday () in
   (* trusting the user to give us a file of the correct format! *)
-  let decls = SaveStateService.load_contents_unsafe decls_path in
+  let decls = Save_state_service.load_contents_unsafe decls_path in
   let _ = Hh_logger.log_duration "Loaded hot decls" t in
   decls
 

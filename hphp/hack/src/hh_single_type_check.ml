@@ -817,7 +817,9 @@ let parse_options () =
              Config_keys.Hhconfig.allowed_fixme_codes_strict
         |> Option.map ~f:comma_string_to_iset;
       sharedmem_config :=
-        ServerConfig.make_sharedmem_config config ServerLocalConfigLoad.default;
+        ServerConfig.make_sharedmem_config
+          config
+          Server_local_config_load.default;
       no_builtins := true;
       (* Now let CLI options override whatever we just picked *)
       Arg.parse options (fun _ -> ()) usage;
@@ -1712,7 +1714,7 @@ let do_hover ~ctx ~filename oc (pos_given : File_content.Position.t option) =
   in
   let results = Ide_hover.go_quarantined ~ctx ~entry pos in
   let formatted_results =
-    HoverService.as_marked_string_list results
+    Hover_service.as_marked_string_list results
     |> List.map ~f:(fun (r : Lsp.markedString) ->
            match r with
            | Lsp.MarkedCode (_, s) -> s
@@ -1808,9 +1810,9 @@ let handle_mode
       let open Result.Monad_infix in
       Sys_utils.read_stdin_to_string ()
       |> Yojson.Safe.from_string
-      |> CstSearchService.compile_pattern ctx
-      >>| CstSearchService.search ctx entry
-      >>| CstSearchService.result_to_json ~sort_results:true
+      |> Cst_search_service.compile_pattern ctx
+      >>| Cst_search_service.search ctx entry
+      >>| Cst_search_service.result_to_json ~sort_results:true
       >>| Hh_json_helpers.Out.pretty_to_string
     in
     begin
@@ -1827,7 +1829,7 @@ let handle_mode
           let raw_result = Symbol_info_service_utils.helper ctx [] [filename] in
           let result = Symbol_info_service_utils.format_result raw_result in
           let result_json =
-            ServerCommandTypes.Symbol_info_service.to_json result
+            Server_command_types.Symbol_info_service.to_json result
           in
           print_endline (Hh_json_helpers.Out.pretty_to_string result_json)
         | None -> ())
@@ -1864,7 +1866,7 @@ let handle_mode
           lint_errors
       in
       let lint_errors = List.map ~f:Lints_core.to_absolute lint_errors in
-      ServerLintTypes.output_text stdout lint_errors error_format;
+      Server_lint_types.output_text stdout lint_errors error_format;
       exit 2
     ) else
       Printf.printf "No lint errors\n"
@@ -1887,7 +1889,11 @@ let handle_mode
         json_errors
     in
     let json_errors = List.map ~f:Lints_core.to_absolute json_errors in
-    ServerLintTypes.output_json ~from_test:true ~pretty:true stdout json_errors;
+    Server_lint_types.output_json
+      ~from_test:true
+      ~pretty:true
+      stdout
+      json_errors;
     exit 2
   | Dump_deps ->
     Relative_path.Map.iter files_info ~f:(fun fn _fileinfo ->
@@ -1907,7 +1913,7 @@ let handle_mode
     |> Seq.iter (fun file ->
            Printf.printf "%s\n" (Relative_path.to_absolute file))
   | Dump_inheritance ->
-    let open ServerCommandTypes.Method_jumps in
+    let open Server_command_types.Method_jumps in
     let naming_table = Naming_table.create files_info in
     Naming_table.iter naming_table ~f:(fun fn fileinfo ->
         if Relative_path.Map.mem builtins fn then
@@ -1919,7 +1925,7 @@ let handle_mode
                 id.FileInfo.name;
               let ancestors =
                 (* Might raise {!Naming_table.File_info_not_found} *)
-                MethodJumps.get_inheritance
+                Method_jumps.get_inheritance
                   ctx
                   id.FileInfo.name
                   ~filter:No_filter
@@ -1927,7 +1933,7 @@ let handle_mode
                   naming_table
                   None
               in
-              ServerCommandTypes.Method_jumps.print_readable
+              Server_command_types.Method_jumps.print_readable
                 ancestors
                 ~find_children:false;
               Printf.printf "\n");
@@ -1938,7 +1944,7 @@ let handle_mode
                 id.FileInfo.name;
               let children =
                 (* Might raise {!Naming_table.File_info_not_found} *)
-                MethodJumps.get_inheritance
+                Method_jumps.get_inheritance
                   ctx
                   id.FileInfo.name
                   ~filter:No_filter
@@ -1946,7 +1952,7 @@ let handle_mode
                   naming_table
                   None
               in
-              ServerCommandTypes.Method_jumps.print_readable
+              Server_command_types.Method_jumps.print_readable
                 children
                 ~find_children:true;
               Printf.printf "\n")
@@ -1957,7 +1963,7 @@ let handle_mode
     (* TODO(ljw): surely this doesn't need quarantine? *)
     let result =
       Provider_utils.respect_but_quarantine_unsaved_changes ~ctx ~f:(fun () ->
-          ServerIdentifyFunction.go_quarantined_absolute ~ctx ~entry pos)
+          Server_identify_function.go_quarantined_absolute ~ctx ~entry pos)
     in
     begin
       match result with
@@ -1988,7 +1994,7 @@ let handle_mode
     let (ctx, entry) = Provider_context.add_entry_if_missing ~ctx ~path in
     let src = Provider_context.read_file_contents_exn entry in
     let pos = caret_pos_exn src "^ at-caret" in
-    let result = ServerSignatureHelp.go_quarantined ~ctx ~entry pos in
+    let result = Server_signature_help.go_quarantined ~ctx ~entry pos in
     print_endline "textDocument/signatureHelp response:\n";
     result
     |> Lsp_fmt.print_signatureHelp
@@ -2003,16 +2009,16 @@ let handle_mode
     let (ctx, entry) =
       Provider_context.add_entry_if_missing ~ctx ~path:filename
     in
-    let result = ServerFindLocals.go ~ctx ~entry pos in
+    let result = Server_find_locals.go ~ctx ~entry pos in
     let print pos = Printf.printf "%s\n" (Pos.string_no_file pos) in
     List.iter result ~f:print
   | Outline ->
     iter_over_files (fun filename ->
         let file = cat (Relative_path.to_absolute filename) in
         let results =
-          FileOutline.outline (Provider_context.get_popt ctx) file
+          File_outline.outline (Provider_context.get_popt ctx) file
         in
-        FileOutline.print ~short_pos:true results)
+        File_outline.print ~short_pos:true results)
   | Outline_for_agents ->
     iter_over_files (fun filename ->
         let file = cat (Relative_path.to_absolute filename) in
@@ -2128,14 +2134,14 @@ let handle_mode
         ~ctx:(Provider_utils.ctx_from_server_env env)
         ~path
     in
-    let open ServerCommandTypes.Done_or_retry in
+    let open Server_command_types.Done_or_retry in
     Provider_utils.respect_but_quarantine_unsaved_changes ~ctx ~f:(fun () ->
-        match ServerFindRefs.go_from_file_ctx ~ctx ~entry pos with
+        match Server_find_refs.go_from_file_ctx ~ctx ~entry pos with
         | None -> ()
         | Some (name, action) ->
           let results =
             match
-              ServerFindRefs.go
+              Server_find_refs.go
                 ctx
                 action
                 include_defs
@@ -2144,11 +2150,12 @@ let handle_mode
                 genv
                 env
             with
-            | (_env, Done r) -> ServerFindRefs.to_absolute r
+            | (_env, Done r) -> Server_find_refs.to_absolute r
             | (_env, Retry) -> failwith "didn't expect retry"
           in
           Printf.printf "%s\n" name;
-          FindRefsWireFormat.CliHumanReadable.print_results (List.rev results))
+          Find_refs_wire_format.CliHumanReadable.print_results
+            (List.rev results))
   | Go_to_impl pos ->
     let filename = expect_single_file () in
     let naming_table = Naming_table.create files_info in
@@ -2173,18 +2180,18 @@ let handle_mode
         ~path:(Relative_path.create_detect_prefix filename)
         ~contents
     in
-    let open ServerCommandTypes.Done_or_retry in
+    let open Server_command_types.Done_or_retry in
     begin
-      match ServerFindRefs.go_from_file_ctx ~ctx ~entry pos with
+      match Server_find_refs.go_from_file_ctx ~ctx ~entry pos with
       | None -> ()
       | Some (name, action) ->
         let results =
-          match ServerGoToImpl.go ~action ~genv ~env with
-          | (_env, Done r) -> ServerFindRefs.to_absolute r
+          match Server_go_to_impl.go ~action ~genv ~env with
+          | (_env, Done r) -> Server_find_refs.to_absolute r
           | (_env, Retry) -> failwith "didn't expect retry"
         in
         Printf.printf "%s\n" name;
-        FindRefsWireFormat.CliHumanReadable.print_results (List.rev results)
+        Find_refs_wire_format.CliHumanReadable.print_results (List.rev results)
     end
   | Highlight_refs pos ->
     let path = expect_single_file () in

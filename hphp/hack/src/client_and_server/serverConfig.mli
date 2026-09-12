@@ -25,7 +25,7 @@ val load :
   silent:bool ->
   from:string ->
   cli_config_overrides:(string * string) list ->
-  t * ServerLocalConfig.t
+  t * Server_local_config.t
 
 (** As [load], with [apply_dynamic_overrides] applied after JustKnobs and before
     SandboxExperiment while loading the local config. *)
@@ -35,7 +35,7 @@ val load_with_dynamic_overrides :
   silent:bool ->
   from:string ->
   cli_config_overrides:(string * string) list ->
-  t * ServerLocalConfig.t
+  t * Server_local_config.t
 
 val load_config : Config_file_common.t -> GlobalOptions.t -> GlobalOptions.t
 
@@ -84,10 +84,10 @@ val convert_auto_namespace_to_map : string -> (string * string) list
 val warnings_generated_files : t -> string list
 
 val make_sharedmem_config :
-  Config_file.t -> ServerLocalConfig.t -> SharedMem.config
+  Config_file.t -> Server_local_config.t -> SharedMem.config
 
 val update_config_with_ai_options :
-  t -> ServerLocalConfig.t -> Ai_options.t option -> t * ServerLocalConfig.t
+  t -> Server_local_config.t -> Ai_options.t option -> t * Server_local_config.t
 
 (** Validate CLI --config key=value overrides. Logs a warning via Hh_logger
     for each key that is not a recognized config option, with a "did you mean?"

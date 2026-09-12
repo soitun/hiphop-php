@@ -9,7 +9,7 @@
 
 val go :
   MultiWorker.worker list option ->
-  ServerCommandTypes.file_input list ->
+  Server_command_types.file_input list ->
   Provider_context.t ->
   return_expanded_tast:bool ->
   error_filter:Tast_provider.ErrorFilter.t ->
@@ -17,7 +17,7 @@ val go :
 
 val go_from_cached_diagnostics :
   ServerEnv.env ->
-  ServerCommandTypes.file_input list ->
+  Server_command_types.file_input list ->
   return_expanded_tast:bool ->
   preexisting_warnings:bool ->
   is_stale:bool ->

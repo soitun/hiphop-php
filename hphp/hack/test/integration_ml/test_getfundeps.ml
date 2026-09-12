@@ -236,11 +236,11 @@ let test () =
       ~hhi_files:(Hhi.get_raw_hhi_contents () |> Array.to_list)
   in
   let env = Test.setup_disk env files in
-  let h = ServerFunDepsBatch.handlers in
+  let h = Server_fun_deps_batch.handlers in
   let do_test ((file, line, col), expected) =
     let ctx = Provider_utils.ctx_from_server_env env in
     let pos_list = [(Relative_path.from_root ~suffix:file, line, col)] in
-    let result = ServerRxApiShared.helper h ctx [] pos_list in
+    let result = Server_rx_api_shared.helper h ctx [] pos_list in
     if not (List.equal String.equal result [expected]) then
       let msg =
         "Unexpected test result\nExpected:\n"

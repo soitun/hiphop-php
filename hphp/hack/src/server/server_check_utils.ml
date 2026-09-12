@@ -8,7 +8,7 @@
 
 open Hh_prelude
 open ServerEnv
-open ServerLocalConfig
+open Server_local_config
 
 let get_naming_table_fallback_path genv : string option =
   match genv.local_config.naming_sqlite_path with
@@ -90,7 +90,7 @@ let extend_defs_per_file
       additional_count;
     let t = Unix.gettimeofday () in
     let bucket_size =
-      genv.local_config.ServerLocalConfig.extend_defs_per_file_bucket_size
+      genv.local_config.Server_local_config.extend_defs_per_file_bucket_size
     in
     let extended_defs_per_file =
       match Naming_table.get_forward_naming_fallback_path naming_table with
@@ -119,13 +119,15 @@ let get_check_info ~check_reason ~log_errors ~discard_warnings (genv : genv) env
     log_errors;
     discard_warnings;
     recheck_id = env.init_env.recheck_id;
-    per_file_profiling = genv.local_config.ServerLocalConfig.per_file_profiling;
-    memtrace_dir = genv.local_config.ServerLocalConfig.memtrace_dir;
-    heartbeat_interval = genv.local_config.ServerLocalConfig.heartbeat_interval;
+    per_file_profiling =
+      genv.local_config.Server_local_config.per_file_profiling;
+    memtrace_dir = genv.local_config.Server_local_config.memtrace_dir;
+    heartbeat_interval =
+      genv.local_config.Server_local_config.heartbeat_interval;
     prefetch_decls_enabled =
-      genv.local_config.ServerLocalConfig.prefetch_decls_enabled;
+      genv.local_config.Server_local_config.prefetch_decls_enabled;
     prefetch_decls_threshold =
-      genv.local_config.ServerLocalConfig.prefetch_decls_threshold;
+      genv.local_config.Server_local_config.prefetch_decls_threshold;
   }
 
 type user_filter =

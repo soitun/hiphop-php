@@ -238,7 +238,9 @@ let parse_options () =
         |> Option.map ~f:comma_string_to_iset
       in
       let sharedmem_config =
-        ServerConfig.make_sharedmem_config config ServerLocalConfigLoad.default
+        ServerConfig.make_sharedmem_config
+          config
+          Server_local_config_load.default
       in
       no_builtins := true;
       (* Now let CLI options override whatever we just picked *)
@@ -372,12 +374,12 @@ let do_auto332
     ~(naming_table : Naming_table.t)
     (path : Relative_path.t)
     (contents : string) :
-    AutocompleteTypes.autocomplete_item list Utils.With_complete_flag.t =
+    Autocomplete_types.autocomplete_item list Utils.With_complete_flag.t =
   (* Search backwards: there should only be one /real/ case. If there's multiple, *)
   (* guess that the others are preceding explanation comments *)
   let offset =
     Str.search_backward
-      (Str.regexp AutocompleteTypes.autocomplete_token)
+      (Str.regexp Autocomplete_types.autocomplete_token)
       contents
       (String.length contents)
   in
@@ -386,12 +388,12 @@ let do_auto332
     Provider_context.add_or_overwrite_entry_contents ~ctx ~path ~contents
   in
   let autocomplete_context =
-    ServerAutoComplete.get_autocomplete_context
+    Server_auto_complete.get_autocomplete_context
       ~file_content:contents
       ~pos
       ~is_manually_invoked
   in
-  ServerAutoComplete.go_at_auto332_ctx
+  Server_auto_complete.go_at_auto332_ctx
     ~ctx
     ~entry
     ~sienv_ref
@@ -530,15 +532,15 @@ let sort_autocomplete_results results =
   List.stable_sort results ~compare:(fun left right ->
       let sort_text_comparison =
         String.compare
-          (String.lowercase (AutocompleteTypes.sort_text left))
-          (String.lowercase (AutocompleteTypes.sort_text right))
+          (String.lowercase (Autocomplete_types.sort_text left))
+          (String.lowercase (Autocomplete_types.sort_text right))
       in
       if sort_text_comparison <> 0 then
         sort_text_comparison
       else
         String.compare
-          left.AutocompleteTypes.res_label
-          right.AutocompleteTypes.res_label)
+          left.Autocomplete_types.res_label
+          right.Autocomplete_types.res_label)
 
 (** This handles "--auto-complete" and "--auto-complete-manually-invoked".
 It parses the input file/multifiles for AUTO332, and runs them through
@@ -552,7 +554,7 @@ let handle_autocomplete ctx sienv naming_table ~is_manually_invoked filename =
     |> List.filter ~f:(fun (_path, contents) ->
            String.is_substring
              contents
-             ~substring:AutocompleteTypes.autocomplete_token)
+             ~substring:Autocomplete_types.autocomplete_token)
   in
   let show_file_titles = List.length files_with_token > 1 in
   List.iter files_with_token ~f:(fun (path, contents) ->
@@ -572,7 +574,7 @@ let handle_autocomplete ctx sienv naming_table ~is_manually_invoked filename =
       if show_file_titles then
         Printf.printf "//// %s\n" (Multifile.short_suffix path);
       List.iter results ~f:(fun r ->
-          let open AutocompleteTypes in
+          let open Autocomplete_types in
           Printf.printf "%s\n" r.res_label;
           List.iter r.res_additional_edits ~f:(fun (s, _) ->
               Printf.printf "  INSERT %s\n" s);
@@ -602,7 +604,7 @@ let handle_xhp_close ctx _ _ filename =
       in
       let offset = String_utils.substring_index "AUTOCLOSE332" contents in
       let position = File_content.offset_to_position contents offset in
-      let close_tag = AutocloseTags.go_xhp_close_tag ~ctx ~entry position in
+      let close_tag = Autoclose_tags.go_xhp_close_tag ~ctx ~entry position in
       match close_tag with
       | Some close_tag -> Printf.printf "Close Tag: %s\n" close_tag
       | None -> Printf.printf "Close Tag: None")
@@ -617,7 +619,7 @@ let handle_resolve ctx sienv naming_table ~is_manually_invoked filename =
     |> List.filter ~f:(fun (_path, contents) ->
            String.is_substring
              contents
-             ~substring:AutocompleteTypes.autocomplete_token)
+             ~substring:Autocomplete_types.autocomplete_token)
   in
   let show_file_titles =
     match files_with_token with
@@ -640,12 +642,12 @@ let handle_resolve ctx sienv naming_table ~is_manually_invoked filename =
       if show_file_titles then
         Printf.printf "//// %s\n" (Multifile.short_suffix path);
       List.iter result.Utils.With_complete_flag.value ~f:(fun r ->
-          let open AutocompleteTypes in
+          let open Autocomplete_types in
           Printf.printf
             "%s\n"
             (Option.value
                ~default:"none"
-               (ServerAutoComplete.get_signature ctx r.res_fullname));
+               (Server_auto_complete.get_signature ctx r.res_fullname));
           Printf.printf "%s\n" r.res_fullname;
           Printf.printf "%s\n" r.res_label;
           List.iter r.res_additional_edits ~f:(fun (s, _) ->
@@ -731,8 +733,8 @@ let handle_findrefs_glean sienv ~dry_run filename =
       Some (Glean.initialize ~reponame ~prev_init_time:None |> Option.value_exn)
   in
   List.iter queries ~f:(fun query ->
-      let { FindRefsWireFormat.CliArgs.action; _ } =
-        FindRefsWireFormat.CliArgs.from_string_exn query
+      let { Find_refs_wire_format.CliArgs.action; _ } =
+        Find_refs_wire_format.CliArgs.from_string_exn query
       in
       Printf.printf "//// %s\n" query;
       let angle = Glean_autocomplete_query.make_refs_query ~action in

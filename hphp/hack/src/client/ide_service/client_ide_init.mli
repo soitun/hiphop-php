@@ -56,7 +56,7 @@ while trying to open the sqlite file (e.g. it has zero size) then that counts as
 failure and we continue on to the next attempt. Weird but true. *)
 val init :
   config:ServerConfig.t ->
-  local_config:ServerLocalConfig.t ->
+  local_config:Server_local_config.t ->
   param:Client_ide_message.Initialize_from_saved_state.t ->
   hhi_root:Path.t ->
   local_memory:Provider_backend.local_memory ->

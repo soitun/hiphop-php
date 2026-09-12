@@ -7,9 +7,9 @@ module SA = Asserter.String_asserter
 module IA = Asserter.Int_asserter
 
 let rec assert_docblock_markdown
-    (expected : DocblockService.result) (actual : DocblockService.result) : unit
-    =
-  DocblockService.(
+    (expected : Docblock_service.result) (actual : Docblock_service.result) :
+    unit =
+  Docblock_service.(
     match (expected, actual) with
     | ([], []) -> ()
     | ([], _) -> failwith "Expected end of list"
@@ -213,14 +213,14 @@ let test_docblock_finder (harness : Test_harness.t) : bool =
   in
   let (ctx, entry) = Provider_context.add_entry_if_missing ~ctx ~path in
   let docblock =
-    ServerDocblockAt.go_docblock_ctx
+    Server_docblock_at.go_docblock_ctx
       ~ctx
       ~entry
       (File_content.Position.from_one_based 6 7)
       ~kind:FileInfo.SI_Trait
   in
   assert_docblock_markdown
-    [DocblockService.Markdown "This is a docblock for NoBigTrait"]
+    [Docblock_service.Markdown "This is a docblock for NoBigTrait"]
     docblock;
   true
 

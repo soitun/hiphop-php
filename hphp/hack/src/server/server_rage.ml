@@ -9,8 +9,9 @@
 
 open Hh_prelude
 
-let go (_genv : ServerEnv.genv) (env : ServerEnv.env) : ServerRageTypes.result =
-  let open ServerRageTypes in
+let go (_genv : ServerEnv.genv) (env : ServerEnv.env) : Server_rage_types.result
+    =
+  let open Server_rage_types in
   let data =
     Printf.sprintf
       "hh_server pid=%d ppid=%d\ndisk_needs_parsing: %s\n"

@@ -14,7 +14,7 @@
 open Hh_prelude
 open Config_file.Getters
 open Reordered_argument_collections
-open ServerLocalConfig
+open Server_local_config
 
 type t = {
   version: Config_file.version; [@printer (fun fmt _ -> fprintf fmt "version")]
@@ -74,7 +74,7 @@ let make_sharedmem_config config local_config =
   let { SharedMem.global_size; heap_size; shm_min_avail; _ } =
     SharedMem.default_config
   in
-  let shm_dirs = local_config.ServerLocalConfig.shm_dirs in
+  let shm_dirs = local_config.Server_local_config.shm_dirs in
   let global_size =
     int_ Config_keys.Hhconfig.sharedmem_global_size ~default:global_size config
   in
@@ -99,13 +99,13 @@ let make_sharedmem_config config local_config =
   let shm_use_sharded_hashtbl =
     bool_
       Config_keys.Hhconfig.shm_use_sharded_hashtbl
-      ~default:local_config.ServerLocalConfig.shm_use_sharded_hashtbl
+      ~default:local_config.Server_local_config.shm_use_sharded_hashtbl
       config
   in
   let shm_cache_size =
     int_
       Config_keys.Hhconfig.shm_cache_size
-      ~default:local_config.ServerLocalConfig.shm_cache_size
+      ~default:local_config.Server_local_config.shm_cache_size
       config
   in
   let shm_min_avail =
@@ -678,7 +678,7 @@ let load_local_config
     ~(command_line_overrides : Config_file_common.t)
     ~apply_dynamic_overrides
     ~silent
-    ~from : ServerLocalConfig.t =
+    ~from : Server_local_config.t =
   let current_rolled_out_flag_idx =
     int_
       Config_keys.Hhconfig.current_saved_state_rollout_flag_index
@@ -691,7 +691,7 @@ let load_local_config
       ~default:false
       config
   in
-  ServerLocalConfigLoad.load_with_dynamic_overrides
+  Server_local_config_load.load_with_dynamic_overrides
     ~apply_dynamic_overrides
     ~silent
     ~current_version:version
@@ -704,7 +704,8 @@ let load_with_dynamic_overrides
     ~apply_dynamic_overrides
     ~silent
     ~from
-    ~(cli_config_overrides : (string * string) list) : t * ServerLocalConfig.t =
+    ~(cli_config_overrides : (string * string) list) : t * Server_local_config.t
+    =
   let command_line_overrides = Config_file.of_list cli_config_overrides in
   let hhconfig_abs_path = Relative_path.to_absolute repo_config_path in
   let hhconfig = Config_file.parse_hhconfig hhconfig_abs_path in
@@ -744,7 +745,9 @@ let load_with_dynamic_overrides
       ~pkgconfig_contents:(Config_file.cat_packages_file pkgs_config_abs_path)
   in
   let global_opts_without_package_info =
-    let tco_custom_error_config = CustomErrorConfig.load_and_parse () in
+    let tco_custom_error_config =
+      Custom_error_config_loader.load_and_parse ()
+    in
     let local_config_opts =
       GlobalOptions.set
         ~po:
@@ -752,32 +755,34 @@ let load_with_dynamic_overrides
             {
               default.po with
               Parser_options.allow_unstable_features =
-                local_config.ServerLocalConfig.allow_unstable_features;
+                local_config.Server_local_config.allow_unstable_features;
             }
         ?so_naming_sqlite_path:local_config.naming_sqlite_path
         ?tco_log_large_fanouts_threshold:
           local_config.log_large_fanouts_threshold
         ~tco_fetch_remote_old_decls:
-          local_config.ServerLocalConfig.fetch_remote_old_decls
+          local_config.Server_local_config.fetch_remote_old_decls
         ~tco_only_fetch_remote_old_decl_during_init:
-          local_config.ServerLocalConfig.only_fetch_remote_old_decl_during_init
+          local_config
+            .Server_local_config.only_fetch_remote_old_decl_during_init
         ~tco_disable_rust_provider_shallow_decl_invalidation:
           local_config
-            .ServerLocalConfig.disable_rust_provider_shallow_decl_invalidation
+            .Server_local_config.disable_rust_provider_shallow_decl_invalidation
         ~tco_enable_annotation_agnostic_decl_diffing:
-          local_config.ServerLocalConfig.enable_annotation_agnostic_decl_diffing
+          local_config
+            .Server_local_config.enable_annotation_agnostic_decl_diffing
         ~tco_populate_member_heaps:
-          local_config.ServerLocalConfig.populate_member_heaps
+          local_config.Server_local_config.populate_member_heaps
         ~tco_skip_hierarchy_checks:
-          local_config.ServerLocalConfig.skip_hierarchy_checks
-        ~tco_skip_tast_checks:local_config.ServerLocalConfig.skip_tast_checks
+          local_config.Server_local_config.skip_hierarchy_checks
+        ~tco_skip_tast_checks:local_config.Server_local_config.skip_tast_checks
         ~tco_silence_errors_under_dynamic:
-          local_config.ServerLocalConfig.silence_errors_under_dynamic
-        ~tco_saved_state:local_config.ServerLocalConfig.saved_state
+          local_config.Server_local_config.silence_errors_under_dynamic
+        ~tco_saved_state:local_config.Server_local_config.saved_state
         ~tco_log_inference_constraints:
-          local_config.ServerLocalConfig.log_inference_constraints
+          local_config.Server_local_config.log_inference_constraints
         ~tco_global_access_check_enabled:
-          local_config.ServerLocalConfig.enable_global_access_check
+          local_config.Server_local_config.enable_global_access_check
         ~dump_tast_hashes:local_config.dump_tast_hashes
         ~dump_tasts:local_config.dump_tasts
         ~tco_custom_error_config
@@ -804,7 +809,7 @@ let load_with_dynamic_overrides
   Hh_logger.log "Parsing and loading packages config at %s" pkgs_config_abs_path;
   let package_info =
     Package_config.load_and_parse
-      ~strict:local_config.ServerLocalConfig.package_config_strict_validation
+      ~strict:local_config.Server_local_config.package_config_strict_validation
       ~enable_implicit_packages:
         (bool_
            Config_keys.Hhconfig.enable_implicit_packages

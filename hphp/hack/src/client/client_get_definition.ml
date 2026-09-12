@@ -32,7 +32,7 @@ let print_readable ?(short_pos = false) x =
           | None -> Printf.printf " None\n"
           | Some definition ->
             Out_channel.newline stdout;
-            FileOutline.print_def ~short_pos " " definition
+            File_outline.print_def ~short_pos " " definition
         end;
         Out_channel.newline stdout))
 

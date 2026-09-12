@@ -7,7 +7,7 @@
  *
  *)
 open Hh_prelude
-open ServerCommandTypes
+open Server_command_types
 
 let file_inputs_to_cacheable_paths file_inputs =
   let rec aux acc = function

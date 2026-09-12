@@ -38,7 +38,7 @@ let rec watch
       let%lwt () = Lwt_unix.sleep 0.2 in
       watch ~pid ~pid_future fd add
     else
-      let server_finale_file = ServerFiles.server_finale_file pid in
+      let server_finale_file = Server_files.server_finale_file pid in
       let finale_data = Exit_status.get_finale_data server_finale_file in
       add (Some (Error (Killed finale_data)));
       add None;

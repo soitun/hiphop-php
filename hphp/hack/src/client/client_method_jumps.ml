@@ -8,7 +8,7 @@
  *)
 
 open Hh_prelude
-module MethodJumps = ServerCommandTypes.Method_jumps
+module MethodJumps = Server_command_types.Method_jumps
 
 let pos_to_json pos =
   let (line, start, end_) = Pos.info_pos pos in

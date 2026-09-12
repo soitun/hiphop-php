@@ -45,7 +45,7 @@ let test () =
     Tast_provider.compute_tast_quarantined ~ctx ~entry
   in
   let symbols =
-    IdentifySymbolService.all_symbols
+    Identify_symbol_service.all_symbols
       ctx
       tast.Tast_with_dynamic.under_normal_assumptions
   in

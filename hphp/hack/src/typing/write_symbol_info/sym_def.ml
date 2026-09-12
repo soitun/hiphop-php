@@ -107,7 +107,7 @@ let resolve ctx SO.{ name; type_; _ } =
   | SO.XhpLiteralAttr (c_name, property_name) ->
     Decl_provider.get_class ctx c_name |> Decl_entry.to_option >>= fun class_ ->
     let clean_member_name =
-      IdentifySymbolService.clean_member_name property_name
+      Identify_symbol_service.clean_member_name property_name
     in
     (match Folded_class.get_prop class_ clean_member_name with
     | Some m -> Some m

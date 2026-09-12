@@ -118,7 +118,7 @@ during the full index. *)
 let init_via_build
     ~(config : ServerConfig.t) ~(root : Path.t) ~(hhi_root : Path.t) :
     (Path.t * Symbol_index_core.paths_with_addenda) outcome Lwt.t =
-  let path = Path.make (ServerFiles.client_ide_naming_table root) in
+  let path = Path.make (Server_files.client_ide_naming_table root) in
   let rec poll_build_until_complete_exn progress =
     match Naming_table_builder_ffi_externs.poll_exn progress with
     | Some build_result -> Lwt.return build_result
@@ -161,11 +161,11 @@ let init_via_build
   on disk. *)
 let init_via_find
     (ctx : Provider_context.t)
-    ~(local_config : ServerLocalConfig.t)
+    ~(local_config : Server_local_config.t)
     ~(root : Path.t)
     ~(ignore_hh_version : bool) :
     State_loader_lwt.FromDisk.load_result outcome Lwt.t =
-  if not local_config.ServerLocalConfig.ide_load_naming_table_on_disk then begin
+  if not local_config.Server_local_config.ide_load_naming_table_on_disk then begin
     Lwt.return (Skip "ide_load_naming_table_on_disk=false")
   end else begin
     let%lwt project_metadata =
@@ -182,7 +182,7 @@ let init_via_find
         State_loader_lwt.FromDisk.load
           ~project_metadata
           ~threshold:
-            local_config.ServerLocalConfig.ide_naming_table_update_threshold
+            local_config.Server_local_config.ide_naming_table_update_threshold
           ~root
       in
       match load_off_disk_result with
@@ -298,7 +298,7 @@ let map_attempt
 
 let init
     ~(config : ServerConfig.t)
-    ~(local_config : ServerLocalConfig.t)
+    ~(local_config : Server_local_config.t)
     ~(param : Client_ide_message.Initialize_from_saved_state.t)
     ~(hhi_root : Path.t)
     ~(local_memory : Provider_backend.local_memory) :
@@ -330,8 +330,8 @@ let init
       ~gleanopt
       ~namespace_map:tcopt.GlobalOptions.po.Parser_options.auto_namespace_map
       ~provider_name:
-        local_config.ServerLocalConfig.ide_symbolindex_search_provider
-      ~quiet:local_config.ServerLocalConfig.symbolindex_quiet
+        local_config.Server_local_config.ide_symbolindex_search_provider
+      ~quiet:local_config.Server_local_config.symbolindex_quiet
   in
 
   (* How this code handles errors:
@@ -416,7 +416,7 @@ let init
           {
             lookup_timeout =
               local_config
-                .ServerLocalConfig.load_state_natively_download_timeout;
+                .Server_local_config.load_state_natively_download_timeout;
           }
       in
       init_via_fetch ctx ~watchman_opts ~eden_opts ~ignore_hh_version

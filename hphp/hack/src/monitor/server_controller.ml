@@ -41,7 +41,7 @@ let start_server_daemon
     )
   in
   let start_t = Unix.time () in
-  let state = ServerGlobalState.save ~logging_init:(fun () -> ()) in
+  let state = Server_global_state.save ~logging_init:(fun () -> ()) in
   let monitor_pid = Unix.getpid () in
   (* Setting some additional channels between monitor and server *)
   let (parent_priority_fd, child_priority_fd) =
@@ -87,16 +87,16 @@ let start_server_daemon
         pid;
         server_specific_files =
           {
-            ServerCommandTypes.server_finale_file =
-              ServerFiles.server_finale_file pid;
+            Server_command_types.server_finale_file =
+              Server_files.server_finale_file pid;
           };
         in_fd = Daemon.descr_of_in_channel ic;
         out_fds =
-          MonitorRpc.PipeTypeMap.of_list
+          Monitor_rpc.PipeTypeMap.of_list
             [
-              (MonitorRpc.Default, Daemon.descr_of_out_channel oc);
-              (MonitorRpc.Priority, parent_priority_fd);
-              ( MonitorRpc.Force_dormant_start_only,
+              (Monitor_rpc.Default, Daemon.descr_of_out_channel oc);
+              (Monitor_rpc.Priority, parent_priority_fd);
+              ( Monitor_rpc.Force_dormant_start_only,
                 parent_force_dormant_start_only_fd );
             ];
         start_t;
@@ -106,7 +106,7 @@ let start_server_daemon
   server
 
 let start_hh_server ~informant_managed options =
-  let log_link = ServerFiles.log_link (ServerArgs.root options) in
+  let log_link = Server_files.log_link (ServerArgs.root options) in
   start_server_daemon ~informant_managed options log_link ServerMain.entry
 
 type server_start_options = ServerArgs.options

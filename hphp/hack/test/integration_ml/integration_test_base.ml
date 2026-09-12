@@ -11,7 +11,7 @@
 open Hh_prelude
 open Integration_test_base_types
 open Reordered_argument_collections
-open ServerCommandTypes
+open Server_command_types
 open Int.Replace_polymorphic_compare
 
 exception Integration_test_failure
@@ -122,12 +122,12 @@ let default_loop_input = { disk_changes = []; new_client = None }
 let run_loop_once :
     type a. ServerEnv.env -> a loop_inputs -> ServerEnv.env * a loop_outputs =
  fun env inputs ->
-  TestClientProvider.clear ();
+  Test_client_provider.clear ();
   Option.iter inputs.new_client ~f:(function RequestResponse x ->
-      TestClientProvider.mock_new_client_type Non_persistent;
-      TestClientProvider.mock_client_request x);
+      Test_client_provider.mock_new_client_type Non_persistent;
+      Test_client_provider.mock_client_request x);
 
-  let client_provider = ClientProvider.provider_for_test () in
+  let client_provider = Client_provider.provider_for_test () in
   let disk_changes =
     List.map inputs.disk_changes ~f:(fun (x, y) -> (root ^ x, y))
   in
@@ -142,12 +142,14 @@ let run_loop_once :
     ) else
       SSet.empty
   in
-  let get_changes_async () = ServerNotifier.SyncChanges (get_changes_sync ()) in
+  let get_changes_async () =
+    Server_notifier.SyncChanges (get_changes_sync ())
+  in
   let genv =
     {
       !genv with
       ServerEnv.notifier =
-        ServerNotifier.init_mock ~get_changes_sync ~get_changes_async;
+        Server_notifier.init_mock ~get_changes_sync ~get_changes_async;
     }
   in
   (* Always pick up disk changes in tests immediately *)
@@ -171,7 +173,7 @@ let run_loop_once :
         | Some stats ->
           Some stats.ServerEnv.RecheckLoopStats.total_rechecked_count);
       new_client_response =
-        TestClientProvider.get_client_response Non_persistent;
+        Test_client_provider.get_client_response Non_persistent;
     } )
 
 let prepend_root x = root ^ x
@@ -303,8 +305,8 @@ let list_to_string l =
 
 let assert_ide_completions response expected =
   let results =
-    List.map response.AutocompleteTypes.completions ~f:(fun x ->
-        x.AutocompleteTypes.res_label)
+    List.map response.Autocomplete_types.completions ~f:(fun x ->
+        x.Autocomplete_types.res_label)
   in
   let results_as_string = list_to_string results in
   let expected_as_string = list_to_string expected in

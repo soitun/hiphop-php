@@ -133,7 +133,9 @@ let test () =
   let test_ide env contents i expected =
     let path = "test" ^ string_of_int i ^ ".php" in
     let offset =
-      String_utils.substring_index AutocompleteTypes.autocomplete_token contents
+      String_utils.substring_index
+        Autocomplete_types.autocomplete_token
+        contents
     in
     let clean_contents =
       Str.global_replace (Str.regexp_string "AUTO332") "" contents

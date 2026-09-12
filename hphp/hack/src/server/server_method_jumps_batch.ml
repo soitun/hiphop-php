@@ -13,10 +13,10 @@
 open Hh_prelude
 
 let get_ancestors_single ctx class_ ~filter =
-  let class_ = MethodJumps.add_ns class_ in
+  let class_ = Method_jumps.add_ns class_ in
   let class_ = Decl_provider.get_class ctx class_ |> Decl_entry.to_option in
   Option.map class_ ~f:(fun c ->
-      MethodJumps.get_ancestor_classes_and_methods ctx c ~filter [])
+      Method_jumps.get_ancestor_classes_and_methods ctx c ~filter [])
 
 let get_ancestors_multiple ctx acc classes ~filter =
   let result =
@@ -39,8 +39,8 @@ let go :
     Provider_context.t ->
     MultiWorker.worker list option ->
     Decl_provider.type_key list ->
-    ServerCommandTypes.Method_jumps.filter ->
-    ServerCommandTypes.Method_jumps.result list =
+    Server_command_types.Method_jumps.filter ->
+    Server_command_types.Method_jumps.result list =
  fun ctx workers classes filter ->
   (* Sort and dedup identical queries *)
   let deduped =

@@ -597,7 +597,7 @@ let parse_check_args cmd ~from_default : Client_env.client_check_env =
           (fun x ->
             set_mode
               (MODE_IDE_FIND_REFS_BY_SYMBOL
-                 (FindRefsWireFormat.CliArgs.from_string_exn x))),
+                 (Find_refs_wire_format.CliArgs.from_string_exn x))),
         "(mode) similar to IDE_FIND_REFS, but takes a symbol name rather than position",
         Arg_non_user_facing );
       ( "--ide-find-refs-by-symbol3",
@@ -611,7 +611,7 @@ let parse_check_args cmd ~from_default : Client_env.client_check_env =
                (fun hints ->
                  set_mode
                    (MODE_IDE_FIND_REFS_BY_SYMBOL
-                      (FindRefsWireFormat.CliArgs.from_string_triple_exn
+                      (Find_refs_wire_format.CliArgs.from_string_triple_exn
                          (!action, !stream_file, hints))));
            ]),
         "(mode) similar to FIND_REFS, but takes [action stream_file hints]",
@@ -621,7 +621,7 @@ let parse_check_args cmd ~from_default : Client_env.client_check_env =
           (fun x ->
             set_mode
               (MODE_IDE_GO_TO_IMPL_BY_SYMBOL
-                 (FindRefsWireFormat.CliArgs.from_string_exn x))),
+                 (Find_refs_wire_format.CliArgs.from_string_exn x))),
         "(mode) similar to IDE_GO_TO_IMPL, but takes a symbol name rather than position",
         Arg_non_user_facing );
       ( "--ide-get-definition",
@@ -1196,37 +1196,37 @@ rewrite to the function names to something like `foo_1` and `foo_2`.
   in
 
   if !lock_file then (
-    let lock_file_link = ServerFiles.lock_file root in
+    let lock_file_link = Server_files.lock_file root in
     Printf.printf "%s\n%!" lock_file_link;
     exit 0
   );
 
   if !ide_logname then (
-    let ide_log_link = ServerFiles.client_ide_log root in
+    let ide_log_link = Server_files.client_ide_log root in
     Printf.printf "%s\n%!" ide_log_link;
     exit 0
   );
 
   if !lsp_logname then (
-    let lsp_log_link = ServerFiles.client_lsp_log root in
+    let lsp_log_link = Server_files.client_lsp_log root in
     Printf.printf "%s\n%!" lsp_log_link;
     exit 0
   );
 
   if !monitor_logname then (
-    let monitor_log_link = ServerFiles.monitor_log_link root in
+    let monitor_log_link = Server_files.monitor_log_link root in
     Printf.printf "%s\n%!" monitor_log_link;
     exit 0
   );
 
   if !client_logname then (
-    let client_log_link = ServerFiles.client_log root in
+    let client_log_link = Server_files.client_log root in
     Printf.printf "%s\n%!" client_log_link;
     exit 0
   );
 
   if !logname then (
-    let log_link = ServerFiles.log_link root in
+    let log_link = Server_files.log_link root in
     Printf.printf "%s\n%!" log_link;
     exit 0
   );

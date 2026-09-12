@@ -191,15 +191,15 @@ let try_with_server
               ~file:(Path.concat root name |> Path.to_string)
               content);
         Server_progress.set_root root;
-        ServerFiles.set_tmp_FOR_TESTING_ONLY tmp;
+        Server_files.set_tmp_FOR_TESTING_ONLY tmp;
         let%lwt () = f ~root ~hhi ~tmp in
         Lwt.return_unit
       with
       | exn ->
         let e = Exception.wrap exn in
-        dump_log ~name:"--logname" (ServerFiles.log_link root);
-        dump_log ~name:"--monitor-logname" (ServerFiles.monitor_log_link root);
-        dump_log ~name:"--client-logname" (ServerFiles.client_log root);
+        dump_log ~name:"--logname" (Server_files.log_link root);
+        dump_log ~name:"--monitor-logname" (Server_files.monitor_log_link root);
+        dump_log ~name:"--client-logname" (Server_files.client_log root);
         let%lwt ls =
           Lwt_utils.exec_checked
             Exec_command.Ls
@@ -270,7 +270,7 @@ let rec wait_for_errors_file ~(deadline : float) (errors_file_path : string) :
 (** Scrapes the monitor log for '...server...pid: 012345' and returns it.
 Alas, this is the only means we have to find PIDs. *)
 let get_server_pid ~(root : Path.t) : int Lwt.t =
-  let%lwt result = Lwt_utils.read_all (ServerFiles.monitor_log_link root) in
+  let%lwt result = Lwt_utils.read_all (Server_files.monitor_log_link root) in
   let monitor_log = Result.ok_or_failwith result in
   let re = Str.regexp {|^.*server.*pid: \([0-9]+\).?$|} in
   let _pos = Str.search_forward re monitor_log 0 in
@@ -302,7 +302,7 @@ let test_start_stop () : bool Lwt.t =
         in
         let%lwt _ = hh ~root ~tmp [| "stop" |] in
         (* The progress file should be cleanly deleted *)
-        if Sys_utils.file_exists (ServerFiles.server_progress_file root) then
+        if Sys_utils.file_exists (Server_files.server_progress_file root) then
           failwith "expected progress file to be deleted";
         let%lwt () =
           wait_for_progress ~deadline:0. ~expected:"[DStopped] stopped"
@@ -362,7 +362,7 @@ let test_kill_server () : bool Lwt.t =
             ~deadline:(Unix.gettimeofday () +. 60.0)
             ~expected:"[DStopped] server stopped"
         in
-        if not (Sys_utils.file_exists (ServerFiles.server_progress_file root))
+        if not (Sys_utils.file_exists (Server_files.server_progress_file root))
         then
           failwith "expected progress file to remain";
         Lwt.return_unit)
@@ -395,7 +395,7 @@ let test_kill_monitor () : bool Lwt.t =
             ~deadline:(Unix.gettimeofday () +. 60.0)
             ~expected:"[DStopped] stopped"
         in
-        if not (Sys_utils.file_exists (ServerFiles.server_progress_file root))
+        if not (Sys_utils.file_exists (Server_files.server_progress_file root))
         then
           failwith "expected progress file to remain";
         Lwt.return_unit)
@@ -420,7 +420,7 @@ let test_errors_complete () : bool Lwt.t =
             |]
         in
         (* at this point we should have all errors available *)
-        let errors_file_path = ServerFiles.errors_file_path root in
+        let errors_file_path = Server_files.errors_file_path root in
         let fd = Unix.openfile errors_file_path [Unix.O_RDONLY] 0 in
         let { Server_progress.ErrorsRead.pid; _ } =
           Server_progress.ErrorsRead.openfile fd
@@ -483,7 +483,7 @@ let test_errors_during () : bool Lwt.t =
             |]
         in
         (* the file loop_php causes the typechecker to spin, typechecking, for 10mins! *)
-        let errors_file_path = ServerFiles.errors_file_path root in
+        let errors_file_path = Server_files.errors_file_path root in
         let%lwt fd1 =
           wait_for_errors_file
             errors_file_path
@@ -634,7 +634,7 @@ let test_errors_kill () : bool Lwt.t =
         (* read the remainding output from hh_client. It should detect the kill. *)
         let%lwt stdout = Lwt_io.read hh_client#stdout in
         assert_substring stdout ~substring:"hh_server has terminated. [Killed]";
-        let errors_file_path = ServerFiles.errors_file_path root in
+        let errors_file_path = Server_files.errors_file_path root in
         assert (Sys_utils.file_exists errors_file_path);
         Lwt.return_unit)
   in
@@ -979,7 +979,7 @@ let test_client_invalid_config_key () : bool Lwt.t =
           stderr
           ~substring:"Unrecognized --config config option";
         (* Verify the warning IS in the client log file *)
-        let client_log_file = ServerFiles.client_log root in
+        let client_log_file = Server_files.client_log root in
         let client_log =
           try Sys_utils.cat client_log_file with
           | _ -> failwith "could not read client log"
@@ -1025,7 +1025,7 @@ let test_client_invalid_config_key_did_you_mean () : bool Lwt.t =
           stderr
           ~substring:"Unrecognized --config config option";
         (* Verify the warning with suggestion IS in the client log file *)
-        let client_log_file = ServerFiles.client_log root in
+        let client_log_file = Server_files.client_log root in
         let client_log =
           try Sys_utils.cat client_log_file with
           | _ -> failwith "could not read client log"
@@ -1079,7 +1079,7 @@ let test_client_valid_local_config_key () : bool Lwt.t =
           stderr
           ~substring:"Unrecognized --config config option";
         (* Also verify the client log does NOT contain any warning about this key *)
-        let client_log_file = ServerFiles.client_log root in
+        let client_log_file = Server_files.client_log root in
         let client_log =
           try Sys_utils.cat client_log_file with
           | _ -> failwith "could not read client log"
@@ -1124,7 +1124,7 @@ let test_server_invalid_config_key () : bool Lwt.t =
             ~expected:"[DReady] ready"
         in
         (* Verify the warning IS in the monitor log file *)
-        let monitor_log_file = ServerFiles.monitor_log_link root in
+        let monitor_log_file = Server_files.monitor_log_link root in
         let monitor_log =
           try Sys_utils.cat monitor_log_file with
           | exn ->

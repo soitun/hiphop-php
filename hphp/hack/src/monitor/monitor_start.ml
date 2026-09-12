@@ -48,7 +48,7 @@ let monitor_daemon_main
      (2) otherwise we'll start up the server and it will continue to run
      and handle requests. *)
   (if not (ServerArgs.check_mode options) then
-    let lock_file = ServerFiles.lock_file www_root in
+    let lock_file = Server_files.lock_file www_root in
     if not (Lock.grab lock_file) then (
       Printf.eprintf "Monitor lock file already exists: %s\n%!" lock_file;
       Exit.exit Exit_status.No_error
@@ -59,7 +59,7 @@ let monitor_daemon_main
      and redirect stdout/err to it; in the absence of that flag, we'll just continue
      to write to stdout/err as normal. *)
   if ServerArgs.should_detach options then begin
-    let log_link = ServerFiles.monitor_log_link www_root in
+    let log_link = Server_files.monitor_log_link www_root in
     (try Sys.rename log_link (log_link ^ ".old") with
     | _ -> ());
     let log_file_path = Sys_utils.make_link_of_timestamped log_link in
@@ -84,8 +84,8 @@ let monitor_daemon_main
     ~custom_columns:(ServerArgs.custom_telemetry_data options)
     ~hhconfig_version:
       (ServerConfig.version config |> Config_file.version_to_string_opt)
-    ~rollout_flags:(ServerLocalConfigLoad.to_rollout_flags local_config)
-    ~rollout_group:local_config.ServerLocalConfig.rollout_group
+    ~rollout_flags:(Server_local_config_load.to_rollout_flags local_config)
+    ~rollout_group:local_config.Server_local_config.rollout_group
     ~proc_stack
     (ServerArgs.root options)
     init_id
@@ -121,20 +121,20 @@ let monitor_daemon_main
   ) else
     let current_version = ServerConfig.version config in
     let waiting_client = ServerArgs.waiting_client options in
-    let ServerLocalConfig.Watchman.
+    let Server_local_config.Watchman.
           { debug_logging; subscribe = allow_subscriptions; _ } =
-      local_config.ServerLocalConfig.watchman
+      local_config.Server_local_config.watchman
     in
     let informant_options =
       {
         Informant.root = ServerArgs.root options;
         allow_subscriptions;
-        use_dummy = local_config.ServerLocalConfig.use_dummy_informant;
+        use_dummy = local_config.Server_local_config.use_dummy_informant;
         watchman_debug_logging =
           ServerArgs.watchman_debug_logging options || debug_logging;
-        use_eden = local_config.ServerLocalConfig.edenfs_informant_enabled;
+        use_eden = local_config.Server_local_config.edenfs_informant_enabled;
         min_distance_restart =
-          local_config.ServerLocalConfig.informant_min_distance_restart;
+          local_config.Server_local_config.informant_min_distance_restart;
         ignore_hh_version = ServerArgs.ignore_hh_version options;
         is_saved_state_precomputed =
           (match ServerArgs.with_saved_state options with
@@ -148,15 +148,15 @@ let monitor_daemon_main
           ~current_version
           ~waiting_client
           ~max_purgatory_clients:
-            local_config.ServerLocalConfig.max_purgatory_clients
+            local_config.Server_local_config.max_purgatory_clients
           options
           informant_options
           Monitor_utils.
             {
-              socket_file = ServerFiles.socket_file www_root;
-              lock_file = ServerFiles.lock_file www_root;
-              server_log_file = ServerFiles.log_link www_root;
-              monitor_log_file = ServerFiles.monitor_log_link www_root;
+              socket_file = Server_files.socket_file www_root;
+              lock_file = Server_files.lock_file www_root;
+              server_log_file = Server_files.log_link www_root;
+              monitor_log_file = Server_files.monitor_log_link www_root;
             })
       ~finally:Server_progress.try_delete
 

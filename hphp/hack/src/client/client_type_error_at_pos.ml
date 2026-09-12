@@ -15,7 +15,7 @@ let print_json result =
          result
          ~default:(None, None, None, None)
          ~f:(fun
-              InferErrorAtPosService.
+              Infer_error_at_pos_service.
                 {
                   actual_ty_string;
                   expected_ty_string;
@@ -34,7 +34,8 @@ let print_string result =
        result
        ~default:"(unknown)"
        ~f:(fun
-            InferErrorAtPosService.{ actual_ty_string; expected_ty_string; _ }
+            Infer_error_at_pos_service.
+              { actual_ty_string; expected_ty_string; _ }
           ->
          Format.sprintf
            {|actual: %s, expected: %s|}

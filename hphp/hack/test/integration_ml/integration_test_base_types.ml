@@ -8,7 +8,7 @@
  *
  *)
 
-type 'a new_client_type = RequestResponse of 'a ServerCommandTypes.t
+type 'a new_client_type = RequestResponse of 'a Server_command_types.t
 
 type disk_changes_type = (string * string) list
 

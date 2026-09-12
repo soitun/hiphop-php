@@ -10,14 +10,14 @@
 open Hh_prelude
 
 let helper ctx acc path_list =
-  let (ctx, tasts) = ServerInferTypeBatch.get_tast_map ctx path_list in
+  let (ctx, tasts) = Server_infer_type_batch.get_tast_map ctx path_list in
   let holes =
     List.concat_map path_list ~f:(fun path ->
         let tast = Relative_path.Map.find tasts path in
-        ServerCollectTastHoles.tast_holes
+        Server_collect_tast_holes.tast_holes
           ctx
           tast.Tast_with_dynamic.under_normal_assumptions
-          ServerCommandTypes.Tast_hole.Typing)
+          Server_command_types.Tast_hole.Typing)
   in
   holes @ acc
 
@@ -25,7 +25,7 @@ let go :
     MultiWorker.worker list option ->
     string list ->
     ServerEnv.env ->
-    TastHolesService.result =
+    Tast_holes_service.result =
  fun workers file_list env ->
   let file_list =
     file_list

@@ -24,9 +24,9 @@ function test() {
 }"
 
 let identify_foo_request =
-  ServerCommandTypes.IDENTIFY_FUNCTION
+  Server_command_types.IDENTIFY_FUNCTION
     ( "",
-      ServerCommandTypes.FileContent bar_contents,
+      Server_command_types.FileContent bar_contents,
       File_content.Position.from_one_based 4 4 )
 
 let check_identify_foo_response = function

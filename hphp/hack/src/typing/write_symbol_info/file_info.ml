@@ -235,7 +235,7 @@ let create ctx Indexable.{ path; fanout } ~gen_sym_hash ~root_path ~hhi_path =
        - Get missing information using `Sym_def.resolve`
 
      TODO: do it in one pass using a dedicated visitor *)
-  let symbol_occs = IdentifySymbolService.all_symbols ctx tast in
+  let symbol_occs = Identify_symbol_service.all_symbols ctx tast in
   let symbols =
     List.map symbol_occs ~f:(fun occ -> { occ; def = Sym_def.resolve ctx occ })
   in

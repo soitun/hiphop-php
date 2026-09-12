@@ -9,6 +9,6 @@
 val go_ide :
   filename_for_logging:string ->
   content:string ->
-  action:ServerFormatTypes.ide_action ->
+  action:Server_format_types.ide_action ->
   options:Lsp.DocumentFormatting.formattingOptions ->
-  ServerFormatTypes.ide_result
+  Server_format_types.ide_result

@@ -30,7 +30,7 @@ type env = {
   args: args;
   root: Path.t;
   hhconfig_version_and_switch: string;
-  local_config: ServerLocalConfig.t;
+  local_config: Server_local_config.t;
 }
 
 (** We're storing [env] as global state. It gets initialized right at the start of [main].
@@ -52,7 +52,7 @@ let env =
         };
       root = Path.dummy_path;
       hhconfig_version_and_switch = "[init]";
-      local_config = ServerLocalConfigLoad.default;
+      local_config = Server_local_config_load.default;
     }
 
 (** When did this binary start? *)
@@ -166,13 +166,13 @@ module Run_env = struct
   (** A file use to stream the output of a shelled out command *)
   type stream_file = {
     file: Path.t;
-    q: FindRefsWireFormat.half_open_one_based list Lwt_stream.t;
+    q: Find_refs_wire_format.half_open_one_based list Lwt_stream.t;
     partial_result_token: Lsp.partial_result_token;
   }
 
   type shellout_standard_response = {
     symbol: string;
-    find_refs_action: ServerCommandTypes.Find_refs.action; [@opaque]
+    find_refs_action: Server_command_types.Find_refs.action; [@opaque]
     ide_calculated_positions: Pos.absolute list UriMap.t; [@opaque]
         (** These are results calculated by clientIdeDaemon from its open files, one entry for each open file *)
     stream_file: stream_file option; [@opaque]
@@ -197,7 +197,7 @@ module Run_env = struct
     | GoToImpl of shellout_standard_response
     | Rename of {
         symbol_definition: Relative_path.t Symbol_definition.t; [@opaque]
-        find_refs_action: ServerCommandTypes.Find_refs.action; [@opaque]
+        find_refs_action: Server_command_types.Find_refs.action; [@opaque]
         new_name: string;
         ide_calculated_patches: ServerRenameTypes.patch list; [@opaque]
       }
@@ -393,7 +393,7 @@ type event =
       or [Some Error _] that either the typecheck completed or hh_server failed.
       The [None] case never arises; it represents a logic bug, an unexpected close
       of the underlying [Lwt_stream.t]. All handled in [handle_errors_file_item]. *)
-  | Refs_file of FindRefsWireFormat.half_open_one_based list option
+  | Refs_file of Find_refs_wire_format.half_open_one_based list option
       (** If the editor sent a find-refs-request with a partialResultsToken, then
       we create a partial-results file and "tail -f" it until the shell-out to "hh --ide-find-refs-by-symbol3"
       has finished. This event signals with [Some] that new refs have been appended to the file.
@@ -743,7 +743,7 @@ let get_client_message_source
       Lwt_stream.t
       option)
     (refs_q_opt :
-      FindRefsWireFormat.half_open_one_based list Lwt_stream.t option)
+      Find_refs_wire_format.half_open_one_based list Lwt_stream.t option)
     (uri_needs_check : (DocumentUri.t * errors_trigger) option) :
     [ `From_client
     | `From_ide_service of event
@@ -752,7 +752,7 @@ let get_client_message_source
         Server_progress_lwt.watch_error )
       result
       option
-    | `From_refs_q of FindRefsWireFormat.half_open_one_based list option
+    | `From_refs_q of Find_refs_wire_format.half_open_one_based list option
     | `From_uris_that_need_check of DocumentUri.t * errors_trigger
     | `No_source
     ]
@@ -1032,8 +1032,8 @@ let rename_params_to_document_position (params : Lsp.Rename.params) :
     }
 
 let ide_shell_out_pos_to_lsp_location
-    (pos : FindRefsWireFormat.half_open_one_based) : Lsp.Location.t =
-  let open FindRefsWireFormat in
+    (pos : Find_refs_wire_format.half_open_one_based) : Lsp.Location.t =
+  let open Find_refs_wire_format in
   Lsp.Location.
     {
       uri = path_string_to_lsp_uri pos.filename ~default_path:pos.filename;
@@ -1335,7 +1335,7 @@ let get_document_location
 If the output is malformed, raises an exception. *)
 let shellout_locations_to_lsp_locations_exn (stdout : string) :
     Lsp.Location.t list =
-  FindRefsWireFormat.IdeShellout.from_string_exn stdout
+  Find_refs_wire_format.IdeShellout.from_string_exn stdout
   |> List.map ~f:ide_shell_out_pos_to_lsp_location
 
 let edit_of_patch (patch : ide_refactor_patch) : Lsp.TextEdit.t =
@@ -1350,7 +1350,7 @@ let edit_of_patch (patch : ide_refactor_patch) : Lsp.TextEdit.t =
   let loc =
     let ide_shell_out_pos =
       {
-        FindRefsWireFormat.filename = patch.filename;
+        Find_refs_wire_format.filename = patch.filename;
         char_start = patch.char_start;
         char_end = patch.char_end + 1;
         (* This end is inclusive for range replacement *)
@@ -1782,14 +1782,14 @@ let ide_rpc
 let watch_refs_stream_file
     (file : Path.t)
     ~(open_file_results : Search_types.Find_refs.absolute list Lsp.UriMap.t) :
-    FindRefsWireFormat.half_open_one_based list Lwt_stream.t =
+    Find_refs_wire_format.half_open_one_based list Lwt_stream.t =
   let (q, add) = Lwt_stream.create () in
   let ide_results =
     open_file_results
     |> UriMap.values
     |> List.concat
     |> List.map ~f:(fun Search_types.Find_refs.{ name = _; pos } ->
-           FindRefsWireFormat.from_absolute pos)
+           Find_refs_wire_format.from_absolute pos)
   in
   if not (List.is_empty ide_results) then add (Some ide_results);
   let rec watch_loop fd file_pos =
@@ -1806,14 +1806,14 @@ let watch_refs_stream_file
       let%lwt (results, file_pos) =
         Lwt_utils.with_lock fd Unix.F_RLOCK ~f:(fun () ->
             let r =
-              FindRefsWireFormat.Ide_stream.read_from_locked_file
+              Find_refs_wire_format.Ide_stream.read_from_locked_file
                 (Lwt_unix.unix_file_descr fd)
                 ~pos:file_pos
             in
             Lwt.return r)
       in
       let results =
-        List.filter results ~f:(fun { FindRefsWireFormat.filename; _ } ->
+        List.filter results ~f:(fun { Find_refs_wire_format.filename; _ } ->
             let uri = path_string_to_lsp_uri filename ~default_path:filename in
             not (UriMap.mem uri open_file_results))
       in
@@ -2068,9 +2068,9 @@ let kickoff_shell_out_and_maybe_cancel
               ide_calculated_positions = _;
             } ->
           let (action, stream_file, hints) =
-            FindRefsWireFormat.CliArgs.to_string_triple
+            Find_refs_wire_format.CliArgs.to_string_triple
               {
-                FindRefsWireFormat.CliArgs.symbol_name = symbol;
+                Find_refs_wire_format.CliArgs.symbol_name = symbol;
                 action = find_refs_action;
                 stream_file =
                   Option.map stream_file ~f:(fun sf -> sf.Run_env.file);
@@ -2085,9 +2085,9 @@ let kickoff_shell_out_and_maybe_cancel
           cmd
         | GoToImpl { symbol; find_refs_action; _ } ->
           let symbol_action_arg =
-            FindRefsWireFormat.CliArgs.to_string
+            Find_refs_wire_format.CliArgs.to_string
               {
-                FindRefsWireFormat.CliArgs.symbol_name = symbol;
+                Find_refs_wire_format.CliArgs.symbol_name = symbol;
                 action = find_refs_action;
                 stream_file = None;
                 hint_suffixes = [];
@@ -2101,7 +2101,7 @@ let kickoff_shell_out_and_maybe_cancel
           cmd
         | Rename { symbol_definition; find_refs_action; new_name; _ } ->
           let name_action_definition_string =
-            ServerCommandTypes.Rename.arguments_to_string_exn
+            Server_command_types.Rename.arguments_to_string_exn
               new_name
               find_refs_action
               symbol_definition
@@ -2238,14 +2238,14 @@ let do_rageFB (state : state) : RageFB.result Lwt.t =
   in
   Lwt.return [{ RageFB.title = None; data }]
 
-let do_hover_common (infos : HoverService.hover_info list) : Hover.result =
-  let contents = HoverService.as_marked_string_list infos in
+let do_hover_common (infos : Hover_service.hover_info list) : Hover.result =
+  let contents = Hover_service.as_marked_string_list infos in
   (* We pull the position from the SymbolOccurrence.t record, so I would be
      surprised if there were any different ones in here. Just take the first
      non-None one. *)
   let range =
     infos
-    |> List.filter_map ~f:(fun { HoverService.pos; _ } -> pos)
+    |> List.filter_map ~f:(fun { Hover_service.pos; _ } -> pos)
     |> List.hd
     |> Option.map
          ~f:(Lsp_helpers.hack_pos_to_lsp_range ~equal:Relative_path.equal)
@@ -2321,9 +2321,9 @@ let do_definition
   Lwt.return (locations, has_xhp_attribute)
 
 let make_ide_completion_response
-    (result : AutocompleteTypes.ide_result) (filename : string) :
+    (result : Autocomplete_types.ide_result) (filename : string) :
     Completion.completionList Lwt.t =
-  let open AutocompleteTypes in
+  let open Autocomplete_types in
   let open Completion in
   let hack_to_insert (completion : autocomplete_item) :
       TextEdit.t * Completion.insertTextFormat * TextEdit.t list =
@@ -2387,13 +2387,13 @@ let make_ide_completion_response
     in
     {
       label = completion.res_label;
-      kind = si_kind_to_completion_kind completion.AutocompleteTypes.res_kind;
+      kind = si_kind_to_completion_kind completion.Autocomplete_types.res_kind;
       detail = Some completion.res_detail;
       documentation =
         Option.map completion.res_documentation ~f:(fun s ->
             MarkedStringsDocumentation [MarkedString s]);
       (* This will be filled in by completionItem/resolve. *)
-      sortText = Some (AutocompleteTypes.sort_text completion);
+      sortText = Some (Autocomplete_types.sort_text completion);
       filterText = completion.res_filter_text;
       insertText = None;
       insertTextFormat = Some insertTextFormat;
@@ -2439,7 +2439,7 @@ let do_completion
 
 exception NoLocationFound
 
-let docblock_to_markdown (raw_docblock : DocblockService.result) :
+let docblock_to_markdown (raw_docblock : Docblock_service.result) :
     Completion.completionDocumentation option =
   match raw_docblock with
   | [] -> None
@@ -2448,17 +2448,17 @@ let docblock_to_markdown (raw_docblock : DocblockService.result) :
       (Completion.MarkedStringsDocumentation
          (Core.List.fold docblock ~init:[] ~f:(fun acc elt ->
               match elt with
-              | DocblockService.Markdown txt -> MarkedString txt :: acc
-              | DocblockService.HackSnippet txt ->
+              | Docblock_service.Markdown txt -> MarkedString txt :: acc
+              | Docblock_service.HackSnippet txt ->
                 MarkedCode ("hack", txt) :: acc
-              | DocblockService.XhpSnippet txt ->
+              | Docblock_service.XhpSnippet txt ->
                 MarkedCode ("html", txt) :: acc)))
 
 let docblock_with_ranking_detail
-    (raw_docblock : DocblockService.result) (ranking_detail : string option) :
-    DocblockService.result =
+    (raw_docblock : Docblock_service.result) (ranking_detail : string option) :
+    Docblock_service.result =
   match ranking_detail with
-  | Some detail -> raw_docblock @ [DocblockService.Markdown detail]
+  | Some detail -> raw_docblock @ [Docblock_service.Markdown detail]
   | None -> raw_docblock
 
 let resolve_ranking_source
@@ -2609,7 +2609,7 @@ let rec lsp_document_symbols_of_outline
     ~(filename : string)
     ~(accu : Lsp.SymbolInformation.t list)
     ~(container_name : string option)
-    (defs : FileOutline.outline) : Lsp.SymbolInformation.t list =
+    (defs : File_outline.outline) : Lsp.SymbolInformation.t list =
   let open Symbol_definition in
   let hack_to_lsp_kind = function
     | Symbol_definition.Function -> SymbolInformation.Function
@@ -2757,7 +2757,7 @@ let do_findReferences
         ~f:(fun partial_result_token ->
           let file =
             Stdlib.Filename.temp_file
-              ~temp_dir:(ServerFiles.get_tmp ())
+              ~temp_dir:(Server_files.get_tmp ())
               (Printf.sprintf "find_refs_stream_%d_pid" (Unix.getpid ()))
               ".jsonl"
           in
@@ -2800,7 +2800,7 @@ let do_findReferences
 (** Helper for sending $/progress messages for find-refs items. *)
 let notify_refs_file_items
     (shellout_standard_response : Run_env.shellout_standard_response)
-    (refs : FindRefsWireFormat.half_open_one_based list) : unit =
+    (refs : Find_refs_wire_format.half_open_one_based list) : unit =
   match shellout_standard_response.Run_env.stream_file with
   | Some Run_env.{ partial_result_token; _ } ->
     let notification =
@@ -2820,7 +2820,7 @@ let notify_refs_file_items
 items in the streaming-find-refs file. *)
 let handle_refs_file_items
     ~(state : state)
-    (items : FindRefsWireFormat.half_open_one_based list option) :
+    (items : Find_refs_wire_format.half_open_one_based list option) :
     result_telemetry option =
   match (items, state) with
   | ( Some refs,
@@ -3010,9 +3010,9 @@ let do_highlight
 let do_formatting_common
     (uri : Lsp.DocumentUri.t)
     (editor_open_files : Lsp.TextDocumentItem.t UriMap.t)
-    (action : ServerFormatTypes.ide_action)
+    (action : Server_format_types.ide_action)
     (options : DocumentFormatting.formattingOptions) : TextEdit.t list =
-  let open ServerFormatTypes in
+  let open Server_format_types in
   let filename_for_logging = lsp_uri_to_path uri in
   (* Following line will throw if the document isn't already open, so we'll *)
   (* return an error code to the LSP client. The spec doesn't spell out if we *)
@@ -3047,7 +3047,7 @@ let do_documentRangeFormatting
     (params : DocumentRangeFormatting.params) : DocumentRangeFormatting.result =
   let open DocumentRangeFormatting in
   let open TextDocumentIdentifier in
-  let action = ServerFormatTypes.Range (lsp_range_to_ide params.range) in
+  let action = Server_format_types.Range (lsp_range_to_ide params.range) in
   do_formatting_common
     params.textDocument.uri
     editor_open_files
@@ -3082,7 +3082,7 @@ let do_documentOnTypeFormatting
   let position =
     { params.position with character = params.position.character - 1 }
   in
-  let action = ServerFormatTypes.Position (lsp_position_to_ide position) in
+  let action = Server_format_types.Position (lsp_position_to_ide position) in
   do_formatting_common
     params.textDocument.uri
     editor_open_files
@@ -3094,7 +3094,7 @@ let do_documentFormatting
     (params : DocumentFormatting.params) : DocumentFormatting.result =
   let open DocumentFormatting in
   let open TextDocumentIdentifier in
-  let action = ServerFormatTypes.Document in
+  let action = Server_format_types.Document in
   do_formatting_common
     params.textDocument.uri
     editor_open_files
@@ -3665,7 +3665,7 @@ let try_open_errors_file ~(state : state ref) : unit Lwt.t =
   match !latest_hh_server_errors with
   | TailingErrors _ -> Lwt.return_unit
   | SeekingErrors { prev_st_ino; seek_reason } ->
-    let errors_file_path = ServerFiles.errors_file_path !env.root in
+    let errors_file_path = Server_files.errors_file_path !env.root in
     (* 1. can we open the file? *)
     let result =
       try
@@ -3919,7 +3919,7 @@ let do_initialize ~initialize_params : Initialize.result =
           documentLinkProvider = None;
           executeCommandProvider = None;
           implementationProvider =
-            !env.local_config.ServerLocalConfig.go_to_implementation;
+            !env.local_config.Server_local_config.go_to_implementation;
           rageProviderFB = true;
           server_experimental =
             Some
@@ -4929,7 +4929,7 @@ let handle_tick ~(state : state ref) : result_telemetry option Lwt.t =
 let setup_logging ~root ~verbose =
   (* Log to a file on disk. Note that calls to `Hh_logger` will always write to
      `stderr`; this is in addition to that. *)
-  let log_filename = ServerFiles.client_lsp_log root in
+  let log_filename = Server_files.client_lsp_log root in
   begin
     try Sys.rename log_filename (log_filename ^ ".old") with
     | _e -> ()
@@ -4953,7 +4953,7 @@ let main
     (args : args)
     ~(init_id : string)
     ~(config : ServerConfig.t)
-    ~(local_config : ServerLocalConfig.t)
+    ~(local_config : Server_local_config.t)
     ~(init_proc_stack : string list option) : Exit_status.t Lwt.t =
   Printexc.record_backtrace true;
 
@@ -4982,7 +4982,7 @@ let main
 
   let error_filter =
     Filter_diagnostics.Filter.make
-      ~default_all:local_config.ServerLocalConfig.warnings_default_all
+      ~default_all:local_config.Server_local_config.warnings_default_all
       ~generated_files:
         (List.map ~f:Str.regexp (ServerConfig.warnings_generated_files config))
       []

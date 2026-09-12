@@ -9,7 +9,7 @@
 
 type params = {
   informant_managed: bool;
-  state: ServerGlobalState.t;
+  state: Server_global_state.t;
   options: ServerArgs.options;
   monitor_pid: int;
   priority_in_fd: Unix.file_descr;
@@ -22,10 +22,11 @@ type params = {
  * are not functions. *)
 val entry : (params, unit, unit) Daemon.entry
 
-val run_once : ServerArgs.options -> ServerConfig.t -> ServerLocalConfig.t -> 'a
+val run_once :
+  ServerArgs.options -> ServerConfig.t -> Server_local_config.t -> 'a
 
 val serve_one_iteration :
-  ServerEnv.genv -> ServerEnv.env -> ClientProvider.t -> ServerEnv.env
+  ServerEnv.genv -> ServerEnv.env -> Client_provider.t -> ServerEnv.env
 
 (* Main loop can choose to batch several rechecks together. Setting this will
  * disable this behavior, forcing only one recheck per serve_one_iteration
@@ -46,5 +47,5 @@ val setup_server :
   monitor_pid:int option ->
   ServerArgs.options ->
   ServerConfig.t ->
-  ServerLocalConfig.t ->
+  Server_local_config.t ->
   MultiWorker.worker list * ServerEnv.env

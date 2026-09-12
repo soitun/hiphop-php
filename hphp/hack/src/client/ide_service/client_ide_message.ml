@@ -32,7 +32,7 @@ module Completion_resolve = struct
   }
 
   type result = {
-    docblock: DocblockService.result;
+    docblock: Docblock_service.result;
     signature: string option;
   }
 end
@@ -48,7 +48,7 @@ type find_refs_result =
   | Invalid_symbol
   | Find_refs_success of {
       full_name: string;  (** from [SymbolDefinition.full_name] *)
-      action: ServerCommandTypes.Find_refs.action option;
+      action: Server_command_types.Find_refs.action option;
           (** if true, then clientLsp should shell out to hh_server to collect more positions;
           this action will specifiy what hh_server shoud look for. *)
       hint_suffixes: string list;
@@ -62,7 +62,7 @@ type rename_result =
   | Rename_success of {
       shellout:
         (Relative_path.t Symbol_definition.t
-        * ServerCommandTypes.Find_refs.action)
+        * Server_command_types.Find_refs.action)
         option;
       local: ServerRenameTypes.patch list;
     }
@@ -71,7 +71,7 @@ type go_to_impl_result =
   | Invalid_symbol_impl
   | Go_to_impl_success of
       (string
-      * ServerCommandTypes.Find_refs.action
+      * Server_command_types.Find_refs.action
       * Pos.absolute list Lsp.UriMap.t)
 
 type completion_request = { is_manually_invoked: bool }
@@ -124,13 +124,13 @@ type _ t =
   | Diagnostics : document -> diagnostic list t
       (** Obtains latest diagnostics for file. *)
   | Verbose_to_file : bool -> unit t
-  | Hover : document * File_content.Position.t -> HoverService.result t
+  | Hover : document * File_content.Position.t -> Hover_service.result t
   | Definition :
       document * File_content.Position.t
-      -> ServerCommandTypes.Go_to_definition.result t
+      -> Server_command_types.Go_to_definition.result t
   | Completion :
       document * File_content.Position.t * completion_request
-      -> AutocompleteTypes.ide_result t
+      -> Autocomplete_types.ide_result t
       (** Handles "textDocument/completion" LSP messages *)
   | Completion_resolve_location :
       Path.t * fullname * File_content.Position.t * FileInfo.si_kind
@@ -149,7 +149,7 @@ type _ t =
       document * File_content.Position.t
       -> Ide_api_types.range list t
       (** Handles "textDocument/documentHighlight" LSP messages *)
-  | Document_symbol : document -> FileOutline.outline t
+  | Document_symbol : document -> File_outline.outline t
       (** Handles "textDocument/documentSymbol" LSP messages *)
   | Workspace_symbol : string -> Search_utils.result t
   | Go_to_implementation :
@@ -171,7 +171,7 @@ type _ t =
           *)
   | Type_definition :
       document * File_content.Position.t
-      -> ServerCommandTypes.Go_to_type_definition.result t
+      -> Server_command_types.Go_to_type_definition.result t
       (** Handles "textDocument/typeDefinition" LSP messages *)
   | Signature_help :
       document * File_content.Position.t

@@ -9,11 +9,11 @@
 
 type process_data = {
   pid: int;  (** Process ID. *)
-  server_specific_files: ServerCommandTypes.server_specific_files; [@opaque]
+  server_specific_files: Server_command_types.server_specific_files; [@opaque]
   start_t: float;
   in_fd: Unix.file_descr; [@opaque]
       (** Get occasional updates about status/busyness from typechecker here. *)
-  out_fds: Unix.file_descr MonitorRpc.PipeTypeMap.t; [@opaque]
+  out_fds: Unix.file_descr Monitor_rpc.PipeTypeMap.t; [@opaque]
       (** Send client's File Descriptors to the typechecker over this. *)
   last_request_handoff: float ref;
 }

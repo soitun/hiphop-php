@@ -49,7 +49,7 @@ type conn = {
   t_received_hello: float;
   t_sent_connection_type: float;
   channels: Stdlib.in_channel * Out_channel.t;
-  server_specific_files: ServerCommandTypes.server_specific_files;
+  server_specific_files: Server_command_types.server_specific_files;
   conn_progress_callback: string option -> unit;
   conn_root: Path.t;
   conn_deadline: float option;
@@ -79,12 +79,12 @@ let check_for_deadline progress_callback deadline_opt =
     and progress information using the argument callback. *)
 let rec wait_for_server_message
     ~(connection_log_id : string)
-    ~(expected_message : 'a ServerCommandTypes.message_type option)
+    ~(expected_message : 'a Server_command_types.message_type option)
     ~(ic : Stdlib.in_channel)
     ~(deadline : float option)
-    ~(server_specific_files : ServerCommandTypes.server_specific_files)
+    ~(server_specific_files : Server_command_types.server_specific_files)
     ~(progress_callback : string option -> unit)
-    ~(root : Path.t) : _ ServerCommandTypes.message_type Lwt.t =
+    ~(root : Path.t) : _ Server_command_types.message_type Lwt.t =
   check_for_deadline progress_callback deadline;
   let%lwt (readable, _, _) =
     Lwt_utils.select
@@ -110,13 +110,13 @@ let rec wait_for_server_message
     end in
     try%lwt
       let fd = Unix.descr_of_in_channel ic in
-      let msg : 'a ServerCommandTypes.message_type =
+      let msg : 'a Server_command_types.message_type =
         Marshal_tools.from_fd_with_preamble fd
       in
       let (is_ping, is_handoff_failed) =
         match msg with
-        | ServerCommandTypes.Ping -> (true, false)
-        | ServerCommandTypes.Monitor_failed_to_handoff -> (false, true)
+        | Server_command_types.Ping -> (true, false)
+        | Server_command_types.Monitor_failed_to_handoff -> (false, true)
         | _ -> (false, false)
       in
       let matches_expected =
@@ -128,14 +128,14 @@ let rec wait_for_server_message
         log
           ~connection_log_id
           "wait_for_server_message: got expected %s"
-          (ServerCommandTypesUtils.debug_describe_message_type msg);
+          (Server_command_types_utils.debug_describe_message_type msg);
         progress_callback None;
         Lwt.return msg
       ) else (
         log
           ~connection_log_id
           "wait_for_server_message: didn't want %s"
-          (ServerCommandTypesUtils.debug_describe_message_type msg);
+          (Server_command_types_utils.debug_describe_message_type msg);
         if not is_ping then read_and_show_progress progress_callback;
         wait_for_server_message
           ~connection_log_id
@@ -151,7 +151,7 @@ let rec wait_for_server_message
       let e = Exception.wrap exn in
       let finale_data =
         Exit_status.get_finale_data
-          server_specific_files.ServerCommandTypes.server_finale_file
+          server_specific_files.Server_command_types.server_finale_file
       in
       let client_exn = Exception.get_ctor_string e in
       let client_stack =
@@ -203,13 +203,13 @@ let wait_for_server_hello
     (connection_log_id : string)
     (ic : Stdlib.in_channel)
     (deadline : float option)
-    (server_specific_files : ServerCommandTypes.server_specific_files)
+    (server_specific_files : Server_command_types.server_specific_files)
     (progress_callback : string option -> unit)
     (root : Path.t) : unit Lwt.t =
-  let%lwt (_ : 'a ServerCommandTypes.message_type) =
+  let%lwt (_ : 'a Server_command_types.message_type) =
     wait_for_server_message
       ~connection_log_id
-      ~expected_message:(Some ServerCommandTypes.Hello)
+      ~expected_message:(Some Server_command_types.Hello)
       ~ic
       ~deadline
       ~server_specific_files
@@ -265,14 +265,14 @@ let rec connect
   check_for_deadline progress_callback deadline;
   let handoff_options =
     {
-      MonitorRpc.force_dormant_start;
+      Monitor_rpc.force_dormant_start;
       pipe_type =
         (if force_dormant_start then
-          MonitorRpc.Force_dormant_start_only
+          Monitor_rpc.Force_dormant_start_only
         else if use_priority_pipe then
-          MonitorRpc.Priority
+          Monitor_rpc.Priority
         else
-          MonitorRpc.Default);
+          Monitor_rpc.Default);
     }
   in
   let tracker = Connection_tracker.create () in
@@ -429,14 +429,14 @@ let connect (env : env) : conn Lwt.t =
   Hack_event_logger.client_established_connection start_time;
   if env.do_post_handoff_handshake then begin
     (* read by [ServerClientProvider.read_connection_type_from_channel] *)
-    Marshal.to_channel oc ServerCommandTypes.Non_persistent [];
+    Marshal.to_channel oc Server_command_types.Non_persistent [];
     Out_channel.flush oc
   end;
   Lwt.return { conn with t_sent_connection_type = Unix.gettimeofday () }
 
 let rpc :
     type a.
-    conn -> desc:string -> a ServerCommandTypes.t -> (a * Telemetry.t) Lwt.t =
+    conn -> desc:string -> a Server_command_types.t -> (a * Telemetry.t) Lwt.t =
  fun {
        connection_log_id;
        t_connected_to_monitor;
@@ -452,7 +452,7 @@ let rpc :
      ~desc
      cmd ->
   let t_ready_to_send_cmd = Unix.gettimeofday () in
-  let metadata = { ServerCommandTypes.from; desc } in
+  let metadata = { Server_command_types.from; desc } in
   Marshal.to_channel oc (metadata, cmd) [];
   Out_channel.flush oc;
   let t_sent_cmd = Unix.gettimeofday () in
@@ -467,7 +467,7 @@ let rpc :
       ~root:conn_root
   in
   match res with
-  | ServerCommandTypes.Response (response, tracker) ->
+  | Server_command_types.Response (response, tracker) ->
     let open Connection_tracker in
     let telemetry =
       tracker
@@ -482,17 +482,17 @@ let rpc :
       |> get_telemetry
     in
     Lwt.return (response, telemetry)
-  | ServerCommandTypes.Hello -> failwith "unexpected 'hello' RPC response"
-  | ServerCommandTypes.Ping -> failwith "unexpected 'ping' RPC response"
-  | ServerCommandTypes.Monitor_failed_to_handoff ->
+  | Server_command_types.Hello -> failwith "unexpected 'hello' RPC response"
+  | Server_command_types.Ping -> failwith "unexpected 'ping' RPC response"
+  | Server_command_types.Monitor_failed_to_handoff ->
     failwith "unexpected 'monitor_failed_to_handoff' RPC response"
 
 let rpc_with_retry
     (conn_f : unit -> conn Lwt.t)
     ~(desc : string)
-    (cmd : 'a ServerCommandTypes.Done_or_retry.t ServerCommandTypes.t) :
+    (cmd : 'a Server_command_types.Done_or_retry.t Server_command_types.t) :
     'a Lwt.t =
-  ServerCommandTypes.Done_or_retry.call ~f:(fun () ->
+  Server_command_types.Done_or_retry.call ~f:(fun () ->
       let%lwt conn = conn_f () in
       let%lwt (result, _telemetry) = rpc conn ~desc cmd in
       Lwt.return result)
@@ -500,10 +500,10 @@ let rpc_with_retry
 let rpc_with_retry_list
     (conn_f : unit -> conn Lwt.t)
     ~(desc : string)
-    (cmd : 'a ServerCommandTypes.Done_or_retry.t list ServerCommandTypes.t) :
-    'a list Lwt.t =
+    (cmd : 'a Server_command_types.Done_or_retry.t list Server_command_types.t)
+    : 'a list Lwt.t =
   let call_here s =
-    ServerCommandTypes.Done_or_retry.call ~f:(fun () -> Lwt.return s)
+    Server_command_types.Done_or_retry.call ~f:(fun () -> Lwt.return s)
   in
   let%lwt conn = conn_f () in
   let%lwt (job_list, _) = rpc conn ~desc cmd in

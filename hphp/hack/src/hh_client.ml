@@ -31,7 +31,7 @@ let init_event_logger
     ~init_id
     ~from
     (config : ServerConfig.t)
-    (local_config : ServerLocalConfig.t) : unit =
+    (local_config : Server_local_config.t) : unit =
   Hack_event_logger.client_init
     ~init_id
     ~from
@@ -41,9 +41,9 @@ let init_event_logger
   Hack_event_logger.set_hhconfig_version
     (ServerConfig.version config |> Config_file.version_to_string_opt);
   Hack_event_logger.set_rollout_group
-    local_config.ServerLocalConfig.rollout_group;
+    local_config.Server_local_config.rollout_group;
   Hack_event_logger.set_rollout_flags
-    (ServerLocalConfigLoad.to_rollout_flags local_config);
+    (Server_local_config_load.to_rollout_flags local_config);
   ()
 
 let log_qe_fetch (fetch : Server_local_config_qe.fetch) =
@@ -65,7 +65,7 @@ let set_up_logger ~command_name ~init_id ~root =
   Hh_logger.Level.set_min_level_file Hh_logger.Level.Info;
   Hh_logger.Level.set_min_level_stderr Hh_logger.Level.Error;
   Hh_logger.set_id (Printf.sprintf "%s#%s" command_name init_id);
-  let client_log_fn = ServerFiles.client_log root in
+  let client_log_fn = Server_files.client_log root in
   try
     (* For irritating reasons T67177821 we might not have permissions
        to write to the file. Pending a fix, let's only set up Hh_logger
@@ -169,8 +169,8 @@ let exec_command_with_config
   let init_proc_stack =
     Option.some_if
       (String.equal "" from
-      || local_config.ServerLocalConfig.log_init_proc_stack_also_on_absent_from
-      )
+      || local_config
+           .Server_local_config.log_init_proc_stack_also_on_absent_from)
       init_proc_stack
   in
   try

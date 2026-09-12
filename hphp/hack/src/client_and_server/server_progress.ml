@@ -45,7 +45,7 @@ let server_progress_file () =
   match !root with
   | None -> failwith "Server_progress.set_root must be called first"
   | Some root when Path.equal root Path.dummy_path -> None
-  | Some root -> Some (ServerFiles.server_progress_file root)
+  | Some root -> Some (Server_files.server_progress_file root)
 
 let try_delete () : unit =
   match server_progress_file () with
@@ -230,7 +230,7 @@ let errors_file_path () =
   | None -> failwith "Server_progress.set_root must be called first"
   | Some _ when not !is_production_enabled -> None
   | Some root when Path.equal root Path.dummy_path -> None
-  | Some root -> Some (ServerFiles.errors_file_path root)
+  | Some root -> Some (Server_files.errors_file_path root)
 
 (** This is an internal module concerned with the binary format of the errors-file. *)
 module ErrorsFile = struct
@@ -261,7 +261,7 @@ module ErrorsFile = struct
         cmdline: string;
             (** the /proc/pid/cmdline of hh_server; clients check that the current /proc/pid/cmdline is the same (proving that the pid hasn't been recycled) *)
         timestamp: float;  (** the time at which the typecheck began *)
-        clock: ServerNotifierTypes.clock option;
+        clock: Server_notifier_types.clock option;
             (** the file watcher clock at which the typecheck began, i.e. reflecting all file-changes up to here *)
       }
     | Item of errors_file_item
@@ -400,7 +400,7 @@ module ErrorsWrite = struct
     result
 
   let new_empty_file
-      ~(clock : ServerNotifierTypes.clock option)
+      ~(clock : Server_notifier_types.clock option)
       ~(ignore_hh_version : bool)
       ~(cancel_reason : string * string) : unit =
     match errors_file_path () with
@@ -461,7 +461,7 @@ module ErrorsWrite = struct
                 (Sys_utils.show_inode fd)
                 (Option.value_map
                    clock
-                   ~f:ServerNotifierTypes.show_clock
+                   ~f:Server_notifier_types.show_clock
                    ~default:"[none]");
               fd)
       in
@@ -594,7 +594,7 @@ module ErrorsRead = struct
   type open_success = {
     pid: int;
     timestamp: float;
-    clock: ServerNotifierTypes.clock option;
+    clock: Server_notifier_types.clock option;
   }
 
   type open_error =
@@ -635,7 +635,7 @@ module ErrorsRead = struct
         in
         Error (OBuild_id_mismatch, msg)
       else if not (Proc.is_alive ~pid ~expected:cmdline) then
-        let server_finale_file = ServerFiles.server_finale_file pid in
+        let server_finale_file = Server_files.server_finale_file pid in
         let finale_data = Exit_status.get_finale_data server_finale_file in
         Error (OKilled finale_data, "Errors-file is from defunct PID")
       else

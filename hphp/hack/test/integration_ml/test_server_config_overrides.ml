@@ -28,7 +28,7 @@ let test_cli_overrides () =
   if not (timeout = 747) then Test.fail "Global config value not overridden!";
 
   let informant_min_distance_restart =
-    local_config.ServerLocalConfig.informant_min_distance_restart
+    local_config.Server_local_config.informant_min_distance_restart
   in
   if not (informant_min_distance_restart = 711) then
     Test.fail "Local config value not overridden!"
@@ -50,7 +50,7 @@ let run_override_pipeline overrides =
     ("gatekeeper metadata", apply "gatekeeper" config)
   in
   let (experiments_meta, config) =
-    ServerLocalConfigLoad.For_test.apply_overrides_in_order
+    Server_local_config_load.For_test.apply_overrides_in_order
       ~silent:true
       ~config:(Config_file.of_list [(key, "hh.conf")])
       ~overrides

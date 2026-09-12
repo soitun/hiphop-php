@@ -166,7 +166,7 @@ let query_notifier
     (start_time : float) :
     ServerEnv.env
     * Relative_path.Set.t
-    * ServerNotifier.clock option
+    * Server_notifier.clock option
     * bool
     * Telemetry.t =
   let telemetry =
@@ -179,22 +179,22 @@ let query_notifier
         begin
           try
             let (changes, clock, telemetry) =
-              ServerNotifier.get_changes_sync genv.notifier telemetry
+              Server_notifier.get_changes_sync genv.notifier telemetry
             in
-            (ServerNotifier.SyncChanges changes, clock, telemetry)
+            (Server_notifier.SyncChanges changes, clock, telemetry)
           with
-          | Watchman.Timeout -> (ServerNotifier.Unavailable, None, telemetry)
+          | Watchman.Timeout -> (Server_notifier.Unavailable, None, telemetry)
         end )
     | `Async ->
       ( { env with last_notifier_check_time = start_time },
-        ServerNotifier.get_changes_async genv.notifier telemetry )
-    | `Skip -> (env, (ServerNotifier.AsyncChanges SSet.empty, None, telemetry))
+        Server_notifier.get_changes_async genv.notifier telemetry )
+    | `Skip -> (env, (Server_notifier.AsyncChanges SSet.empty, None, telemetry))
   in
   let telemetry = Telemetry.duration telemetry ~key:"notified" ~start_time in
   let unpack_updates = function
-    | ServerNotifier.Unavailable -> (true, SSet.empty)
-    | ServerNotifier.AsyncChanges updates -> (true, updates)
-    | ServerNotifier.SyncChanges updates ->
+    | Server_notifier.Unavailable -> (true, SSet.empty)
+    | Server_notifier.AsyncChanges updates -> (true, updates)
+    | Server_notifier.SyncChanges updates ->
       (* We get SyncChanges either
          a) due to a call to to  ServerNotifier.get_changes_sync  (see match on query_kind above) or
          b) if we used ServerNotifier.get_changes_async, but the latter actually received
@@ -204,8 +204,8 @@ let query_notifier
   in
   let (updates_stale, raw_updates) = unpack_updates raw_updates in
   let stop_pumping_on_empty_updates =
-    let open ServerLocalConfig in
-    let open ServerLocalConfig.EdenfsFileWatcher in
+    let open Server_local_config in
+    let open Server_local_config.EdenfsFileWatcher in
     (* TODO(T226505256) When using Edenfs_watcher, we currently have a Watchman-based workaround
        in place to support deferring changes while meerkat is running. However, this workaround has
        the side-effect that ServerNotifier.maybe_changes_available may still return true after
@@ -216,10 +216,10 @@ let query_notifier
     genv.local_config.edenfs_file_watcher.enabled
   in
   let rec pump_async_updates acc acc_clock iteration telemetry =
-    match ServerNotifier.maybe_changes_available genv.notifier with
+    match Server_notifier.maybe_changes_available genv.notifier with
     | Some true ->
       let (changes, clock, telemetry) =
-        ServerNotifier.get_changes_async genv.notifier telemetry
+        Server_notifier.get_changes_async genv.notifier telemetry
       in
       let (_, raw_updates) = unpack_updates changes in
       if stop_pumping_on_empty_updates && SSet.is_empty raw_updates then
@@ -335,10 +335,10 @@ let rec recheck_until_no_changes_left stats genv env select_outcome :
       connection. This is harmless, but could maybe be filtered away. *)
   let query_kind =
     match select_outcome with
-    | ClientProvider.Select_new _ -> `Sync
-    | ClientProvider.Select_nothing
-    | ClientProvider.Select_exception _
-    | ClientProvider.Not_selecting_hg_updating ->
+    | Client_provider.Select_new _ -> `Sync
+    | Client_provider.Select_nothing
+    | Client_provider.Select_exception _
+    | Client_provider.Not_selecting_hg_updating ->
       if Float.(start_time - env.last_notifier_check_time > 0.5) then
         `Async
       else
@@ -361,7 +361,7 @@ let rec recheck_until_no_changes_left stats genv env select_outcome :
   let env =
     if
       Option.is_some clock
-      && not (Option.equal ServerNotifier.equal_clock clock env.clock)
+      && not (Option.equal Server_notifier.equal_clock clock env.clock)
     then begin
       Hh_logger.log "Recheck at watchclock %s" (ServerEnv.show_clock clock);
       { env with clock }
@@ -391,11 +391,11 @@ let rec recheck_until_no_changes_left stats genv env select_outcome :
       when is_full_check_needed env.full_check_status
            && Float.(start_time - env.last_command_time > 5.0) -> begin
       try
-        ClientProvider.ping client;
+        Client_provider.ping client;
         env
       with
-      | ClientProvider.Client_went_away ->
-        ClientProvider.shutdown_client client;
+      | Client_provider.Client_went_away ->
+        Client_provider.shutdown_client client;
         {
           env with
           nonpersistent_client_pending_command_needs_full_check = None;
@@ -507,9 +507,9 @@ let generate_and_update_recheck_id env =
 
 let idle_if_no_client env waiting_client =
   match waiting_client with
-  | ClientProvider.Select_nothing
-  | ClientProvider.Select_exception _
-  | ClientProvider.Not_selecting_hg_updating ->
+  | Client_provider.Select_nothing
+  | Client_provider.Select_exception _
+  | Client_provider.Not_selecting_hg_updating ->
     let {
       RecheckLoopStats.per_batch_telemetry;
       total_changed_files_count;
@@ -534,7 +534,7 @@ let idle_if_no_client env waiting_client =
       { env with last_idle_job_time = t }
     else
       env
-  | ClientProvider.Select_new _ -> env
+  | Client_provider.Select_new _ -> env
 
 let log_recheck_end (stats : ServerEnv.RecheckLoopStats.t) ~diagnostics =
   let telemetry =
@@ -582,7 +582,7 @@ let serve_one_iteration genv env client_provider =
     let has_default_client_pending =
       Option.is_some env.nonpersistent_client_pending_command_needs_full_check
     in
-    let can_accept_clients = not @@ ServerRevisionTracker.is_hg_updating () in
+    let can_accept_clients = not @@ Server_revision_tracker.is_hg_updating () in
     match (can_accept_clients, has_default_client_pending) with
     (* If we are already blocked on some client, do not accept more of them.
      * Other clients (that connect through priority pipe, or persistent clients)
@@ -595,11 +595,11 @@ let serve_one_iteration genv env client_provider =
   in
   let selected_client =
     match acceptable_new_client_kind with
-    | None -> ClientProvider.Not_selecting_hg_updating
+    | None -> Client_provider.Not_selecting_hg_updating
     | Some client_kind ->
-      ClientProvider.sleep_and_check
+      Client_provider.sleep_and_check
         client_provider
-        ~idle_gc_slice:genv.local_config.ServerLocalConfig.idle_gc_slice
+        ~idle_gc_slice:genv.local_config.Server_local_config.idle_gc_slice
         client_kind
   in
 
@@ -624,7 +624,7 @@ let serve_one_iteration genv env client_provider =
    *)
   begin
     match selected_client with
-    | ClientProvider.(Select_nothing | Select_exception _) ->
+    | Client_provider.(Select_nothing | Select_exception _) ->
       (* There's some subtle IDE behavior, described in [ServerCommand.handle]
          and [ServerMain.recheck_until_no_changes_left]... If an EDIT was received
          over the persistent connection, then we won't resume typechecking
@@ -636,9 +636,9 @@ let serve_one_iteration genv env client_provider =
         | Full_check_done -> (Server_progress.DReady, "ready")
       in
       Server_progress.write ~include_in_logs:false ~disposition "%s" msg
-    | ClientProvider.Not_selecting_hg_updating ->
+    | Client_provider.Not_selecting_hg_updating ->
       Server_progress.write ~include_in_logs:false "hg-transaction"
-    | ClientProvider.Select_new _ ->
+    | Client_provider.Select_new _ ->
       Server_progress.write ~include_in_logs:false "working"
   end;
   let env = idle_if_no_client env selected_client in
@@ -684,11 +684,11 @@ let serve_one_iteration genv env client_provider =
 
   let env =
     match selected_client with
-    | ClientProvider.Select_nothing
-    | ClientProvider.Select_exception _
-    | ClientProvider.Not_selecting_hg_updating ->
+    | Client_provider.Select_nothing
+    | Client_provider.Select_exception _
+    | Client_provider.Not_selecting_hg_updating ->
       env
-    | ClientProvider.Select_new { ClientProvider.client; m2s_sequence_number }
+    | Client_provider.Select_new { Client_provider.client; m2s_sequence_number }
       -> begin
       try
         Hh_logger.log
@@ -696,15 +696,15 @@ let serve_one_iteration genv env client_provider =
           m2s_sequence_number;
         (* client here is the new client (not the existing persistent client)
          * whose request we're going to handle. *)
-        ClientProvider.track
+        Client_provider.track
           client
           ~key:Connection_tracker.Server_start_recheck
           ~time:t_start_recheck;
-        ClientProvider.track
+        Client_provider.track
           client
           ~key:Connection_tracker.Server_done_recheck
           ~time:t_done_recheck;
-        ClientProvider.track
+        Client_provider.track
           client
           ~key:Connection_tracker.Server_sent_diagnostics
           ~time:t_sent_diagnostics;
@@ -743,7 +743,7 @@ let serve_one_iteration genv env client_provider =
 a typecheck cancelled due to files changing on disk. It constructs the
 human-readable [user_message] and also [log_message] appropriately. *)
 let cancel_due_to_file_changes
-    (updates : Relative_path.Set.t) (clock : ServerNotifier.clock option) :
+    (updates : Relative_path.Set.t) (clock : Server_notifier.clock option) :
     MultiThreadedCall.interrupt_result =
   assert (not (Relative_path.Set.is_empty updates));
   let size = Relative_path.Set.cardinal updates in
@@ -830,31 +830,31 @@ let priority_client_interrupt_handler genv client_provider :
       },
       cancel_due_to_file_changes updates clock )
   ) else
-    let idle_gc_slice = genv.local_config.ServerLocalConfig.idle_gc_slice in
+    let idle_gc_slice = genv.local_config.Server_local_config.idle_gc_slice in
     let select_outcome =
-      if ServerRevisionTracker.is_hg_updating () then (
+      if Server_revision_tracker.is_hg_updating () then (
         Hh_logger.log "Won't handle client message: hg is updating.";
-        ClientProvider.Not_selecting_hg_updating
+        Client_provider.Not_selecting_hg_updating
       ) else
-        ClientProvider.sleep_and_check client_provider ~idle_gc_slice `Priority
+        Client_provider.sleep_and_check client_provider ~idle_gc_slice `Priority
     in
     let env =
       match select_outcome with
-      | ClientProvider.Select_nothing ->
+      | Client_provider.Select_nothing ->
         (* This is possible because client might have gone away during
          * sleep_and_check. *)
         Hh_logger.log "Client went away.";
         env
-      | ClientProvider.Select_exception e ->
+      | Client_provider.Select_exception e ->
         Hh_logger.log
           "Exception during client FD select: %s"
           (Exception.get_ctor_string e);
         env
-      | ClientProvider.Not_selecting_hg_updating ->
+      | Client_provider.Not_selecting_hg_updating ->
         Hh_logger.log "hg is updating.";
         env
-      | ClientProvider.Select_new { ClientProvider.client; m2s_sequence_number }
-        ->
+      | Client_provider.Select_new
+          { Client_provider.client; m2s_sequence_number } ->
         Hh_logger.log
           "Serving new client obtained from monitor handoff #%d"
           m2s_sequence_number;
@@ -879,7 +879,7 @@ let setup_interrupts env client_provider =
     interrupt_handlers =
       (fun genv _env ->
         let {
-          ServerLocalConfig.interrupt_on_file_changes;
+          Server_local_config.interrupt_on_file_changes;
           interrupt_on_client;
           _;
         } =
@@ -887,13 +887,13 @@ let setup_interrupts env client_provider =
         in
         let handlers = [] in
         let handlers =
-          match ServerNotifier.notification_fd genv.notifier with
+          match Server_notifier.notification_fd genv.notifier with
           | Some fd when interrupt_on_file_changes ->
             (fd, file_changes_interrupt_handler genv) :: handlers
           | _ -> handlers
         in
         let handlers =
-          match ClientProvider.priority_fd client_provider with
+          match Client_provider.priority_fd client_provider with
           | Some fd when interrupt_on_client ->
             (fd, priority_client_interrupt_handler genv client_provider)
             :: handlers
@@ -903,7 +903,7 @@ let setup_interrupts env client_provider =
   }
 
 let serve genv env in_fds =
-  if genv.local_config.ServerLocalConfig.ide_parser_cache then
+  if genv.local_config.Server_local_config.ide_parser_cache then
     Ide_parser_cache.enable ();
   (* During server lifetime dependency table can be not up-to-date. Because of
    * that, we ban access to it be default, forcing the code trying to read it to
@@ -915,7 +915,7 @@ let serve genv env in_fds =
   in
   let () = Diagnostics.set_allow_errors_in_default_path false in
   MultiThreadedCall.on_exception (fun e -> ServerUtils.exit_on_exception e);
-  let client_provider = ClientProvider.provider_from_file_descriptors in_fds in
+  let client_provider = Client_provider.provider_from_file_descriptors in_fds in
 
   (* This is needed when typecheck_after_init option is disabled.
    * We're just filling it with placeholder telemetry values since
@@ -953,13 +953,13 @@ let resolve_init_approach genv : Server_init.init_approach * string =
   else if ServerArgs.no_load genv.options then
     (Server_init.Full_init, "Server_args_no_load")
   else if
-    (not genv.local_config.ServerLocalConfig.use_saved_state)
+    (not genv.local_config.Server_local_config.use_saved_state)
     && Option.is_none (ServerArgs.write_symbol_info genv.options)
   then
     (Server_init.Full_init, "Local_config_saved_state_disabled")
   else if Option.is_some (ServerArgs.write_symbol_info genv.options) then
     match
-      ( genv.local_config.ServerLocalConfig.use_saved_state_when_indexing,
+      ( genv.local_config.Server_local_config.use_saved_state_when_indexing,
         ServerArgs.with_saved_state genv.options )
     with
     | (false, None) ->
@@ -972,7 +972,7 @@ let resolve_init_approach genv : Server_init.init_approach * string =
         "Server_args_writing_symbol_info_precomputed" )
   else
     match
-      ( genv.local_config.ServerLocalConfig.load_state_natively,
+      ( genv.local_config.Server_local_config.load_state_natively,
         ServerArgs.with_saved_state genv.options )
     with
     | (_, Some (ServerArgs.Saved_state_target_info target)) ->
@@ -990,7 +990,7 @@ let program_init genv env =
   Hh_logger.log "Init id: %s" env.init_env.init_id;
   Server_progress.with_message "initializing..." @@ fun () ->
   Server_progress.enable_error_production
-    genv.local_config.ServerLocalConfig.produce_streaming_errors;
+    genv.local_config.Server_local_config.produce_streaming_errors;
   Exit.add_hook_upon_clean_exit (fun _finale_data ->
       Server_progress.ErrorsWrite.unlink_at_server_stop ());
   let env =
@@ -1045,7 +1045,7 @@ let program_init genv env =
   in
   Hh_logger.log "Waiting for daemon(s) to be ready...";
   Server_progress.write "wrapping up init...";
-  ServerNotifier.wait_until_ready genv.notifier;
+  Server_notifier.wait_until_ready genv.notifier;
   EventLogger.set_init_type init_type;
   let telemetry =
     ServerUtils.log_and_get_sharedmem_load_telemetry ()
@@ -1078,7 +1078,7 @@ let num_workers options local_config =
           min a b
         ))
       (ServerArgs.max_procs options)
-      local_config.ServerLocalConfig.max_workers
+      local_config.Server_local_config.max_workers
   in
   let nbr_procs = Sys_utils.nbr_procs in
   match max_procs_opt with
@@ -1110,9 +1110,9 @@ let setup_ipc root =
      We'll rely upon tmpclean to eventually clean them up. *)
   let pid = Unix.getpid () in
   Server_progress.set_root root;
-  let server_finale_file = ServerFiles.server_finale_file pid in
+  let server_finale_file = Server_files.server_finale_file pid in
   let server_receipt_to_monitor_file =
-    ServerFiles.server_receipt_to_monitor_file pid
+    Server_files.server_receipt_to_monitor_file pid
   in
   (try Unix.unlink server_finale_file with
   | _ -> ());
@@ -1157,8 +1157,8 @@ let initialize_logging
     config
     local_config
     ~root : unit =
-  Hh_logger.Level.set_min_level local_config.ServerLocalConfig.min_log_level;
-  Hh_logger.Level.set_categories local_config.ServerLocalConfig.log_categories;
+  Hh_logger.Level.set_min_level local_config.Server_local_config.min_log_level;
+  Hh_logger.Level.set_categories local_config.Server_local_config.log_categories;
 
   let hhconfig_version =
     config |> ServerConfig.version |> Config_file.version_to_string_opt
@@ -1169,10 +1169,10 @@ let initialize_logging
       ~hhconfig_version
       ~init_id
       ~custom_columns:(ServerArgs.custom_telemetry_data options)
-      ~rollout_flags:(ServerLocalConfigLoad.to_rollout_flags local_config)
-      ~rollout_group:local_config.ServerLocalConfig.rollout_group
+      ~rollout_flags:(Server_local_config_load.to_rollout_flags local_config)
+      ~rollout_group:local_config.Server_local_config.rollout_group
       ~time:(Unix.gettimeofday ())
-      ~per_file_profiling:local_config.ServerLocalConfig.per_file_profiling
+      ~per_file_profiling:local_config.Server_local_config.per_file_profiling
   else
     Hack_event_logger.init
       ~root
@@ -1180,11 +1180,11 @@ let initialize_logging
       ~init_id
       ~custom_columns:(ServerArgs.custom_telemetry_data options)
       ~informant_managed
-      ~rollout_flags:(ServerLocalConfigLoad.to_rollout_flags local_config)
-      ~rollout_group:local_config.ServerLocalConfig.rollout_group
+      ~rollout_flags:(Server_local_config_load.to_rollout_flags local_config)
+      ~rollout_group:local_config.Server_local_config.rollout_group
       ~time:(Unix.gettimeofday ())
       ~max_workers:num_workers
-      ~per_file_profiling:local_config.ServerLocalConfig.per_file_profiling
+      ~per_file_profiling:local_config.Server_local_config.per_file_profiling
 
 let check_nfs ~root options local_config =
   let root_s = Path.to_string root in
@@ -1192,7 +1192,7 @@ let check_nfs ~root options local_config =
   if
     (not check_mode)
     && Sys_utils.is_nfs root_s
-    && not local_config.ServerLocalConfig.enable_on_nfs
+    && not local_config.Server_local_config.enable_on_nfs
   then (
     Hh_logger.log "Refusing to run on %s: root is on NFS!" root_s;
     Hack_event_logger.nfs_root ();
@@ -1259,14 +1259,14 @@ let make_workers
   in
   let gc_control = ServerConfig.gc_control config in
   Server_worker.make
-    ~longlived_workers:local_config.ServerLocalConfig.longlived_workers
+    ~longlived_workers:local_config.Server_local_config.longlived_workers
     ~nbr_procs:num_workers
     gc_control
     shmem_handle
     ~logging_init:worker_logging_init
 
 let log_pids root ~monitor_pid =
-  Pid_log.init (ServerFiles.pids_file root);
+  Pid_log.init (Server_files.pids_file root);
   Option.iter monitor_pid ~f:(fun monitor_pid ->
       Pid_log.log ~reason:"monitor" monitor_pid);
   Pid_log.log ~reason:"main" (Unix.getpid ())
@@ -1283,7 +1283,7 @@ let setup_server
     ~(monitor_pid : int option)
     (options : ServerArgs.options)
     (config : ServerConfig.t)
-    (local_config : ServerLocalConfig.t) : MultiWorker.worker list * env =
+    (local_config : Server_local_config.t) : MultiWorker.worker list * env =
   let num_workers = num_workers options local_config in
   let shmem_handle =
     SharedMem.init ~num_workers (ServerConfig.sharedmem_config config)
@@ -1313,7 +1313,7 @@ let setup_server
 
   Hack_event_logger.init_start
     ~experiments_config_meta:
-      local_config.ServerLocalConfig.experiments_config_meta
+      local_config.Server_local_config.experiments_config_meta
     (Memory_stats.get_host_hw_telemetry ());
 
   check_nfs ~root options local_config;
@@ -1321,7 +1321,7 @@ let setup_server
 
   Program.set_signals ();
 
-  let { ServerLocalConfig.cpu_priority; io_priority; _ } = local_config in
+  let { Server_local_config.cpu_priority; io_priority; _ } = local_config in
   Sys_utils.set_priorities ~cpu_priority ~io_priority;
 
   log_pids root ~monitor_pid;
@@ -1415,7 +1415,7 @@ let daemon_main_exn ~informant_managed options monitor_pid in_fds =
       ~from:(ServerArgs.from options)
       ~cli_config_overrides:(ServerArgs.config options)
   in
-  Option.iter local_config.ServerLocalConfig.memtrace_dir ~f:(fun dir ->
+  Option.iter local_config.Server_local_config.memtrace_dir ~f:(fun dir ->
       Daemon.start_memtracing (Filename.concat dir "memtrace.server.ctf"));
   let (workers, env) =
     setup_server
@@ -1440,7 +1440,7 @@ let daemon_main_exn ~informant_managed options monitor_pid in_fds =
 
 type params = {
   informant_managed: bool;
-  state: ServerGlobalState.t;
+  state: Server_global_state.t;
   options: ServerArgs.options;
   monitor_pid: int;
   priority_in_fd: Unix.file_descr;
@@ -1478,7 +1478,7 @@ let daemon_main
   let default_in_fd = Daemon.descr_of_in_channel default_ic in
 
   (* Restore the root directory and other global states from monitor *)
-  ServerGlobalState.restore state ~worker_id:0;
+  Server_global_state.restore state ~worker_id:0;
 
   setup_hhi_root options;
 
